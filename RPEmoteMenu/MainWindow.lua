@@ -1,4 +1,3 @@
-if EUI_CLIENT_BLOCKED then return end
 local _, addon = ...
 
 addon.MainWindow = {}
@@ -32,7 +31,6 @@ local categoryButtonHeight = 24
 local emoteButtonHeight = 20
 
 local MainFrame
-local MainBorderFrame
 local CategorySidebar
 local CategoryScrollFrame
 local CategoryScrollChild
@@ -583,29 +581,27 @@ function MainWindow.ApplyAppearance()
     local categoryBackground = settings.categoryBackgroundColor
     local emoteBackground = settings.emoteBackgroundColor
     local border = settings.borderColor
-    MainFrame:SetBackdrop({
+    local backdrop = {
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground"
-    })
+    }
+
+    if settings.borderStyle == "thin" then
+        backdrop.edgeFile = "Interface\\ChatFrame\\ChatFrameBackground"
+        backdrop.edgeSize = 1
+    elseif settings.borderStyle == "blizzard" then
+        backdrop.edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border"
+        backdrop.edgeSize = 12
+        backdrop.insets = {left = 3, right = 3, top = 3, bottom = 3}
+    end
+
+    MainFrame:SetBackdrop(backdrop)
     MainFrame:SetBackdropColor(
         emoteBackground.r,
         emoteBackground.g,
         emoteBackground.b,
         settings.backgroundOpacity
     )
-    if settings.borderStyle == "none" then
-        if MainBorderFrame then MainBorderFrame:Hide() end
-    else
-        MainBorderFrame:Show()
-        EllesmereUI.ApplyBorderStyle(
-            MainBorderFrame,
-            1,
-            border.r,
-            border.g,
-            border.b,
-            1,
-            settings.borderStyle == "blizzard" and "blizz" or "solid"
-        )
-    end
+    MainFrame:SetBackdropBorderColor(border.r, border.g, border.b, 1)
 
     CategorySidebar:SetBackdropColor(
         categoryBackground.r,
@@ -986,13 +982,6 @@ function MainWindow.CreateMainWindow()
     MainFrame:SetClampedToScreen(true)
     MainFrame:EnableMouse(true)
     MainFrame:RegisterForDrag("LeftButton")
-
-    -- EllesmereUI owns the border rendering. Keeping it on a mouse-disabled
-    -- child frame lets the menu retain its own background opacity and input.
-    MainBorderFrame = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
-    MainBorderFrame:SetAllPoints(MainFrame)
-    MainBorderFrame:SetFrameLevel(MainFrame:GetFrameLevel() + 10)
-    MainBorderFrame:EnableMouse(false)
 
     MainFrame:SetScript("OnDragStart", function(self)
         if not settings.locked then

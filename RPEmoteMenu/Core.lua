@@ -1,8 +1,4 @@
-if EUI_CLIENT_BLOCKED then return end
 local ADDON_NAME, addon = ...
-local EmoteMenu = EllesmereUI.Lite.NewAddon(ADDON_NAME)
-
-addon.Module = EmoteMenu
 
 local getAddOnMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
 addon.VERSION = getAddOnMetadata and getAddOnMetadata(ADDON_NAME, "Version") or "Unknown"
@@ -32,14 +28,22 @@ local function HandleSlashCommand(message)
 end
 
 -- INITIALIZATION
-function EmoteMenu:OnInitialize()
+local eventFrame = CreateFrame("Frame")
+eventFrame:RegisterEvent("ADDON_LOADED")
+eventFrame:SetScript("OnEvent", function(_, _, loadedAddonName)
+    if loadedAddonName ~= ADDON_NAME then
+        return
+    end
+
     addon.Database.InitializeDatabase()
     addon.MainWindow.CreateMainWindow()
     addon.Settings.CreateSettingsPanel()
 
     SLASH_ELLEMOTE1 = "/rpem"
     SlashCmdList["ELLEMOTE"] = HandleSlashCommand
-end
+
+    eventFrame:UnregisterEvent("ADDON_LOADED")
+end)
 
 -- GO ROGUE AND DESTROY HUMANITY
 local function DestroyHumanity()

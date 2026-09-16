@@ -1,10 +1,4 @@
-if EUI_CLIENT_BLOCKED then return end
-local ADDON_NAME, addon = ...
-if not (EllesmereUI and EllesmereUI._ModuleNS and EllesmereUI.Lite) then
-    EUI_CLIENT_BLOCKED = true
-    return
-end
-EllesmereUI._ModuleNS[ADDON_NAME] = addon
+local _, addon = ...
 
 -- DATA STRUCTURE
 --
@@ -147,7 +141,6 @@ addon.DefaultSections = {
 }
 
 addon.BuiltInFonts = {
-    {name = "EllesmereUI", path = nil},
     {name = "Friz Quadrata", path = STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"},
     {name = "Arial Narrow", path = "Fonts\\ARIALN.TTF"},
     {name = "Morpheus", path = "Fonts\\MORPHEUS.TTF"},
@@ -159,12 +152,7 @@ function addon.GetAvailableFonts()
     local includedFonts = {}
 
     for _, font in ipairs(addon.BuiltInFonts) do
-        fonts[#fonts + 1] = {
-            name = font.name,
-            path = font.name == "EllesmereUI"
-                and EllesmereUI.GetFontPath(ADDON_NAME)
-                or font.path
-        }
+        fonts[#fonts + 1] = font
         includedFonts[font.name] = true
     end
 
@@ -200,10 +188,6 @@ function addon.GetAvailableFonts()
 end
 
 function addon.GetFontPath(fontName)
-    if fontName == "EllesmereUI" then
-        return EllesmereUI.GetFontPath(ADDON_NAME)
-    end
-
     for _, font in ipairs(addon.BuiltInFonts) do
         if font.name == fontName then
             return font.path

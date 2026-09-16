@@ -1,4 +1,3 @@
-if EUI_CLIENT_BLOCKED then return end
 local _, addon = ...
 
 addon.Settings = {}
@@ -10,7 +9,7 @@ local Serialization = addon.Serialization
 local settings
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SOURCE_URL = "https://github.com/bblackmoor/RPEmoteMenu"
+local SOURCE_URL = "https://github.com/bblackmoor/rpemotemenu"
 local settingsCategory
 local generalSettingsCategory
 local appearanceSettingsCategory

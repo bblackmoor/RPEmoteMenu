@@ -1,9 +1,8 @@
-# EllesmereUI RP Emote Menu
+# RP Emote Menu
 
 ## The Short Version
 
-A customizable emote menu for **World of Warcraft** roleplayers, built as an
-EllesmereUI companion addon.
+A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.
@@ -26,19 +25,13 @@ EllesmereUI companion addon.
 
 ## Installation
 
-Install **EllesmereUI** first, then place the `EllesmereUIRPEmoteMenu` folder in
-your World of Warcraft addons directory:
+Place the `RPEmoteMenu` folder in your World of Warcraft addons directory:
 
 ```text
-World of Warcraft/_retail_/Interface/AddOns/EllesmereUIRPEmoteMenu/
+World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/
 ```
 
-Enable **EllesmereUI RP Emote Menu** from the character-selection screen's AddOns
-list if necessary. Existing `RPEmoteMenuDB` profiles and settings are retained.
-
-When upgrading from version 1.x, remove the old `RPEmoteMenu` addon folder after
-installing `EllesmereUIRPEmoteMenu`. Do not delete the saved variables; version
-2.x deliberately keeps the same `RPEmoteMenuDB` name so your data migrates intact.
+Enable **RP Emote Menu** from the character-selection screen's AddOns list if necessary.
 
 ## Getting Started
 
@@ -112,10 +105,7 @@ The **Fonts & Colors** settings screen customizes the current profile:
 - Background opacity and active window opacity.
 - Optional inactivity fading, with configurable delay and inactive opacity.
 
-The font menus include the active **EllesmereUI** font, WOW's built-in fonts, and
-fonts made available by LibSharedMedia-3.0 (if any). Borders are rendered by
-EllesmereUI's pixel-perfect border library. A custom font may take 10 to 30
-seconds to appear the first time it is selected.
+The font menus include WOW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
 
 Changes appear immediately. **Restore Defaults** resets the current profile's appearance.
 
@@ -157,4 +147,4 @@ The **Targeted Command** is used only when another unit is targeted. Without a t
 Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
 Licensed under the GNU General Public License v3.0 (GPL-3.0):  
 https://www.gnu.org/licenses/gpl-3.0.en.html  
-Source: https://github.com/bblackmoor/RPEmoteMenu
+Source: https://github.com/bblackmoor/rpemotemenu
