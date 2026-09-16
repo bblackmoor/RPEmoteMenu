@@ -45,6 +45,7 @@ local SettingsBtn
 local ResizeGrip
 local categoryButtons = {}
 local buttonsPool = {}
+local emoteEditorDialog
 local isWindowCollapsed = false
 local fadeGeneration = 0
 local opacityAnimationGroup
@@ -622,6 +623,173 @@ function MainWindow.ApplyAppearance()
 end
 
 -- MENU RENDERING
+local function GetEmoteEditorDialog()
+    if emoteEditorDialog then
+        return emoteEditorDialog
+    end
+
+    local dialog = CreateFrame(
+        "Frame",
+        "RPEmoteMenuEmoteEditorDialog",
+        UIParent,
+        "BackdropTemplate"
+    )
+    dialog:SetSize(610, 330)
+    dialog:SetPoint("CENTER", UIParent, "CENTER")
+    dialog:SetFrameStrata("DIALOG")
+    dialog:SetClampedToScreen(true)
+    dialog:SetMovable(true)
+    dialog:EnableMouse(true)
+    dialog:RegisterForDrag("LeftButton")
+    dialog:SetScript("OnDragStart", dialog.StartMoving)
+    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+    dialog:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1
+    })
+    dialog:SetBackdropColor(0.08, 0.08, 0.08, 0.98)
+    dialog:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
+    dialog:Hide()
+
+    if UISpecialFrames then
+        table.insert(UISpecialFrames, "RPEmoteMenuEmoteEditorDialog")
+    end
+
+    local title = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -16)
+    title:SetText("Edit Emote")
+    dialog.Title = title
+
+    local closeIcon = CreateFrame("Button", nil, dialog, "UIPanelCloseButton")
+    closeIcon:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -4, -4)
+    closeIcon:SetScript("OnClick", function() dialog:Hide() end)
+
+    local helpText = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    helpText:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
+    helpText:SetWidth(570)
+    helpText:SetJustifyH("LEFT")
+    helpText:SetText(
+        "{target} - Target's name without the realm.   " ..
+        "{player} - Your character's name without the realm.\n" ..
+        "Targeted Emote is used only when another unit is targeted. " ..
+        "An emote appears only when it has both a name and a default emote."
+    )
+    helpText:SetTextColor(0.8, 0.8, 0.8, 1)
+
+    local function CreateEditor(labelText, y)
+        local label = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        label:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, y)
+        label:SetWidth(170)
+        label:SetJustifyH("LEFT")
+        label:SetText(labelText)
+
+        local editBox = CreateFrame("EditBox", nil, dialog, "InputBoxTemplate")
+        editBox:SetSize(390, 24)
+        editBox:SetPoint("TOPLEFT", dialog, "TOPLEFT", 188, y + 5)
+        editBox:SetAutoFocus(false)
+        editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
+        editBox:SetTextColor(1, 1, 1, 1)
+        editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        return editBox
+    end
+
+    dialog.NameBox = CreateEditor("Emote Name", -112)
+    dialog.DefaultBox = CreateEditor("Default Emote", -152)
+    dialog.TargetedBox = CreateEditor("Targeted Emote (optional)", -192)
+
+    local status = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 51)
+    status:SetWidth(420)
+    status:SetJustifyH("LEFT")
+    status:SetTextColor(0.8, 0.8, 0.8, 1)
+    dialog.Status = status
+
+    local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    saveButton:SetSize(110, 24)
+    saveButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -138, 16)
+    saveButton:SetText("Save")
+    dialog.SaveButton = saveButton
+
+    local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    cancelButton:SetSize(110, 24)
+    cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 16)
+    cancelButton:SetText(CANCEL or "Cancel")
+    cancelButton:SetScript("OnClick", function() dialog:Hide() end)
+
+    local function SaveEmote()
+        if not Database.CanEditActiveProfile() then
+            return
+        end
+
+        local category = Database.GetCategory(dialog.categoryIndex)
+        local emote = category and category.emotes
+            and category.emotes[dialog.emoteIndex]
+
+        if not emote then
+            return
+        end
+
+        emote.label = dialog.NameBox:GetText() or ""
+        emote.defaultCommand = dialog.DefaultBox:GetText() or ""
+        emote.targetedCommand = dialog.TargetedBox:GetText() or ""
+
+        MainWindow.UpdateMenu()
+        if addon.Settings and addon.Settings.RefreshEditors then
+            addon.Settings.RefreshEditors(dialog.categoryIndex)
+        end
+        dialog:Hide()
+    end
+
+    saveButton:SetScript("OnClick", SaveEmote)
+    for _, editBox in ipairs({dialog.NameBox, dialog.DefaultBox, dialog.TargetedBox}) do
+        editBox:SetScript("OnEnterPressed", function(self)
+            self:ClearFocus()
+            SaveEmote()
+        end)
+    end
+
+    function dialog:Open(categoryIndex, emoteIndex)
+        local category = Database.GetCategory(categoryIndex)
+        local emote = category and category.emotes and category.emotes[emoteIndex]
+        if not emote then
+            return
+        end
+
+        self.categoryIndex = categoryIndex
+        self.emoteIndex = emoteIndex
+        self.NameBox:SetText(emote.label or "")
+        self.DefaultBox:SetText(emote.defaultCommand or "")
+        self.TargetedBox:SetText(emote.targetedCommand or "")
+
+        local editable = Database.CanEditActiveProfile()
+        for _, editBox in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
+            if editable then
+                editBox:Enable()
+                editBox:SetTextColor(1, 1, 1, 1)
+            else
+                editBox:Disable()
+                editBox:SetTextColor(0.65, 0.65, 0.65, 1)
+            end
+        end
+
+        self.SaveButton:SetEnabled(editable)
+        self.Status:SetText(editable
+            and "Changes apply to the current profile."
+            or "The Default profile's emotes cannot be edited. Copy it to a custom profile first.")
+        self.Title:SetText(editable and "Edit Emote" or "View Emote")
+        self:Show()
+        self:Raise()
+    end
+
+    emoteEditorDialog = dialog
+    return dialog
+end
+
+function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex)
+    GetEmoteEditorDialog():Open(categoryIndex, emoteIndex)
+end
+
 local function GetContainerButton()
     for _, button in ipairs(buttonsPool) do
         if not button:IsShown() then
@@ -634,7 +802,24 @@ local function GetContainerButton()
 
     button.Text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     button.Text:SetPoint("LEFT", button, "LEFT", 7, 0)
-    button.Text:SetPoint("RIGHT", button, "RIGHT", -4, 0)
+    button.EditButton = CreateFrame("Button", nil, button)
+    button.EditButton:SetSize(16, 16)
+    button.EditButton:SetPoint("RIGHT", button, "RIGHT", -3, 0)
+    button.EditButton:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    button.EditButton:SetHighlightTexture(
+        "Interface\\Buttons\\ButtonHilight-Square",
+        "ADD"
+    )
+    button.EditButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Edit emote")
+        GameTooltip:Show()
+    end)
+    button.EditButton:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
+    button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -4, 0)
     button.Text:SetJustifyH("LEFT")
     button.Text:SetWordWrap(false)
     ApplyFont(
@@ -684,7 +869,10 @@ local function GetVisibleEmotes(category)
         local emote = category.emotes and category.emotes[emoteIndex]
 
         if IsEmoteVisible(emote) then
-            table.insert(visibleEmotes, emote)
+            table.insert(visibleEmotes, {
+                emote = emote,
+                index = emoteIndex
+            })
         end
     end
 
@@ -878,6 +1066,7 @@ function MainWindow.UpdateMenu()
         button:Hide()
         button:ClearAllPoints()
         button:SetScript("OnClick", nil)
+        button.EditButton:SetScript("OnClick", nil)
     end
 
     if not IsCategoryVisible(selectedCategoryIndex) then
@@ -900,7 +1089,9 @@ function MainWindow.UpdateMenu()
     local visibleEmotes = GetVisibleEmotes(category)
     local dynamicY = 0
 
-    for _, emote in ipairs(visibleEmotes) do
+    for _, visible in ipairs(visibleEmotes) do
+        local emote = visible.emote
+        local emoteIndex = visible.index
         local label = emote.label
         local defaultCommand = emote.defaultCommand
         local targetedCommand = emote.targetedCommand
@@ -916,6 +1107,9 @@ function MainWindow.UpdateMenu()
         )
         emoteButton:SetScript("OnClick", function()
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
+        end)
+        emoteButton.EditButton:SetScript("OnClick", function()
+            MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
         end)
         emoteButton:Show()
 
