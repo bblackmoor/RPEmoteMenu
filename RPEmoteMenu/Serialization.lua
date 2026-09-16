@@ -37,6 +37,7 @@ local PROFILE_SETTINGS_FIELDS = {
     locked = true,
     hideSettingsGear = true,
     showAtLogin = true,
+    keepOpen = true,
     rememberMinimized = true,
     point = true,
     relativePoint = true,
@@ -74,6 +75,7 @@ local BOOLEAN_SETTING_KEYS = {
     "rememberMinimized",
     "fadeEnabled"
 }
+local OPTIONAL_BOOLEAN_SETTING_KEYS = {"keepOpen"}
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
     "selectedCategoryTextColor",
@@ -313,6 +315,14 @@ local function ValidateProfileSettings(value)
         imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
         if imported[key] == nil then return nil, errorMessage end
     end
+    for _, key in ipairs(OPTIONAL_BOOLEAN_SETTING_KEYS) do
+        if value[key] == nil then
+            imported[key] = addon.DefaultSettings[key]
+        else
+            imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
+            if imported[key] == nil then return nil, errorMessage end
+        end
+    end
 
     if not VALID_ANCHOR_POINTS[value.point] then
         return nil, "Setting point is not supported."
@@ -495,6 +505,9 @@ local function ExportProfileSettings(source)
     local exported = {}
 
     for _, key in ipairs(BOOLEAN_SETTING_KEYS) do
+        exported[key] = source[key]
+    end
+    for _, key in ipairs(OPTIONAL_BOOLEAN_SETTING_KEYS) do
         exported[key] = source[key]
     end
     for _, key in ipairs({

@@ -41,6 +41,7 @@ local ScrollChild
 local ScrollTopIndicator
 local ScrollBottomIndicator
 local CollapseBtn
+local PinBtn
 local SettingsBtn
 local ResizeGrip
 local categoryButtons = {}
@@ -57,6 +58,15 @@ local fadeOutDuration = 1.0
 local fadeInDuration = 0.2
 local isApplyingColumnSize = false
 local fontRefreshGeneration = 0
+
+local function UpdatePinButton()
+    if not PinBtn or not settings then
+        return
+    end
+
+    PinBtn.Icon:SetDesaturated(not settings.keepOpen)
+    PinBtn.Icon:SetAlpha(settings.keepOpen and 1 or 0.45)
+end
 
 local function RefreshGeneralWindowFields()
     if addon.Settings and addon.Settings.RefreshGeneralWindowFields then
@@ -1289,6 +1299,9 @@ function MainWindow.UpdateMenu()
                 return
             end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
+            if not settings.keepOpen then
+                MainFrame:Hide()
+            end
         end)
         emoteButton:RegisterForDrag("LeftButton")
         emoteButton:SetScript("OnDragStart", StartEmoteDrag)
@@ -1600,9 +1613,46 @@ function MainWindow.CreateMainWindow()
         UpdateWindowCollapse()
     end)
 
+    PinBtn = CreateFrame("Button", nil, MainFrame)
+    PinBtn:SetSize(20, 20)
+    PinBtn:SetPoint("RIGHT", CollapseBtn, "LEFT", -4, 0)
+
+    PinBtn.Icon = PinBtn:CreateTexture(nil, "ARTWORK")
+    PinBtn.Icon:SetSize(18, 18)
+    PinBtn.Icon:SetPoint("CENTER")
+    PinBtn.Icon:SetAtlas("waypoint-mappin-minimap-tracked", false)
+    PinBtn:SetHighlightTexture(
+        "Interface\\Buttons\\ButtonHilight-Square",
+        "ADD"
+    )
+
+    PinBtn:SetScript("OnClick", function()
+        settings.keepOpen = not settings.keepOpen
+        UpdatePinButton()
+    end)
+
+    PinBtn:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetText(settings.keepOpen and "Window pinned" or "Window unpinned")
+        GameTooltip:AddLine(
+            settings.keepOpen
+                and "The emote menu stays open after using an emote."
+                or "The emote menu closes after using an emote.",
+            1,
+            1,
+            1,
+            true
+        )
+        GameTooltip:Show()
+    end)
+
+    PinBtn:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
     SettingsBtn = CreateFrame("Button", nil, MainFrame)
     SettingsBtn:SetSize(20, 20)
-    SettingsBtn:SetPoint("RIGHT", CollapseBtn, "LEFT", -7, 0)
+    SettingsBtn:SetPoint("RIGHT", PinBtn, "LEFT", -4, 0)
 
     SettingsBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
     SettingsBtn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
@@ -1665,6 +1715,7 @@ function MainWindow.ApplyProfileSettings()
     MainWindow.ApplyMovementLock()
     MainWindow.ApplySettingsGearVisibility()
     MainWindow.ApplyAppearance()
+    UpdatePinButton()
 
     isWindowCollapsed = settings.rememberMinimized and settings.minimized or false
     UpdateWindowCollapse()

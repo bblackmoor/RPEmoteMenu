@@ -5,6 +5,7 @@
 A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
+- **Pinning:** Pin the window open, or let it close automatically after choosing an emote.
 - **Quick editing:** Use the icon at the right edge of any emote row to edit it in place.
 - **Reordering:** Drag visible emote labels to rearrange them within their category.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.

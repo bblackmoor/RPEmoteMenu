@@ -208,6 +208,7 @@ addon.DefaultSettings = {
     locked = false,
     hideSettingsGear = false,
     showAtLogin = true,
+    keepOpen = false,
     rememberMinimized = true,
     minimized = false,
     selectedCategory = 1,
