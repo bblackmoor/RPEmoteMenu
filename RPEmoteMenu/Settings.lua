@@ -1346,7 +1346,7 @@ local function CreateGeneralSettingsPanel()
 
     local iconSizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -215)
-    iconSizeLabel:SetText("Minimized icon size (20-64 px)")
+    iconSizeLabel:SetText("Minimized icon size (16-64 px)")
 
     local iconSizeBox = CreateIntegerEditBox(
         panel, 190, -211, 70,

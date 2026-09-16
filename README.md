@@ -123,7 +123,7 @@ The **General** settings screen controls the current profile's window behavior a
 - Lock movement and resizing.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
-- Replace the auto-hidden title bar with the addon icon and choose its size (20–64 pixels).
+- Replace the auto-hidden title bar with the addon icon and choose its size (16–64 pixels).
 - Set the window position, height, left-column width, and right-column width.
 - Restore the default position and size.
 
