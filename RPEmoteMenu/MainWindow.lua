@@ -32,7 +32,7 @@ local emoteButtonHeight = 20
 
 local MainFrame
 local TitleText
-local MinimizedIcon
+local MinimizedIconButton
 local CategorySidebar
 local CategoryScrollFrame
 local CategoryScrollChild
@@ -171,14 +171,7 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
 
     isApplyingColumnSize = true
     if IsWindowBodyHidden() then
-        if settings.minimizeToIcon then
-            MainFrame:SetSize(
-                settings.minimizedIconSize,
-                settings.minimizedIconSize
-            )
-        else
-            MainFrame:SetSize(width, titleBarHeight)
-        end
+        MainFrame:SetSize(width, titleBarHeight)
     else
         MainFrame:SetSize(width, height)
     end
@@ -280,14 +273,7 @@ function MainWindow.ResetWindowPosition()
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        if settings.minimizeToIcon then
-            SetInternalFrameSize(
-                settings.minimizedIconSize,
-                settings.minimizedIconSize
-            )
-        else
-            SetInternalFrameSize(defaults.width, titleBarHeight)
-        end
+        SetInternalFrameSize(defaults.width, titleBarHeight)
     end
 
     MainWindow.ApplySidebarWidth(defaults.sidebarWidth)
@@ -339,12 +325,6 @@ local function ApplyExplicitColumnWidths(left, right)
     MainFrame:SetWidth(totalWidth)
     isApplyingColumnSize = false
     ApplyColumnLayout()
-    if IsWindowBodyHidden() and settings.minimizeToIcon then
-        SetInternalFrameSize(
-            settings.minimizedIconSize,
-            settings.minimizedIconSize
-        )
-    end
 end
 
 function MainWindow.ApplySidebarWidth(width)
@@ -632,12 +612,7 @@ function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
     end
 end
 
-function MainWindow.ApplyAppearance()
-    if not MainFrame then
-        return
-    end
-
-    local categoryBackground = settings.categoryBackgroundColor
+local function ApplyMainFrameBackdrop()
     local emoteBackground = settings.emoteBackgroundColor
     local border = settings.borderColor
     local backdrop = {
@@ -661,6 +636,18 @@ function MainWindow.ApplyAppearance()
         settings.backgroundOpacity
     )
     MainFrame:SetBackdropBorderColor(border.r, border.g, border.b, 1)
+end
+
+function MainWindow.ApplyAppearance()
+    if not MainFrame then
+        return
+    end
+
+    local categoryBackground = settings.categoryBackgroundColor
+
+    if not (isWindowAutoHidden and settings.minimizeToIcon) then
+        ApplyMainFrameBackdrop()
+    end
 
     CategorySidebar:SetBackdropColor(
         categoryBackground.r,
@@ -1395,19 +1382,20 @@ local function UpdateWindowBodyVisibility()
             TitleText:Hide()
             PinBtn:Hide()
             SettingsBtn:Hide()
-            MinimizedIcon:Show()
-            MinimizedIcon:SetSize(
+            MainFrame:SetBackdrop(nil)
+            MainFrame:EnableMouse(false)
+            MinimizedIconButton:SetSize(
                 settings.minimizedIconSize,
                 settings.minimizedIconSize
             )
-            SetInternalFrameSize(
-                settings.minimizedIconSize,
-                settings.minimizedIconSize
-            )
+            MinimizedIconButton:SetShown(MainFrame:IsShown())
+            SetInternalFrameSize(settings.width, titleBarHeight)
         else
             TitleText:Show()
             PinBtn:Show()
-            MinimizedIcon:Hide()
+            MinimizedIconButton:Hide()
+            MainFrame:EnableMouse(true)
+            ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
             SetInternalFrameSize(settings.width, titleBarHeight)
         end
@@ -1415,7 +1403,9 @@ local function UpdateWindowBodyVisibility()
         SetNormalResizeBounds()
         TitleText:Show()
         PinBtn:Show()
-        MinimizedIcon:Hide()
+        MinimizedIconButton:Hide()
+        MainFrame:EnableMouse(true)
+        ApplyMainFrameBackdrop()
         MainWindow.ApplySettingsGearVisibility()
         SetInternalFrameSize(settings.width, settings.height)
         CategorySidebar:Show()
@@ -1497,14 +1487,34 @@ function MainWindow.CreateMainWindow()
     TitleText:SetText("RP Emote Menu " .. addon.VERSION)
     TitleText:SetTextColor(1, 1, 1, 1)
 
-    MinimizedIcon = MainFrame:CreateTexture(nil, "OVERLAY")
-    MinimizedIcon:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
-    MinimizedIcon:SetSize(
+    MinimizedIconButton = CreateFrame("Button", nil, UIParent)
+    MinimizedIconButton:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+    MinimizedIconButton:SetSize(
         defaults.minimizedIconSize,
         defaults.minimizedIconSize
     )
-    MinimizedIcon:SetTexture("Interface\\AddOns\\RPEmoteMenu\\Media\\icon")
-    MinimizedIcon:Hide()
+    MinimizedIconButton:SetFrameStrata(MainFrame:GetFrameStrata())
+    MinimizedIconButton:SetFrameLevel(MainFrame:GetFrameLevel() + 5)
+    MinimizedIconButton.Icon = MinimizedIconButton:CreateTexture(nil, "ARTWORK")
+    MinimizedIconButton.Icon:SetAllPoints(MinimizedIconButton)
+    MinimizedIconButton.Icon:SetTexture(
+        "Interface\\AddOns\\RPEmoteMenu\\Media\\icon"
+    )
+    MinimizedIconButton:RegisterForDrag("LeftButton")
+    MinimizedIconButton:SetScript("OnEnter", function()
+        SetWindowAutoHidden(false)
+        MainWindow.NotifyActivity()
+    end)
+    MinimizedIconButton:SetScript("OnDragStart", function()
+        if not settings.locked then
+            MainFrame:StartMoving()
+        end
+    end)
+    MinimizedIconButton:SetScript("OnDragStop", function()
+        MainFrame:StopMovingOrSizing()
+        SaveWindowPosition()
+    end)
+    MinimizedIconButton:Hide()
 
     CategorySidebar = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
     CategorySidebar:SetWidth(sidebarWidth)
@@ -1784,6 +1794,14 @@ function MainWindow.CreateMainWindow()
 
     MainFrame:HookScript("OnEnter", MainWindow.NotifyActivity)
     MainFrame:HookScript("OnLeave", ScheduleInactiveFade)
+    MainFrame:HookScript("OnHide", function()
+        MinimizedIconButton:Hide()
+    end)
+    MainFrame:HookScript("OnShow", function()
+        if isWindowAutoHidden and settings.minimizeToIcon then
+            MinimizedIconButton:Show()
+        end
+    end)
     local mouseCheckElapsed = 0
     MainFrame:SetScript("OnUpdate", function(self, elapsed)
         mouseCheckElapsed = mouseCheckElapsed + elapsed
@@ -1793,6 +1811,9 @@ function MainWindow.CreateMainWindow()
         mouseCheckElapsed = 0
 
         if settings.keepOpen then
+            return
+        end
+        if isWindowAutoHidden and settings.minimizeToIcon then
             return
         end
 
