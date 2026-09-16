@@ -67,6 +67,19 @@ local function SetInternalFrameSize(width, height)
     isApplyingColumnSize = false
 end
 
+local function SetCompactResizeBounds()
+    MainFrame:SetResizeBounds(1, 1, maximumWidth, maximumHeight)
+end
+
+local function SetNormalResizeBounds()
+    MainFrame:SetResizeBounds(
+        minimumWidth,
+        minimumHeight,
+        maximumWidth,
+        maximumHeight
+    )
+end
+
 local function IsWindowBodyHidden()
     return isWindowAutoHidden
 end
@@ -1373,6 +1386,7 @@ local function UpdateWindowBodyVisibility()
     AnchorFrameByTopLeft()
 
     if IsWindowBodyHidden() then
+        SetCompactResizeBounds()
         CategorySidebar:Hide()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
@@ -1382,6 +1396,10 @@ local function UpdateWindowBodyVisibility()
             PinBtn:Hide()
             SettingsBtn:Hide()
             MinimizedIcon:Show()
+            MinimizedIcon:SetSize(
+                settings.minimizedIconSize,
+                settings.minimizedIconSize
+            )
             SetInternalFrameSize(
                 settings.minimizedIconSize,
                 settings.minimizedIconSize
@@ -1394,6 +1412,7 @@ local function UpdateWindowBodyVisibility()
             SetInternalFrameSize(settings.width, titleBarHeight)
         end
     else
+        SetNormalResizeBounds()
         TitleText:Show()
         PinBtn:Show()
         MinimizedIcon:Hide()
@@ -1443,7 +1462,7 @@ function MainWindow.CreateMainWindow()
     emoteColumnWidth = settings.emoteColumnWidth
     MainFrame = CreateFrame("Frame", "RPEmoteMenu", UIParent, "BackdropTemplate")
     MainFrame:SetSize(defaults.width, defaults.height)
-    MainFrame:SetResizeBounds(minimumWidth, minimumHeight, maximumWidth, maximumHeight)
+    SetNormalResizeBounds()
     MainFrame:SetClampedToScreen(true)
     MainFrame:EnableMouse(true)
     MainFrame:RegisterForDrag("LeftButton")
@@ -1479,7 +1498,11 @@ function MainWindow.CreateMainWindow()
     TitleText:SetTextColor(1, 1, 1, 1)
 
     MinimizedIcon = MainFrame:CreateTexture(nil, "OVERLAY")
-    MinimizedIcon:SetAllPoints(MainFrame)
+    MinimizedIcon:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+    MinimizedIcon:SetSize(
+        defaults.minimizedIconSize,
+        defaults.minimizedIconSize
+    )
     MinimizedIcon:SetTexture("Interface\\AddOns\\RPEmoteMenu\\Media\\icon")
     MinimizedIcon:Hide()
 
