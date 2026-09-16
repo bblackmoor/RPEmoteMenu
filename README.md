@@ -151,7 +151,7 @@ The **Targeted Command** is used only when another unit is targeted. Without a t
 
 ---
 
-Copyright Â© 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
+Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
 Licensed under the GNU General Public License v3.0 (GPL-3.0):  
 https://www.gnu.org/licenses/gpl-3.0.en.html  
 Source: https://github.com/bblackmoor/rpemotemenu
