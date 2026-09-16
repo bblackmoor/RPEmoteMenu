@@ -46,6 +46,8 @@ local ResizeGrip
 local categoryButtons = {}
 local buttonsPool = {}
 local emoteEditorDialog
+local emoteDropIndicator
+local emoteDragState
 local isWindowCollapsed = false
 local fadeGeneration = 0
 local opacityAnimationGroup
@@ -879,6 +881,174 @@ local function GetVisibleEmotes(category)
     return visibleEmotes
 end
 
+local function HideEmoteDropIndicator()
+    if emoteDropIndicator then
+        emoteDropIndicator:Hide()
+    end
+end
+
+local function ShowEmoteDropIndicator(button, insertBefore)
+    if not emoteDropIndicator then
+        emoteDropIndicator = ScrollChild:CreateTexture(nil, "OVERLAY")
+        emoteDropIndicator:SetHeight(2)
+    end
+
+    local color = settings.categoryHighlightColor
+    emoteDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
+    emoteDropIndicator:ClearAllPoints()
+    emoteDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
+    emoteDropIndicator:SetPoint("RIGHT", button, "RIGHT", -2, 0)
+
+    if insertBefore then
+        emoteDropIndicator:SetPoint("BOTTOM", button, "TOP", 0, 1)
+    else
+        emoteDropIndicator:SetPoint("TOP", button, "BOTTOM", 0, -1)
+    end
+
+    emoteDropIndicator:Show()
+end
+
+local function UpdateEmoteDragTarget(_, elapsed)
+    if not emoteDragState then
+        return
+    end
+
+    local cursorX, cursorY = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    cursorX = cursorX / scale
+    cursorY = cursorY / scale
+
+    -- Keep all ten possible rows reachable in a short window.
+    local scrollTop = ScrollFrame:GetTop()
+    local scrollBottom = ScrollFrame:GetBottom()
+    local maximumScroll = math.max(
+        ScrollChild:GetHeight() - ScrollFrame:GetHeight(),
+        0
+    )
+    local currentScroll = ScrollFrame:GetVerticalScroll() or 0
+    local scrollSpeed = 140 * (elapsed or 0)
+
+    if scrollTop and cursorY > scrollTop - 14 and currentScroll > 0 then
+        ScrollFrame:SetVerticalScroll(math.max(0, currentScroll - scrollSpeed))
+    elseif scrollBottom
+        and cursorY < scrollBottom + 14
+        and currentScroll < maximumScroll then
+        ScrollFrame:SetVerticalScroll(math.min(maximumScroll, currentScroll + scrollSpeed))
+    end
+
+    emoteDragState.targetButton = nil
+    emoteDragState.insertBefore = nil
+
+    for _, button in ipairs(buttonsPool) do
+        if button:IsShown() and button.visiblePosition then
+            local left, right = button:GetLeft(), button:GetRight()
+            local top, bottom = button:GetTop(), button:GetBottom()
+
+            if left and right and top and bottom
+                and cursorX >= left and cursorX <= right
+                and cursorY <= top and cursorY >= bottom then
+                emoteDragState.targetButton = button
+                emoteDragState.insertBefore = cursorY >= ((top + bottom) / 2)
+                ShowEmoteDropIndicator(button, emoteDragState.insertBefore)
+                return
+            end
+        end
+    end
+
+    HideEmoteDropIndicator()
+end
+
+local function ReorderVisibleEmotes(categoryIndex, sourcePosition, insertionPosition)
+    local category = Database.GetCategory(categoryIndex)
+    local visible = GetVisibleEmotes(category)
+    local source = visible[sourcePosition]
+
+    if not source or insertionPosition < 1 or insertionPosition > #visible + 1 then
+        return false
+    end
+
+    if insertionPosition > sourcePosition then
+        insertionPosition = insertionPosition - 1
+    end
+
+    if insertionPosition == sourcePosition then
+        return false
+    end
+
+    local visibleIndices = {}
+    local records = {}
+    for position, entry in ipairs(visible) do
+        visibleIndices[position] = entry.index
+        records[position] = entry.emote
+    end
+
+    local moved = table.remove(records, sourcePosition)
+    table.insert(records, insertionPosition, moved)
+
+    for position, emoteIndex in ipairs(visibleIndices) do
+        category.emotes[emoteIndex] = records[position]
+    end
+
+    return true
+end
+
+local function StartEmoteDrag(button)
+    if not Database.CanEditActiveProfile() or not button.visiblePosition then
+        return
+    end
+
+    emoteDragState = {
+        sourceButton = button,
+        sourcePosition = button.visiblePosition,
+        categoryIndex = selectedCategoryIndex
+    }
+    button:SetAlpha(0.45)
+    button:SetScript("OnUpdate", UpdateEmoteDragTarget)
+    UpdateEmoteDragTarget(button, 0)
+end
+
+local function StopEmoteDrag(button)
+    if not emoteDragState or emoteDragState.sourceButton ~= button then
+        return
+    end
+
+    UpdateEmoteDragTarget(button, 0)
+    button:SetScript("OnUpdate", nil)
+    button:SetAlpha(1)
+    button.suppressClick = true
+    C_Timer.After(0, function()
+        button.suppressClick = false
+    end)
+
+    local target = emoteDragState.targetButton
+    local changed = false
+    if target then
+        local insertionPosition = target.visiblePosition
+            + (emoteDragState.insertBefore and 0 or 1)
+        changed = ReorderVisibleEmotes(
+            emoteDragState.categoryIndex,
+            emoteDragState.sourcePosition,
+            insertionPosition
+        )
+    end
+
+    emoteDragState = nil
+    HideEmoteDropIndicator()
+
+    if changed then
+        local previousScroll = ScrollFrame:GetVerticalScroll() or 0
+        MainWindow.UpdateMenu()
+        local maximumScroll = math.max(
+            ScrollChild:GetHeight() - ScrollFrame:GetHeight(),
+            0
+        )
+        ScrollFrame:SetVerticalScroll(math.min(previousScroll, maximumScroll))
+        if addon.Settings and addon.Settings.RefreshEditors then
+            addon.Settings.RefreshEditors(selectedCategoryIndex)
+        end
+    end
+end
+
 function MainWindow.ApplyCategoryHighlight(button, isSelected)
     button.Selection:Hide()
     button.SelectionUnderline:Hide()
@@ -1063,11 +1233,18 @@ function MainWindow.UpdateMenu()
     MainWindow.NotifyActivity()
 
     for _, button in ipairs(buttonsPool) do
+        button:SetScript("OnUpdate", nil)
+        button:SetAlpha(1)
         button:Hide()
         button:ClearAllPoints()
         button:SetScript("OnClick", nil)
+        button:SetScript("OnDragStart", nil)
+        button:SetScript("OnDragStop", nil)
         button.EditButton:SetScript("OnClick", nil)
     end
+
+    emoteDragState = nil
+    HideEmoteDropIndicator()
 
     if not IsCategoryVisible(selectedCategoryIndex) then
         selectedCategoryIndex = FindFirstVisibleCategory()
@@ -1089,13 +1266,15 @@ function MainWindow.UpdateMenu()
     local visibleEmotes = GetVisibleEmotes(category)
     local dynamicY = 0
 
-    for _, visible in ipairs(visibleEmotes) do
+    for visiblePosition, visible in ipairs(visibleEmotes) do
         local emote = visible.emote
         local emoteIndex = visible.index
         local label = emote.label
         local defaultCommand = emote.defaultCommand
         local targetedCommand = emote.targetedCommand
         local emoteButton = GetContainerButton()
+        emoteButton.visiblePosition = visiblePosition
+        emoteButton.emoteIndex = emoteIndex
 
         emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
         emoteButton.Text:SetText(label)
@@ -1106,8 +1285,14 @@ function MainWindow.UpdateMenu()
             1
         )
         emoteButton:SetScript("OnClick", function()
+            if emoteButton.suppressClick then
+                return
+            end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
         end)
+        emoteButton:RegisterForDrag("LeftButton")
+        emoteButton:SetScript("OnDragStart", StartEmoteDrag)
+        emoteButton:SetScript("OnDragStop", StopEmoteDrag)
         emoteButton.EditButton:SetScript("OnClick", function()
             MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
         end)
