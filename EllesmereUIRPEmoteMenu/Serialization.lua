@@ -1,3 +1,4 @@
+if EUI_CLIENT_BLOCKED then return end
 local _, addon = ...
 
 local Serialization = {}

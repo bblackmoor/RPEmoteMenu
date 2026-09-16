@@ -3,7 +3,7 @@
 set -eu
 
 repo_root=$(git rev-parse --show-toplevel)
-toc="$repo_root/RPEmoteMenu/RPEmoteMenu.toc"
+toc="$repo_root/EllesmereUIRPEmoteMenu/EllesmereUIRPEmoteMenu.toc"
 
 if [ ! -f "$toc" ]; then
     echo "Error: $toc not found."
@@ -18,8 +18,8 @@ fi
 commit_count=$(git rev-list --count HEAD 2>/dev/null || printf '0')
 build=$((commit_count + 1))
 
-sed -i "s/^## Version:.*/## Version: 1.$build/" "$toc"
+sed -i "s/^## Version:.*/## Version: 2.0.$build/" "$toc"
 
 git add "$toc"
 
-echo "Updated addon version to 1.$build"
+echo "Updated addon version to 2.0.$build"
