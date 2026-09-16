@@ -179,6 +179,12 @@ local function NormalizeSettings(source)
     end
 
     result.height = math.floor(ClampNumber(source.height, 150, 600, defaults.height))
+    result.minimizedIconSize = math.floor(ClampNumber(
+        source.minimizedIconSize,
+        addon.MIN_MINIMIZED_ICON_SIZE,
+        addon.MAX_MINIMIZED_ICON_SIZE,
+        defaults.minimizedIconSize
+    ))
     result.x = math.floor(ClampNumber(source.x, -100000, 100000, defaults.x))
     result.y = math.floor(ClampNumber(source.y, -100000, 100000, defaults.y))
 

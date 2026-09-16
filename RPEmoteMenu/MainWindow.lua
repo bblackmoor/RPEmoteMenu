@@ -31,6 +31,8 @@ local categoryButtonHeight = 24
 local emoteButtonHeight = 20
 
 local MainFrame
+local TitleText
+local MinimizedIcon
 local CategorySidebar
 local CategoryScrollFrame
 local CategoryScrollChild
@@ -58,6 +60,12 @@ local fadeOutDuration = 1.0
 local fadeInDuration = 0.2
 local isApplyingColumnSize = false
 local fontRefreshGeneration = 0
+
+local function SetInternalFrameSize(width, height)
+    isApplyingColumnSize = true
+    MainFrame:SetSize(width, height)
+    isApplyingColumnSize = false
+end
 
 local function IsWindowBodyHidden()
     return isWindowAutoHidden
@@ -150,7 +158,14 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
 
     isApplyingColumnSize = true
     if IsWindowBodyHidden() then
-        MainFrame:SetSize(width, titleBarHeight)
+        if settings.minimizeToIcon then
+            MainFrame:SetSize(
+                settings.minimizedIconSize,
+                settings.minimizedIconSize
+            )
+        else
+            MainFrame:SetSize(width, titleBarHeight)
+        end
     else
         MainFrame:SetSize(width, height)
     end
@@ -252,7 +267,14 @@ function MainWindow.ResetWindowPosition()
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        MainFrame:SetHeight(titleBarHeight)
+        if settings.minimizeToIcon then
+            SetInternalFrameSize(
+                settings.minimizedIconSize,
+                settings.minimizedIconSize
+            )
+        else
+            SetInternalFrameSize(defaults.width, titleBarHeight)
+        end
     end
 
     MainWindow.ApplySidebarWidth(defaults.sidebarWidth)
@@ -304,6 +326,12 @@ local function ApplyExplicitColumnWidths(left, right)
     MainFrame:SetWidth(totalWidth)
     isApplyingColumnSize = false
     ApplyColumnLayout()
+    if IsWindowBodyHidden() and settings.minimizeToIcon then
+        SetInternalFrameSize(
+            settings.minimizedIconSize,
+            settings.minimizedIconSize
+        )
+    end
 end
 
 function MainWindow.ApplySidebarWidth(width)
@@ -334,7 +362,8 @@ function MainWindow.ApplySettingsGearVisibility()
         return
     end
 
-    if settings.hideSettingsGear then
+    if settings.hideSettingsGear
+        or (isWindowAutoHidden and settings.minimizeToIcon) then
         SettingsBtn:Hide()
     else
         SettingsBtn:Show()
@@ -1348,9 +1377,28 @@ local function UpdateWindowBodyVisibility()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
-        MainFrame:SetHeight(titleBarHeight)
+        if settings.minimizeToIcon then
+            TitleText:Hide()
+            PinBtn:Hide()
+            SettingsBtn:Hide()
+            MinimizedIcon:Show()
+            SetInternalFrameSize(
+                settings.minimizedIconSize,
+                settings.minimizedIconSize
+            )
+        else
+            TitleText:Show()
+            PinBtn:Show()
+            MinimizedIcon:Hide()
+            MainWindow.ApplySettingsGearVisibility()
+            SetInternalFrameSize(settings.width, titleBarHeight)
+        end
     else
-        MainFrame:SetSize(settings.width, settings.height)
+        TitleText:Show()
+        PinBtn:Show()
+        MinimizedIcon:Hide()
+        MainWindow.ApplySettingsGearVisibility()
+        SetInternalFrameSize(settings.width, settings.height)
         CategorySidebar:Show()
         ScrollFrame:Show()
         MainWindow.UpdateMenu()
@@ -1358,6 +1406,19 @@ local function UpdateWindowBodyVisibility()
     end
 
     MainWindow.ApplyMovementLock()
+end
+
+function MainWindow.ApplyMinimizeToIconSettings()
+    settings.minimizedIconSize = math.max(
+        addon.MIN_MINIMIZED_ICON_SIZE,
+        math.min(
+            addon.MAX_MINIMIZED_ICON_SIZE,
+            math.floor(tonumber(settings.minimizedIconSize)
+                or defaults.minimizedIconSize)
+        )
+    )
+    UpdateWindowBodyVisibility()
+    RefreshGeneralWindowFields()
 end
 
 SetWindowAutoHidden = function(hidden)
@@ -1412,10 +1473,15 @@ function MainWindow.CreateMainWindow()
         if ApplyColumnLayout then ApplyColumnLayout() end
     end)
 
-    local title = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    title:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 10, -10)
-    title:SetText("RP Emote Menu " .. addon.VERSION)
-    title:SetTextColor(1, 1, 1, 1)
+    TitleText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    TitleText:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 10, -10)
+    TitleText:SetText("RP Emote Menu " .. addon.VERSION)
+    TitleText:SetTextColor(1, 1, 1, 1)
+
+    MinimizedIcon = MainFrame:CreateTexture(nil, "OVERLAY")
+    MinimizedIcon:SetAllPoints(MainFrame)
+    MinimizedIcon:SetTexture("Interface\\AddOns\\RPEmoteMenu\\Media\\icon")
+    MinimizedIcon:Hide()
 
     CategorySidebar = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
     CategorySidebar:SetWidth(sidebarWidth)

@@ -6,6 +6,7 @@ A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
 - **Pinning:** Pin the window open, or let its body hide until you mouse over the title bar.
+- **Minimize to icon:** Optionally replace the hidden title bar with a configurable addon icon.
 - **Quick editing:** Use the icon at the right edge of any emote row to edit it in place.
 - **Reordering:** Drag visible emote labels to rearrange them within their category.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.
@@ -122,6 +123,7 @@ The **General** settings screen controls the current profile's window behavior a
 - Lock movement and resizing.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
+- Replace the auto-hidden title bar with the addon icon and choose its size (20–64 pixels).
 - Set the window position, height, left-column width, and right-column width.
 - Restore the default position and size.
 

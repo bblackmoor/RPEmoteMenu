@@ -38,6 +38,8 @@ local PROFILE_SETTINGS_FIELDS = {
     hideSettingsGear = true,
     showAtLogin = true,
     keepOpen = true,
+    minimizeToIcon = true,
+    minimizedIconSize = true,
     rememberMinimized = true,
     point = true,
     relativePoint = true,
@@ -75,7 +77,7 @@ local BOOLEAN_SETTING_KEYS = {
     "rememberMinimized",
     "fadeEnabled"
 }
-local OPTIONAL_BOOLEAN_SETTING_KEYS = {"keepOpen"}
+local OPTIONAL_BOOLEAN_SETTING_KEYS = {"keepOpen", "minimizeToIcon"}
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
     "selectedCategoryTextColor",
@@ -323,6 +325,18 @@ local function ValidateProfileSettings(value)
             if imported[key] == nil then return nil, errorMessage end
         end
     end
+    if value.minimizedIconSize == nil then
+        imported.minimizedIconSize = addon.DefaultSettings.minimizedIconSize
+    else
+        imported.minimizedIconSize, errorMessage = ValidateNumber(
+            value.minimizedIconSize,
+            addon.MIN_MINIMIZED_ICON_SIZE,
+            addon.MAX_MINIMIZED_ICON_SIZE,
+            "Minimized icon size",
+            true
+        )
+        if not imported.minimizedIconSize then return nil, errorMessage end
+    end
 
     if not VALID_ANCHOR_POINTS[value.point] then
         return nil, "Setting point is not supported."
@@ -512,6 +526,7 @@ local function ExportProfileSettings(source)
     end
     for _, key in ipairs({
         "point", "relativePoint", "x", "y", "width", "height", "sidebarWidth",
+        "minimizedIconSize",
         "emoteColumnWidth",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
