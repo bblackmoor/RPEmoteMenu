@@ -5,7 +5,7 @@
 A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
-- **Pinning:** Pin the window open, or let it close automatically after choosing an emote.
+- **Pinning:** Pin the window open, or let its body hide until you mouse over the title bar.
 - **Quick editing:** Use the icon at the right edge of any emote row to edit it in place.
 - **Reordering:** Drag visible emote labels to rearrange them within their category.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.
@@ -42,6 +42,7 @@ Enable **RP Emote Menu** from the character-selection screen's AddOns list if ne
 2. Choose a category, then select an emote.
    Use the small icon at the right edge of an emote to edit its name and commands.
    Drag an emote label to move it; the insertion line shows where it will be placed.
+   When unpinned, the menu hides after use or when the pointer leaves it; hover over the title bar to reopen it.
 3. Open settings with the gear icon or `/rpem config`.
 4. Under **Profiles**, create or copy a profile if you want to customize categories and emotes.
 5. Under **Emotes**, choose a category and edit its name and commands.

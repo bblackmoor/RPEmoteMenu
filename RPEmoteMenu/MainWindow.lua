@@ -50,6 +50,8 @@ local emoteEditorDialog
 local emoteDropIndicator
 local emoteDragState
 local isWindowCollapsed = false
+local isWindowAutoHidden = false
+local SetWindowAutoHidden
 local fadeGeneration = 0
 local opacityAnimationGroup
 local opacityAnimation
@@ -58,6 +60,10 @@ local fadeOutDuration = 1.0
 local fadeInDuration = 0.2
 local isApplyingColumnSize = false
 local fontRefreshGeneration = 0
+
+local function IsWindowBodyHidden()
+    return isWindowCollapsed or isWindowAutoHidden
+end
 
 local function UpdatePinButton()
     if not PinBtn or not settings then
@@ -145,7 +151,7 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
     MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
 
     isApplyingColumnSize = true
-    if isWindowCollapsed then
+    if IsWindowBodyHidden() then
         MainFrame:SetSize(width, collapsedHeight)
     else
         MainFrame:SetSize(width, height)
@@ -187,7 +193,7 @@ local function RestoreWindowPosition()
 end
 
 local function SaveWindowSize()
-    if not isWindowCollapsed then
+    if not IsWindowBodyHidden() then
         local x, y, width, height = ClampWindowGeometry(
             settings.x,
             settings.y,
@@ -247,7 +253,7 @@ function MainWindow.ResetWindowPosition()
     isApplyingColumnSize = false
     RestoreWindowPosition()
 
-    if isWindowCollapsed then
+    if IsWindowBodyHidden() then
         MainFrame:SetHeight(collapsedHeight)
     end
 
@@ -317,7 +323,7 @@ function MainWindow.ApplyMovementLock()
     MainFrame:SetResizable(unlocked)
 
     if ResizeGrip then
-        if unlocked and not isWindowCollapsed then
+        if unlocked and not IsWindowBodyHidden() then
             ResizeGrip:Show()
         else
             ResizeGrip:Hide()
@@ -1202,7 +1208,7 @@ end
 local function UpdateScrollIndicators()
     if not ScrollFrame or not ScrollChild
         or not ScrollTopIndicator or not ScrollBottomIndicator
-        or isWindowCollapsed then
+        or IsWindowBodyHidden() then
         if ScrollTopIndicator then
             ScrollTopIndicator:Hide()
         end
@@ -1300,7 +1306,7 @@ function MainWindow.UpdateMenu()
             end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
             if not settings.keepOpen then
-                MainFrame:Hide()
+                SetWindowAutoHidden(true)
             end
         end)
         emoteButton:RegisterForDrag("LeftButton")
@@ -1339,27 +1345,41 @@ local function UpdateWindowCollapse()
     -- Keep the title bar fixed while the bottom edge rises or falls.
     AnchorFrameByTopLeft()
 
-    if isWindowCollapsed then
+    if IsWindowBodyHidden() then
         CategorySidebar:Hide()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
         MainFrame:SetHeight(collapsedHeight)
-        CollapseBtn:SetText("+")
     else
         MainFrame:SetSize(settings.width, settings.height)
         CategorySidebar:Show()
         ScrollFrame:Show()
-        CollapseBtn:SetText("-")
         MainWindow.UpdateMenu()
         C_Timer.After(0, UpdateScrollIndicators)
     end
+
+    CollapseBtn:SetText(isWindowCollapsed and "+" or "-")
 
     MainWindow.ApplyMovementLock()
 
     if settings.rememberMinimized then
         settings.minimized = isWindowCollapsed
     end
+end
+
+SetWindowAutoHidden = function(hidden)
+    hidden = not not hidden
+
+    if settings.keepOpen or isWindowCollapsed then
+        hidden = false
+    end
+    if isWindowAutoHidden == hidden then
+        return
+    end
+
+    isWindowAutoHidden = hidden
+    UpdateWindowCollapse()
 end
 
 -- MAIN WINDOW
@@ -1610,6 +1630,7 @@ function MainWindow.CreateMainWindow()
         end
 
         isWindowCollapsed = not isWindowCollapsed
+        isWindowAutoHidden = false
         UpdateWindowCollapse()
     end)
 
@@ -1629,6 +1650,9 @@ function MainWindow.CreateMainWindow()
     PinBtn:SetScript("OnClick", function()
         settings.keepOpen = not settings.keepOpen
         UpdatePinButton()
+        if settings.keepOpen then
+            SetWindowAutoHidden(false)
+        end
     end)
 
     PinBtn:SetScript("OnEnter", function(self)
@@ -1636,8 +1660,8 @@ function MainWindow.CreateMainWindow()
         GameTooltip:SetText(settings.keepOpen and "Window pinned" or "Window unpinned")
         GameTooltip:AddLine(
             settings.keepOpen
-                and "The emote menu stays open after using an emote."
-                or "The emote menu closes after using an emote.",
+                and "The emote menu stays open."
+                or "The menu opens on hover and hides when not in use.",
             1,
             1,
             1,
@@ -1678,7 +1702,8 @@ function MainWindow.CreateMainWindow()
     ResizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     ResizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     ResizeGrip:SetScript("OnMouseDown", function(_, button)
-        if button == "LeftButton" and not settings.locked and not isWindowCollapsed then
+        if button == "LeftButton" and not settings.locked
+            and not IsWindowBodyHidden() then
             MainFrame:StartSizing("BOTTOMRIGHT")
         end
     end)
@@ -1689,6 +1714,20 @@ function MainWindow.CreateMainWindow()
 
     MainFrame:HookScript("OnEnter", MainWindow.NotifyActivity)
     MainFrame:HookScript("OnLeave", ScheduleInactiveFade)
+    local mouseCheckElapsed = 0
+    MainFrame:SetScript("OnUpdate", function(self, elapsed)
+        mouseCheckElapsed = mouseCheckElapsed + elapsed
+        if mouseCheckElapsed < 0.05 then
+            return
+        end
+        mouseCheckElapsed = 0
+
+        if isWindowCollapsed or settings.keepOpen then
+            return
+        end
+
+        SetWindowAutoHidden(not self:IsMouseOver())
+    end)
 
     MainWindow.ApplyProfileSettings()
 
@@ -1718,6 +1757,7 @@ function MainWindow.ApplyProfileSettings()
     UpdatePinButton()
 
     isWindowCollapsed = settings.rememberMinimized and settings.minimized or false
+    isWindowAutoHidden = not settings.keepOpen and not isWindowCollapsed
     UpdateWindowCollapse()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)
