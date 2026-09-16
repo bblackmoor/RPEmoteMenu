@@ -14,7 +14,7 @@ local function Trim(value)
     return strtrim(value or "")
 end
 
-local collapsedHeight = 30
+local titleBarHeight = 30
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumWidth = addon.MIN_SIDEBAR_WIDTH
     + addon.MIN_EMOTE_COLUMN_WIDTH + columnChromeWidth
@@ -40,7 +40,6 @@ local ScrollFrame
 local ScrollChild
 local ScrollTopIndicator
 local ScrollBottomIndicator
-local CollapseBtn
 local PinBtn
 local SettingsBtn
 local ResizeGrip
@@ -49,7 +48,6 @@ local buttonsPool = {}
 local emoteEditorDialog
 local emoteDropIndicator
 local emoteDragState
-local isWindowCollapsed = false
 local isWindowAutoHidden = false
 local SetWindowAutoHidden
 local fadeGeneration = 0
@@ -62,7 +60,7 @@ local isApplyingColumnSize = false
 local fontRefreshGeneration = 0
 
 local function IsWindowBodyHidden()
-    return isWindowCollapsed or isWindowAutoHidden
+    return isWindowAutoHidden
 end
 
 local function UpdatePinButton()
@@ -152,7 +150,7 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
 
     isApplyingColumnSize = true
     if IsWindowBodyHidden() then
-        MainFrame:SetSize(width, collapsedHeight)
+        MainFrame:SetSize(width, titleBarHeight)
     else
         MainFrame:SetSize(width, height)
     end
@@ -254,7 +252,7 @@ function MainWindow.ResetWindowPosition()
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        MainFrame:SetHeight(collapsedHeight)
+        MainFrame:SetHeight(titleBarHeight)
     end
 
     MainWindow.ApplySidebarWidth(defaults.sidebarWidth)
@@ -1330,7 +1328,7 @@ function MainWindow.UpdateMenu()
     ScheduleInactiveFade()
 end
 
--- WINDOW COLLAPSE
+-- WINDOW AUTO-HIDE
 local function AnchorFrameByTopLeft()
     local left = MainFrame:GetLeft()
     local top = MainFrame:GetTop()
@@ -1341,7 +1339,7 @@ local function AnchorFrameByTopLeft()
     end
 end
 
-local function UpdateWindowCollapse()
+local function UpdateWindowBodyVisibility()
     -- Keep the title bar fixed while the bottom edge rises or falls.
     AnchorFrameByTopLeft()
 
@@ -1350,7 +1348,7 @@ local function UpdateWindowCollapse()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
-        MainFrame:SetHeight(collapsedHeight)
+        MainFrame:SetHeight(titleBarHeight)
     else
         MainFrame:SetSize(settings.width, settings.height)
         CategorySidebar:Show()
@@ -1359,19 +1357,13 @@ local function UpdateWindowCollapse()
         C_Timer.After(0, UpdateScrollIndicators)
     end
 
-    CollapseBtn:SetText(isWindowCollapsed and "+" or "-")
-
     MainWindow.ApplyMovementLock()
-
-    if settings.rememberMinimized then
-        settings.minimized = isWindowCollapsed
-    end
 end
 
 SetWindowAutoHidden = function(hidden)
     hidden = not not hidden
 
-    if settings.keepOpen or isWindowCollapsed then
+    if settings.keepOpen then
         hidden = false
     end
     if isWindowAutoHidden == hidden then
@@ -1379,7 +1371,7 @@ SetWindowAutoHidden = function(hidden)
     end
 
     isWindowAutoHidden = hidden
-    UpdateWindowCollapse()
+    UpdateWindowBodyVisibility()
 end
 
 -- MAIN WINDOW
@@ -1619,22 +1611,9 @@ function MainWindow.CreateMainWindow()
         C_Timer.After(0, UpdateScrollIndicators)
     end)
 
-    CollapseBtn = CreateFrame("Button", nil, MainFrame, "UIPanelButtonTemplate")
-    CollapseBtn:SetSize(22, 20)
-    CollapseBtn:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT", -5, -5)
-    CollapseBtn:SetScript("OnClick", function()
-        if not isWindowCollapsed then
-            SaveWindowSize()
-        end
-
-        isWindowCollapsed = not isWindowCollapsed
-        isWindowAutoHidden = false
-        UpdateWindowCollapse()
-    end)
-
     PinBtn = CreateFrame("Button", nil, MainFrame)
     PinBtn:SetSize(20, 20)
-    PinBtn:SetPoint("RIGHT", CollapseBtn, "LEFT", -4, 0)
+    PinBtn:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT", -5, -5)
 
     PinBtn.Icon = PinBtn:CreateTexture(nil, "ARTWORK")
     PinBtn.Icon:SetSize(18, 18)
@@ -1720,7 +1699,7 @@ function MainWindow.CreateMainWindow()
         end
         mouseCheckElapsed = 0
 
-        if isWindowCollapsed or settings.keepOpen then
+        if settings.keepOpen then
             return
         end
 
@@ -1754,9 +1733,9 @@ function MainWindow.ApplyProfileSettings()
     MainWindow.ApplyAppearance()
     UpdatePinButton()
 
-    isWindowCollapsed = settings.rememberMinimized and settings.minimized or false
-    isWindowAutoHidden = not settings.keepOpen and not isWindowCollapsed
-    UpdateWindowCollapse()
+    settings.minimized = false
+    isWindowAutoHidden = not settings.keepOpen
+    UpdateWindowBodyVisibility()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)
 end
@@ -1774,10 +1753,6 @@ function MainWindow.SetSelectedCategory(categoryIndex)
     if settings then
         settings.selectedCategory = categoryIndex
     end
-end
-
-function MainWindow.IsCollapsed()
-    return isWindowCollapsed
 end
 
 function MainWindow.GetFrame()

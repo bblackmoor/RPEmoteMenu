@@ -96,7 +96,7 @@ The **Emotes** screen can export the selected category or replace that category 
 
 The **Profiles** screen can import or export one custom profile. The separate **Import & Export** screen can import or export all custom profiles at once.
 
-Profile exports include sharable window settings, appearance, categories, and emotes. They do not include the local **Default** profile, character names, realms, character assignments, the last selected category, or the current minimized state.
+Profile exports include sharable window settings, appearance, categories, and emotes. They do not include the local **Default** profile, character names, realms, character assignments, or the last selected category.
 
 All transfers use JSON text. Imports are validated before any existing category is replaced or any new profiles are added. Bulk imports skip **Default**, preserve existing profiles, and automatically rename conflicts.
 
@@ -122,11 +122,10 @@ The **General** settings screen controls the current profile's window behavior a
 - Lock movement and resizing.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
-- Remember whether the window was minimized.
 - Set the window position, height, left-column width, and right-column width.
 - Restore the default position and size.
 
-The window can also be moved and resized directly while it is unlocked. Its category pane scrolls when necessary, and the title-bar button minimizes or restores it.
+The window can also be moved and resized directly while it is unlocked. Its category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
 
 ## Slash Commands
 
