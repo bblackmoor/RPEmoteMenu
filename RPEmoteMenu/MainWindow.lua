@@ -1552,16 +1552,14 @@ function MainWindow.CreateMainWindow()
             settings.categoryTextColor
         )
 
-        button:SetScript("OnClick", function(self)
-            MainWindow.SetSelectedCategory(self.categoryIndex)
-            MainWindow.UpdateMenu()
-        end)
         button:SetScript("OnEnter", function(self)
             self.isHovered = true
-            MainWindow.ApplyCategoryHighlight(
-                self,
-                self.categoryIndex == selectedCategoryIndex
-            )
+            if self.categoryIndex ~= selectedCategoryIndex then
+                MainWindow.SetSelectedCategory(self.categoryIndex)
+                MainWindow.UpdateMenu()
+            else
+                MainWindow.ApplyCategoryHighlight(self, true)
+            end
             if self.Text:IsTruncated() then
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText(self.Text:GetText())

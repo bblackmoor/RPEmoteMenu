@@ -39,7 +39,7 @@ Enable **RP Emote Menu** from the character-selection screen's AddOns list if ne
 ## Getting Started
 
 1. Enter `/rpem` to show or hide the menu.
-2. Choose a category, then select an emote.
+2. Mouse over a category to display its emotes, then select an emote.
    Use the small icon at the right edge of an emote to edit its name and commands.
    Drag an emote label to move it; the insertion line shows where it will be placed.
    When unpinned, the menu hides after use or when the pointer leaves it; hover over the title bar to reopen it.
