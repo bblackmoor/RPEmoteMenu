@@ -6,8 +6,8 @@ A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
 - **Pinning:** Pin the window open, or let its body hide until you mouse over the title bar.
-- **Minimize to icon:** Optionally replace the hidden title bar with a configurable addon icon.
-- **Quick editing:** Use the icon at the right edge of any emote row to edit it in place.
+- **Minimize to icon:** Optionally replace the hidden title bar with an independently sized, square addon icon.
+- **Quick editing:** Use the icon at the right edge of any emote row to open its editing dialog.
 - **Reordering:** Drag visible emote labels to rearrange them within their category.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.
 - **Sharing:** Import or export individual categories and complete profiles.
@@ -43,7 +43,7 @@ Enable **RP Emote Menu** from the character-selection screen's AddOns list if ne
 2. Mouse over a category to display its emotes, then select an emote.
    Use the small icon at the right edge of an emote to edit its name and commands.
    Drag an emote label to move it; the insertion line shows where it will be placed.
-   When unpinned, the menu hides after use or when the pointer leaves it; hover over the title bar to reopen it.
+   When unpinned, the menu hides after use or when the pointer leaves it. Hover over the title barâ€”or the addon icon when **Minimize to icon** is enabledâ€”to reopen it.
 3. Open settings with the gear icon or `/rpem config`.
 4. Under **Profiles**, create or copy a profile if you want to customize categories and emotes.
 5. Under **Emotes**, choose a category and edit its name and commands.
@@ -123,11 +123,11 @@ The **General** settings screen controls the current profile's window behavior a
 - Lock movement and resizing.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
-- Replace the auto-hidden title bar with the addon icon and choose its size (16–64 pixels).
+- Replace the auto-hidden title bar with a square addon icon and choose its size (16â€“64 pixels), independently of the main window dimensions.
 - Set the window position, height, left-column width, and right-column width.
 - Restore the default position and size.
 
-The window can also be moved and resized directly while it is unlocked. Its category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
+The window can also be moved and resized directly while it is unlocked. Resizing the window does not change the minimized icon, and changing the icon size does not resize the window. The category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
 
 ## Slash Commands
 
@@ -151,7 +151,7 @@ The **Targeted Command** is used only when another unit is targeted. Without a t
 
 ---
 
-Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
+Copyright Â© 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
 Licensed under the GNU General Public License v3.0 (GPL-3.0):  
 https://www.gnu.org/licenses/gpl-3.0.en.html  
 Source: https://github.com/bblackmoor/rpemotemenu
