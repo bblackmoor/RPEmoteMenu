@@ -1656,6 +1656,10 @@ function MainWindow.CreateMainWindow()
     SettingsBtn:SetPoint("RIGHT", PinBtn, "LEFT", -4, 0)
 
     SettingsBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
+    local settingsTexture = SettingsBtn:GetNormalTexture()
+    settingsTexture:ClearAllPoints()
+    settingsTexture:SetSize(16, 16)
+    settingsTexture:SetPoint("CENTER")
     SettingsBtn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 
     SettingsBtn:SetScript("OnClick", function()
