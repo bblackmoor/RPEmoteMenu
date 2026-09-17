@@ -1566,7 +1566,7 @@ function MainWindow.CreateMainWindow()
     MinimizedIconButton.Icon = MinimizedIconButton:CreateTexture(nil, "ARTWORK")
     MinimizedIconButton.Icon:SetAllPoints(MinimizedIconButton)
     MinimizedIconButton.Icon:SetTexture(
-        "Interface\\AddOns\\RPEmoteMenu\\Media\\icon"
+        "Interface\\AddOns\\RPEmoteMenu\\Media\\icon-minimized.tga"
     )
     MinimizedIconButton:RegisterForDrag("LeftButton")
     MinimizedIconButton:SetScript("OnEnter", function()
