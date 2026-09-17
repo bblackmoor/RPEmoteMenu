@@ -58,6 +58,9 @@ local opacityAnimation
 local opacityAnimationTarget
 local fadeOutDuration = 1.0
 local fadeInDuration = 0.2
+local autoHideGeneration = 0
+local autoHideScheduled = false
+local autoHideFading = false
 local isApplyingColumnSize = false
 local fontRefreshGeneration = 0
 
@@ -338,7 +341,7 @@ end
 function MainWindow.ApplyMovementLock()
     local unlocked = not settings.locked
 
-    MainFrame:SetMovable(unlocked)
+    MainFrame:SetMovable(unlocked and not settings.keepOpen)
     MainFrame:SetResizable(unlocked)
 
     if ResizeGrip then
@@ -398,7 +401,9 @@ local function ApplyFont(fontString, fontName, size, color, forceRefresh)
     return applied
 end
 
-local function SetWindowOpacity(targetOpacity, duration)
+local opacityAnimationOnFinished
+
+local function SetWindowOpacity(targetOpacity, duration, onFinished)
     if not MainFrame then
         return
     end
@@ -406,11 +411,15 @@ local function SetWindowOpacity(targetOpacity, duration)
     local currentOpacity = MainFrame:GetAlpha()
 
     if opacityAnimationGroup and opacityAnimationGroup:IsPlaying() then
+        opacityAnimationOnFinished = nil
         opacityAnimationGroup:Stop()
     end
 
     if not duration or math.abs(currentOpacity - targetOpacity) < 0.001 then
         MainFrame:SetAlpha(targetOpacity)
+        if onFinished then
+            onFinished()
+        end
         return
     end
 
@@ -420,15 +429,27 @@ local function SetWindowOpacity(targetOpacity, duration)
         opacityAnimation:SetSmoothing("IN_OUT")
         opacityAnimationGroup:SetScript("OnFinished", function()
             MainFrame:SetAlpha(opacityAnimationTarget)
+            local callback = opacityAnimationOnFinished
+            opacityAnimationOnFinished = nil
+            if callback then
+                callback()
+            end
         end)
     end
 
     MainFrame:SetAlpha(currentOpacity)
     opacityAnimationTarget = targetOpacity
+    opacityAnimationOnFinished = onFinished
     opacityAnimation:SetFromAlpha(currentOpacity)
     opacityAnimation:SetToAlpha(targetOpacity)
     opacityAnimation:SetDuration(duration)
     opacityAnimationGroup:Play()
+end
+
+local function CancelWindowAutoHide()
+    autoHideGeneration = autoHideGeneration + 1
+    autoHideScheduled = false
+    autoHideFading = false
 end
 
 local function RestoreActiveOpacity(animate)
@@ -465,6 +486,7 @@ local function ScheduleInactiveFade()
 end
 
 function MainWindow.NotifyActivity()
+    CancelWindowAutoHide()
     RestoreActiveOpacity(true)
 end
 
@@ -1444,6 +1466,52 @@ SetWindowAutoHidden = function(hidden)
     UpdateWindowBodyVisibility()
 end
 
+local function ScheduleWindowAutoHide()
+    if settings.keepOpen or isWindowAutoHidden
+        or autoHideScheduled or autoHideFading then
+        return
+    end
+
+    autoHideGeneration = autoHideGeneration + 1
+    local requestedGeneration = autoHideGeneration
+    autoHideScheduled = true
+
+    C_Timer.After(math.max(tonumber(settings.fadeDelay) or 0, 0), function()
+        if requestedGeneration ~= autoHideGeneration then
+            return
+        end
+
+        autoHideScheduled = false
+
+        if settings.keepOpen or isWindowAutoHidden
+            or not MainFrame or MainFrame:IsMouseOver() then
+            return
+        end
+
+        autoHideFading = true
+        fadeGeneration = fadeGeneration + 1
+        SetWindowOpacity(0, fadeOutDuration, function()
+            if requestedGeneration ~= autoHideGeneration then
+                return
+            end
+
+            autoHideFading = false
+
+            if settings.keepOpen or MainFrame:IsMouseOver() then
+                RestoreActiveOpacity(true)
+                return
+            end
+
+            SetWindowAutoHidden(true)
+            SetWindowOpacity(
+                settings.fadeEnabled
+                    and math.min(settings.inactiveOpacity, settings.windowOpacity)
+                    or settings.windowOpacity
+            )
+        end)
+    end)
+end
+
 -- MAIN WINDOW
 function MainWindow.CreateMainWindow()
     settings = Database.GetSettings()
@@ -1458,7 +1526,7 @@ function MainWindow.CreateMainWindow()
     MainFrame:RegisterForDrag("LeftButton")
 
     MainFrame:SetScript("OnDragStart", function(self)
-        if not settings.locked then
+        if not settings.locked and not settings.keepOpen then
             self:StartMoving()
         end
     end)
@@ -1726,7 +1794,9 @@ function MainWindow.CreateMainWindow()
     PinBtn:SetScript("OnClick", function()
         settings.keepOpen = not settings.keepOpen
         UpdatePinButton()
+        MainWindow.ApplyMovementLock()
         if settings.keepOpen then
+            CancelWindowAutoHide()
             SetWindowAutoHidden(false)
         end
     end)
@@ -1792,8 +1862,16 @@ function MainWindow.CreateMainWindow()
         SaveWindowSize()
     end)
 
-    MainFrame:HookScript("OnEnter", MainWindow.NotifyActivity)
-    MainFrame:HookScript("OnLeave", ScheduleInactiveFade)
+    MainFrame:HookScript("OnEnter", function()
+        if isWindowAutoHidden and not settings.minimizeToIcon then
+            SetWindowAutoHidden(false)
+        end
+        MainWindow.NotifyActivity()
+    end)
+    MainFrame:HookScript("OnLeave", function()
+        ScheduleInactiveFade()
+        ScheduleWindowAutoHide()
+    end)
     MainFrame:HookScript("OnHide", function()
         MinimizedIconButton:Hide()
     end)
@@ -1810,14 +1888,20 @@ function MainWindow.CreateMainWindow()
         end
         mouseCheckElapsed = 0
 
-        if settings.keepOpen then
-            return
-        end
-        if isWindowAutoHidden and settings.minimizeToIcon then
+        if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
         end
 
-        SetWindowAutoHidden(not self:IsMouseOver())
+        if self:IsMouseOver() then
+            if isWindowAutoHidden then
+                SetWindowAutoHidden(false)
+            end
+            if autoHideScheduled or autoHideFading then
+                MainWindow.NotifyActivity()
+            end
+        else
+            ScheduleWindowAutoHide()
+        end
     end)
 
     MainWindow.ApplyProfileSettings()
