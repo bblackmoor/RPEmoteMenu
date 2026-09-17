@@ -872,6 +872,8 @@ local function GetContainerButton()
     button.EditButton = CreateFrame("Button", nil, button)
     button.EditButton:SetSize(16, 16)
     button.EditButton:SetPoint("RIGHT", button, "RIGHT", -3, 0)
+    button.EditButton:SetFrameLevel(button:GetFrameLevel() + 2)
+    button.EditButton:RegisterForClicks("LeftButtonUp")
     button.EditButton:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
     button.EditButton:SetHighlightTexture(
         "Interface\\Buttons\\ButtonHilight-Square",
@@ -1781,6 +1783,8 @@ function MainWindow.CreateMainWindow()
     PinBtn = CreateFrame("Button", nil, MainFrame)
     PinBtn:SetSize(20, 20)
     PinBtn:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT", -5, -5)
+    PinBtn:SetFrameLevel(MainFrame:GetFrameLevel() + 2)
+    PinBtn:RegisterForClicks("LeftButtonUp")
 
     PinBtn.Icon = PinBtn:CreateTexture(nil, "ARTWORK")
     PinBtn.Icon:SetSize(18, 18)
@@ -1823,6 +1827,8 @@ function MainWindow.CreateMainWindow()
     SettingsBtn = CreateFrame("Button", nil, MainFrame)
     SettingsBtn:SetSize(20, 20)
     SettingsBtn:SetPoint("RIGHT", PinBtn, "LEFT", -4, 0)
+    SettingsBtn:SetFrameLevel(MainFrame:GetFrameLevel() + 2)
+    SettingsBtn:RegisterForClicks("LeftButtonUp")
 
     SettingsBtn:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
     local settingsTexture = SettingsBtn:GetNormalTexture()
@@ -1832,7 +1838,7 @@ function MainWindow.CreateMainWindow()
     SettingsBtn:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
 
     SettingsBtn:SetScript("OnClick", function()
-        addon.Settings.OpenAbout()
+        addon.Settings.Open()
     end)
 
     SettingsBtn:SetScript("OnEnter", function(self)
@@ -1905,6 +1911,11 @@ function MainWindow.CreateMainWindow()
     end)
 
     MainWindow.ApplyProfileSettings()
+
+    -- SetAtlas can finish applying after the button is created and overwrite
+    -- its tint. Reapply the saved pin state on the next frame using the known
+    -- button instead of trying to rediscover it by its not-yet-ready atlas.
+    C_Timer.After(0, UpdatePinButton)
 
     if settings.showAtLogin then
         MainFrame:Show()
