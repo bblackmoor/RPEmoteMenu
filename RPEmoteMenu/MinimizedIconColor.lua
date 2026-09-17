@@ -60,6 +60,7 @@ local function FindMinimizedIconButton()
     return nil
 end
 
+
 function MinimizedIconColor.Apply()
     local button = FindMinimizedIconButton()
     if not button or not button.Icon then
@@ -74,6 +75,7 @@ function MinimizedIconColor.Apply()
     button.Icon:SetVertexColor(color.r, color.g, color.b, 1)
 end
 
+
 local function RefreshSwatch()
     if not colorControl then
         return
@@ -83,13 +85,15 @@ local function RefreshSwatch()
     colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
 end
 
+
 local function SetColor(color)
     GetSettings().minimizedIconColor = CopyColor(color)
     RefreshSwatch()
     MinimizedIconColor.Apply()
 end
 
-local function CreateSettingsPanel()
+
+function MinimizedIconColor.CreateSettingsPanel()
     local panel = CreateFrame("Frame")
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -171,6 +175,7 @@ local function CreateSettingsPanel()
     Settings.RegisterAddOnCategory(category)
 end
 
+
 hooksecurefunc(addon.MainWindow, "CreateMainWindow", function()
     minimizedIconButton = nil
     C_Timer.After(0, MinimizedIconColor.Apply)
@@ -184,5 +189,3 @@ hooksecurefunc(addon.MainWindow, "ApplyProfileSettings", function()
     MinimizedIconColor.Apply()
     RefreshSwatch()
 end)
-
-CreateSettingsPanel()

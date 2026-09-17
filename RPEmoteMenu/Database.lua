@@ -37,7 +37,8 @@ local COLOR_SETTING_KEYS = {
     "categoryHighlightColor",
     "categoryBackgroundColor",
     "emoteBackgroundColor",
-    "borderColor"
+    "borderColor",
+    "minimizedIconColor"
 }
 
 local function NormalizeString(value)

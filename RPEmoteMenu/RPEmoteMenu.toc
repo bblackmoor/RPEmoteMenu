@@ -2,8 +2,8 @@
 ## Title: RP Emote Menu
 ## Notes: Custom roleplay emote menu with per-profile layouts, appearance, targeted commands, and JSON sharing.
 ## Author: Brandon Blackmoor <bblackmoor@blackgate.net>
-## Version: 1.114
-## IconTexture: Interface\AddOns\RPEmoteMenu\Media\icon
+## Version: 1.115
+## IconTexture: Interface\\AddOns\\RPEmoteMenu\\Media\\icon
 ## SavedVariables: RPEmoteMenuDB
 
 ## Category-enUS: Roleplay
