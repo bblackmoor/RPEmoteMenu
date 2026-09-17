@@ -87,6 +87,10 @@ local function IsWindowBodyHidden()
     return isWindowAutoHidden
 end
 
+function MainWindow.GetMinimizedIconButton()
+    return MinimizedIconButton
+end
+
 local function UpdatePinButton()
     if not PinBtn or not settings then
         return

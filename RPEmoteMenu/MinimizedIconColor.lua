@@ -6,7 +6,6 @@ addon.DefaultSettings.minimizedIconColor = addon.DefaultSettings.minimizedIconCo
 local MinimizedIconColor = {}
 addon.MinimizedIconColor = MinimizedIconColor
 
-local minimizedIconButton
 local colorControl
 
 local function CopyColor(color)
@@ -25,44 +24,13 @@ local function GetSettings()
     return settings
 end
 
-local function FindMinimizedIconButton()
-    if minimizedIconButton and minimizedIconButton.Icon then
-        return minimizedIconButton
-    end
-
-    local mainFrame = _G.RPEmoteMenu
-    if not mainFrame then
-        return nil
-    end
-
-    for _, child in ipairs({UIParent:GetChildren()}) do
-        if child ~= mainFrame and child.GetNumPoints and child.GetPoint then
-            for pointIndex = 1, child:GetNumPoints() do
-                local _, relativeTo = child:GetPoint(pointIndex)
-                if relativeTo == mainFrame then
-                    local regions = {child:GetRegions()}
-                    for _, region in ipairs(regions) do
-                        if region.GetTexture then
-                            local texture = region:GetTexture()
-                            if type(texture) == "string"
-                                and texture:lower():find("icon%-minimized%.tga") then
-                                child.Icon = region
-                                minimizedIconButton = child
-                                return child
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    return nil
+local function GetMinimizedIconButton()
+    return addon.MainWindow.GetMinimizedIconButton()
 end
 
 
 function MinimizedIconColor.Apply()
-    local button = FindMinimizedIconButton()
+    local button = GetMinimizedIconButton()
     if not button or not button.Icon then
         return
     end
@@ -177,7 +145,6 @@ end
 
 
 hooksecurefunc(addon.MainWindow, "CreateMainWindow", function()
-    minimizedIconButton = nil
     C_Timer.After(0, MinimizedIconColor.Apply)
 end)
 
