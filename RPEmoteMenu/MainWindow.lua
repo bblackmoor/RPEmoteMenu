@@ -666,6 +666,7 @@ function MainWindow.ApplyAppearance()
     end
 
     local categoryBackground = settings.categoryBackgroundColor
+    local border = settings.borderColor
 
     if not (isWindowAutoHidden and settings.minimizeToIcon) then
         ApplyMainFrameBackdrop()
