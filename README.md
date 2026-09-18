@@ -128,7 +128,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 
 The **General** settings screen controls the current profile's window behavior and layout:
 
-- Lock movement and resizing.
+- Lock the window position and height.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
 - Replace the auto-hidden title bar with a square addon icon and choose its size (16â€“64 pixels), independently of the main window dimensions.

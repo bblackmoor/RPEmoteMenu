@@ -1374,7 +1374,7 @@ local function CreateGeneralSettingsPanel()
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -75)
     behaviorHeading:SetText("Window Behavior")
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Lock window movement and resizing", -100,
+    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Lock window position and height", -100,
         function() return settings.locked end,
         function(value)
             settings.locked = value
