@@ -878,7 +878,7 @@ local function GetEmoteEditorDialog()
         end)
     end
 
-    function dialog:Open(categoryIndex, emoteIndex)
+    function dialog:Open(categoryIndex, emoteIndex, isNew)
         local category = Database.GetCategory(categoryIndex)
         local emote = category and category.emotes and category.emotes[emoteIndex]
         if not emote then
@@ -906,7 +906,9 @@ local function GetEmoteEditorDialog()
         self.Status:SetText(editable
             and "Changes apply to the current profile."
             or "The Default profile's emotes cannot be edited. Copy it to a custom profile first.")
-        self.Title:SetText(editable and "Edit Emote" or "View Emote")
+        self.Title:SetText(
+            editable and (isNew and "Add Emote" or "Edit Emote") or "View Emote"
+        )
         self:Show()
         self:Raise()
     end
@@ -915,8 +917,8 @@ local function GetEmoteEditorDialog()
     return dialog
 end
 
-function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex)
-    GetEmoteEditorDialog():Open(categoryIndex, emoteIndex)
+function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex, isNew)
+    GetEmoteEditorDialog():Open(categoryIndex, emoteIndex, isNew)
 end
 
 local function ApplyEmoteHoverHighlight(button)

@@ -1997,26 +1997,18 @@ local function CreateCategoriesSettingsPanel()
         selectedCategoryIndex = 1
     end
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 4, -4)
-    scrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -28, 4)
-
-    local content = CreateFrame("Frame", nil, scrollFrame)
-    content:SetSize(700, 1500)
-    scrollFrame:SetScrollChild(content)
-
-    local heading = content:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", content, "TOPLEFT", 16, -16)
+    local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
     heading:SetText("Emotes")
 
     local selector = CreateFrame(
         "DropdownButton",
         nil,
-        content,
+        panel,
         "WowStyle1DropdownTemplate"
     )
     selector:SetWidth(300)
-    selector:SetPoint("TOPLEFT", content, "TOPLEFT", 196, -12)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -12)
 
     local function GetCategoryLabel(categoryIndex)
         local category = Database.GetCategory(categoryIndex)
@@ -2032,7 +2024,7 @@ local function CreateCategoriesSettingsPanel()
 
     selector:SetDefaultText(GetCategoryLabel(selectedCategoryIndex))
 
-    local resetButton = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(190, 24)
     resetButton:SetText("Restore Built-in Category")
     resetButton:SetEnabled(Database.CanEditActiveProfile())
@@ -2054,18 +2046,18 @@ local function CreateCategoriesSettingsPanel()
     resetAllCategoriesButton = CreateFrame(
         "Button",
         nil,
-        content,
+        panel,
         "UIPanelButtonTemplate"
     )
     resetAllCategoriesButton:SetSize(240, 24)
-    resetAllCategoriesButton:SetPoint("TOPLEFT", content, "TOPLEFT", 196, -80)
+    resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -80)
     resetAllCategoriesButton:SetText("Restore All Built-in Categories")
     resetAllCategoriesButton:SetEnabled(Database.CanEditActiveProfile())
     resetAllCategoriesButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES")
     end)
 
-    local importButton = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     importButton:SetSize(90, 24)
     importButton:SetText("Import")
     importButton:SetEnabled(Database.CanEditActiveProfile())
@@ -2073,9 +2065,9 @@ local function CreateCategoriesSettingsPanel()
         GetExchangeDialog():OpenImport(selectedCategoryIndex)
     end)
 
-    local exportButton = CreateFrame("Button", nil, content, "UIPanelButtonTemplate")
+    local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportButton:SetSize(90, 24)
-    exportButton:SetPoint("TOPLEFT", content, "TOPLEFT", 196, -48)
+    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -48)
     exportButton:SetText("Export")
     exportButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenExport(selectedCategoryIndex)
@@ -2084,8 +2076,8 @@ local function CreateCategoriesSettingsPanel()
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 8, 0)
     resetButton:SetPoint("LEFT", importButton, "RIGHT", 8, 0)
 
-    local placeholderText = content:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    placeholderText:SetPoint("TOPLEFT", content, "TOPLEFT", 16, -120)
+    local placeholderText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -120)
     placeholderText:SetWidth(630)
     placeholderText:SetJustifyH("LEFT")
     placeholderText:SetText(
@@ -2093,74 +2085,238 @@ local function CreateCategoriesSettingsPanel()
         "{target} - Target's name without the realm.\n" ..
         "{player} - Your character's name without the realm.\n" ..
         "Targeted Command is used only when another unit is targeted.\n" ..
-        "Import replaces this category. Restore uses the addon's built-in category.\n" ..
+        "Drag an emote row to reorder it. Import replaces this category.\n" ..
         "The Default profile's categories cannot be edited."
     )
     placeholderText:SetTextColor(0.8, 0.8, 0.8)
 
-    local editors = {}
-    local y = -196
-
     local nameBox = CreateLabeledEditBox(
-        content,
+        panel,
         "Category Name",
         16,
-        y,
+        -196,
         420,
         selectedCategoryIndex,
         nil,
         "name"
     )
-    table.insert(editors, nameBox)
+    local listHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -235)
+    listHeading:SetText("Emotes in this category")
 
-    y = y - 28
+    local countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    countText:SetPoint("LEFT", listHeading, "RIGHT", 10, 0)
+    countText:SetTextColor(0.7, 0.7, 0.7, 1)
 
-    for emoteIndex = 1, MAX_EMOTES do
-        local emoteNumber = content:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-        emoteNumber:SetPoint("TOPLEFT", content, "TOPLEFT", 28, y)
-        emoteNumber:SetText("Emote " .. emoteIndex)
+    local addButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    addButton:SetSize(110, 24)
+    addButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -52, -228)
+    addButton:SetText("Add Emote")
 
-        local labelBox = CreateLabeledEditBox(
-            content,
-            "Emote Label",
-            48,
-            y - 20,
-            390,
-            selectedCategoryIndex,
-            emoteIndex,
-            "label"
+    local listScrollFrame = CreateFrame(
+        "ScrollFrame",
+        nil,
+        panel,
+        "UIPanelScrollFrameTemplate"
+    )
+    listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -265)
+    listScrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -48, 18)
+
+    local listContent = CreateFrame("Frame", nil, listScrollFrame)
+    listContent:SetSize(590, 1)
+    listScrollFrame:SetScrollChild(listContent)
+
+    local emptyText = listContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    emptyText:SetPoint("TOPLEFT", listContent, "TOPLEFT", 10, -15)
+    emptyText:SetText("No emotes in this category.")
+    emptyText:SetTextColor(0.65, 0.65, 0.65, 1)
+
+    local emoteRows = {}
+    local draggedRow
+
+    local function HasEmoteContent(emote)
+        return emote and (
+            strtrim(emote.label or "") ~= ""
+            or strtrim(emote.defaultCommand or "") ~= ""
+            or strtrim(emote.targetedCommand or "") ~= ""
         )
-
-        local defaultBox = CreateLabeledEditBox(
-            content,
-            "Default Command",
-            48,
-            y - 48,
-            390,
-            selectedCategoryIndex,
-            emoteIndex,
-            "defaultCommand"
-        )
-
-        local targetedBox = CreateLabeledEditBox(
-            content,
-            "Targeted Command (optional)",
-            48,
-            y - 76,
-            390,
-            selectedCategoryIndex,
-            emoteIndex,
-            "targetedCommand"
-        )
-
-        table.insert(editors, labelBox)
-        table.insert(editors, defaultBox)
-        table.insert(editors, targetedBox)
-
-        y = y - 116
     end
 
-    content:SetHeight(-y + 20)
+    local function GetPopulatedEmotes()
+        local populated = {}
+        local category = Database.GetCategory(selectedCategoryIndex)
+
+        for emoteIndex = 1, MAX_EMOTES do
+            local emote = category and category.emotes[emoteIndex]
+            if HasEmoteContent(emote) then
+                populated[#populated + 1] = {
+                    emote = emote,
+                    index = emoteIndex
+                }
+            end
+        end
+
+        return populated
+    end
+
+    local function RefreshEmoteRows()
+        local populated = GetPopulatedEmotes()
+        local editable = Database.CanEditActiveProfile()
+
+        countText:SetText("(" .. #populated .. " of " .. MAX_EMOTES .. ")")
+        emptyText:SetShown(#populated == 0)
+        addButton:SetEnabled(editable and #populated < MAX_EMOTES)
+        listContent:SetHeight(math.max(#populated * 45, 45))
+
+        for rowIndex, row in ipairs(emoteRows) do
+            local entry = populated[rowIndex]
+            if entry then
+                local label = strtrim(entry.emote.label or "")
+                row.emoteIndex = entry.index
+                row.visiblePosition = rowIndex
+                row.Label:SetText(label ~= "" and label or "Unnamed emote")
+
+                local summary = entry.emote.defaultCommand or ""
+                if strtrim(entry.emote.targetedCommand or "") ~= "" then
+                    summary = summary .. "  |  " .. entry.emote.targetedCommand
+                end
+                row.Summary:SetText(summary)
+                row.EditButton:SetText(editable and "Edit" or "View")
+                row.DeleteButton:SetEnabled(editable)
+                row:Show()
+            else
+                row.emoteIndex = nil
+                row.visiblePosition = nil
+                row:Hide()
+            end
+        end
+    end
+
+    local function DeleteEmote(emoteIndex)
+        if not Database.CanEditActiveProfile() then
+            return
+        end
+
+        local category = Database.GetCategory(selectedCategoryIndex)
+        category.emotes[emoteIndex] = {
+            label = "",
+            defaultCommand = "",
+            targetedCommand = ""
+        }
+        MainWindow.UpdateMenu()
+        RefreshEmoteRows()
+    end
+
+    local function FinishRowDrag(row)
+        if draggedRow ~= row then
+            return
+        end
+
+        row:SetAlpha(1)
+        local targetPosition
+        for _, candidate in ipairs(emoteRows) do
+            if candidate:IsShown() and candidate:IsMouseOver() then
+                targetPosition = candidate.visiblePosition
+                break
+            end
+        end
+
+        local sourcePosition = row.visiblePosition
+        draggedRow = nil
+        if not targetPosition or not sourcePosition or targetPosition == sourcePosition then
+            return
+        end
+
+        local category = Database.GetCategory(selectedCategoryIndex)
+        local populated = GetPopulatedEmotes()
+        local records = {}
+        for _, entry in ipairs(populated) do
+            records[#records + 1] = entry.emote
+        end
+
+        local moved = table.remove(records, sourcePosition)
+        table.insert(records, targetPosition, moved)
+        for index = 1, MAX_EMOTES do
+            category.emotes[index] = records[index] or {
+                label = "",
+                defaultCommand = "",
+                targetedCommand = ""
+            }
+        end
+
+        MainWindow.UpdateMenu()
+        RefreshEmoteRows()
+    end
+
+    for rowIndex = 1, MAX_EMOTES do
+        local row = CreateFrame("Button", nil, listContent, "BackdropTemplate")
+        row:SetSize(590, 42)
+        row:SetPoint("TOPLEFT", listContent, "TOPLEFT", 0, -((rowIndex - 1) * 45))
+        row:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
+        row:SetBackdropColor(0.08, 0.08, 0.08, rowIndex % 2 == 0 and 0.5 or 0.3)
+        row:RegisterForDrag("LeftButton")
+
+        local dragHandle = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        dragHandle:SetPoint("LEFT", row, "LEFT", 8, 0)
+        dragHandle:SetText("::")
+        dragHandle:SetTextColor(0.55, 0.55, 0.55, 1)
+
+        row.Label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        row.Label:SetPoint("TOPLEFT", row, "TOPLEFT", 28, -5)
+        row.Label:SetPoint("RIGHT", row, "RIGHT", -160, 0)
+        row.Label:SetJustifyH("LEFT")
+        row.Label:SetWordWrap(false)
+
+        row.Summary = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        row.Summary:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 28, 5)
+        row.Summary:SetPoint("RIGHT", row, "RIGHT", -160, 0)
+        row.Summary:SetJustifyH("LEFT")
+        row.Summary:SetWordWrap(false)
+        row.Summary:SetTextColor(0.7, 0.7, 0.7, 1)
+
+        row.EditButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+        row.EditButton:SetSize(58, 22)
+        row.EditButton:SetPoint("RIGHT", row, "RIGHT", -70, 0)
+        row.EditButton:SetScript("OnClick", function()
+            if row.emoteIndex then
+                MainWindow.OpenEmoteEditor(selectedCategoryIndex, row.emoteIndex)
+            end
+        end)
+
+        row.DeleteButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+        row.DeleteButton:SetSize(62, 22)
+        row.DeleteButton:SetPoint("RIGHT", row, "RIGHT", -5, 0)
+        row.DeleteButton:SetText("Delete")
+        row.DeleteButton:SetScript("OnClick", function()
+            if row.emoteIndex then
+                DeleteEmote(row.emoteIndex)
+            end
+        end)
+
+        row:SetScript("OnDragStart", function(self)
+            if Database.CanEditActiveProfile() and self.emoteIndex then
+                draggedRow = self
+                self:SetAlpha(0.45)
+            end
+        end)
+        row:SetScript("OnDragStop", FinishRowDrag)
+        row:Hide()
+        emoteRows[rowIndex] = row
+    end
+
+    addButton:SetScript("OnClick", function()
+        if not Database.CanEditActiveProfile() then
+            return
+        end
+
+        local category = Database.GetCategory(selectedCategoryIndex)
+        for emoteIndex = 1, MAX_EMOTES do
+            if not HasEmoteContent(category.emotes[emoteIndex]) then
+                MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex, true)
+                return
+            end
+        end
+    end)
 
     local function RefreshCategorySelector()
         selector:OverrideText(GetCategoryLabel(selectedCategoryIndex))
@@ -2175,11 +2331,7 @@ local function CreateCategoriesSettingsPanel()
 
         selectedCategoryIndex = categoryIndex
 
-        for _, editBox in ipairs(editors) do
-            editBox.categoryIndex = categoryIndex
-        end
-
-        scrollFrame:SetVerticalScroll(0)
+        nameBox.categoryIndex = categoryIndex
         panel.RefreshEditors()
     end
 
@@ -2208,9 +2360,8 @@ local function CreateCategoriesSettingsPanel()
         resetAllCategoriesButton:SetEnabled(editable)
         importButton:SetEnabled(editable)
 
-        for _, editBox in ipairs(editors) do
-            editBox:RefreshFromDatabase()
-        end
+        nameBox:RefreshFromDatabase()
+        RefreshEmoteRows()
 
         RefreshCategorySelector()
     end
