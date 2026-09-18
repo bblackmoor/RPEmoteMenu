@@ -46,11 +46,11 @@ addon.DefaultSections = {
             {"Blank", "/blank"},
             {"Gaze", "/gaze"},
             {"Ponder", "/e pauses to ponder.", "/e regards {target} thoughtfully, pausing to ponder."},
-            {"Quiet and thoughtful", "/e grows quiet and thoughtful.", "/e grows quiet and thoughtful as she considers {target}."},
+            {"Quiet and thoughtful", "/e grows quiet and thoughtful.", "/e grows quiet and thoughtful while considering {target}."},
             {"Watches quietly", "/e watches quietly.", "/e watches {target} quietly."},
             {"Peer", "/peer"},
             {"Considers that", "/e considers that for a moment.", "/e considers {target}'s words for a moment."},
-            {"Tilts her head", "/e tilts her head slightly.", "/e tilts her head slightly at {target}."}
+            {"Tilts their head", "/e tilts their head slightly.", "/e tilts their head slightly at {target}."}
         }
     },
 
@@ -63,9 +63,9 @@ addon.DefaultSections = {
             {"Shrug", "/shrug"},
             {"Sigh", "/sigh"},
             {"Smirk", "/smirk"},
-            {"Inhale", "/e takes a slow, deep breath, closing her eyes for a moment."},
-            {"Exhale", "/e exhales slowly and opens her eyes.", "/e exhales slowly, opening her eyes to look at {target}."},
-            {"Growl", "/e makes a soft growling noise in her throat.", "/e makes a soft growling noise in her throat at {target}."}
+            {"Inhale", "/e takes a slow, deep breath, closing their eyes for a moment."},
+            {"Exhale", "/e exhales slowly and opens their eyes.", "/e exhales slowly, opening their eyes to look at {target}."},
+            {"Growl", "/e makes a soft growling noise.", "/e makes a soft growling noise at {target}."}
         }
     },
 
@@ -75,7 +75,7 @@ addon.DefaultSections = {
         emotes = {
             {"Says...", "/e says, \"", "/e says to {target}, \""},
             {"Asks...", "/e asks, \"", "/e asks {target}, \""},
-            {"Faint smile", "/e lets a faint smile flirt with the corner of her mouth.", "/e lets a faint smile flirt with the corner of her mouth as she regards {target}."},
+            {"Faint smile", "/e lets a faint smile flirt with the corner of their mouth.", "/e lets a faint smile flirt with the corner of their mouth while regarding {target}."},
             {"Quiet chuckle", "/e lets out a quiet chuckle.", "/e lets out a quiet chuckle at {target}."},
             {"Smile", "/smile"},
             {"Laugh", "/lol"},
@@ -104,7 +104,7 @@ addon.DefaultSections = {
         emotes = {
             {"Sit", "/sit"},
             {"Stand", "/stand"},
-            {"Stretch", "/e laces her fingers together and stretches skyward, exhaling slowly before letting her arms fall back to her sides."},
+            {"Stretch", "/e laces their fingers together and stretches skyward, exhaling slowly before letting their arms fall back to their sides."},
             {"Lean", "/lean"},
             {"Bow", "/bow"},
             {"Read", "/read"}
@@ -185,6 +185,16 @@ function addon.GetAvailableFonts()
     end
 
     return fonts
+end
+
+function addon.IsFontAvailable(fontName)
+    for _, font in ipairs(addon.GetAvailableFonts()) do
+        if font.name == fontName then
+            return true
+        end
+    end
+
+    return false
 end
 
 function addon.GetFontPath(fontName)

@@ -7,11 +7,16 @@ local defaultSections = addon.DefaultSections
 local defaults = addon.DefaultSettings
 local builtInProfiles = addon.BuiltInProfiles or {}
 local builtInProfileVersion = addon.BuiltInProfileVersion or 0
+local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
 local SCHEMA_VERSION = 7
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
+
+for _, definition in ipairs(builtInProfiles) do
+    builtInProfileByName[definition.name] = definition
+end
 
 local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     background = true,
@@ -470,6 +475,34 @@ function Database.GetProfileNames()
     end)
 
     return names
+end
+
+
+function Database.IsBuiltInProfileName(profileName)
+    return builtInProfileByName[profileName] ~= nil
+end
+
+
+function Database.GetProfileDisplayName(profileName)
+    if Database.IsBuiltInProfileName(profileName) then
+        return profileName .. " (Bundled)"
+    end
+
+    return profileName
+end
+
+
+function Database.GetProfileDescription(profileName)
+    if profileName == DEFAULT_PROFILE_NAME then
+        return "Protected built-in profile with customizable appearance and layout."
+    end
+
+    local definition = builtInProfileByName[profileName]
+    if definition then
+        return definition.description or "Editable bundled profile."
+    end
+
+    return "Custom profile."
 end
 
 

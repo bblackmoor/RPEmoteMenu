@@ -911,6 +911,38 @@ local function ScheduleEmoteHoverRefresh(button)
     end)
 end
 
+local function ShowEmoteTooltip(button, owner, showEditHint)
+    if not button.emoteLabel or not button.defaultCommand then
+        return
+    end
+
+    GameTooltip:SetOwner(owner or button, "ANCHOR_RIGHT")
+    GameTooltip:SetText(button.emoteLabel)
+    GameTooltip:AddLine(
+        "Default: " .. button.defaultCommand,
+        0.9,
+        0.9,
+        0.9,
+        true
+    )
+
+    if button.targetedCommand and button.targetedCommand ~= "" then
+        GameTooltip:AddLine(
+            "Targeted: " .. button.targetedCommand,
+            0.75,
+            0.85,
+            1,
+            true
+        )
+    end
+
+    if showEditHint then
+        GameTooltip:AddLine("Click to edit", 1, 0.82, 0, false)
+    end
+
+    GameTooltip:Show()
+end
+
 local function GetContainerButton()
     for _, button in ipairs(buttonsPool) do
         if not button:IsShown() then
@@ -939,20 +971,20 @@ local function GetContainerButton()
     )
     button.EditButton:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
-        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Edit emote")
-        GameTooltip:Show()
+        ShowEmoteTooltip(button, self, true)
     end)
     button.EditButton:SetScript("OnLeave", function()
         ScheduleEmoteHoverRefresh(button)
         GameTooltip:Hide()
     end)
 
-    button:SetScript("OnEnter", function()
+    button:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
+        ShowEmoteTooltip(button, self, false)
     end)
     button:SetScript("OnLeave", function()
         ScheduleEmoteHoverRefresh(button)
+        GameTooltip:Hide()
     end)
 
     button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -4, 0)
@@ -1136,6 +1168,7 @@ local function StartEmoteDrag(button)
         sourcePosition = button.visiblePosition,
         categoryIndex = selectedCategoryIndex
     }
+    GameTooltip:Hide()
     button:SetAlpha(0.45)
     button:SetScript("OnUpdate", UpdateEmoteDragTarget)
     UpdateEmoteDragTarget(button, 0)
@@ -1376,6 +1409,9 @@ function MainWindow.UpdateMenu()
         button:SetScript("OnDragStart", nil)
         button:SetScript("OnDragStop", nil)
         button.EditButton:SetScript("OnClick", nil)
+        button.emoteLabel = nil
+        button.defaultCommand = nil
+        button.targetedCommand = nil
     end
 
     emoteDragState = nil
@@ -1410,6 +1446,9 @@ function MainWindow.UpdateMenu()
         local emoteButton = GetContainerButton()
         emoteButton.visiblePosition = visiblePosition
         emoteButton.emoteIndex = emoteIndex
+        emoteButton.emoteLabel = label
+        emoteButton.defaultCommand = defaultCommand
+        emoteButton.targetedCommand = targetedCommand
 
         emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
         emoteButton.Text:SetText(label)

@@ -3,17 +3,18 @@ local _, addon = ...
 -- Bundled profiles use the built-in emote categories. Settings intentionally
 -- contain only each profile's visual design and dimensions; Database.lua fills
 -- every omitted setting from the current defaults.
-addon.BuiltInProfileVersion = 1
+addon.BuiltInProfileVersion = 2
 
 addon.BuiltInProfiles = {
     {
         name = "Gilded Shadow",
+        description = "Black, gold, and cyan with a narrow, highly legible typeface.",
         settings = {
             backgroundOpacity = 0.6,
             borderColor = {r = 0, g = 0, b = 0},
             borderStyle = "blizzard",
             categoryBackgroundColor = {r = 0, g = 0, b = 0},
-            categoryFont = "Gotham Narrow",
+            categoryFont = "Friz Quadrata",
             categoryFontSize = 18,
             categoryHighlightColor = {r = 0.2, g = 0.2, b = 0.2},
             categoryHighlightEffect = "separator",
@@ -21,7 +22,7 @@ addon.BuiltInProfiles = {
             categoryTextColor = {r = 0.8, g = 0.8, b = 0.8},
             emoteBackgroundColor = {r = 0, g = 0, b = 0},
             emoteColumnWidth = 190,
-            emoteFont = "Gotham Narrow",
+            emoteFont = "Arial Narrow",
             emoteFontSize = 18,
             emoteTextColor = {r = 0.6, g = 0.9333334, b = 0.9333334},
             height = 310,
@@ -32,6 +33,7 @@ addon.BuiltInProfiles = {
     },
     {
         name = "Crimson Night",
+        description = "A clean black-and-crimson design with strong contrast.",
         settings = {
             backgroundOpacity = 0.6,
             borderColor = {r = 0, g = 0, b = 0},
@@ -56,12 +58,13 @@ addon.BuiltInProfiles = {
     },
     {
         name = "Teal",
+        description = "Large teal text with a spacious, high-contrast layout.",
         settings = {
             backgroundOpacity = 1,
             borderColor = {r = 0.2, g = 0.2, b = 0.2},
             borderStyle = "thin",
             categoryBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
-            categoryFont = "Avant Garde",
+            categoryFont = "Friz Quadrata",
             categoryFontSize = 21,
             categoryHighlightColor = {r = 0.4, g = 0.4, b = 0.4},
             categoryHighlightEffect = "background",
@@ -69,7 +72,7 @@ addon.BuiltInProfiles = {
             categoryTextColor = {r = 0.8, g = 0.8, b = 0.8},
             emoteBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
             emoteColumnWidth = 239,
-            emoteFont = "Avant Garde",
+            emoteFont = "Arial Narrow",
             emoteFontSize = 21,
             emoteTextColor = {r = 0, g = 1, b = 1},
             height = 325,
@@ -80,6 +83,7 @@ addon.BuiltInProfiles = {
     },
     {
         name = "Joker",
+        description = "An intentionally loud green-and-magenta fantasy theme.",
         settings = {
             backgroundOpacity = 0.6,
             borderColor = {r = 0.8, g = 0, b = 1},
@@ -93,7 +97,7 @@ addon.BuiltInProfiles = {
             categoryTextColor = {r = 0, g = 0, b = 0},
             emoteBackgroundColor = {r = 0, g = 1, b = 0},
             emoteColumnWidth = 310,
-            emoteFont = "KMT Ninja Naruto",
+            emoteFont = "Arial Narrow",
             emoteFontSize = 24,
             emoteTextColor = {r = 1, g = 1, b = 1},
             height = 365,
@@ -104,6 +108,7 @@ addon.BuiltInProfiles = {
     },
     {
         name = "Moonlight",
+        description = "A restrained blue-and-silver theme designed for easy reading.",
         settings = {
             backgroundOpacity = 0.9,
             borderColor = {r = 0.24, g = 0.35, b = 0.5},

@@ -42,6 +42,7 @@ Enable **RP Emote Menu** from the character-selection screen's AddOns list if ne
 1. Enter `/rpem` to show or hide the menu.
 2. Mouse over a category to display its emotes, then select an emote.
    Use the small icon at the right edge of an emote to edit its name and commands.
+   Hover over an emote to see its default and targeted commands.
    Drag an emote label to move it; the insertion line shows where it will be placed.
    When unpinned, the menu hides after use or when the pointer leaves it. Hover over the title barâ€”or the addon icon when **Minimize to icon** is enabledâ€”to reopen it.
 3. Open settings with the gear icon or `/rpem config`.
@@ -94,6 +95,8 @@ Profile names cannot be blank, exceed 64 characters, duplicate another name rega
 
 The addon includes five editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
 
+Bundled profile names are marked **(Bundled)** in the profile selector. Each also displays a short description of its visual theme.
+
 ## Import and Export
 
 The **Emotes** screen can export the selected category or replace that category in the current custom profile with an imported one.
@@ -116,6 +119,8 @@ The **Appearance** settings screen customizes the current profile:
 - Optional inactivity fading, with configurable delay and inactive opacity.
 
 The font menus include WOW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
+
+If a saved custom font is unavailable, the font selector marks it in red and the menu temporarily displays Friz Quadrata instead.
 
 Changes appear immediately. **Restore Defaults** resets the current profile's appearance.
 

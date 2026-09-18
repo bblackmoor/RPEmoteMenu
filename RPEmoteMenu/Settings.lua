@@ -841,6 +841,8 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
 
     selector.RefreshValue = function(self)
         local fontName = settings[settingKey] or ""
+        local fontAvailable = addon.IsFontAvailable(fontName)
+        self.MissingFontName = not fontAvailable and fontName or nil
         self:OverrideText(fontName)
         if self.InternalText then
             self.InternalText:SetAlpha(0)
@@ -851,10 +853,45 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
             -- The selected-font label must remain readable while a custom font
             -- is still loading. Only the menu itself previews custom fonts.
             previewText:SetFont(STANDARD_TEXT_FONT, 12, "")
-            previewText:SetTextColor(1, 1, 1, 1)
-            previewText:SetText(fontName)
+            if fontAvailable then
+                previewText:SetTextColor(1, 1, 1, 1)
+            else
+                previewText:SetTextColor(1, 0.35, 0.35, 1)
+            end
+            previewText:SetText(
+                fontAvailable and fontName or fontName .. " (unavailable)"
+            )
         end
     end
+
+    selector:HookScript("OnEnter", function(self)
+        if not self.MissingFontName then
+            return
+        end
+
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Font unavailable")
+        GameTooltip:AddLine(
+            self.MissingFontName .. " is not registered by WoW or LibSharedMedia.",
+            1,
+            1,
+            1,
+            true
+        )
+        GameTooltip:AddLine(
+            "RP Emote Menu is displaying Friz Quadrata instead.",
+            0.8,
+            0.8,
+            0.8,
+            true
+        )
+        GameTooltip:Show()
+    end)
+    selector:HookScript("OnLeave", function(self)
+        if self.MissingFontName then
+            GameTooltip:Hide()
+        end
+    end)
 
     selector:SetupMenu(function(_, rootDescription)
         for _, font in ipairs(addon.GetAvailableFonts()) do
@@ -865,6 +902,7 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
                 function() return settings[settingKey] == fontName end,
                 function()
                     settings[settingKey] = fontName
+                    selector:RefreshValue()
                     MainWindow.ScheduleFontRefreshes()
                 end
             )
@@ -1656,22 +1694,34 @@ local function CreateProfilesSettingsPanel()
     local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
     selector:SetWidth(300)
     selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -100)
-    selector:SetDefaultText(Database.GetActiveProfileName())
+    selector:SetDefaultText(
+        Database.GetProfileDisplayName(Database.GetActiveProfileName())
+    )
+
+    local profileDescription = panel:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+    )
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -165)
+    profileDescription:SetWidth(620)
+    profileDescription:SetJustifyH("LEFT")
+    profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
     local nameLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    nameLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -175)
+    nameLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -205)
     nameLabel:SetText("New profile name")
 
     local nameInput = CreateFrame("EditBox", nil, panel, "InputBoxTemplate")
     nameInput:SetSize(290, 24)
-    nameInput:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -197)
+    nameInput:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -227)
     nameInput:SetAutoFocus(false)
     nameInput:SetMaxLetters(64)
     nameInput:SetFont(STANDARD_TEXT_FONT, 12, "")
     nameInput:SetTextColor(1, 1, 1, 1)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -273)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -303)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -1765,19 +1815,32 @@ local function CreateProfilesSettingsPanel()
         preferredIndex = 3
     }
 
+    local function DeleteProfile(_, profileName)
+        local success, errorMessage = Database.DeleteProfile(profileName)
+
+        if success then
+            SetStatus("Deleted profile " .. profileName .. ".")
+        else
+            SetStatus(errorMessage, true)
+        end
+    end
+
     StaticPopupDialogs["RPEMOTEMENU_DELETE_PROFILE"] = {
         text = 'Delete the profile "%s"?\n\nCharacters using it will return to Default.',
         button1 = DELETE or "Delete",
         button2 = CANCEL or "Cancel",
-        OnAccept = function(_, profileName)
-            local success, errorMessage = Database.DeleteProfile(profileName)
+        OnAccept = DeleteProfile,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
 
-            if success then
-                SetStatus("Deleted profile " .. profileName .. ".")
-            else
-                SetStatus(errorMessage, true)
-            end
-        end,
+    StaticPopupDialogs["RPEMOTEMENU_DELETE_BUNDLED_PROFILE"] = {
+        text = 'Delete the bundled profile "%s"?\n\nCharacters using it will return to Default. You can recreate it later with Restore Bundled Profiles.',
+        button1 = DELETE or "Delete",
+        button2 = CANCEL or "Cancel",
+        OnAccept = DeleteProfile,
         timeout = 0,
         whileDead = true,
         hideOnEscape = true,
@@ -1801,7 +1864,7 @@ local function CreateProfilesSettingsPanel()
     local function BuildProfileMenu(_, rootDescription)
         for _, profileName in ipairs(Database.GetProfileNames()) do
             rootDescription:CreateRadio(
-                profileName,
+                Database.GetProfileDisplayName(profileName),
                 function()
                     return Database.GetActiveProfileName() == profileName
                 end,
@@ -1822,7 +1885,7 @@ local function CreateProfilesSettingsPanel()
 
     createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     createButton:SetSize(125, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -235)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -265)
     createButton:SetText("Create Profile")
     createButton:SetScript("OnClick", function()
         local success, result = Database.CreateProfile(nameInput:GetText())
@@ -1880,7 +1943,10 @@ local function CreateProfilesSettingsPanel()
             return
         end
 
-        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", profileName, nil, profileName)
+        local popupName = Database.IsBuiltInProfileName(profileName)
+            and "RPEMOTEMENU_DELETE_BUNDLED_PROFILE"
+            or "RPEMOTEMENU_DELETE_PROFILE"
+        StaticPopup_Show(popupName, profileName, nil, profileName)
     end)
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -1900,7 +1966,7 @@ local function CreateProfilesSettingsPanel()
     end)
 
     local bundledHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -320)
+    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -350)
     bundledHeading:SetText("Bundled Profiles")
 
     local bundledDescription = panel:CreateFontString(
@@ -1946,7 +2012,9 @@ local function CreateProfilesSettingsPanel()
     end)
 
     panel.Refresh = function()
-        selector:OverrideText(Database.GetActiveProfileName())
+        local profileName = Database.GetActiveProfileName()
+        selector:OverrideText(Database.GetProfileDisplayName(profileName))
+        profileDescription:SetText(Database.GetProfileDescription(profileName))
         UpdateButtonState()
     end
 
