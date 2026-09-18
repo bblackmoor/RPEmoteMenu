@@ -86,10 +86,13 @@ The **Profiles** settings screen includes:
 - **Delete Profile:** Delete the current custom profile after confirmation.
 - **Export Profile:** Copy the current custom profile as JSON.
 - **Import Profile:** Add a profile from exported JSON.
+- **Restore Bundled Profiles:** Reset the five bundled profiles and recreate any that were deleted.
 
 Imported profiles do not replace or activate existing profiles. If an imported name is already in use, the addon assigns the new profile a unique name. Deleting a profile returns characters using it to **Default**.
 
 Profile names cannot be blank, exceed 64 characters, duplicate another name regardless of case, or use the reserved name **Default**.
+
+The addon includes five editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
 
 ## Import and Export
 

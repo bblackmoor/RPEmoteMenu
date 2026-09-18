@@ -5,9 +5,11 @@ addon.Database = {}
 local Database = addon.Database
 local defaultSections = addon.DefaultSections
 local defaults = addon.DefaultSettings
+local builtInProfiles = addon.BuiltInProfiles or {}
+local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 6
+local SCHEMA_VERSION = 7
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -369,6 +371,30 @@ local function FindProfileByName(profileName)
 end
 
 
+local function CopyBuiltInProfile(definition)
+    return {
+        categories = CopyDefaultCategories(),
+        settings = CopySettings(definition.settings)
+    }
+end
+
+
+local function InstallMissingBuiltInProfiles()
+    local installedVersion = tonumber(RPEmoteMenuDB.builtInProfileVersion) or 0
+    if installedVersion >= builtInProfileVersion then
+        return
+    end
+
+    for _, definition in ipairs(builtInProfiles) do
+        if not FindProfileByName(definition.name) then
+            RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
+        end
+    end
+
+    RPEmoteMenuDB.builtInProfileVersion = builtInProfileVersion
+end
+
+
 local function ValidateNewProfileName(profileName, existingProfileName)
     if type(profileName) ~= "string" then
         return nil, "Enter a profile name."
@@ -637,6 +663,7 @@ function Database.InitializeDatabase()
         categories = CopyDefaultCategories(),
         settings = defaultSettings
     }
+    InstallMissingBuiltInProfiles()
     RPEmoteMenuDB.emoteDataVersion = defaults.emoteDataVersion
     RPEmoteMenuDB.schemaVersion = SCHEMA_VERSION
 
@@ -658,6 +685,17 @@ function Database.InitializeDatabase()
     if characterKey and not RPEmoteMenuDB.activeProfiles[characterKey] then
         RPEmoteMenuDB.activeProfiles[characterKey] = DEFAULT_PROFILE_NAME
     end
+end
+
+
+function Database.RestoreBuiltInProfiles()
+    for _, definition in ipairs(builtInProfiles) do
+        RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
+    end
+
+    RPEmoteMenuDB.builtInProfileVersion = builtInProfileVersion
+    RefreshProfileViews()
+    return #builtInProfiles
 end
 
 

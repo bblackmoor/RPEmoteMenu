@@ -1644,7 +1644,8 @@ local function CreateProfilesSettingsPanel()
         "Choose a profile for this character, create or copy an editable profile, " ..
         "or import a new one. Default's settings are customizable and persistent, but " ..
         "local-only. Its categories cannot be edited, and the profile cannot be " ..
-        "imported, exported, renamed, or deleted."
+        "imported, exported, renamed, or deleted. Bundled profiles are ordinary, " ..
+        "editable profiles and may be renamed or deleted."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1783,6 +1784,20 @@ local function CreateProfilesSettingsPanel()
         preferredIndex = 3
     }
 
+    StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES"] = {
+        text = "Restore all bundled profiles to their original categories, appearance, and layout?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
+        button1 = "Restore",
+        button2 = CANCEL or "Cancel",
+        OnAccept = function()
+            local count = Database.RestoreBuiltInProfiles()
+            SetStatus("Restored " .. count .. " bundled profiles.")
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
+
     local function BuildProfileMenu(_, rootDescription)
         for _, profileName in ipairs(Database.GetProfileNames()) do
             rootDescription:CreateRadio(
@@ -1882,6 +1897,37 @@ local function CreateProfilesSettingsPanel()
     importProfileButton:SetText("Import Profile")
     importProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
+    end)
+
+    local bundledHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -320)
+    bundledHeading:SetText("Bundled Profiles")
+
+    local bundledDescription = panel:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+    )
+    bundledDescription:SetPoint("TOPLEFT", bundledHeading, "BOTTOMLEFT", 0, -8)
+    bundledDescription:SetWidth(620)
+    bundledDescription:SetJustifyH("LEFT")
+    bundledDescription:SetText(
+        "Reset Gilded Shadow, Crimson Night, Teal, Joker, and Moonlight to " ..
+        "their original designs and recreate any that are missing."
+    )
+    bundledDescription:SetTextColor(0.8, 0.8, 0.8)
+
+    local restoreBuiltInsButton = CreateFrame(
+        "Button",
+        nil,
+        panel,
+        "UIPanelButtonTemplate"
+    )
+    restoreBuiltInsButton:SetSize(190, 24)
+    restoreBuiltInsButton:SetPoint("TOPLEFT", bundledDescription, "BOTTOMLEFT", 0, -12)
+    restoreBuiltInsButton:SetText("Restore Bundled Profiles")
+    restoreBuiltInsButton:SetScript("OnClick", function()
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES")
     end)
 
     nameInput:SetScript("OnTextChanged", function(_, userInput)
