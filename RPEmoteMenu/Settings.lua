@@ -19,6 +19,31 @@ local importExportSettingsCategory
 local resetAllCategoriesButton
 local exchangeDialog
 
+local function EmoteHasContent(emote)
+    return emote and (
+        strtrim(emote.label or "") ~= ""
+        or strtrim(emote.defaultCommand or "") ~= ""
+        or strtrim(emote.targetedCommand or "") ~= ""
+    )
+end
+
+local function CategoryHasContent(category)
+    if not category then
+        return false
+    end
+    if strtrim(category.name or "") ~= "" then
+        return true
+    end
+
+    for emoteIndex = 1, MAX_EMOTES do
+        if EmoteHasContent(category.emotes and category.emotes[emoteIndex]) then
+            return true
+        end
+    end
+
+    return false
+end
+
 -- SETTINGS PANEL
 local function CreateCheckbox(parent, label, y, getValue, setValue)
     local checkbox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
@@ -318,7 +343,7 @@ local function GetExchangeDialog()
         dialog:Hide()
     end)
 
-    local function PerformImport(importText, dataType)
+    local function PerformImport(importText, dataType, categoryIndex)
         dataType = dataType or dialog.dataType
         local success
         local result
@@ -329,7 +354,7 @@ local function GetExchangeDialog()
             success, result, sourceProfileName = Serialization.ImportProfileAsNew(importText)
         elseif dataType == "category" then
             success, result = Serialization.ImportCategory(
-                dialog.categoryIndex,
+                categoryIndex or dialog.categoryIndex,
                 importText
             )
         else
@@ -370,6 +395,19 @@ local function GetExchangeDialog()
         end
     end
 
+    StaticPopupDialogs["RPEMOTEMENU_IMPORT_OVER_CATEGORY"] = {
+        text = "Replace %s and all of its emotes with the imported category?\n\nThis cannot be undone.",
+        button1 = "Replace",
+        button2 = CANCEL or "Cancel",
+        OnAccept = function(_, data)
+            PerformImport(data.importText, "category", data.categoryIndex)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
+
     actionButton:SetScript("OnClick", function()
         if dialog.mode == "export" then
             editBox:SetFocus()
@@ -378,7 +416,22 @@ local function GetExchangeDialog()
             return
         end
 
-        PerformImport(editBox:GetText(), dialog.dataType)
+        local importText = editBox:GetText()
+        if dialog.dataType == "category"
+            and CategoryHasContent(Database.GetCategory(dialog.categoryIndex)) then
+            StaticPopup_Show(
+                "RPEMOTEMENU_IMPORT_OVER_CATEGORY",
+                "Category " .. dialog.categoryIndex,
+                nil,
+                {
+                    importText = importText,
+                    categoryIndex = dialog.categoryIndex
+                }
+            )
+            return
+        end
+
+        PerformImport(importText, dialog.dataType)
     end)
 
     dialog:SetScript("OnHide", function()
@@ -2048,8 +2101,26 @@ local function CreateCategoriesSettingsPanel()
     resetButton:SetText("Restore Built-in Category")
     resetButton:SetEnabled(Database.CanEditActiveProfile())
     resetButton:SetScript("OnClick", function()
-        Database.ResetCategoryToDefaults(selectedCategoryIndex)
+        StaticPopup_Show(
+            "RPEMOTEMENU_RESTORE_CATEGORY",
+            "Category " .. selectedCategoryIndex,
+            nil,
+            {categoryIndex = selectedCategoryIndex}
+        )
     end)
+
+    StaticPopupDialogs["RPEMOTEMENU_RESTORE_CATEGORY"] = {
+        text = "Replace %s and all of its emotes with the built-in category?\n\nThis cannot be undone.",
+        button1 = "Restore",
+        button2 = CANCEL or "Cancel",
+        OnAccept = function(_, data)
+            Database.ResetCategoryToDefaults(data.categoryIndex)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_ALL_CATEGORIES"] = {
         text = "Replace every category and emote in the current profile with the built-in set?\n\nThis cannot be undone.",
@@ -2163,14 +2234,6 @@ local function CreateCategoriesSettingsPanel()
     local emoteRows = {}
     local draggedRow
 
-    local function HasEmoteContent(emote)
-        return emote and (
-            strtrim(emote.label or "") ~= ""
-            or strtrim(emote.defaultCommand or "") ~= ""
-            or strtrim(emote.targetedCommand or "") ~= ""
-        )
-    end
-
     local function HasEmptyCategorySlot()
         for categoryIndex = 1, MAX_CATEGORIES do
             if categoryIndex ~= selectedCategoryIndex then
@@ -2178,7 +2241,7 @@ local function CreateCategoriesSettingsPanel()
                 local empty = category and strtrim(category.name or "") == ""
 
                 for emoteIndex = 1, MAX_EMOTES do
-                    if empty and HasEmoteContent(category.emotes[emoteIndex]) then
+                    if empty and EmoteHasContent(category.emotes[emoteIndex]) then
                         empty = false
                     end
                 end
@@ -2198,7 +2261,7 @@ local function CreateCategoriesSettingsPanel()
 
         for emoteIndex = 1, MAX_EMOTES do
             local emote = category and category.emotes[emoteIndex]
-            if HasEmoteContent(emote) then
+            if EmoteHasContent(emote) then
                 populated[#populated + 1] = {
                     emote = emote,
                     index = emoteIndex
@@ -2243,12 +2306,12 @@ local function CreateCategoriesSettingsPanel()
         end
     end
 
-    local function DeleteEmote(emoteIndex)
+    local function DeleteEmote(categoryIndex, emoteIndex)
         if not Database.CanEditActiveProfile() then
             return
         end
 
-        local category = Database.GetCategory(selectedCategoryIndex)
+        local category = Database.GetCategory(categoryIndex)
         category.emotes[emoteIndex] = {
             label = "",
             defaultCommand = "",
@@ -2257,6 +2320,19 @@ local function CreateCategoriesSettingsPanel()
         MainWindow.UpdateMenu()
         RefreshEmoteRows()
     end
+
+    StaticPopupDialogs["RPEMOTEMENU_DELETE_EMOTE"] = {
+        text = "Delete the emote %s?\n\nThis cannot be undone.",
+        button1 = DELETE or "Delete",
+        button2 = CANCEL or "Cancel",
+        OnAccept = function(_, data)
+            DeleteEmote(data.categoryIndex, data.emoteIndex)
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
 
     local function FinishRowDrag(row)
         if draggedRow ~= row then
@@ -2357,7 +2433,15 @@ local function CreateCategoriesSettingsPanel()
         row.DeleteButton:SetText("Delete")
         row.DeleteButton:SetScript("OnClick", function()
             if row.emoteIndex then
-                DeleteEmote(row.emoteIndex)
+                StaticPopup_Show(
+                    "RPEMOTEMENU_DELETE_EMOTE",
+                    row.Label:GetText() or "this emote",
+                    nil,
+                    {
+                        categoryIndex = selectedCategoryIndex,
+                        emoteIndex = row.emoteIndex
+                    }
+                )
             end
         end)
 
@@ -2379,7 +2463,7 @@ local function CreateCategoriesSettingsPanel()
 
         local category = Database.GetCategory(selectedCategoryIndex)
         for emoteIndex = 1, MAX_EMOTES do
-            if not HasEmoteContent(category.emotes[emoteIndex]) then
+            if not EmoteHasContent(category.emotes[emoteIndex]) then
                 MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex, true)
                 return
             end
