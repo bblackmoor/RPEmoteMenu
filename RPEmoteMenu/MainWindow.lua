@@ -862,6 +862,55 @@ function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex)
     GetEmoteEditorDialog():Open(categoryIndex, emoteIndex)
 end
 
+local function ApplyEmoteHoverHighlight(button)
+    if not button or not button.HoverHighlight then
+        return
+    end
+
+    if not button.isHovered then
+        button.HoverHighlight:Hide()
+        return
+    end
+
+    -- Keep emote hover related to the category selection color, but quieter.
+    -- Blending it toward the emote pane background reduces its saturation and
+    -- contrast without introducing another profile setting.
+    local highlight = settings.categoryHighlightColor
+    local background = settings.emoteBackgroundColor
+    local blend = 0.45
+
+    button.HoverHighlight:SetColorTexture(
+        background.r + (highlight.r - background.r) * blend,
+        background.g + (highlight.g - background.g) * blend,
+        background.b + (highlight.b - background.b) * blend,
+        0.75
+    )
+    button.HoverHighlight:Show()
+end
+
+local function SetEmoteHovered(button, isHovered)
+    button.isHovered = isHovered
+    ApplyEmoteHoverHighlight(button)
+end
+
+local function RefreshEmoteHovered(button)
+    if not button or not button:IsShown() then
+        return
+    end
+
+    SetEmoteHovered(
+        button,
+        button:IsMouseOver()
+            or (button.EditButton and button.EditButton:IsMouseOver())
+    )
+end
+
+local function ScheduleEmoteHoverRefresh(button)
+    C_Timer.After(0, function()
+        RefreshEmoteHovered(button)
+    end)
+end
+
 local function GetContainerButton()
     for _, button in ipairs(buttonsPool) do
         if not button:IsShown() then
@@ -871,6 +920,10 @@ local function GetContainerButton()
 
     local button = CreateFrame("Button", nil, ScrollChild)
     button:SetSize(math.max(ScrollChild:GetWidth() - 5, 1), emoteButtonHeight)
+
+    button.HoverHighlight = button:CreateTexture(nil, "BACKGROUND")
+    button.HoverHighlight:SetAllPoints(button)
+    button.HoverHighlight:Hide()
 
     button.Text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     button.Text:SetPoint("LEFT", button, "LEFT", 7, 0)
@@ -885,12 +938,21 @@ local function GetContainerButton()
         "ADD"
     )
     button.EditButton:SetScript("OnEnter", function(self)
+        SetEmoteHovered(button, true)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetText("Edit emote")
         GameTooltip:Show()
     end)
     button.EditButton:SetScript("OnLeave", function()
+        ScheduleEmoteHoverRefresh(button)
         GameTooltip:Hide()
+    end)
+
+    button:SetScript("OnEnter", function()
+        SetEmoteHovered(button, true)
+    end)
+    button:SetScript("OnLeave", function()
+        ScheduleEmoteHoverRefresh(button)
     end)
 
     button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -4, 0)
@@ -1307,6 +1369,7 @@ function MainWindow.UpdateMenu()
     for _, button in ipairs(buttonsPool) do
         button:SetScript("OnUpdate", nil)
         button:SetAlpha(1)
+        SetEmoteHovered(button, false)
         button:Hide()
         button:ClearAllPoints()
         button:SetScript("OnClick", nil)
