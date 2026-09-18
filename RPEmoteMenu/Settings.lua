@@ -2076,6 +2076,16 @@ local function CreateCategoriesSettingsPanel()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES")
     end)
 
+    local duplicateCategoryButton = CreateFrame(
+        "Button",
+        nil,
+        panel,
+        "UIPanelButtonTemplate"
+    )
+    duplicateCategoryButton:SetSize(160, 24)
+    duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -80)
+    duplicateCategoryButton:SetText("Duplicate Category")
+
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     importButton:SetSize(90, 24)
     importButton:SetText("Import")
@@ -2161,6 +2171,27 @@ local function CreateCategoriesSettingsPanel()
         )
     end
 
+    local function HasEmptyCategorySlot()
+        for categoryIndex = 1, MAX_CATEGORIES do
+            if categoryIndex ~= selectedCategoryIndex then
+                local category = Database.GetCategory(categoryIndex)
+                local empty = category and strtrim(category.name or "") == ""
+
+                for emoteIndex = 1, MAX_EMOTES do
+                    if empty and HasEmoteContent(category.emotes[emoteIndex]) then
+                        empty = false
+                    end
+                end
+
+                if empty then
+                    return true
+                end
+            end
+        end
+
+        return false
+    end
+
     local function GetPopulatedEmotes()
         local populated = {}
         local category = Database.GetCategory(selectedCategoryIndex)
@@ -2201,6 +2232,7 @@ local function CreateCategoriesSettingsPanel()
                 end
                 row.Summary:SetText(summary)
                 row.EditButton:SetText(editable and "Edit" or "View")
+                row.DuplicateButton:SetEnabled(editable and #populated < MAX_EMOTES)
                 row.DeleteButton:SetEnabled(editable)
                 row:Show()
             else
@@ -2282,23 +2314,40 @@ local function CreateCategoriesSettingsPanel()
 
         row.Label = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
         row.Label:SetPoint("TOPLEFT", row, "TOPLEFT", 28, -5)
-        row.Label:SetPoint("RIGHT", row, "RIGHT", -160, 0)
+        row.Label:SetPoint("RIGHT", row, "RIGHT", -220, 0)
         row.Label:SetJustifyH("LEFT")
         row.Label:SetWordWrap(false)
 
         row.Summary = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         row.Summary:SetPoint("BOTTOMLEFT", row, "BOTTOMLEFT", 28, 5)
-        row.Summary:SetPoint("RIGHT", row, "RIGHT", -160, 0)
+        row.Summary:SetPoint("RIGHT", row, "RIGHT", -220, 0)
         row.Summary:SetJustifyH("LEFT")
         row.Summary:SetWordWrap(false)
         row.Summary:SetTextColor(0.7, 0.7, 0.7, 1)
 
         row.EditButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-        row.EditButton:SetSize(58, 22)
-        row.EditButton:SetPoint("RIGHT", row, "RIGHT", -70, 0)
+        row.EditButton:SetSize(52, 22)
+        row.EditButton:SetPoint("RIGHT", row, "RIGHT", -154, 0)
         row.EditButton:SetScript("OnClick", function()
             if row.emoteIndex then
                 MainWindow.OpenEmoteEditor(selectedCategoryIndex, row.emoteIndex)
+            end
+        end)
+
+        row.DuplicateButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
+        row.DuplicateButton:SetSize(76, 22)
+        row.DuplicateButton:SetPoint("RIGHT", row, "RIGHT", -73, 0)
+        row.DuplicateButton:SetText("Duplicate")
+        row.DuplicateButton:SetScript("OnClick", function()
+            if row.emoteIndex then
+                local success = Database.DuplicateEmote(
+                    selectedCategoryIndex,
+                    row.emoteIndex
+                )
+                if success then
+                    MainWindow.UpdateMenu()
+                    RefreshEmoteRows()
+                end
             end
         end)
 
@@ -2354,6 +2403,15 @@ local function CreateCategoriesSettingsPanel()
         panel.RefreshEditors()
     end
 
+    duplicateCategoryButton:SetScript("OnClick", function()
+        local success, result = Database.DuplicateCategory(selectedCategoryIndex)
+        if success then
+            SelectCategory(result)
+            MainWindow.SetSelectedCategory(result)
+            MainWindow.UpdateMenu()
+        end
+    end)
+
     selector:SetupMenu(function(_, rootDescription)
         for categoryIndex = 1, MAX_CATEGORIES do
             rootDescription:CreateRadio(
@@ -2378,6 +2436,7 @@ local function CreateCategoriesSettingsPanel()
         resetButton:SetEnabled(editable)
         resetAllCategoriesButton:SetEnabled(editable)
         importButton:SetEnabled(editable)
+        duplicateCategoryButton:SetEnabled(editable and HasEmptyCategorySlot())
 
         nameBox:RefreshFromDatabase()
         RefreshEmoteRows()

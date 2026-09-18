@@ -747,3 +747,102 @@ function Database.ResetAllCategoriesToDefaults()
     addon.MainWindow.UpdateMenu()
     return true
 end
+
+
+local function EmoteHasContent(emote)
+    return type(emote) == "table" and (
+        strtrim(NormalizeString(emote.label)) ~= ""
+        or strtrim(NormalizeString(emote.defaultCommand)) ~= ""
+        or strtrim(NormalizeString(emote.targetedCommand)) ~= ""
+    )
+end
+
+
+function Database.DuplicateEmote(categoryIndex, emoteIndex)
+    if not Database.CanEditActiveProfile() then
+        return false, "The Default profile's emotes cannot be edited."
+    end
+
+    local category = Database.GetCategory(categoryIndex)
+    local source = category and category.emotes and category.emotes[emoteIndex]
+    if not EmoteHasContent(source) then
+        return false, "That emote is empty."
+    end
+
+    for destinationIndex = 1, MAX_EMOTES do
+        if not EmoteHasContent(category.emotes[destinationIndex]) then
+            category.emotes[destinationIndex] = {
+                label = NormalizeString(source.label),
+                defaultCommand = NormalizeString(source.defaultCommand),
+                targetedCommand = NormalizeString(source.targetedCommand)
+            }
+            return true, destinationIndex
+        end
+    end
+
+    return false, "This category already has ten emotes."
+end
+
+
+function Database.DuplicateCategory(categoryIndex)
+    if not Database.CanEditActiveProfile() then
+        return false, "The Default profile's categories cannot be edited."
+    end
+
+    local categories = Database.GetCategories()
+    local source = categories[categoryIndex]
+    if type(source) ~= "table" then
+        return false, "That category does not exist."
+    end
+
+    local destinationIndex
+    for index = 1, MAX_CATEGORIES do
+        local category = categories[index]
+        local empty = index ~= categoryIndex
+            and type(category) == "table"
+            and strtrim(NormalizeString(category.name)) == ""
+
+        for emoteIndex = 1, MAX_EMOTES do
+            if empty and EmoteHasContent(category.emotes and category.emotes[emoteIndex]) then
+                empty = false
+            end
+        end
+
+        if empty then
+            destinationIndex = index
+            break
+        end
+    end
+
+    if not destinationIndex then
+        return false, "This profile already has ten categories."
+    end
+
+    local baseName = strtrim(NormalizeString(source.name))
+    if baseName == "" then
+        baseName = "Category " .. categoryIndex
+    end
+    local copyName = baseName .. " Copy"
+    local suffix = 2
+    local names = {}
+    for _, category in ipairs(categories) do
+        names[string.lower(strtrim(NormalizeString(category.name)))] = true
+    end
+    while names[string.lower(copyName)] do
+        copyName = baseName .. " Copy " .. suffix
+        suffix = suffix + 1
+    end
+
+    local copy = {name = copyName, emotes = {}}
+    for emoteIndex = 1, MAX_EMOTES do
+        local sourceEmote = source.emotes and source.emotes[emoteIndex]
+        copy.emotes[emoteIndex] = {
+            label = NormalizeString(sourceEmote and sourceEmote.label),
+            defaultCommand = NormalizeString(sourceEmote and sourceEmote.defaultCommand),
+            targetedCommand = NormalizeString(sourceEmote and sourceEmote.targetedCommand)
+        }
+    end
+
+    categories[destinationIndex] = copy
+    return true, destinationIndex
+end
