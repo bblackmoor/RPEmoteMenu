@@ -10,7 +10,7 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 7
+local SCHEMA_VERSION = 8
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -211,22 +211,6 @@ local function NormalizeSettings(source)
         or result.selectedCategory > MAX_CATEGORIES then
         result.selectedCategory = defaults.selectedCategory
     end
-
-    result.sidebarWidth = math.floor(ClampNumber(
-        source.sidebarWidth,
-        addon.MIN_SIDEBAR_WIDTH,
-        addon.MAX_SIDEBAR_WIDTH,
-        defaults.sidebarWidth
-    ))
-    result.emoteColumnWidth = math.floor(ClampNumber(
-        source.emoteColumnWidth,
-        addon.MIN_EMOTE_COLUMN_WIDTH,
-        addon.MAX_EMOTE_COLUMN_WIDTH,
-        defaults.emoteColumnWidth
-    ))
-    result.width = result.sidebarWidth
-        + result.emoteColumnWidth
-        + addon.COLUMN_CHROME_WIDTH
 
     if strtrim(result.categoryFont) == "" then
         result.categoryFont = defaults.categoryFont

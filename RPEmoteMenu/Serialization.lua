@@ -47,8 +47,9 @@ local PROFILE_SETTINGS_FIELDS = {
     relativePoint = true,
     x = true,
     y = true,
-    width = true,
     height = true,
+    -- Accepted for compatibility, then discarded because width is automatic.
+    width = true,
     sidebarWidth = true,
     emoteColumnWidth = true,
     categoryFont = true,
@@ -370,33 +371,8 @@ local function ValidateProfileSettings(value)
     )
     if imported.y == nil then return nil, errorMessage end
 
-    imported.width, errorMessage = ValidateNumber(
-        value.width,
-        addon.MIN_SIDEBAR_WIDTH + addon.MIN_EMOTE_COLUMN_WIDTH
-            + addon.COLUMN_CHROME_WIDTH,
-        600,
-        "Window width",
-        true
-    )
-    if not imported.width then return nil, errorMessage end
     imported.height, errorMessage = ValidateNumber(value.height, 150, 600, "Window height", true)
     if not imported.height then return nil, errorMessage end
-    imported.sidebarWidth, errorMessage = ValidateNumber(
-        value.sidebarWidth,
-        addon.MIN_SIDEBAR_WIDTH,
-        addon.MAX_SIDEBAR_WIDTH,
-        "Left column width",
-        true
-    )
-    if not imported.sidebarWidth then return nil, errorMessage end
-    imported.emoteColumnWidth, errorMessage = ValidateNumber(
-        value.emoteColumnWidth,
-        addon.MIN_EMOTE_COLUMN_WIDTH,
-        addon.MAX_EMOTE_COLUMN_WIDTH,
-        "Right column width",
-        true
-    )
-    if not imported.emoteColumnWidth then return nil, errorMessage end
 
     for _, key in ipairs({"categoryFont", "emoteFont"}) do
         imported[key], errorMessage = ValidateString(
@@ -540,9 +516,8 @@ local function ExportProfileSettings(source)
         exported[key] = source[key]
     end
     for _, key in ipairs({
-        "point", "relativePoint", "x", "y", "width", "height", "sidebarWidth",
+        "point", "relativePoint", "x", "y", "height",
         "minimizedIconSize", "minimizedIconCorner",
-        "emoteColumnWidth",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
         "backgroundOpacity", "windowOpacity", "fadeDelay", "inactiveOpacity"

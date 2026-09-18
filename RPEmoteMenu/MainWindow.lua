@@ -16,17 +16,15 @@ end
 
 local titleBarHeight = 30
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
-local minimumWidth = addon.MIN_SIDEBAR_WIDTH
-    + addon.MIN_EMOTE_COLUMN_WIDTH + columnChromeWidth
+local minimumUsableWidth = 220
 local minimumHeight = 150
-local maximumWidth = 600
 local maximumHeight = 600
-local sidebarWidth = defaults.sidebarWidth
-local emoteColumnWidth = defaults.emoteColumnWidth
 local minimumSidebarWidth = addon.MIN_SIDEBAR_WIDTH
 local maximumSidebarWidth = addon.MAX_SIDEBAR_WIDTH
 local minimumEmoteColumnWidth = addon.MIN_EMOTE_COLUMN_WIDTH
 local maximumEmoteColumnWidth = addon.MAX_EMOTE_COLUMN_WIDTH
+local sidebarWidth = minimumSidebarWidth
+local emoteColumnWidth = minimumEmoteColumnWidth
 local categoryButtonHeight = 24
 local emoteButtonHeight = 20
 
@@ -45,6 +43,7 @@ local ScrollBottomIndicator
 local PinBtn
 local SettingsBtn
 local ResizeGrip
+local WidthMeasurementText
 local categoryButtons = {}
 local buttonsPool = {}
 local emoteEditorDialog
@@ -71,14 +70,16 @@ local function SetInternalFrameSize(width, height)
 end
 
 local function SetCompactResizeBounds()
-    MainFrame:SetResizeBounds(1, 1, maximumWidth, maximumHeight)
+    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    MainFrame:SetResizeBounds(width, 1, width, maximumHeight)
 end
 
 local function SetNormalResizeBounds()
+    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
     MainFrame:SetResizeBounds(
-        minimumWidth,
+        width,
         minimumHeight,
-        maximumWidth,
+        width,
         maximumHeight
     )
 end
@@ -106,49 +107,106 @@ local function RefreshGeneralWindowFields()
     end
 end
 
-local function ClampColumnWidth(value, minimum, maximum, fallback)
-    value = math.floor(tonumber(value) or fallback)
+local function ClampColumnWidth(value, minimum, maximum)
+    value = math.ceil(tonumber(value) or minimum)
     return math.max(minimum, math.min(maximum, value))
 end
 
-local function DistributeWindowWidth(width)
-    local target = math.max(minimumWidth, math.min(maximumWidth,
-        math.floor(tonumber(width) or settings.width or defaults.width)))
-    local left = ClampColumnWidth(
-        sidebarWidth, minimumSidebarWidth, maximumSidebarWidth, defaults.sidebarWidth
-    )
-    local right = ClampColumnWidth(
-        emoteColumnWidth,
-        minimumEmoteColumnWidth,
-        maximumEmoteColumnWidth,
-        defaults.emoteColumnWidth
-    )
-    local delta = target - columnChromeWidth - left - right
-
-    if delta > 0 then
-        local rightChange = math.min(delta, maximumEmoteColumnWidth - right)
-        right = right + rightChange
-        left = left + math.min(delta - rightChange, maximumSidebarWidth - left)
-    elseif delta < 0 then
-        local remaining = -delta
-        local rightChange = math.min(remaining, right - minimumEmoteColumnWidth)
-        right = right - rightChange
-        left = left - math.min(remaining - rightChange, left - minimumSidebarWidth)
+local function MeasureText(text, fontName, fontSize)
+    if not WidthMeasurementText or type(text) ~= "string" or text == "" then
+        return 0
     end
 
-    return left, right, left + right + columnChromeWidth
+    local fontPath = addon.GetFontPath(fontName)
+    if not WidthMeasurementText:SetFont(fontPath, fontSize, "") then
+        WidthMeasurementText:SetFont(STANDARD_TEXT_FONT, fontSize, "")
+    end
+    WidthMeasurementText:SetText(text)
+
+    local width = WidthMeasurementText.GetUnboundedStringWidth
+        and WidthMeasurementText:GetUnboundedStringWidth()
+        or WidthMeasurementText:GetStringWidth()
+
+    if width <= 0 and fontPath ~= STANDARD_TEXT_FONT then
+        WidthMeasurementText:SetFont(STANDARD_TEXT_FONT, fontSize, "")
+        WidthMeasurementText:SetText(text)
+        width = WidthMeasurementText.GetUnboundedStringWidth
+            and WidthMeasurementText:GetUnboundedStringWidth()
+            or WidthMeasurementText:GetStringWidth()
+    end
+
+    return math.max(width or 0, 0)
 end
 
 local ApplyColumnLayout
+local ApplyAutomaticWidth
+
+local function CalculateColumnWidths()
+    local widestCategory = 0
+    local widestEmote = 0
+
+    for _, category in ipairs(Database.GetCategories()) do
+        local categoryName = Trim(category.name)
+        if categoryName ~= "" then
+            widestCategory = math.max(
+                widestCategory,
+                MeasureText(
+                    categoryName,
+                    settings.categoryFont,
+                    settings.categoryFontSize
+                )
+            )
+        end
+
+        for _, emote in ipairs(category.emotes or {}) do
+            local label = Trim(emote.label)
+            if label ~= "" then
+                widestEmote = math.max(
+                    widestEmote,
+                    MeasureText(
+                        label,
+                        settings.emoteFont,
+                        settings.emoteFontSize
+                    )
+                )
+            end
+        end
+    end
+
+    -- Category text uses 11 pixels inside its button plus 7 pixels of sidebar
+    -- chrome. Emotes reserve room for their edit button as well as text padding.
+    sidebarWidth = ClampColumnWidth(
+        widestCategory + 18,
+        minimumSidebarWidth,
+        maximumSidebarWidth
+    )
+    emoteColumnWidth = ClampColumnWidth(
+        widestEmote + 35,
+        minimumEmoteColumnWidth,
+        maximumEmoteColumnWidth
+    )
+
+    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    if width < minimumUsableWidth then
+        emoteColumnWidth = math.min(
+            maximumEmoteColumnWidth,
+            emoteColumnWidth + minimumUsableWidth - width
+        )
+        width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    end
+
+    return width
+end
 
 local function ClampWindowGeometry(x, y, width, height)
     local screenWidth = math.floor(UIParent:GetWidth() + 0.5)
     local screenHeight = math.floor(UIParent:GetHeight() + 0.5)
 
-    width = math.floor(tonumber(width) or settings.width or defaults.width)
+    width = math.floor(tonumber(width)
+        or sidebarWidth + emoteColumnWidth + columnChromeWidth)
     height = math.floor(tonumber(height) or settings.height or defaults.height)
 
-    width = math.max(minimumWidth, math.min(maximumWidth, screenWidth, width))
+    width = math.min(screenWidth, width)
     height = math.max(minimumHeight, math.min(maximumHeight, screenHeight, height))
 
     x = math.floor(tonumber(x) or settings.x or 0)
@@ -163,14 +221,13 @@ local function ClampWindowGeometry(x, y, width, height)
 end
 
 function MainWindow.ApplyWindowGeometry(x, y, width, height)
+    width = CalculateColumnWidths()
     x, y, width, height = ClampWindowGeometry(x, y, width, height)
-    sidebarWidth, emoteColumnWidth, width = DistributeWindowWidth(width)
 
     settings.point = "TOPLEFT"
     settings.relativePoint = "BOTTOMLEFT"
     settings.x = x
     settings.y = y
-    settings.width = width
     settings.height = height
 
     MainFrame:ClearAllPoints()
@@ -183,6 +240,11 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
         MainFrame:SetSize(width, height)
     end
     isApplyingColumnSize = false
+    if IsWindowBodyHidden() then
+        SetCompactResizeBounds()
+    else
+        SetNormalResizeBounds()
+    end
     ApplyColumnLayout()
 
     RefreshGeneralWindowFields()
@@ -200,7 +262,8 @@ local function SaveWindowPosition()
     settings.point = "TOPLEFT"
     settings.relativePoint = "BOTTOMLEFT"
 
-    local x, y = ClampWindowGeometry(left, top, settings.width, settings.height)
+    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    local x, y = ClampWindowGeometry(left, top, width, settings.height)
     settings.x = x
     settings.y = y
 
@@ -220,16 +283,16 @@ end
 
 local function SaveWindowSize()
     if not IsWindowBodyHidden() then
-        local x, y, width, height = ClampWindowGeometry(
+        local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+        local x, y, _, height = ClampWindowGeometry(
             settings.x,
             settings.y,
-            MainFrame:GetWidth(),
+            width,
             MainFrame:GetHeight()
         )
 
         settings.x = x
         settings.y = y
-        settings.width = width
         settings.height = height
     end
 
@@ -237,25 +300,26 @@ local function SaveWindowSize()
 end
 
 local function RestoreWindowSize()
+    local width = CalculateColumnWidths()
     local x, y, width, height = ClampWindowGeometry(
         settings.x,
         settings.y,
-        settings.width,
+        width,
         settings.height
     )
 
     settings.x = x
     settings.y = y
-    sidebarWidth = settings.sidebarWidth
-    emoteColumnWidth = settings.emoteColumnWidth
-    sidebarWidth, emoteColumnWidth, width = DistributeWindowWidth(width)
-    settings.sidebarWidth = sidebarWidth
-    settings.emoteColumnWidth = emoteColumnWidth
-    settings.width = width
     settings.height = height
     isApplyingColumnSize = true
     MainFrame:SetSize(width, height)
     isApplyingColumnSize = false
+    if IsWindowBodyHidden() then
+        SetCompactResizeBounds()
+    else
+        SetNormalResizeBounds()
+    end
+    ApplyColumnLayout()
 
     RefreshGeneralWindowFields()
 end
@@ -265,25 +329,26 @@ function MainWindow.ResetWindowPosition()
     settings.relativePoint = defaults.relativePoint
     settings.x = defaults.x
     settings.y = defaults.y
-    settings.width = defaults.width
     settings.height = defaults.height
-    settings.sidebarWidth = defaults.sidebarWidth
-    settings.emoteColumnWidth = defaults.emoteColumnWidth
-    sidebarWidth = defaults.sidebarWidth
-    emoteColumnWidth = defaults.emoteColumnWidth
+    local width = CalculateColumnWidths()
 
     -- Resolve the default CENTER anchor using the restored full-size window.
     -- Otherwise its previous dimensions shift the position until a second reset.
     isApplyingColumnSize = true
-    MainFrame:SetSize(defaults.width, defaults.height)
+    MainFrame:SetSize(width, defaults.height)
     isApplyingColumnSize = false
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        SetInternalFrameSize(defaults.width, titleBarHeight)
+        SetInternalFrameSize(width, titleBarHeight)
     end
 
-    MainWindow.ApplySidebarWidth(defaults.sidebarWidth)
+    if IsWindowBodyHidden() then
+        SetCompactResizeBounds()
+    else
+        SetNormalResizeBounds()
+    end
+    ApplyColumnLayout()
     RefreshGeneralWindowFields()
 end
 
@@ -292,10 +357,6 @@ ApplyColumnLayout = function()
         or not ScrollFrame or not ScrollChild then
         return
     end
-
-    settings.sidebarWidth = sidebarWidth
-    settings.emoteColumnWidth = emoteColumnWidth
-    settings.width = sidebarWidth + emoteColumnWidth + columnChromeWidth
 
     CategorySidebar:SetWidth(sidebarWidth)
     CategoryScrollChild:SetWidth(sidebarWidth - 7)
@@ -317,29 +378,23 @@ ApplyColumnLayout = function()
     RefreshGeneralWindowFields()
 end
 
-local function ApplyExplicitColumnWidths(left, right)
-    sidebarWidth = ClampColumnWidth(
-        left, minimumSidebarWidth, maximumSidebarWidth, defaults.sidebarWidth
-    )
-    emoteColumnWidth = ClampColumnWidth(
-        right,
-        minimumEmoteColumnWidth,
-        maximumEmoteColumnWidth,
-        defaults.emoteColumnWidth
-    )
-    local totalWidth = sidebarWidth + emoteColumnWidth + columnChromeWidth
+ApplyAutomaticWidth = function()
+    if not MainFrame then
+        return
+    end
+
+    local width = CalculateColumnWidths()
     isApplyingColumnSize = true
-    MainFrame:SetWidth(totalWidth)
+    MainFrame:SetWidth(width)
     isApplyingColumnSize = false
+
+    if IsWindowBodyHidden() then
+        SetCompactResizeBounds()
+    else
+        SetNormalResizeBounds()
+    end
+
     ApplyColumnLayout()
-end
-
-function MainWindow.ApplySidebarWidth(width)
-    ApplyExplicitColumnWidths(width, emoteColumnWidth)
-end
-
-function MainWindow.ApplyEmoteColumnWidth(width)
-    ApplyExplicitColumnWidths(sidebarWidth, width)
 end
 
 function MainWindow.ApplyMovementLock()
@@ -611,6 +666,8 @@ function MainWindow.RefreshFontDisplays(updateLayout)
     if addon.Settings and addon.Settings.RefreshFontControls then
         addon.Settings.RefreshFontControls()
     end
+
+    ApplyAutomaticWidth()
 
     return categoryApplied and emoteApplied
 end
@@ -1398,6 +1455,7 @@ end
 
 function MainWindow.UpdateMenu()
     MainWindow.NotifyActivity()
+    ApplyAutomaticWidth()
 
     for _, button in ipairs(buttonsPool) do
         button:SetScript("OnUpdate", nil)
@@ -1515,6 +1573,7 @@ end
 local function UpdateWindowBodyVisibility()
     -- Keep the title bar fixed while the bottom edge rises or falls.
     AnchorFrameByTopLeft()
+    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
 
     if IsWindowBodyHidden() then
         SetCompactResizeBounds()
@@ -1534,7 +1593,7 @@ local function UpdateWindowBodyVisibility()
             )
             ApplyMinimizedIconAnchor()
             MinimizedIconButton:SetShown(MainFrame:IsShown())
-            SetInternalFrameSize(settings.width, titleBarHeight)
+            SetInternalFrameSize(width, titleBarHeight)
         else
             TitleText:Show()
             PinBtn:Show()
@@ -1542,7 +1601,7 @@ local function UpdateWindowBodyVisibility()
             MainFrame:EnableMouse(true)
             ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
-            SetInternalFrameSize(settings.width, titleBarHeight)
+            SetInternalFrameSize(width, titleBarHeight)
         end
     else
         SetNormalResizeBounds()
@@ -1552,7 +1611,7 @@ local function UpdateWindowBodyVisibility()
         MainFrame:EnableMouse(true)
         ApplyMainFrameBackdrop()
         MainWindow.ApplySettingsGearVisibility()
-        SetInternalFrameSize(settings.width, settings.height)
+        SetInternalFrameSize(width, settings.height)
         CategorySidebar:Show()
         ScrollFrame:Show()
         MainWindow.UpdateMenu()
@@ -1643,10 +1702,13 @@ end
 function MainWindow.CreateMainWindow()
     settings = Database.GetSettings()
     selectedCategoryIndex = settings.selectedCategory
-    sidebarWidth = settings.sidebarWidth
-    emoteColumnWidth = settings.emoteColumnWidth
     MainFrame = CreateFrame("Frame", "RPEmoteMenu", UIParent, "BackdropTemplate")
-    MainFrame:SetSize(defaults.width, defaults.height)
+    MainFrame:SetSize(
+        sidebarWidth + emoteColumnWidth + columnChromeWidth,
+        defaults.height
+    )
+    WidthMeasurementText = MainFrame:CreateFontString(nil, "OVERLAY")
+    WidthMeasurementText:SetAlpha(0)
     SetNormalResizeBounds()
     MainFrame:SetClampedToScreen(true)
     MainFrame:EnableMouse(true)
@@ -1663,18 +1725,18 @@ function MainWindow.CreateMainWindow()
         SaveWindowPosition()
     end)
 
-    MainFrame:SetScript("OnSizeChanged", function(self, width)
+    MainFrame:SetScript("OnSizeChanged", function(self, width, height)
         if isApplyingColumnSize then return end
-        sidebarWidth, emoteColumnWidth, width = DistributeWindowWidth(width)
-        settings.sidebarWidth = sidebarWidth
-        settings.emoteColumnWidth = emoteColumnWidth
-        settings.width = width
-        if math.abs(self:GetWidth() - width) > 0.5 then
+        local automaticWidth = sidebarWidth + emoteColumnWidth + columnChromeWidth
+        settings.height = math.max(
+            minimumHeight,
+            math.min(maximumHeight, math.floor(height + 0.5))
+        )
+        if math.abs(width - automaticWidth) > 0.5 then
             isApplyingColumnSize = true
-            self:SetWidth(width)
+            self:SetWidth(automaticWidth)
             isApplyingColumnSize = false
         end
-        if ApplyColumnLayout then ApplyColumnLayout() end
     end)
 
     TitleText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1985,7 +2047,7 @@ function MainWindow.CreateMainWindow()
     ResizeGrip:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" and not settings.locked
             and not IsWindowBodyHidden() then
-            MainFrame:StartSizing("BOTTOMRIGHT")
+            MainFrame:StartSizing("BOTTOM")
         end
     end)
     ResizeGrip:SetScript("OnMouseUp", function()
@@ -2052,8 +2114,6 @@ end
 function MainWindow.ApplyProfileSettings()
     settings = Database.GetSettings()
     selectedCategoryIndex = settings.selectedCategory
-    sidebarWidth = settings.sidebarWidth
-    emoteColumnWidth = settings.emoteColumnWidth
 
     if not MainFrame then
         return
@@ -2061,7 +2121,6 @@ function MainWindow.ApplyProfileSettings()
 
     RestoreWindowSize()
     RestoreWindowPosition()
-    MainWindow.ApplySidebarWidth(settings.sidebarWidth)
     MainWindow.ApplyMovementLock()
     MainWindow.ApplySettingsGearVisibility()
     MainWindow.ApplyAppearance()

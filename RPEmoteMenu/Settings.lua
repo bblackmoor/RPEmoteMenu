@@ -1352,7 +1352,7 @@ local function CreateGeneralSettingsPanel()
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetText(
-        "Configure window visibility, movement, resizing, and login behavior "
+        "Configure window visibility, movement, height, and login behavior "
         .. "for the current profile."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
@@ -1491,7 +1491,7 @@ local function CreateGeneralSettingsPanel()
             MainWindow.ApplyWindowGeometry(
                 value,
                 settings.y,
-                settings.width,
+                nil,
                 settings.height
             )
         end
@@ -1504,77 +1504,40 @@ local function CreateGeneralSettingsPanel()
             MainWindow.ApplyWindowGeometry(
                 settings.x,
                 value,
-                settings.width,
+                nil,
                 settings.height
             )
         end
     )
 
-    local sizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    sizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -475)
-    sizeLabel:SetText("Current window size")
-
-    local widthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 225, -470)
-    widthLabel:SetText("Width")
-
-    local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    heightLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 305, -470)
-    heightLabel:SetText("Height")
-
-    local widthBox = CreateIntegerEditBox(
-        panel, 190, -471, 70,
-        function() return settings.width end,
-        function(value)
-            MainWindow.ApplyWindowGeometry(
-                settings.x,
-                settings.y,
-                value,
-                settings.height
-            )
-        end
-    )
+    local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -475)
+    heightLabel:SetText("Window height (150-600 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 270, -471, 70,
+        panel, 190, -471, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
                 settings.x,
                 settings.y,
-                settings.width,
+                nil,
                 value
             )
         end
     )
 
-    local sidebarWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    sidebarWidthLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
-    sidebarWidthLabel:SetText("Left column width")
-
-    local sidebarWidthBox = CreateIntegerEditBox(
-        panel, 190, -506, 70,
-        function() return settings.sidebarWidth end,
-        MainWindow.ApplySidebarWidth
-    )
-
-    local emoteColumnWidthLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    emoteColumnWidthLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -545)
-    emoteColumnWidthLabel:SetText("Right column width")
-
-    local emoteColumnWidthBox = CreateIntegerEditBox(
-        panel, 190, -541, 70,
-        function() return settings.emoteColumnWidth end,
-        MainWindow.ApplyEmoteColumnWidth
-    )
+    local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
+    widthNote:SetWidth(620)
+    widthNote:SetJustifyH("LEFT")
+    widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
+    widthNote:SetTextColor(0.8, 0.8, 0.8, 1)
 
     AddonSettings.RefreshGeneralWindowFields = function()
         positionXBox:RefreshValue()
         positionYBox:RefreshValue()
-        widthBox:RefreshValue()
         heightBox:RefreshValue()
-        sidebarWidthBox:RefreshValue()
-        emoteColumnWidthBox:RefreshValue()
         iconSizeBox:RefreshValue()
         iconCornerSelector:OverrideText(
             iconCornerLabels[settings.minimizedIconCorner]
@@ -1598,7 +1561,7 @@ local function CreateGeneralSettingsPanel()
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(200, 24)
     resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 450, -14)
-    resetButton:SetText("Reset Window Size & Position")
+    resetButton:SetText("Reset Window Height & Position")
     resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
 
     return panel
