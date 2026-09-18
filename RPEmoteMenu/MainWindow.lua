@@ -35,9 +35,11 @@ local CategorySidebar
 local CategoryScrollFrame
 local CategoryScrollChild
 local CategoryEmptyLabel
+local CategoryEmptyButton
 local SidebarDivider
 local ScrollFrame
 local ScrollChild
+local EmoteEmptyButton
 local ScrollTopIndicator
 local ScrollBottomIndicator
 local PinBtn
@@ -171,6 +173,14 @@ local function CalculateColumnWidths()
                 )
             end
         end
+    end
+
+    if widestCategory == 0 then
+        widestCategory = MeasureText(
+            "Add Category",
+            settings.categoryFont,
+            settings.categoryFontSize
+        )
     end
 
     -- Category text uses 11 pixels inside its button plus 7 pixels of sidebar
@@ -374,6 +384,9 @@ ApplyColumnLayout = function()
 
     CategorySidebar:SetWidth(sidebarWidth)
     CategoryScrollChild:SetWidth(sidebarWidth - 7)
+    if CategoryEmptyButton then
+        CategoryEmptyButton:SetWidth(math.max(sidebarWidth - 14, 1))
+    end
 
     for _, button in ipairs(categoryButtons) do
         button:SetWidth(sidebarWidth - 7)
@@ -384,6 +397,9 @@ ApplyColumnLayout = function()
     ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25, 10)
 
     ScrollChild:SetWidth(emoteColumnWidth)
+    if EmoteEmptyButton then
+        EmoteEmptyButton:SetWidth(math.max(emoteColumnWidth - 5, 1))
+    end
 
     for _, button in ipairs(buttonsPool) do
         button:SetWidth(math.max(emoteColumnWidth - 5, 1))
@@ -1420,8 +1436,10 @@ local function UpdateCategorySidebar()
 
     if visibleCount == 0 then
         CategoryEmptyLabel:Show()
+        CategoryEmptyButton:Show()
     else
         CategoryEmptyLabel:Hide()
+        CategoryEmptyButton:Hide()
     end
 
     local maximumScroll = math.max(
@@ -1503,6 +1521,7 @@ function MainWindow.UpdateMenu()
     UpdateCategorySidebar()
 
     if not selectedCategoryIndex then
+        EmoteEmptyButton:Hide()
         ScrollChild:SetHeight(1)
         ScrollFrame:SetVerticalScroll(0)
         UpdateScrollIndicators()
@@ -1513,6 +1532,7 @@ function MainWindow.UpdateMenu()
     local category = GetCurrentCategory(selectedCategoryIndex)
 
     local visibleEmotes = GetVisibleEmotes(category)
+    EmoteEmptyButton:SetShown(#visibleEmotes == 0)
     local dynamicY = 0
 
     for visiblePosition, visible in ipairs(visibleEmotes) do
@@ -1556,7 +1576,7 @@ function MainWindow.UpdateMenu()
         dynamicY = dynamicY + emoteButtonHeight + 2
     end
 
-    ScrollChild:SetHeight(math.max(dynamicY, 1))
+    ScrollChild:SetHeight(math.max(dynamicY, #visibleEmotes == 0 and 26 or 1))
     ScrollFrame:SetVerticalScroll(0)
 
     C_Timer.After(0, function()
@@ -1835,6 +1855,22 @@ function MainWindow.CreateMainWindow()
     CategoryEmptyLabel:SetText("No categories")
     CategoryEmptyLabel:Hide()
 
+    CategoryEmptyButton = CreateFrame(
+        "Button",
+        nil,
+        CategorySidebar,
+        "UIPanelButtonTemplate"
+    )
+    CategoryEmptyButton:SetSize(math.max(sidebarWidth - 14, 1), 22)
+    CategoryEmptyButton:SetPoint("TOPLEFT", CategorySidebar, "TOPLEFT", 7, -28)
+    CategoryEmptyButton:SetText("Add Category")
+    CategoryEmptyButton:SetScript("OnClick", function()
+        if addon.Settings and addon.Settings.OpenEmotes then
+            addon.Settings.OpenEmotes()
+        end
+    end)
+    CategoryEmptyButton:Hide()
+
     for categoryIndex = 1, MAX_CATEGORIES do
         local button = CreateFrame("Button", nil, CategoryScrollChild)
         button:SetSize(sidebarWidth - 7, categoryButtonHeight)
@@ -1954,6 +1990,22 @@ function MainWindow.CreateMainWindow()
     ScrollChild = CreateFrame("Frame", nil, ScrollFrame)
     ScrollChild:SetSize(emoteColumnWidth, 1)
     ScrollFrame:SetScrollChild(ScrollChild)
+
+    EmoteEmptyButton = CreateFrame(
+        "Button",
+        nil,
+        ScrollChild,
+        "UIPanelButtonTemplate"
+    )
+    EmoteEmptyButton:SetSize(math.max(emoteColumnWidth - 5, 1), 22)
+    EmoteEmptyButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -2)
+    EmoteEmptyButton:SetText("Add Emote")
+    EmoteEmptyButton:SetScript("OnClick", function()
+        if addon.Settings and addon.Settings.OpenEmotes then
+            addon.Settings.OpenEmotes()
+        end
+    end)
+    EmoteEmptyButton:Hide()
 
     ScrollTopIndicator = MainFrame:CreateTexture(nil, "OVERLAY")
     ScrollTopIndicator:SetHeight(1)

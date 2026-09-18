@@ -2228,7 +2228,7 @@ local function CreateCategoriesSettingsPanel()
 
     local emptyText = listContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     emptyText:SetPoint("TOPLEFT", listContent, "TOPLEFT", 10, -15)
-    emptyText:SetText("No emotes in this category.")
+    emptyText:SetText("No emotes yet. Use Add Emote above.")
     emptyText:SetTextColor(0.65, 0.65, 0.65, 1)
 
     local emoteRows = {}
@@ -2618,5 +2618,13 @@ AddonSettings.Open = function()
         Settings.OpenToCategory(generalSettingsCategory:GetID())
     elseif settingsCategory then
         Settings.OpenToCategory(settingsCategory:GetID())
+    end
+end
+
+AddonSettings.OpenEmotes = function()
+    if categoriesSettingsCategory then
+        Settings.OpenToCategory(categoriesSettingsCategory:GetID())
+    else
+        AddonSettings.Open()
     end
 end

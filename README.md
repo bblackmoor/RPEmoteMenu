@@ -9,6 +9,7 @@ A customizable emote menu for **World of Warcraft** roleplayers.
 - **Minimize to icon:** Optionally replace the hidden title bar with an independently sized, square addon icon.
 - **Quick editing:** Use the icon at the right edge of any emote row to open its editing dialog.
 - **Reordering:** Drag visible emote labels to rearrange them within their category.
+- **Empty states:** Add-category and add-emote prompts open the relevant settings directly.
 - **Profiles:** Create, copy, rename, delete, and share character profiles.
 - **Sharing:** Import or export individual categories and complete profiles.
 - **Appearance:** Customize fonts, colors, selection effects, borders, opacity, and fading per profile.
