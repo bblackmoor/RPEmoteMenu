@@ -102,6 +102,7 @@ local function CreateLabeledEditBox(
     end
 
     editBox.RefreshFromDatabase = function(self)
+        self.isDirty = false
         DisplayCurrentValue(self)
         self:SetCursorPosition(0)
         self:HighlightText(0, 0)
@@ -132,7 +133,12 @@ local function CreateLabeledEditBox(
     end)
 
     local function Commit(self)
+        if not self.isDirty then
+            return
+        end
+
         if SetCurrentValue(self, self:GetText() or "") then
+            self.isDirty = false
             MainWindow.UpdateMenu()
 
             if not self.emoteIndex
@@ -141,13 +147,14 @@ local function CreateLabeledEditBox(
                 AddonSettings.RefreshCategorySelector()
             end
         else
+            self.isDirty = false
             DisplayCurrentValue(self)
         end
     end
 
     editBox:SetScript("OnTextChanged", function(self, userInput)
         if userInput then
-            Commit(self)
+            self.isDirty = true
         end
     end)
 
@@ -159,6 +166,12 @@ local function CreateLabeledEditBox(
     editBox:SetScript("OnEditFocusLost", function(self)
         Commit(self)
         DisplayCurrentValue(self)
+    end)
+
+    editBox:SetScript("OnEscapePressed", function(self)
+        self.isDirty = false
+        DisplayCurrentValue(self)
+        self:ClearFocus()
     end)
 
     editBox:RefreshFromDatabase()
