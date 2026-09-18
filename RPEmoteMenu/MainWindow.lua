@@ -352,6 +352,20 @@ function MainWindow.ResetWindowPosition()
     RefreshGeneralWindowFields()
 end
 
+function MainWindow.CenterWindow()
+    if not MainFrame then
+        return
+    end
+
+    settings.point = "CENTER"
+    settings.relativePoint = "CENTER"
+    settings.x = 0
+    settings.y = 0
+    MainFrame:ClearAllPoints()
+    MainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    RefreshGeneralWindowFields()
+end
+
 ApplyColumnLayout = function()
     if not MainFrame or not CategorySidebar or not CategoryScrollChild
         or not ScrollFrame or not ScrollChild then

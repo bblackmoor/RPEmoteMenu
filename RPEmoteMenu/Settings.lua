@@ -1487,7 +1487,7 @@ local function CreateGeneralSettingsPanel()
 
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -440)
-    positionLabel:SetText("Current window position")
+    positionLabel:SetText("Exact position (advanced)")
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 225, -435)
@@ -1522,6 +1522,12 @@ local function CreateGeneralSettingsPanel()
             )
         end
     )
+
+    local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    centerButton:SetSize(130, 24)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 360, -436)
+    centerButton:SetText("Center Window")
+    centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -475)

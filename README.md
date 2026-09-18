@@ -133,7 +133,8 @@ The **General** settings screen controls the current profile's window behavior a
 - Show or hide the addon at login.
 - Replace the auto-hidden title bar with a square addon icon and choose its size (16â€“64 pixels), independently of the main window dimensions.
 - Place the minimized icon at the upper-left or upper-right corner of the main window and choose its color tint.
-- Set the window position and height; width automatically fits every category and emote label in the profile.
+- Drag or center the window, with exact coordinates available as an advanced option.
+- Set the window height; width automatically fits every category and emote label in the profile.
 - Restore the default position and size.
 
 The window can also be moved and resized vertically while it is unlocked. Changing the height does not change the minimized icon, and changing the icon size does not resize the window. The category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
