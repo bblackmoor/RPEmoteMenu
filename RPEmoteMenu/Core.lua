@@ -38,7 +38,6 @@ eventFrame:SetScript("OnEvent", function(_, _, loadedAddonName)
     addon.Database.InitializeDatabase()
     addon.MainWindow.CreateMainWindow()
     addon.Settings.CreateSettingsPanel()
-    addon.MinimizedIconColor.CreateSettingsPanel()
 
     SLASH_ELLEMOTE1 = "/rpem"
     SlashCmdList["ELLEMOTE"] = HandleSlashCommand

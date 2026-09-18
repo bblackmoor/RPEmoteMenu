@@ -40,6 +40,8 @@ local PROFILE_SETTINGS_FIELDS = {
     keepOpen = true,
     minimizeToIcon = true,
     minimizedIconSize = true,
+    minimizedIconCorner = true,
+    minimizedIconColor = true,
     rememberMinimized = true,
     point = true,
     relativePoint = true,
@@ -85,13 +87,15 @@ local COLOR_SETTING_KEYS = {
     "categoryHighlightColor",
     "categoryBackgroundColor",
     "emoteBackgroundColor",
-    "borderColor"
+    "borderColor",
+    "minimizedIconColor"
 }
 local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     background = true, outline = true, underline = true, shadow = true,
     separator = true
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
+local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
     TOP = true,
@@ -337,6 +341,13 @@ local function ValidateProfileSettings(value)
         )
         if not imported.minimizedIconSize then return nil, errorMessage end
     end
+    if value.minimizedIconCorner == nil then
+        imported.minimizedIconCorner = addon.DefaultSettings.minimizedIconCorner
+    elseif VALID_MINIMIZED_ICON_CORNERS[value.minimizedIconCorner] then
+        imported.minimizedIconCorner = value.minimizedIconCorner
+    else
+        return nil, "Setting minimizedIconCorner is not supported."
+    end
 
     if not VALID_ANCHOR_POINTS[value.point] then
         return nil, "Setting point is not supported."
@@ -407,10 +418,14 @@ local function ValidateProfileSettings(value)
     if not imported.emoteFontSize then return nil, errorMessage end
 
     for _, key in ipairs(COLOR_SETTING_KEYS) do
-        imported[key], errorMessage = ValidateColor(
-            value[key], "Setting " .. key
-        )
-        if not imported[key] then return nil, errorMessage end
+        if value[key] == nil and key == "minimizedIconColor" then
+            imported[key] = CopyColor(addon.DefaultSettings[key])
+        else
+            imported[key], errorMessage = ValidateColor(
+                value[key], "Setting " .. key
+            )
+            if not imported[key] then return nil, errorMessage end
+        end
     end
 
     if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[value.categoryHighlightEffect] then
@@ -526,7 +541,7 @@ local function ExportProfileSettings(source)
     end
     for _, key in ipairs({
         "point", "relativePoint", "x", "y", "width", "height", "sidebarWidth",
-        "minimizedIconSize",
+        "minimizedIconSize", "minimizedIconCorner",
         "emoteColumnWidth",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",

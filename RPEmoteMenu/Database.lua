@@ -19,6 +19,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     separator = true
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
+local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
     TOP = true,
@@ -186,6 +187,9 @@ local function NormalizeSettings(source)
         addon.MAX_MINIMIZED_ICON_SIZE,
         defaults.minimizedIconSize
     ))
+    if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
+        result.minimizedIconCorner = defaults.minimizedIconCorner
+    end
     result.x = math.floor(ClampNumber(source.x, -100000, 100000, defaults.x))
     result.y = math.floor(ClampNumber(source.y, -100000, 100000, defaults.y))
 

@@ -211,6 +211,8 @@ addon.DefaultSettings = {
     keepOpen = false,
     minimizeToIcon = false,
     minimizedIconSize = 32,
+    minimizedIconCorner = "TOPLEFT",
+    minimizedIconColor = {r = 1.0, g = 0.82, b = 0.0},
     rememberMinimized = true,
     minimized = false,
     selectedCategory = 1,

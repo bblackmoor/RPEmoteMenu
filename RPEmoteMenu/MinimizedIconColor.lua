@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.DefaultSettings.minimizedIconColor = addon.DefaultSettings.minimizedIconColor
-    or {r = 1.0, g = 0.82, b = 0.0}
-
 local MinimizedIconColor = {}
 addon.MinimizedIconColor = MinimizedIconColor
 
@@ -61,30 +58,14 @@ local function SetColor(color)
 end
 
 
-function MinimizedIconColor.CreateSettingsPanel()
-    local panel = CreateFrame("Frame")
-
-    local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
-    heading:SetText("Minimized Icon")
-
-    local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
-    description:SetWidth(600)
-    description:SetJustifyH("LEFT")
-    description:SetText(
-        "Choose the color tint used for the on-screen minimized icon. "
-        .. "The normal addon icon is not changed."
-    )
-    description:SetTextColor(0.8, 0.8, 0.8)
-
-    local label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -90)
+function MinimizedIconColor.CreateSettingsControls(parent, x, y)
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     label:SetText("Icon color")
 
-    local button = CreateFrame("Button", nil, panel, "BackdropTemplate")
+    local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(52, 24)
-    button:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -112)
+    button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
     button:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -121,7 +102,7 @@ function MinimizedIconColor.CreateSettingsPanel()
         })
     end)
 
-    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     resetButton:SetSize(150, 24)
     resetButton:SetPoint("LEFT", button, "RIGHT", 12, 0)
     resetButton:SetText("Restore Yellow")
@@ -129,18 +110,13 @@ function MinimizedIconColor.CreateSettingsPanel()
         SetColor(addon.DefaultSettings.minimizedIconColor)
     end)
 
-    panel:SetScript("OnShow", function()
-        RefreshSwatch()
-        MinimizedIconColor.Apply()
-    end)
-
     RefreshSwatch()
+    return label, button, resetButton
+end
 
-    local category = Settings.RegisterCanvasLayoutCategory(
-        panel,
-        "RP Emote Menu - Minimized Icon"
-    )
-    Settings.RegisterAddOnCategory(category)
+
+function MinimizedIconColor.RefreshControl()
+    RefreshSwatch()
 end
 
 

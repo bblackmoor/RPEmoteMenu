@@ -101,9 +101,9 @@ Profile exports include sharable window settings, appearance, categories, and em
 
 All transfers use JSON text. Imports are validated before any existing category is replaced or any new profiles are added. Bulk imports skip **Default**, preserve existing profiles, and automatically rename conflicts.
 
-## Fonts and Colors
+## Appearance
 
-The **Fonts & Colors** settings screen customizes the current profile:
+The **Appearance** settings screen customizes the current profile:
 
 - Separate fonts and font sizes for category names and emote labels.
 - Category text, selected text, emote text, selection, background, and border colors.
@@ -124,6 +124,7 @@ The **General** settings screen controls the current profile's window behavior a
 - Hide the settings gear icon.
 - Show or hide the addon at login.
 - Replace the auto-hidden title bar with a square addon icon and choose its size (16â€“64 pixels), independently of the main window dimensions.
+- Place the minimized icon at the upper-left or upper-right corner of the main window and choose its color tint.
 - Set the window position, height, left-column width, and right-column width.
 - Restore the default position and size.
 

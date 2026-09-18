@@ -1460,6 +1460,19 @@ local function AnchorFrameByTopLeft()
     end
 end
 
+local function ApplyMinimizedIconAnchor()
+    if not MinimizedIconButton or not MainFrame then
+        return
+    end
+
+    local corner = settings.minimizedIconCorner == "TOPRIGHT"
+        and "TOPRIGHT"
+        or "TOPLEFT"
+
+    MinimizedIconButton:ClearAllPoints()
+    MinimizedIconButton:SetPoint(corner, MainFrame, corner)
+end
+
 local function UpdateWindowBodyVisibility()
     -- Keep the title bar fixed while the bottom edge rises or falls.
     AnchorFrameByTopLeft()
@@ -1480,6 +1493,7 @@ local function UpdateWindowBodyVisibility()
                 settings.minimizedIconSize,
                 settings.minimizedIconSize
             )
+            ApplyMinimizedIconAnchor()
             MinimizedIconButton:SetShown(MainFrame:IsShown())
             SetInternalFrameSize(settings.width, titleBarHeight)
         else
@@ -1518,6 +1532,10 @@ function MainWindow.ApplyMinimizeToIconSettings()
                 or defaults.minimizedIconSize)
         )
     )
+    settings.minimizedIconCorner = settings.minimizedIconCorner == "TOPRIGHT"
+        and "TOPRIGHT"
+        or "TOPLEFT"
+    ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
     RefreshGeneralWindowFields()
 end
@@ -1626,7 +1644,7 @@ function MainWindow.CreateMainWindow()
     TitleText:SetTextColor(1, 1, 1, 1)
 
     MinimizedIconButton = CreateFrame("Button", nil, UIParent)
-    MinimizedIconButton:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+    ApplyMinimizedIconAnchor()
     MinimizedIconButton:SetSize(
         defaults.minimizedIconSize,
         defaults.minimizedIconSize
