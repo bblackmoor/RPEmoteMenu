@@ -371,7 +371,7 @@ local function ValidateProfileSettings(value)
     )
     if imported.y == nil then return nil, errorMessage end
 
-    imported.height, errorMessage = ValidateNumber(value.height, 150, 600, "Window height", true)
+    imported.height, errorMessage = ValidateNumber(value.height, 150, 630, "Window height", true)
     if not imported.height then return nil, errorMessage end
 
     for _, key in ipairs({"categoryFont", "emoteFont"}) do

@@ -1591,7 +1591,7 @@ local function CreateGeneralSettingsPanel()
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -475)
-    heightLabel:SetText("Window height (150-600 px)")
+    heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
         panel, 190, -471, 70,

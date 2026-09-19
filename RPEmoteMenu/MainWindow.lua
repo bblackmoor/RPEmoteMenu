@@ -18,7 +18,7 @@ local titleBarHeight = 30
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumUsableWidth = 220
 local minimumHeight = 150
-local maximumHeight = 600
+local maximumHeight = 630
 local minimumSidebarWidth = addon.MIN_SIDEBAR_WIDTH
 local maximumSidebarWidth = addon.MAX_SIDEBAR_WIDTH
 local minimumEmoteColumnWidth = addon.MIN_EMOTE_COLUMN_WIDTH
@@ -63,7 +63,9 @@ local autoHideGeneration = 0
 local autoHideScheduled = false
 local autoHideFading = false
 local isApplyingColumnSize = false
+local isUserResizing = false
 local fontRefreshGeneration = 0
+local trackedEmoteButton
 
 local function SetInternalFrameSize(width, height)
     isApplyingColumnSize = true
@@ -985,21 +987,32 @@ local function SetEmoteHovered(button, isHovered)
     ApplyEmoteHoverHighlight(button)
 end
 
-local function RefreshEmoteHovered(button)
-    if not button or not button:IsShown() then
-        return
+local function TrackEmoteHover(button)
+    if trackedEmoteButton and trackedEmoteButton ~= button then
+        SetEmoteHovered(trackedEmoteButton, false)
     end
 
-    SetEmoteHovered(
-        button,
-        button:IsMouseOver()
-            or (button.EditButton and button.EditButton:IsMouseOver())
-    )
+    trackedEmoteButton = button
+    SetEmoteHovered(button, true)
+end
+
+local function RefreshEmoteHovered(button)
+    if not button or not button:IsShown() then
+        return false
+    end
+
+    local isHovered = button:IsMouseOver()
+        or (button.EditButton and button.EditButton:IsMouseOver())
+    SetEmoteHovered(button, isHovered)
+    return isHovered
 end
 
 local function ScheduleEmoteHoverRefresh(button)
     C_Timer.After(0, function()
-        RefreshEmoteHovered(button)
+        if not RefreshEmoteHovered(button)
+            and trackedEmoteButton == button then
+            trackedEmoteButton = nil
+        end
     end)
 end
 
@@ -1065,7 +1078,7 @@ local function GetContainerButton()
         "ADD"
     )
     button.EditButton:SetScript("OnEnter", function(self)
-        SetEmoteHovered(button, true)
+        TrackEmoteHover(button)
         ShowEmoteTooltip(button, self, true)
     end)
     button.EditButton:SetScript("OnLeave", function()
@@ -1074,7 +1087,7 @@ local function GetContainerButton()
     end)
 
     button:SetScript("OnEnter", function(self)
-        SetEmoteHovered(button, true)
+        TrackEmoteHover(button)
         ShowEmoteTooltip(button, self, false)
     end)
     button:SetScript("OnLeave", function()
@@ -1496,6 +1509,7 @@ end
 function MainWindow.UpdateMenu()
     MainWindow.NotifyActivity()
     ApplyAutomaticWidth()
+    trackedEmoteButton = nil
 
     for _, button in ipairs(buttonsPool) do
         button:SetScript("OnUpdate", nil)
@@ -1774,10 +1788,12 @@ function MainWindow.CreateMainWindow()
     MainFrame:SetScript("OnSizeChanged", function(self, width, height)
         if isApplyingColumnSize then return end
         local automaticWidth = sidebarWidth + emoteColumnWidth + columnChromeWidth
-        settings.height = math.max(
-            minimumHeight,
-            math.min(maximumHeight, math.floor(height + 0.5))
-        )
+        if isUserResizing and not IsWindowBodyHidden() then
+            settings.height = math.max(
+                minimumHeight,
+                math.min(maximumHeight, math.floor(height + 0.5))
+            )
+        end
         if math.abs(width - automaticWidth) > 0.5 then
             isApplyingColumnSize = true
             self:SetWidth(automaticWidth)
@@ -2125,12 +2141,16 @@ function MainWindow.CreateMainWindow()
     ResizeGrip:SetScript("OnMouseDown", function(_, button)
         if button == "LeftButton" and not settings.locked
             and not IsWindowBodyHidden() then
+            isUserResizing = true
             MainFrame:StartSizing("BOTTOM")
         end
     end)
     ResizeGrip:SetScript("OnMouseUp", function()
         MainFrame:StopMovingOrSizing()
-        SaveWindowSize()
+        if isUserResizing then
+            SaveWindowSize()
+            isUserResizing = false
+        end
     end)
 
     MainFrame:HookScript("OnEnter", function()
@@ -2158,6 +2178,11 @@ function MainWindow.CreateMainWindow()
             return
         end
         mouseCheckElapsed = 0
+
+        if trackedEmoteButton
+            and not RefreshEmoteHovered(trackedEmoteButton) then
+            trackedEmoteButton = nil
+        end
 
         if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
