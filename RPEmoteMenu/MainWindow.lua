@@ -1644,6 +1644,11 @@ local function UpdateWindowBodyVisibility()
             SetInternalFrameSize(width, titleBarHeight)
         end
     else
+        -- Restore the saved height before raising the minimum resize bound.
+        -- Applying the normal bounds while the frame is still collapsed to
+        -- titleBarHeight makes WoW clamp it to minimumHeight. OnSizeChanged
+        -- then persists that clamped value over the user's chosen height.
+        SetInternalFrameSize(width, settings.height)
         SetNormalResizeBounds()
         TitleText:Show()
         PinBtn:Show()
@@ -1651,7 +1656,6 @@ local function UpdateWindowBodyVisibility()
         MainFrame:EnableMouse(true)
         ApplyMainFrameBackdrop()
         MainWindow.ApplySettingsGearVisibility()
-        SetInternalFrameSize(width, settings.height)
         CategorySidebar:Show()
         ScrollFrame:Show()
         MainWindow.UpdateMenu()
