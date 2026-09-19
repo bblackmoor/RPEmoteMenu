@@ -29,6 +29,7 @@ local categoryButtonHeight = 24
 local emoteButtonHeight = 20
 
 local MainFrame
+local TitleBar
 local TitleText
 local MinimizedIconButton
 local CategorySidebar
@@ -1633,6 +1634,7 @@ local function UpdateWindowBodyVisibility()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
         if settings.minimizeToIcon then
+            TitleBar:Hide()
             TitleText:Hide()
             PinBtn:Hide()
             SettingsBtn:Hide()
@@ -1646,6 +1648,7 @@ local function UpdateWindowBodyVisibility()
             MinimizedIconButton:SetShown(MainFrame:IsShown())
             SetInternalFrameSize(width, titleBarHeight)
         else
+            TitleBar:Show()
             TitleText:Show()
             PinBtn:Show()
             MinimizedIconButton:Hide()
@@ -1661,6 +1664,7 @@ local function UpdateWindowBodyVisibility()
         -- then persists that clamped value over the user's chosen height.
         SetInternalFrameSize(width, settings.height)
         SetNormalResizeBounds()
+        TitleBar:Show()
         TitleText:Show()
         PinBtn:Show()
         MinimizedIconButton:Hide()
@@ -1794,6 +1798,28 @@ function MainWindow.CreateMainWindow()
             isApplyingColumnSize = true
             self:SetWidth(automaticWidth)
             isApplyingColumnSize = false
+        end
+    end)
+
+    TitleBar = CreateFrame("Frame", nil, MainFrame)
+    TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+    TitleBar:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
+    TitleBar:SetHeight(titleBarHeight)
+    TitleBar:SetFrameLevel(MainFrame:GetFrameLevel() + 1)
+    TitleBar:EnableMouse(true)
+    TitleBar:RegisterForDrag("LeftButton")
+    TitleBar:SetScript("OnDragStart", function()
+        if not settings.locked and not settings.keepOpen then
+            MainFrame:StartMoving()
+        end
+    end)
+    TitleBar:SetScript("OnDragStop", function()
+        MainFrame:StopMovingOrSizing()
+        SaveWindowPosition()
+    end)
+    TitleBar:SetScript("OnMouseUp", function(_, button)
+        if button == "RightButton" then
+            addon.Settings.Open()
         end
     end)
 

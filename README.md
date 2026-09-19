@@ -50,7 +50,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
    Hovering over an emote displays its default and targeted commands.
    Emote labels can be dragged into a new order; an insertion line marks the destination.
    When inactivity fading is enabled and the menu is unpinned, it hides after use or after the configured delay. The title bar—or the addon icon when **Minimize to icon** is enabled—reveals it when hovered.
-3. The gear icon and `/rpem config` command open the addon settings.
+3. The gear icon, a right-click on the title bar, and the `/rpem config` command open the addon settings.
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
 5. Category names and their emote commands can be edited under **Emotes**.
 
@@ -133,7 +133,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 The **General** settings screen controls the current profile's window behavior and layout:
 
 - The window position and height can be locked.
-- The settings gear icon can be hidden.
+- The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.
 - Inactivity fading can be enabled with a configurable delay and inactive opacity. It is disabled by default, so the menu remains visible.
 - The auto-hidden title bar can be replaced by a square addon icon sized from 16 to 64 pixels, independently of the main window dimensions.
