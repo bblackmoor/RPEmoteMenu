@@ -997,6 +997,14 @@ local function RefreshEmoteHovered(button)
     )
 end
 
+local function RefreshVisibleEmoteHoverStates()
+    for _, button in ipairs(buttonsPool) do
+        if button:IsShown() then
+            RefreshEmoteHovered(button)
+        end
+    end
+end
+
 local function ScheduleEmoteHoverRefresh(button)
     C_Timer.After(0, function()
         RefreshEmoteHovered(button)
@@ -1056,8 +1064,9 @@ local function GetContainerButton()
     button.EditButton:SetPoint("RIGHT", button, "RIGHT", -3, 0)
     button.EditButton:SetFrameLevel(button:GetFrameLevel() + 2)
     button.EditButton:RegisterForClicks("LeftButtonUp")
-    button.EditButton:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
-    button.EditButton.Icon = button.EditButton:GetNormalTexture()
+    button.EditButton.Icon = button.EditButton:CreateTexture(nil, "ARTWORK")
+    button.EditButton.Icon:SetAllPoints(button.EditButton)
+    button.EditButton.Icon:SetTexture("Interface\\Buttons\\UI-OptionsButton")
     button.EditButton.Icon:SetAlpha(0.25)
     button.EditButton:SetHighlightTexture(
         "Interface\\Buttons\\ButtonHilight-Square",
@@ -2157,6 +2166,8 @@ function MainWindow.CreateMainWindow()
             return
         end
         mouseCheckElapsed = 0
+
+        RefreshVisibleEmoteHoverStates()
 
         if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
