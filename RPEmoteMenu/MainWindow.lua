@@ -65,7 +65,6 @@ local autoHideFading = false
 local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
-local trackedEmoteButton
 
 local function SetInternalFrameSize(width, height)
     isApplyingColumnSize = true
@@ -981,38 +980,22 @@ end
 
 local function SetEmoteHovered(button, isHovered)
     button.isHovered = isHovered
-    if button.EditButton and button.EditButton.Icon then
-        button.EditButton.Icon:SetAlpha(isHovered and 1 or 0.25)
-    end
     ApplyEmoteHoverHighlight(button)
-end
-
-local function TrackEmoteHover(button)
-    if trackedEmoteButton and trackedEmoteButton ~= button then
-        SetEmoteHovered(trackedEmoteButton, false)
-    end
-
-    trackedEmoteButton = button
-    SetEmoteHovered(button, true)
 end
 
 local function RefreshEmoteHovered(button)
     if not button or not button:IsShown() then
-        return false
+        return
     end
 
     local isHovered = button:IsMouseOver()
         or (button.EditButton and button.EditButton:IsMouseOver())
     SetEmoteHovered(button, isHovered)
-    return isHovered
 end
 
 local function ScheduleEmoteHoverRefresh(button)
     C_Timer.After(0, function()
-        if not RefreshEmoteHovered(button)
-            and trackedEmoteButton == button then
-            trackedEmoteButton = nil
-        end
+        RefreshEmoteHovered(button)
     end)
 end
 
@@ -1073,12 +1056,20 @@ local function GetContainerButton()
     button.EditButton.Icon:SetAllPoints(button.EditButton)
     button.EditButton.Icon:SetTexture("Interface\\Buttons\\UI-OptionsButton")
     button.EditButton.Icon:SetAlpha(0.25)
+
+    -- Native HIGHLIGHT layers follow WoW's actual mouse focus and cannot be
+    -- left bright by missed or reordered OnEnter/OnLeave callbacks.
+    button.EditHoverIcon = button:CreateTexture(nil, "HIGHLIGHT")
+    button.EditHoverIcon:SetSize(16, 16)
+    button.EditHoverIcon:SetPoint("CENTER", button.EditButton, "CENTER")
+    button.EditHoverIcon:SetTexture("Interface\\Buttons\\UI-OptionsButton")
+    button.EditHoverIcon:SetBlendMode("BLEND")
     button.EditButton:SetHighlightTexture(
-        "Interface\\Buttons\\ButtonHilight-Square",
-        "ADD"
+        "Interface\\Buttons\\UI-OptionsButton",
+        "BLEND"
     )
     button.EditButton:SetScript("OnEnter", function(self)
-        TrackEmoteHover(button)
+        SetEmoteHovered(button, true)
         ShowEmoteTooltip(button, self, true)
     end)
     button.EditButton:SetScript("OnLeave", function()
@@ -1087,7 +1078,7 @@ local function GetContainerButton()
     end)
 
     button:SetScript("OnEnter", function(self)
-        TrackEmoteHover(button)
+        SetEmoteHovered(button, true)
         ShowEmoteTooltip(button, self, false)
     end)
     button:SetScript("OnLeave", function()
@@ -1509,7 +1500,6 @@ end
 function MainWindow.UpdateMenu()
     MainWindow.NotifyActivity()
     ApplyAutomaticWidth()
-    trackedEmoteButton = nil
 
     for _, button in ipairs(buttonsPool) do
         button:SetScript("OnUpdate", nil)
@@ -2178,11 +2168,6 @@ function MainWindow.CreateMainWindow()
             return
         end
         mouseCheckElapsed = 0
-
-        if trackedEmoteButton
-            and not RefreshEmoteHovered(trackedEmoteButton) then
-            trackedEmoteButton = nil
-        end
 
         if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
