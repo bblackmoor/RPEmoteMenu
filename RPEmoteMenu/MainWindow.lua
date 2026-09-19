@@ -187,14 +187,15 @@ local function CalculateColumnWidths()
     end
 
     -- Category text uses 11 pixels inside its button plus 7 pixels of sidebar
-    -- chrome. Emotes reserve room for their edit button as well as text padding.
+    -- chrome. Emotes reserve room for their edit button, text padding, and an
+    -- eight-pixel gap between the label and gear.
     sidebarWidth = ClampColumnWidth(
         widestCategory + 18,
         minimumSidebarWidth,
         maximumSidebarWidth
     )
     emoteColumnWidth = ClampColumnWidth(
-        widestEmote + 35,
+        widestEmote + 39,
         minimumEmoteColumnWidth,
         maximumEmoteColumnWidth
     )
@@ -1092,7 +1093,7 @@ local function GetContainerButton()
         GameTooltip:Hide()
     end)
 
-    button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -4, 0)
+    button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
     button.Text:SetJustifyH("LEFT")
     button.Text:SetWordWrap(false)
     ApplyFont(
