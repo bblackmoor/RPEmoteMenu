@@ -1440,7 +1440,7 @@ local function CreateGeneralSettingsPanel()
     iconSizeLabel:SetText("Minimized icon size (16-64 px)")
 
     local iconSizeBox = CreateIntegerEditBox(
-        panel, 190, -371, 70,
+        panel, 230, -371, 70,
         function() return settings.minimizedIconSize end,
         function(value)
             settings.minimizedIconSize = value
@@ -1547,15 +1547,15 @@ local function CreateGeneralSettingsPanel()
     positionLabel:SetText("Exact position (advanced)")
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 225, -535)
+    xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 265, -535)
     xLabel:SetText("X")
 
     local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    yLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 305, -535)
+    yLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 345, -535)
     yLabel:SetText("Y")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 190, -536, 70,
+        panel, 230, -536, 70,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1568,7 +1568,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 270, -536, 70,
+        panel, 310, -536, 70,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1582,7 +1582,7 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 360, -536)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -536)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
@@ -1591,7 +1591,7 @@ local function CreateGeneralSettingsPanel()
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 190, -571, 70,
+        panel, 230, -571, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
