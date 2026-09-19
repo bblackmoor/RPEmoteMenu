@@ -5,16 +5,20 @@
 A customizable emote menu for **World of Warcraft** roleplayers.
 
 - **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
-- **Pinning:** Pin the window open, or let its body hide until you mouse over the title bar.
-- **Minimize to icon:** Optionally replace the hidden title bar with an independently sized, square addon icon.
-- **Quick editing:** Use the icon at the right edge of any emote row to open its editing dialog.
-- **Reordering:** Drag visible emote labels to rearrange them within their category.
-- **Empty states:** Add-category and add-emote prompts open the relevant settings directly.
-- **Profiles:** Create, copy, rename, delete, and share character profiles.
-- **Sharing:** Import or export individual categories and complete profiles.
+- **Easy organization:** Edit emotes from the menu, drag them into order, and duplicate emotes or categories.
+- **Flexible window:** Pin it open, let it hide until hovered, or replace it with a configurable minimized icon.
+- **Profiles and sharing:** Create distinct character setups and import or export categories and complete profiles.
 - **Appearance:** Customize fonts, colors, selection effects, borders, opacity, and fading per profile.
-- **Window:** Move, adjust the height, minimize, or lock the menu; its columns automatically fit their labels.
 - **Commands:** `/rpem` toggles the menu; `/rpem config` opens its settings.
+
+## What's New In Version 2
+
+- **Easier editing:** Open an emote editor from its row, use streamlined settings, duplicate emotes or categories, and jump directly from empty-menu prompts to the right editor.
+- **Drag-and-drop sorting:** Reorder visible emotes directly in the menu with a clear insertion marker.
+- **Optional minimize to icon:** Replace the hidden title bar with a transparent icon whose size, corner, and color tint can be configured and previewed.
+- **Refined pinning and hiding:** Pin the menu open or let it fade and collapse when not in use, then reveal it by hovering.
+- **Smarter layout:** Columns automatically fit their labels while the user-controlled height, position, and lock state remain persistent.
+- **Improved profiles:** Start from five bundled visual themes and use clearer tools for creating, copying, restoring, importing, and exporting profiles.
 
 ## Screenshots
 
@@ -45,7 +49,7 @@ Enable **RP Emote Menu** from the character-selection screen's AddOns list if ne
    Use the small icon at the right edge of an emote to edit its name and commands.
    Hover over an emote to see its default and targeted commands.
    Drag an emote label to move it; the insertion line shows where it will be placed.
-   When unpinned, the menu hides after use or when the pointer leaves it. Hover over the title barâ€”or the addon icon when **Minimize to icon** is enabledâ€”to reopen it.
+   When unpinned, the menu hides after use or when the pointer leaves it. Hover over the title bar—or the addon icon when **Minimize to icon** is enabled—to reopen it.
 3. Open settings with the gear icon or `/rpem config`.
 4. Under **Profiles**, create or copy a profile if you want to customize categories and emotes.
 5. Under **Emotes**, choose a category and edit its name and commands.
@@ -132,7 +136,7 @@ The **General** settings screen controls the current profile's window behavior a
 - Lock the window position and height.
 - Hide the settings gear icon.
 - Show or hide the addon at login.
-- Replace the auto-hidden title bar with a square addon icon and choose its size (16â€“64 pixels), independently of the main window dimensions.
+- Replace the auto-hidden title bar with a square addon icon and choose its size (16–64 pixels), independently of the main window dimensions.
 - Place the minimized icon at the upper-left or upper-right corner of the main window and choose its color tint.
 - Drag or center the window, with exact coordinates available as an advanced option.
 - Set the window height; width automatically fits every category and emote label in the profile.
