@@ -2,23 +2,23 @@
 
 ## The Short Version
 
-A customizable emote menu for **World of Warcraft** roleplayers.
+RP Emote Menu is a customizable emote menu that keeps frequently used character actions organized and readily available for **World of Warcraft** roleplayers.
 
-- **Emotes:** Up to 100 emotes across 10 categories, with optional targeted commands.
-- **Easy organization:** Edit emotes from the menu, drag them into order, and duplicate emotes or categories.
-- **Flexible window:** Pin it open, let it hide until hovered, or replace it with a configurable minimized icon.
-- **Profiles and sharing:** Create distinct character setups and import or export categories and complete profiles.
-- **Appearance:** Customize fonts, colors, selection effects, borders, opacity, and fading per profile.
-- **Commands:** `/rpem` toggles the menu; `/rpem config` opens its settings.
+- **Emotes:** The addon organizes up to 100 emotes across 10 categories, with optional targeted commands.
+- **Easy organization:** Emotes can be edited from the menu, dragged into order, and duplicated along with complete categories.
+- **Flexible window:** The window can remain pinned, hide until hovered, or be replaced by a configurable minimized icon.
+- **Profiles and sharing:** Profiles provide distinct character setups, while categories and complete profiles can be imported or exported.
+- **Appearance:** Per-profile settings control fonts, colors, selection effects, borders, opacity, and fading.
+- **Commands:** `/rpem` toggles the menu, while `/rpem config` opens its settings.
 
 ## What's New In Version 2
 
-- **Easier editing:** Open an emote editor from its row, use streamlined settings, duplicate emotes or categories, and jump directly from empty-menu prompts to the right editor.
-- **Drag-and-drop sorting:** Reorder visible emotes directly in the menu with a clear insertion marker.
-- **Optional minimize to icon:** Replace the hidden title bar with a transparent icon whose size, corner, and color tint can be configured and previewed.
-- **Refined pinning and hiding:** Pin the menu open or let it fade and collapse when not in use, then reveal it by hovering.
-- **Smarter layout:** Columns automatically fit their labels while the user-controlled height, position, and lock state remain persistent.
-- **Improved profiles:** Start from five bundled visual themes and use clearer tools for creating, copying, restoring, importing, and exporting profiles.
+- **Easier editing:** Version 2 adds row-level emote editing, streamlined settings, emote and category duplication, and direct editing links in empty menus.
+- **Drag-and-drop sorting:** Visible emotes can be reordered directly in the menu with a clear insertion marker.
+- **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, corner, color tint, and live preview.
+- **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
+- **Smarter layout:** Column widths automatically fit their labels, while height, position, and lock state remain persistent.
+- **Improved profiles:** Five bundled visual themes accompany clearer tools for creating, copying, restoring, importing, and exporting profiles.
 
 ## Screenshots
 
@@ -34,36 +34,36 @@ A customizable emote menu for **World of Warcraft** roleplayers.
 
 ## Installation
 
-Place the `RPEmoteMenu` folder in your World of Warcraft addons directory:
+The `RPEmoteMenu` folder should be placed in the World of Warcraft addons directory:
 
 ```text
 World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/
 ```
 
-Enable **RP Emote Menu** from the character-selection screen's AddOns list if necessary.
+If necessary, **RP Emote Menu** can be enabled from the character-selection screen's AddOns list.
 
 ## Getting Started
 
-1. Enter `/rpem` to show or hide the menu.
-2. Mouse over a category to display its emotes, then select an emote.
-   Use the small icon at the right edge of an emote to edit its name and commands.
-   Hover over an emote to see its default and targeted commands.
-   Drag an emote label to move it; the insertion line shows where it will be placed.
-   When unpinned, the menu hides after use or when the pointer leaves it. Hover over the title bar—or the addon icon when **Minimize to icon** is enabled—to reopen it.
-3. Open settings with the gear icon or `/rpem config`.
-4. Under **Profiles**, create or copy a profile if you want to customize categories and emotes.
-5. Under **Emotes**, choose a category and edit its name and commands.
+1. The `/rpem` command shows or hides the menu.
+2. Hovering over a category displays its emotes, and selecting an emote performs it.
+   The small icon at the right edge of each row opens that emote's name and command editor.
+   Hovering over an emote displays its default and targeted commands.
+   Emote labels can be dragged into a new order; an insertion line marks the destination.
+   When unpinned, the menu hides after use or when the pointer leaves it. The title bar—or the addon icon when **Minimize to icon** is enabled—reveals it when hovered.
+3. The gear icon and `/rpem config` command open the addon settings.
+4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
+5. Category names and their emote commands can be edited under **Emotes**.
 
 The built-in **Default** profile is always available. Its categories and emotes are protected, but its window and appearance settings can be customized.
 
 ## Categories and Emotes
 
-Each profile supports **10 categories** with up to **10 emotes** each. Open **Emotes** in the addon settings and choose a category from the dropdown.
+Each profile supports **10 categories** with up to **10 emotes** each. The **Emotes** settings screen provides a category dropdown for editing them.
 
 Each emote includes:
 
 - **Emote Label:** The text shown in the menu.
-- **Default Command:** The command used when you have no other target.
+- **Default Command:** The command used when no other unit is targeted.
 - **Targeted Command:** An optional command used when targeting another unit.
 
 Commands can use built-in emotes such as `/wave` or custom `/e` commands.
@@ -80,19 +80,19 @@ The **Emotes** screen can restore the selected category or every category in the
 
 ## Profiles
 
-A profile contains its categories, emotes, window layout, and appearance. Profiles are available to all of your characters, while each character independently chooses which profile to use.
+A profile contains its categories, emotes, window layout, and appearance. Profiles are available to all characters, while an active profile is selected independently for each character.
 
 The **Default** profile has protected categories and is local only. It cannot be imported, exported, renamed, or deleted. Its window and appearance settings remain customizable and persistent.
 
 The **Profiles** settings screen includes:
 
-- **Create Profile:** Create a profile with the built-in categories and the current profile's settings.
-- **Copy Profile:** Duplicate the current profile, including its categories, emotes, layout, and appearance.
-- **Rename Profile:** Rename the current custom profile.
-- **Delete Profile:** Delete the current custom profile after confirmation.
-- **Export Profile:** Copy the current custom profile as JSON.
-- **Import Profile:** Add a profile from exported JSON.
-- **Restore Bundled Profiles:** Reset the five bundled profiles and recreate any that were deleted.
+- **Create Profile:** Creates a profile with the built-in categories and the current profile's settings.
+- **Copy Profile:** Duplicates the current profile, including its categories, emotes, layout, and appearance.
+- **Rename Profile:** Renames the current custom profile.
+- **Delete Profile:** Deletes the current custom profile after confirmation.
+- **Export Profile:** Copies the current custom profile as JSON.
+- **Import Profile:** Adds a profile from exported JSON.
+- **Restore Bundled Profiles:** Resets the five bundled profiles and recreates any that were deleted.
 
 Imported profiles do not replace or activate existing profiles. If an imported name is already in use, the addon assigns the new profile a unique name. Deleting a profile returns characters using it to **Default**.
 
@@ -114,7 +114,7 @@ All transfers use JSON text. Imports are validated before any existing category 
 
 ## Appearance
 
-The **Appearance** settings screen customizes the current profile:
+The **Appearance** settings screen provides these options for the current profile:
 
 - Separate fonts and font sizes for category names and emote labels.
 - Category text, selected text, emote text, selection, background, and border colors.
@@ -123,7 +123,7 @@ The **Appearance** settings screen customizes the current profile:
 - Background opacity and active window opacity.
 - Optional inactivity fading, with configurable delay and inactive opacity.
 
-The font menus include WOW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
+The font menus include WoW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
 
 If a saved custom font is unavailable, the font selector marks it in red and the menu temporarily displays Friz Quadrata instead.
 
@@ -133,14 +133,14 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 
 The **General** settings screen controls the current profile's window behavior and layout:
 
-- Lock the window position and height.
-- Hide the settings gear icon.
-- Show or hide the addon at login.
-- Replace the auto-hidden title bar with a square addon icon and choose its size (16–64 pixels), independently of the main window dimensions.
-- Place the minimized icon at the upper-left or upper-right corner of the main window and choose its color tint.
-- Drag or center the window, with exact coordinates available as an advanced option.
-- Set the window height; width automatically fits every category and emote label in the profile.
-- Restore the default position and size.
+- The window position and height can be locked.
+- The settings gear icon can be hidden.
+- The addon can be shown or hidden at login.
+- The auto-hidden title bar can be replaced by a square addon icon sized from 16 to 64 pixels, independently of the main window dimensions.
+- The minimized icon can occupy the upper-left or upper-right corner of the main window and can use a custom color tint.
+- The window can be dragged or centered, with exact coordinates available as an advanced option.
+- The window height can be set manually, while its width automatically fits every category and emote label in the profile.
+- The default position and size can be restored.
 
 The window can also be moved and resized vertically while it is unlocked. Changing the height does not change the minimized icon, and changing the icon size does not resize the window. The category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
 
@@ -148,21 +148,21 @@ The window can also be moved and resized vertically while it is unlocked. Changi
 
 | Command          | Description                    |
 | :--------------- | :----------------------------- |
-| `/rpem`          | Show or hide the RP Emote Menu |
-| `/rpem config`   | Open the addon settings        |
-| `/rpem options`  | Open the addon settings        |
-| `/rpem settings` | Open the addon settings        |
+| `/rpem`          | Shows or hides RP Emote Menu   |
+| `/rpem config`   | Opens the addon settings       |
+| `/rpem options`  | Opens the addon settings       |
+| `/rpem settings` | Opens the addon settings       |
 
 ## Target Tokens
 
-Use these tokens in either command to include character names:
+These tokens insert character names into either command:
 
 | Token      | Description                             |
 | :--------- | :-------------------------------------- |
 | `{target}` | Target's name without the realm         |
-| `{player}` | Your character's name without the realm |
+| `{player}` | Current character's name without the realm |
 
-The **Targeted Command** is used only when another unit is targeted. Without a target, or when targeting yourself, the **Default Command** is used instead.
+The **Targeted Command** is used only when another unit is targeted. Without a target, or when the character targets itself, the **Default Command** is used instead.
 
 ---
 
