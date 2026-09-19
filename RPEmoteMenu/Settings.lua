@@ -1506,8 +1506,14 @@ local function CreateGeneralSettingsPanel()
         end
     end)
 
-    local iconColorLabel, iconColorButton, iconColorResetButton =
-        addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -335)
+    local iconColorLabel,
+        iconColorButton,
+        iconColorResetButton,
+        iconColorPreview = addon.MinimizedIconColor.CreateSettingsControls(
+            panel,
+            20,
+            -335
+        )
 
     local iconNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -385)
@@ -1531,6 +1537,7 @@ local function CreateGeneralSettingsPanel()
         iconSizeLabel:SetAlpha(alpha)
         iconCornerLabel:SetAlpha(alpha)
         iconColorLabel:SetAlpha(alpha)
+        iconColorPreview:SetAlpha(alpha)
         iconNote:SetAlpha(alpha)
     end
 

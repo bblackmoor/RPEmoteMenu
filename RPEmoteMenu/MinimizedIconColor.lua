@@ -4,6 +4,7 @@ local MinimizedIconColor = {}
 addon.MinimizedIconColor = MinimizedIconColor
 
 local colorControl
+local previewControl
 
 local function CopyColor(color)
     return {
@@ -42,12 +43,14 @@ end
 
 
 local function RefreshSwatch()
-    if not colorControl then
-        return
-    end
-
     local color = GetSettings().minimizedIconColor
-    colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
+    if colorControl then
+        colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
+    end
+    if previewControl and previewControl.Icon then
+        previewControl.Icon:SetDesaturated(true)
+        previewControl.Icon:SetVertexColor(color.r, color.g, color.b, 1)
+    end
 end
 
 
@@ -110,8 +113,18 @@ function MinimizedIconColor.CreateSettingsControls(parent, x, y)
         SetColor(addon.DefaultSettings.minimizedIconColor)
     end)
 
+    local preview = CreateFrame("Frame", nil, parent)
+    preview:SetSize(32, 32)
+    preview:SetPoint("LEFT", resetButton, "RIGHT", 12, 0)
+    preview.Icon = preview:CreateTexture(nil, "ARTWORK")
+    preview.Icon:SetAllPoints(preview)
+    preview.Icon:SetTexture(
+        "Interface\\AddOns\\RPEmoteMenu\\Media\\icon-minimized.tga"
+    )
+    previewControl = preview
+
     RefreshSwatch()
-    return label, button, resetButton
+    return label, button, resetButton, preview
 end
 
 
