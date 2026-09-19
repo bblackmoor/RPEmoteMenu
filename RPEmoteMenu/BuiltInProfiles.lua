@@ -24,7 +24,6 @@ addon.BuiltInProfiles = {
             emoteFont = "Arial Narrow",
             emoteFontSize = 18,
             emoteTextColor = {r = 0.6, g = 0.9333334, b = 0.9333334},
-            height = 310,
             selectedCategoryTextColor = {r = 0, g = 1, b = 1},
             windowOpacity = 0.9
         }
@@ -47,7 +46,6 @@ addon.BuiltInProfiles = {
             emoteFont = "Arial Narrow",
             emoteFontSize = 18,
             emoteTextColor = {r = 1, g = 0, b = 0},
-            height = 304,
             selectedCategoryTextColor = {r = 1, g = 1, b = 1},
             windowOpacity = 0.9
         }
@@ -70,7 +68,6 @@ addon.BuiltInProfiles = {
             emoteFont = "Arial Narrow",
             emoteFontSize = 21,
             emoteTextColor = {r = 0, g = 1, b = 1},
-            height = 325,
             selectedCategoryTextColor = {r = 0, g = 1, b = 1},
             windowOpacity = 1
         }
@@ -93,7 +90,6 @@ addon.BuiltInProfiles = {
             emoteFont = "Arial Narrow",
             emoteFontSize = 24,
             emoteTextColor = {r = 1, g = 1, b = 1},
-            height = 365,
             selectedCategoryTextColor = {r = 1, g = 1, b = 1},
             windowOpacity = 0.9
         }
@@ -116,7 +112,6 @@ addon.BuiltInProfiles = {
             emoteFont = "Friz Quadrata",
             emoteFontSize = 17,
             emoteTextColor = {r = 0.78, g = 0.86, b = 1},
-            height = 320,
             selectedCategoryTextColor = {r = 1, g = 1, b = 1},
             windowOpacity = 1
         }
