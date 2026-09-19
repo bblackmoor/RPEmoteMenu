@@ -6,7 +6,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 - **Emotes:** The addon organizes up to 100 emotes across 10 categories, with optional targeted commands.
 - **Easy organization:** Emotes can be edited from the menu, dragged into order, and duplicated along with complete categories.
-- **Flexible window:** The window can remain pinned, hide until hovered, or be replaced by a configurable minimized icon.
+- **Flexible window:** The window remains visible by default; optional inactivity fading can hide it or replace it with a configurable minimized icon.
 - **Profiles and sharing:** Profiles provide distinct character setups, while categories and complete profiles can be imported or exported.
 - **Appearance:** Per-profile settings control fonts, colors, selection effects, borders, opacity, and fading.
 - **Commands:** `/rpem` toggles the menu, while `/rpem config` opens its settings.
@@ -49,7 +49,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
    The small icon at the right edge of each row opens that emote's name and command editor.
    Hovering over an emote displays its default and targeted commands.
    Emote labels can be dragged into a new order; an insertion line marks the destination.
-   When unpinned, the menu hides after use or when the pointer leaves it. The title bar—or the addon icon when **Minimize to icon** is enabled—reveals it when hovered.
+   When inactivity fading is enabled and the menu is unpinned, it hides after use or after the configured delay. The title bar—or the addon icon when **Minimize to icon** is enabled—reveals it when hovered.
 3. The gear icon and `/rpem config` command open the addon settings.
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
 5. Category names and their emote commands can be edited under **Emotes**.
@@ -121,7 +121,6 @@ The **Appearance** settings screen provides these options for the current profil
 - Selection effects: **Background**, **Outline**, **Separator**, **Underline**, or **Drop shadow**.
 - Border styles: **None**, **Thin**, or **Blizzard**.
 - Background opacity and active window opacity.
-- Optional inactivity fading, with configurable delay and inactive opacity.
 
 The font menus include WoW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
 
@@ -136,6 +135,7 @@ The **General** settings screen controls the current profile's window behavior a
 - The window position and height can be locked.
 - The settings gear icon can be hidden.
 - The addon can be shown or hidden at login.
+- Inactivity fading can be enabled with a configurable delay and inactive opacity. It is disabled by default, so the menu remains visible.
 - The auto-hidden title bar can be replaced by a square addon icon sized from 16 to 64 pixels, independently of the main window dimensions.
 - The minimized icon can occupy the upper-left or upper-right corner of the main window and can use a custom color tint.
 - The window can be dragged or centered, with exact coordinates available as an advanced option.

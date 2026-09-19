@@ -53,6 +53,7 @@ local emoteDropIndicator
 local emoteDragState
 local isWindowAutoHidden = false
 local SetWindowAutoHidden
+local ScheduleWindowAutoHide
 local fadeGeneration = 0
 local opacityAnimationGroup
 local opacityAnimation
@@ -583,8 +584,12 @@ end
 function MainWindow.ApplyFadeSettings()
     RestoreActiveOpacity()
 
-    if settings.fadeEnabled and MainFrame and not MainFrame:IsMouseOver() then
+    if not settings.fadeEnabled then
+        CancelWindowAutoHide()
+        SetWindowAutoHidden(false)
+    elseif MainFrame and not MainFrame:IsMouseOver() then
         ScheduleInactiveFade()
+        ScheduleWindowAutoHide()
     end
 end
 
@@ -1691,7 +1696,7 @@ end
 SetWindowAutoHidden = function(hidden)
     hidden = not not hidden
 
-    if settings.keepOpen then
+    if settings.keepOpen or not settings.fadeEnabled then
         hidden = false
     end
     if isWindowAutoHidden == hidden then
@@ -1702,8 +1707,8 @@ SetWindowAutoHidden = function(hidden)
     UpdateWindowBodyVisibility()
 end
 
-local function ScheduleWindowAutoHide()
-    if settings.keepOpen or isWindowAutoHidden
+ScheduleWindowAutoHide = function()
+    if not settings.fadeEnabled or settings.keepOpen or isWindowAutoHidden
         or autoHideScheduled or autoHideFading then
         return
     end
@@ -1719,7 +1724,7 @@ local function ScheduleWindowAutoHide()
 
         autoHideScheduled = false
 
-        if settings.keepOpen or isWindowAutoHidden
+        if not settings.fadeEnabled or settings.keepOpen or isWindowAutoHidden
             or not MainFrame or MainFrame:IsMouseOver() then
             return
         end
@@ -1733,7 +1738,8 @@ local function ScheduleWindowAutoHide()
 
             autoHideFading = false
 
-            if settings.keepOpen or MainFrame:IsMouseOver() then
+            if not settings.fadeEnabled or settings.keepOpen
+                or MainFrame:IsMouseOver() then
                 RestoreActiveOpacity(true)
                 return
             end
@@ -2082,7 +2088,9 @@ function MainWindow.CreateMainWindow()
         GameTooltip:AddLine(
             settings.keepOpen
                 and "The emote menu stays open."
-                or "The menu opens on hover and hides when not in use.",
+                or (settings.fadeEnabled
+                    and "The menu opens on hover and hides when not in use."
+                    or "The menu stays visible because fading is disabled."),
             1,
             1,
             1,
@@ -2169,7 +2177,8 @@ function MainWindow.CreateMainWindow()
         end
         mouseCheckElapsed = 0
 
-        if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
+        if not settings.fadeEnabled or settings.keepOpen
+            or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
         end
 
@@ -2215,7 +2224,7 @@ function MainWindow.ApplyProfileSettings()
     UpdatePinButton()
 
     settings.minimized = false
-    isWindowAutoHidden = not settings.keepOpen
+    isWindowAutoHidden = settings.fadeEnabled and not settings.keepOpen
     UpdateWindowBodyVisibility()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)

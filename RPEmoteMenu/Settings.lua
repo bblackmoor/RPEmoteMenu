@@ -1249,10 +1249,10 @@ local function CreateAppearanceSettingsPanel()
 
     local opacityHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     opacityHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -525)
-    opacityHeading:SetText("Opacity and Fading")
+    opacityHeading:SetText("Opacity")
 
     controls.backgroundOpacity = CreateNumberSetting(
-        panel, "Background opacity", "backgroundOpacity", 180, -553, 0, 100,
+        panel, "Background opacity", "backgroundOpacity", 230, -553, 0, 100,
         function() return settings.backgroundOpacity * 100 end,
         function(value)
             settings.backgroundOpacity = value / 100
@@ -1274,66 +1274,6 @@ local function CreateAppearanceSettingsPanel()
         end,
         "%"
     )
-
-    local RefreshFadeControls
-    local fadeCheckbox = CreateCheckbox(
-        panel,
-        "Fade the menu when inactive",
-        -625,
-        function() return settings.fadeEnabled end,
-        function(value)
-            settings.fadeEnabled = value
-
-            if RefreshFadeControls then
-                RefreshFadeControls()
-            end
-
-            MainWindow.ApplyFadeSettings()
-        end
-    )
-    fadeCheckbox.settingKey = "fadeEnabled"
-    controls.fadeEnabled = fadeCheckbox
-
-    controls.fadeDelay = CreateNumberSetting(
-        panel, "Fade after", "fadeDelay", 230, -617, 0, 60,
-        function() return settings.fadeDelay end,
-        function(value)
-            settings.fadeDelay = value
-            MainWindow.ApplyFadeSettings()
-        end,
-        "seconds"
-    )
-
-    controls.inactiveOpacity = CreateNumberSetting(
-        panel, "Inactive opacity", "inactiveOpacity", 340, -553, 10, 100,
-        function() return settings.inactiveOpacity * 100 end,
-        function(value)
-            settings.inactiveOpacity = math.min(
-                value / 100,
-                settings.windowOpacity
-            )
-            MainWindow.ApplyFadeSettings()
-        end,
-        "%"
-    )
-
-    RefreshFadeControls = function()
-        local fadeEnabled = settings.fadeEnabled
-        local opacity = fadeEnabled and 1 or 0.45
-
-        for _, control in ipairs({controls.fadeDelay, controls.inactiveOpacity}) do
-            if fadeEnabled then
-                control:Enable()
-            else
-                control:ClearFocus()
-                control:Disable()
-            end
-
-            control:SetAlpha(opacity)
-            control.Label:SetAlpha(opacity)
-            control.SuffixLabel:SetAlpha(opacity)
-        end
-    end
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(170, 24)
@@ -1379,8 +1319,6 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshHighlightControls()
         borderSelector:OverrideText(borderLabels[settings.borderStyle])
-        fadeCheckbox:SetChecked(settings.fadeEnabled)
-        RefreshFadeControls()
     end
 
     resetButton:SetScript("OnClick", function()
@@ -1446,12 +1384,47 @@ local function CreateGeneralSettingsPanel()
         function() return settings.showAtLogin end,
         function(value) settings.showAtLogin = value end)
 
-    local iconHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -215)
-    iconHeading:SetText("Minimized Icon")
+    local inactiveHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    inactiveHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -215)
+    inactiveHeading:SetText("Inactive Menu")
 
+    local RefreshInactiveControls
     local RefreshIconControls
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Minimize to icon", -240,
+    local fadeCheckbox = CreateCheckbox(panel, "Fade and hide the menu when inactive", -240,
+        function() return settings.fadeEnabled end,
+        function(value)
+            settings.fadeEnabled = value
+            MainWindow.ApplyFadeSettings()
+            if RefreshInactiveControls then
+                RefreshInactiveControls()
+            end
+        end)
+    checkboxes[#checkboxes + 1] = fadeCheckbox
+
+    local fadeDelayBox = CreateNumberSetting(
+        panel, "Fade after", "fadeDelay", 20, -280, 0, 60,
+        function() return settings.fadeDelay end,
+        function(value)
+            settings.fadeDelay = value
+            MainWindow.ApplyFadeSettings()
+        end,
+        "seconds"
+    )
+
+    local inactiveOpacityBox = CreateNumberSetting(
+        panel, "Inactive opacity", "inactiveOpacity", 230, -280, 10, 100,
+        function() return settings.inactiveOpacity * 100 end,
+        function(value)
+            settings.inactiveOpacity = math.min(
+                value / 100,
+                settings.windowOpacity
+            )
+            MainWindow.ApplyFadeSettings()
+        end,
+        "%"
+    )
+
+    local minimizeCheckbox = CreateCheckbox(panel, "Minimize to icon", -335,
         function() return settings.minimizeToIcon end,
         function(value)
             settings.minimizeToIcon = value
@@ -1460,13 +1433,14 @@ local function CreateGeneralSettingsPanel()
             end
             MainWindow.ApplyMinimizeToIconSettings()
         end)
+    checkboxes[#checkboxes + 1] = minimizeCheckbox
 
     local iconSizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -280)
+    iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -375)
     iconSizeLabel:SetText("Minimized icon size (16-64 px)")
 
     local iconSizeBox = CreateIntegerEditBox(
-        panel, 190, -276, 70,
+        panel, 190, -371, 70,
         function() return settings.minimizedIconSize end,
         function(value)
             settings.minimizedIconSize = value
@@ -1475,7 +1449,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -280)
+    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -375)
     iconCornerLabel:SetText("Icon corner")
 
     local iconCornerSelector = CreateFrame(
@@ -1485,7 +1459,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     iconCornerSelector:SetWidth(150)
-    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -301)
+    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -396)
     iconCornerSelector:SetDefaultText("Upper left")
 
     local iconCornerLabels = {
@@ -1513,16 +1487,16 @@ local function CreateGeneralSettingsPanel()
         iconColorPreview = addon.MinimizedIconColor.CreateSettingsControls(
             panel,
             20,
-            -335
+            -430
         )
 
     local iconNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -385)
+    iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -480)
     iconNote:SetText("These options affect only the on-screen minimized icon.")
     iconNote:SetTextColor(0.7, 0.7, 0.7)
 
     RefreshIconControls = function()
-        local enabled = settings.minimizeToIcon
+        local enabled = settings.fadeEnabled and settings.minimizeToIcon
         local alpha = enabled and 1 or 0.45
 
         for _, control in ipairs({
@@ -1542,24 +1516,46 @@ local function CreateGeneralSettingsPanel()
         iconNote:SetAlpha(alpha)
     end
 
+    RefreshInactiveControls = function()
+        local enabled = settings.fadeEnabled
+        local alpha = enabled and 1 or 0.45
+
+        for _, control in ipairs({fadeDelayBox, inactiveOpacityBox}) do
+            if enabled then
+                control:Enable()
+            else
+                control:ClearFocus()
+                control:Disable()
+            end
+
+            control:SetAlpha(alpha)
+            control.Label:SetAlpha(alpha)
+            control.SuffixLabel:SetAlpha(alpha)
+        end
+
+        minimizeCheckbox:SetEnabled(enabled)
+        minimizeCheckbox:SetAlpha(alpha)
+        RefreshIconControls()
+    end
+
     local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -410)
+    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
     layoutHeading:SetText("Layout")
 
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -440)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -540)
     positionLabel:SetText("Exact position (advanced)")
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 225, -435)
+    xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 225, -535)
     xLabel:SetText("X")
 
     local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    yLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 305, -435)
+    yLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 305, -535)
     yLabel:SetText("Y")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 190, -436, 70,
+        panel, 190, -536, 70,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1572,7 +1568,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 270, -436, 70,
+        panel, 270, -536, 70,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1586,16 +1582,16 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 360, -436)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 360, -536)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -475)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -575)
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 190, -471, 70,
+        panel, 190, -571, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1608,7 +1604,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -610)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -1618,13 +1614,17 @@ local function CreateGeneralSettingsPanel()
         positionXBox:RefreshValue()
         positionYBox:RefreshValue()
         heightBox:RefreshValue()
+        fadeCheckbox:RefreshValue()
+        fadeDelayBox:RefreshValue()
+        inactiveOpacityBox:RefreshValue()
+        minimizeCheckbox:RefreshValue()
         iconSizeBox:RefreshValue()
         iconCornerSelector:OverrideText(
             iconCornerLabels[settings.minimizedIconCorner]
                 or iconCornerLabels.TOPLEFT
         )
         addon.MinimizedIconColor.RefreshControl()
-        RefreshIconControls()
+        RefreshInactiveControls()
     end
 
     local function RefreshControls()
