@@ -344,8 +344,8 @@ function MainWindow.ResetWindowPosition()
     settings.height = defaults.height
     local width = CalculateColumnWidths()
 
-    -- Resolve the default CENTER anchor using the restored full-size window.
-    -- Otherwise its previous dimensions shift the position until a second reset.
+    -- Restore the full-size frame before applying its default anchor so the
+    -- same saved geometry is used whether the body is visible or hidden.
     isApplyingColumnSize = true
     MainFrame:SetSize(width, defaults.height)
     isApplyingColumnSize = false

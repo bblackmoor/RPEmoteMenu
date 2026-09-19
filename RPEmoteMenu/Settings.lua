@@ -1396,6 +1396,7 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshControls()
         MainWindow.ApplyAppearance()
+        MainWindow.ResetWindowPosition()
     end)
 
     container.RefreshControls = RefreshControls

@@ -127,7 +127,7 @@ The font menus include WoW's built-in fonts and fonts made available by LibShare
 
 If a saved custom font is unavailable, the font selector marks it in red and the menu temporarily displays Friz Quadrata instead.
 
-Changes appear immediately. **Restore Defaults** resets the current profile's appearance.
+Changes appear immediately. **Restore Defaults** resets the current profile's appearance, window height, and window position.
 
 ## Window Settings
 
