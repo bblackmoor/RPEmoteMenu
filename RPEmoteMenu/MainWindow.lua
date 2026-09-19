@@ -997,14 +997,6 @@ local function RefreshEmoteHovered(button)
     )
 end
 
-local function RefreshVisibleEmoteHoverStates()
-    for _, button in ipairs(buttonsPool) do
-        if button:IsShown() then
-            RefreshEmoteHovered(button)
-        end
-    end
-end
-
 local function ScheduleEmoteHoverRefresh(button)
     C_Timer.After(0, function()
         RefreshEmoteHovered(button)
@@ -2166,8 +2158,6 @@ function MainWindow.CreateMainWindow()
             return
         end
         mouseCheckElapsed = 0
-
-        RefreshVisibleEmoteHoverStates()
 
         if settings.keepOpen or (isWindowAutoHidden and settings.minimizeToIcon) then
             return
