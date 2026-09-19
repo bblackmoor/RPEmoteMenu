@@ -22,17 +22,17 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 ## Screenshots
 
-<img width="468" height="230" alt="profile-default" src="https://github.com/user-attachments/assets/48876569-9339-4db2-8648-fec3e13dec61" />
+<img width="468" height="230" alt="profile-default" src="https://github.com/user-attachments/assets/48876569-9339-4db2-8648-fec3e13dec61" />  
 
-<img width="347" height="228" alt="profile-crimson-night" src="https://github.com/user-attachments/assets/6d6c148f-9cc8-4f53-97f8-c3f1366be179" />
+<img width="347" height="228" alt="profile-crimson-night" src="https://github.com/user-attachments/assets/6d6c148f-9cc8-4f53-97f8-c3f1366be179" />  
 
-<img width="502" height="228" alt="profile-gilded-shadow" src="https://github.com/user-attachments/assets/eec845e8-c6be-414f-a034-d34de229d7ea" />
+<img width="502" height="228" alt="profile-gilded-shadow" src="https://github.com/user-attachments/assets/eec845e8-c6be-414f-a034-d34de229d7ea" />  
 
-<img width="427" height="306" alt="profile-joker" src="https://github.com/user-attachments/assets/a6a09b49-f258-48de-957c-6e5be95bf0de" />
+<img width="427" height="306" alt="profile-joker" src="https://github.com/user-attachments/assets/a6a09b49-f258-48de-957c-6e5be95bf0de" />  
 
-<img width="533" height="277" alt="profile-moonlight" src="https://github.com/user-attachments/assets/75d067e6-f571-41db-8b06-9e410f0761df" />
+<img width="533" height="277" alt="profile-moonlight" src="https://github.com/user-attachments/assets/75d067e6-f571-41db-8b06-9e410f0761df" />  
 
-<img width="407" height="308" alt="profile-teal" src="https://github.com/user-attachments/assets/d7c48279-da8d-46b8-98e4-2d645e31ace2" />
+<img width="407" height="308" alt="profile-teal" src="https://github.com/user-attachments/assets/d7c48279-da8d-46b8-98e4-2d645e31ace2" />  
 
 
 https://github.com/user-attachments/assets/b5bad169-6a50-4085-a0c7-5366533300af
