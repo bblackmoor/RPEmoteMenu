@@ -979,8 +979,8 @@ end
 
 local function SetEmoteHovered(button, isHovered)
     button.isHovered = isHovered
-    if button.EditButton then
-        button.EditButton:SetAlpha(isHovered and 1 or 0.25)
+    if button.EditButton and button.EditButton.Icon then
+        button.EditButton.Icon:SetAlpha(isHovered and 1 or 0.25)
     end
     ApplyEmoteHoverHighlight(button)
 end
@@ -1057,7 +1057,8 @@ local function GetContainerButton()
     button.EditButton:SetFrameLevel(button:GetFrameLevel() + 2)
     button.EditButton:RegisterForClicks("LeftButtonUp")
     button.EditButton:SetNormalTexture("Interface\\Buttons\\UI-OptionsButton")
-    button.EditButton:SetAlpha(0.25)
+    button.EditButton.Icon = button.EditButton:GetNormalTexture()
+    button.EditButton.Icon:SetAlpha(0.25)
     button.EditButton:SetHighlightTexture(
         "Interface\\Buttons\\ButtonHilight-Square",
         "ADD"
