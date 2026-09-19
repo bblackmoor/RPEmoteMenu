@@ -10,7 +10,8 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 8
+local SCHEMA_VERSION = 9
+local VERSION_ONE_SCHEMA_MAX = 6
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -384,6 +385,59 @@ local function InstallMissingBuiltInProfiles()
 end
 
 
+local function UniqueVersionOneProfileName(profileName)
+    local suffixNumber = 1
+
+    while true do
+        local suffix = suffixNumber == 1
+            and " (Version 1)"
+            or " (Version 1 " .. suffixNumber .. ")"
+        local base = strtrim(
+            profileName:sub(1, MAX_PROFILE_NAME_LENGTH - #suffix)
+        )
+        local candidate = base .. suffix
+
+        if not FindProfileByName(candidate) then
+            return candidate
+        end
+
+        suffixNumber = suffixNumber + 1
+    end
+end
+
+
+local function PreserveVersionOneBundledNameCollisions()
+    local savedSchemaVersion = tonumber(RPEmoteMenuDB.schemaVersion) or 0
+    local installedBuiltInVersion = tonumber(
+        RPEmoteMenuDB.builtInProfileVersion
+    ) or 0
+
+    if savedSchemaVersion > VERSION_ONE_SCHEMA_MAX
+        or installedBuiltInVersion > 0 then
+        return
+    end
+
+    for _, definition in ipairs(builtInProfiles) do
+        local existingName = FindProfileByName(definition.name)
+
+        if existingName then
+            local preservedName = UniqueVersionOneProfileName(existingName)
+            RPEmoteMenuDB.profiles[preservedName] =
+                RPEmoteMenuDB.profiles[existingName]
+            RPEmoteMenuDB.profiles[existingName] = nil
+
+            for characterKey, activeProfileName in pairs(
+                RPEmoteMenuDB.activeProfiles
+            ) do
+                if activeProfileName == existingName then
+                    RPEmoteMenuDB.activeProfiles[characterKey] = preservedName
+                end
+            end
+        end
+    end
+end
+
+
 local function ValidateNewProfileName(profileName, existingProfileName)
     if type(profileName) ~= "string" then
         return nil, "Enter a profile name."
@@ -674,6 +728,12 @@ function Database.InitializeDatabase()
     for _, profileName in ipairs(invalidProfiles) do
         RPEmoteMenuDB.profiles[profileName] = nil
     end
+
+    -- Version 1 allowed custom profiles to use names that Version 2 reserves
+    -- for its bundled themes. Preserve those profiles under unique names
+    -- before installing the bundled set, and keep character assignments on
+    -- the preserved copies.
+    PreserveVersionOneBundledNameCollisions()
 
     RPEmoteMenuDB.defaultCategories = CopyDefaultCategories()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {

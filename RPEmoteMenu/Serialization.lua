@@ -42,6 +42,8 @@ local PROFILE_SETTINGS_FIELDS = {
     minimizedIconSize = true,
     minimizedIconCorner = true,
     minimizedIconColor = true,
+    -- Accepted from Version 1 exports, then discarded because Version 2 no
+    -- longer has a manually remembered collapsed state.
     rememberMinimized = true,
     point = true,
     relativePoint = true,
@@ -77,7 +79,6 @@ local BOOLEAN_SETTING_KEYS = {
     "locked",
     "hideSettingsGear",
     "showAtLogin",
-    "rememberMinimized",
     "fadeEnabled"
 }
 local OPTIONAL_BOOLEAN_SETTING_KEYS = {"keepOpen", "minimizeToIcon"}
@@ -443,7 +444,6 @@ local function ValidateProfileSettings(value)
         base[key] = settingValue
     end
     base.selectedCategory = addon.DefaultSettings.selectedCategory
-    base.minimized = addon.DefaultSettings.minimized
 
     return Database.CopySettings(base)
 end

@@ -18,7 +18,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, corner, color tint, and live preview.
 - **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
 - **Smarter layout:** Column widths automatically fit their labels, while height, position, and lock state remain persistent.
-- **Improved profiles:** Five bundled visual themes accompany clearer tools for creating, copying, restoring, importing, and exporting profiles.
+- **Improved profiles:** Five bundled visual themes accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
 
 ## Screenshots
 

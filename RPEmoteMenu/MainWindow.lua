@@ -2249,7 +2249,6 @@ function MainWindow.ApplyProfileSettings()
     MainWindow.ApplyAppearance()
     UpdatePinButton()
 
-    settings.minimized = false
     isWindowAutoHidden = settings.fadeEnabled and not settings.keepOpen
     UpdateWindowBodyVisibility()
     MainWindow.UpdateMenu()
