@@ -37,6 +37,10 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 https://github.com/user-attachments/assets/b5bad169-6a50-4085-a0c7-5366533300af
 
+## Download
+
+Ready-to-install ZIP files are available from the [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases) page. Each release contains a versioned `RPEmoteMenu-<version>.zip` archive.
+
 ## Installation
 
 The `RPEmoteMenu` folder should be placed in the World of Warcraft addons directory:
