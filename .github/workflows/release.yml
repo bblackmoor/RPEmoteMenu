@@ -1,0 +1,47 @@
+name: Publish addon release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Read addon version
+        id: version
+        shell: bash
+        run: |
+          version="$(sed -n 's/^## Version:[[:space:]]*//p' RPEmoteMenu/RPEmoteMenu.toc | head -n 1)"
+          if [ -z "$version" ]; then
+            echo "Could not read version from RPEmoteMenu.toc" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Build installable ZIP
+        shell: bash
+        run: |
+          mkdir -p dist
+          zip -qr "dist/RPEmoteMenu-${{ steps.version.outputs.version }}.zip" RPEmoteMenu
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        shell: bash
+        run: |
+          tag="v$VERSION"
+          asset="dist/RPEmoteMenu-$VERSION.zip"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$asset" --clobber
+          else
+            gh release create "$tag" "$asset" --target "$GITHUB_SHA" --title "RP Emote Menu $VERSION" --generate-notes
+          fi
