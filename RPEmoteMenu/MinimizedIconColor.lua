@@ -6,6 +6,45 @@ addon.MinimizedIconColor = MinimizedIconColor
 local colorControl
 local previewControl
 
+local OUTLINE_OFFSETS = {
+    {-2, 0}, {2, 0}, {0, -2}, {0, 2},
+    {-1, -1}, {-1, 1}, {1, -1}, {1, 1}
+}
+
+local function GetContrastColor(color)
+    -- Relative luminance approximation: dark artwork gets a light outline,
+    -- while light artwork gets a dark outline.
+    local luminance = (0.2126 * color.r) + (0.7152 * color.g) + (0.0722 * color.b)
+    if luminance < 0.5 then
+        return 1, 1, 1
+    end
+    return 0, 0, 0
+end
+
+local function EnsureOutline(frame)
+    if frame.OutlineTextures then
+        return frame.OutlineTextures
+    end
+
+    frame.OutlineTextures = {}
+    for i, offset in ipairs(OUTLINE_OFFSETS) do
+        local texture = frame:CreateTexture(nil, "BACKGROUND")
+        texture:SetTexture("Interface\\AddOns\\RPEmoteMenu\\Media\\icon-minimized.tga")
+        texture:SetDesaturated(true)
+        texture:SetPoint("TOPLEFT", frame, "TOPLEFT", offset[1], offset[2])
+        texture:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", offset[1], offset[2])
+        frame.OutlineTextures[i] = texture
+    end
+    return frame.OutlineTextures
+end
+
+local function ApplyOutline(frame, color)
+    local r, g, b = GetContrastColor(color)
+    for _, texture in ipairs(EnsureOutline(frame)) do
+        texture:SetVertexColor(r, g, b, 1)
+    end
+end
+
 local function CopyColor(color)
     return {
         r = tonumber(color and color.r) or 1.0,
@@ -39,6 +78,7 @@ function MinimizedIconColor.Apply()
     -- vertex multiply cannot turn the yellow source art blue, grey, etc.
     button.Icon:SetDesaturated(true)
     button.Icon:SetVertexColor(color.r, color.g, color.b, 1)
+    ApplyOutline(button, color)
 end
 
 
@@ -50,6 +90,7 @@ local function RefreshSwatch()
     if previewControl and previewControl.Icon then
         previewControl.Icon:SetDesaturated(true)
         previewControl.Icon:SetVertexColor(color.r, color.g, color.b, 1)
+        ApplyOutline(previewControl, color)
     end
 end
 
