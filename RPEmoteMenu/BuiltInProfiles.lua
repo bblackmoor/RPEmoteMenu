@@ -3,7 +3,7 @@ local _, addon = ...
 -- Bundled profiles use the built-in emote categories. Settings intentionally
 -- contain only each profile's visual design; Database.lua fills
 -- every omitted setting from the current defaults.
-addon.BuiltInProfileVersion = 2
+addon.BuiltInProfileVersion = 3
 
 addon.BuiltInProfiles = {
     {
@@ -69,6 +69,28 @@ addon.BuiltInProfiles = {
             emoteFontSize = 21,
             emoteTextColor = {r = 0, g = 1, b = 1},
             selectedCategoryTextColor = {r = 0, g = 1, b = 1},
+            windowOpacity = 1
+        }
+    },
+    {
+        name = "High Contrast",
+        description = "A colorblind-friendly theme with bright text and a bold selection outline.",
+        settings = {
+            backgroundOpacity = 1,
+            borderColor = {r = 0.3372549, g = 0.7058824, b = 0.9137255},
+            borderStyle = "thin",
+            categoryBackgroundColor = {r = 0.0627451, g = 0.0941176, b = 0.1254902},
+            categoryFont = "Friz Quadrata",
+            categoryFontSize = 21,
+            categoryHighlightColor = {r = 0.9411765, g = 0.8941177, b = 0.2588235},
+            categoryHighlightEffect = "outline",
+            categoryHighlightThickness = 3,
+            categoryTextColor = {r = 1, g = 1, b = 1},
+            emoteBackgroundColor = {r = 0.0627451, g = 0.0941176, b = 0.1254902},
+            emoteFont = "Arial Narrow",
+            emoteFontSize = 21,
+            emoteTextColor = {r = 0.95, g = 0.95, b = 0.95},
+            selectedCategoryTextColor = {r = 0.9411765, g = 0.8941177, b = 0.2588235},
             windowOpacity = 1
         }
     },

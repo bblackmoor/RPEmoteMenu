@@ -18,7 +18,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, corner, color tint, and live preview.
 - **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
 - **Smarter layout:** Column widths automatically fit their labels, while height, position, and lock state remain persistent.
-- **Improved profiles:** Five bundled visual themes accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
+- **Improved profiles:** Six bundled visual themes—including a high-contrast, colorblind-friendly option—accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
 
 ## Screenshots
 
@@ -97,13 +97,13 @@ The **Profiles** settings screen includes:
 - **Delete Profile:** Deletes the current custom profile after confirmation.
 - **Export Profile:** Copies the current custom profile as JSON.
 - **Import Profile:** Adds a profile from exported JSON.
-- **Restore Bundled Profiles:** Resets the five bundled profiles and recreates any that were deleted.
+- **Restore Bundled Profiles:** Resets the six bundled profiles and recreates any that were deleted.
 
 Imported profiles do not replace or activate existing profiles. If an imported name is already in use, the addon assigns the new profile a unique name. Deleting a profile returns characters using it to **Default**.
 
 Profile names cannot be blank, exceed 64 characters, duplicate another name regardless of case, or use the reserved name **Default**.
 
-The addon includes five editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
+The addon includes six editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. **High Contrast** is colorblind-friendly: it combines bright neutral text, dark opaque backgrounds, and a bold yellow selection outline so selection does not depend on red–green color differences alone. It uses Teal's fonts and font sizes. Bundled profiles can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
 
 Bundled profile names are marked **(Bundled)** in the profile selector. Each also displays a short description of its visual theme.
 

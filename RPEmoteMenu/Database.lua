@@ -12,6 +12,7 @@ local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
 local SCHEMA_VERSION = 9
 local VERSION_ONE_SCHEMA_MAX = 6
+local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -406,6 +407,41 @@ local function UniqueVersionOneProfileName(profileName)
 end
 
 
+local function UniqueCustomProfileName(profileName)
+    local suffixNumber = 1
+
+    while true do
+        local suffix = suffixNumber == 1
+            and " (Custom)"
+            or " (Custom " .. suffixNumber .. ")"
+        local base = strtrim(
+            profileName:sub(1, MAX_PROFILE_NAME_LENGTH - #suffix)
+        )
+        local candidate = base .. suffix
+
+        if not FindProfileByName(candidate) then
+            return candidate
+        end
+
+        suffixNumber = suffixNumber + 1
+    end
+end
+
+
+local function MoveProfileAndAssignments(oldName, newName)
+    RPEmoteMenuDB.profiles[newName] = RPEmoteMenuDB.profiles[oldName]
+    RPEmoteMenuDB.profiles[oldName] = nil
+
+    for characterKey, activeProfileName in pairs(
+        RPEmoteMenuDB.activeProfiles
+    ) do
+        if activeProfileName == oldName then
+            RPEmoteMenuDB.activeProfiles[characterKey] = newName
+        end
+    end
+end
+
+
 local function PreserveVersionOneBundledNameCollisions()
     local savedSchemaVersion = tonumber(RPEmoteMenuDB.schemaVersion) or 0
     local installedBuiltInVersion = tonumber(
@@ -422,18 +458,25 @@ local function PreserveVersionOneBundledNameCollisions()
 
         if existingName then
             local preservedName = UniqueVersionOneProfileName(existingName)
-            RPEmoteMenuDB.profiles[preservedName] =
-                RPEmoteMenuDB.profiles[existingName]
-            RPEmoteMenuDB.profiles[existingName] = nil
-
-            for characterKey, activeProfileName in pairs(
-                RPEmoteMenuDB.activeProfiles
-            ) do
-                if activeProfileName == existingName then
-                    RPEmoteMenuDB.activeProfiles[characterKey] = preservedName
-                end
-            end
+            MoveProfileAndAssignments(existingName, preservedName)
         end
+    end
+end
+
+
+local function PreserveHighContrastNameCollision()
+    local installedBuiltInVersion = tonumber(
+        RPEmoteMenuDB.builtInProfileVersion
+    ) or 0
+
+    if installedBuiltInVersion >= HIGH_CONTRAST_BUILT_IN_VERSION then
+        return
+    end
+
+    local existingName = FindProfileByName("High Contrast")
+    if existingName then
+        local preservedName = UniqueCustomProfileName(existingName)
+        MoveProfileAndAssignments(existingName, preservedName)
     end
 end
 
@@ -734,6 +777,10 @@ function Database.InitializeDatabase()
     -- before installing the bundled set, and keep character assignments on
     -- the preserved copies.
     PreserveVersionOneBundledNameCollisions()
+
+    -- Version 3 adds High Contrast as a bundled profile. Preserve an older
+    -- custom profile with that name before reserving and installing it.
+    PreserveHighContrastNameCollision()
 
     RPEmoteMenuDB.defaultCategories = CopyDefaultCategories()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {

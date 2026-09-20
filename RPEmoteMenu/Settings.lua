@@ -2021,8 +2021,9 @@ local function CreateProfilesSettingsPanel()
     bundledDescription:SetWidth(620)
     bundledDescription:SetJustifyH("LEFT")
     bundledDescription:SetText(
-        "Reset Gilded Shadow, Crimson Night, Teal, Joker, and Moonlight to " ..
-        "their original designs and recreate any that are missing."
+        "Reset Gilded Shadow, Crimson Night, Teal, High Contrast, Joker, " ..
+        "and Moonlight to their original designs and recreate any that " ..
+        "are missing."
     )
     bundledDescription:SetTextColor(0.8, 0.8, 0.8)
 
