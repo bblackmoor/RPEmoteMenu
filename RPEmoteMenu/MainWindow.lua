@@ -689,13 +689,17 @@ local function ScheduleInactiveFade()
     fadeGeneration = fadeGeneration + 1
     local requestedGeneration = fadeGeneration
 
-    if not settings.fadeEnabled or not MainFrame then
+    -- An unpinned window uses ScheduleWindowAutoHide for both its fade and
+    -- collapse. Starting a second opacity animation here can cancel that
+    -- transition and leave the whole frame at zero alpha.
+    if not settings.fadeEnabled or not settings.keepOpen or not MainFrame then
         return
     end
 
     C_Timer.After(settings.fadeDelay, function()
         if requestedGeneration ~= fadeGeneration
             or not settings.fadeEnabled
+            or not settings.keepOpen
             or MainFrame:IsMouseOver() then
             return
         end
@@ -1799,6 +1803,9 @@ local function UpdateWindowBodyVisibility()
             ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
             SetInternalFrameSize(compactWidth, compactHeight)
+            SetWindowOpacity(
+                math.min(settings.inactiveOpacity, settings.windowOpacity)
+            )
         end
     else
         -- Restore the saved height before raising the minimum resize bound.
@@ -1893,7 +1900,13 @@ ScheduleWindowAutoHide = function()
 
         autoHideFading = true
         fadeGeneration = fadeGeneration + 1
-        SetWindowOpacity(0, fadeOutDuration, function()
+        local hiddenOpacity = math.min(
+            settings.inactiveOpacity,
+            settings.windowOpacity
+        )
+        local fadeTarget = settings.minimizeToIcon and 0 or hiddenOpacity
+
+        SetWindowOpacity(fadeTarget, fadeOutDuration, function()
             if requestedGeneration ~= autoHideGeneration then
                 return
             end
@@ -1907,11 +1920,9 @@ ScheduleWindowAutoHide = function()
             end
 
             SetWindowAutoHidden(true)
-            SetWindowOpacity(
-                settings.fadeEnabled
-                    and math.min(settings.inactiveOpacity, settings.windowOpacity)
-                    or settings.windowOpacity
-            )
+            if settings.minimizeToIcon then
+                SetWindowOpacity(hiddenOpacity)
+            end
         end)
     end)
 end
