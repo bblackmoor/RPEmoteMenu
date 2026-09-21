@@ -247,7 +247,7 @@ local function CalculateColumnWidths()
     return width + (IsTitleBarOnLeft() and titleBarThickness or 0)
 end
 
-local function ClampWindowGeometry(x, y, width, height)
+local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
     local screenWidth = math.floor(UIParent:GetWidth() + 0.5)
     local screenHeight = math.floor(UIParent:GetHeight() + 0.5)
 
@@ -261,26 +261,47 @@ local function ClampWindowGeometry(x, y, width, height)
     x = math.floor(tonumber(x) or settings.x or 0)
     y = math.floor(tonumber(y) or settings.y or screenHeight)
 
-    -- x/y represent the window's TOPLEFT point relative to UIParent's BOTTOMLEFT.
-    -- Keep the entire frame on-screen.
-    x = math.max(0, math.min(screenWidth - width, x))
-    y = math.max(height, math.min(screenHeight, y))
+    -- Normal movement supplies the window's TOPLEFT point relative to
+    -- UIParent's BOTTOMLEFT and keeps the entire frame on-screen. Advanced
+    -- position fields supply signed offsets for the saved anchor instead; the
+    -- reset and center buttons provide recovery if an extreme value is used.
+    if allowOffscreen then
+        x = math.max(-100000, math.min(100000, x))
+        y = math.max(-100000, math.min(100000, y))
+    else
+        x = math.max(0, math.min(screenWidth - width, x))
+        y = math.max(height, math.min(screenHeight, y))
+    end
 
     return x, y, width, height
 end
 
-function MainWindow.ApplyWindowGeometry(x, y, width, height)
+function MainWindow.ApplyWindowGeometry(x, y, width, height, preserveAnchor)
     width = CalculateColumnWidths()
-    x, y, width, height = ClampWindowGeometry(x, y, width, height)
+    x, y, width, height = ClampWindowGeometry(
+        x,
+        y,
+        width,
+        height,
+        preserveAnchor
+    )
 
-    settings.point = "TOPLEFT"
-    settings.relativePoint = "BOTTOMLEFT"
+    if not preserveAnchor then
+        settings.point = "TOPLEFT"
+        settings.relativePoint = "BOTTOMLEFT"
+    end
     settings.x = x
     settings.y = y
     settings.height = height
 
     MainFrame:ClearAllPoints()
-    MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
+    MainFrame:SetPoint(
+        settings.point,
+        UIParent,
+        settings.relativePoint,
+        x,
+        y
+    )
 
     local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
     SetInternalFrameSize(frameWidth, frameHeight)

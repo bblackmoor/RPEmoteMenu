@@ -684,14 +684,24 @@ local function CreateAboutPanel()
     return panel
 end
 
-local function CreateIntegerEditBox(parent, x, y, width, getValue, applyValue)
+local function CreateIntegerEditBox(
+    parent,
+    x,
+    y,
+    width,
+    getValue,
+    applyValue,
+    allowNegative
+)
     local editBox = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
     editBox:SetSize(width, 24)
     editBox:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     editBox:SetAutoFocus(false)
-    editBox:SetNumeric(true)
+    -- SetNumeric(true) rejects a typed minus sign. Coordinate fields need a
+    -- normal edit box with signed-integer validation at commit time.
+    editBox:SetNumeric(not allowNegative)
     editBox:EnableMouseWheel(true)
-    editBox:SetMaxLetters(6)
+    editBox:SetMaxLetters(allowNegative and 7 or 6)
     editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
     editBox:SetTextColor(1, 1, 1, 1)
 
@@ -702,9 +712,10 @@ local function CreateIntegerEditBox(parent, x, y, width, getValue, applyValue)
     end
 
     local function Commit(self)
-        local value = tonumber(self:GetText())
+        local text = self:GetText()
+        local value = tonumber(text)
 
-        if not value then
+        if not value or (allowNegative and not text:match("^%-?%d+$")) then
             self:RefreshValue()
             return
         end
@@ -1579,14 +1590,6 @@ local function CreateGeneralSettingsPanel()
     positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -540)
     positionLabel:SetText("Exact position (advanced)")
 
-    local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    xLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 265, -535)
-    xLabel:SetText("X")
-
-    local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    yLabel:SetPoint("BOTTOM", panel, "TOPLEFT", 345, -535)
-    yLabel:SetText("Y")
-
     local positionXBox = CreateIntegerEditBox(
         panel, 230, -536, 70,
         function() return settings.x end,
@@ -1595,9 +1598,11 @@ local function CreateGeneralSettingsPanel()
                 value,
                 settings.y,
                 nil,
-                settings.height
+                settings.height,
+                true
             )
-        end
+        end,
+        true
     )
 
     local positionYBox = CreateIntegerEditBox(
@@ -1608,10 +1613,20 @@ local function CreateGeneralSettingsPanel()
                 settings.x,
                 value,
                 nil,
-                settings.height
+                settings.height,
+                true
             )
-        end
+        end,
+        true
     )
+
+    local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    xLabel:SetPoint("RIGHT", positionXBox, "LEFT", -5, 0)
+    xLabel:SetText("X")
+
+    local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    yLabel:SetPoint("RIGHT", positionYBox, "LEFT", -5, 0)
+    yLabel:SetText("Y")
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
