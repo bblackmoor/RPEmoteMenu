@@ -327,16 +327,23 @@ end
 local function SaveWindowSize()
     if not IsWindowBodyHidden() then
         local width = GetExpandedWidth()
+        local left = MainFrame:GetLeft()
+        local top = MainFrame:GetTop()
         local x, y, _, height = ClampWindowGeometry(
-            settings.x,
-            settings.y,
+            left,
+            top,
             width,
             MainFrame:GetHeight()
         )
 
+        settings.point = "TOPLEFT"
+        settings.relativePoint = "BOTTOMLEFT"
         settings.x = x
         settings.y = y
         settings.height = height
+
+        MainFrame:ClearAllPoints()
+        MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
     end
 
     ApplyTitleBarLayout()
@@ -345,15 +352,26 @@ end
 
 local function RestoreWindowSize()
     local width = CalculateColumnWidths()
-    local x, y, width, height = ClampWindowGeometry(
-        settings.x,
-        settings.y,
-        width,
-        settings.height
+    local height = math.max(
+        minimumHeight,
+        math.min(
+            maximumHeight,
+            math.floor(UIParent:GetHeight() + 0.5),
+            math.floor(tonumber(settings.height) or defaults.height)
+        )
     )
 
-    settings.x = x
-    settings.y = y
+    if settings.point ~= "CENTER" or settings.relativePoint ~= "CENTER" then
+        local x, y
+        x, y, width, height = ClampWindowGeometry(
+            settings.x,
+            settings.y,
+            width,
+            height
+        )
+        settings.x = x
+        settings.y = y
+    end
     settings.height = height
     local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
     SetInternalFrameSize(frameWidth, frameHeight)
@@ -1828,8 +1846,8 @@ function MainWindow.ApplyTitleBarPosition()
         and "LEFT"
         or "TOP"
     MainWindow.ApplyWindowGeometry(
-        settings.x,
-        settings.y,
+        MainFrame:GetLeft() or settings.x,
+        MainFrame:GetTop() or settings.y,
         nil,
         settings.height
     )
