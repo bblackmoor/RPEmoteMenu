@@ -1542,6 +1542,39 @@ local function CreateGeneralSettingsPanel()
     layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
     layoutHeading:SetText("Layout")
 
+    local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -510)
+    titleBarLabel:SetText("Title bar")
+
+    local titleBarSelector = CreateFrame(
+        "DropdownButton",
+        nil,
+        panel,
+        "WowStyle1DropdownTemplate"
+    )
+    titleBarSelector:SetWidth(150)
+    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 310, -505)
+    titleBarSelector:SetDefaultText("Top")
+
+    local titleBarLabels = {
+        TOP = "Top",
+        LEFT = "Left"
+    }
+
+    titleBarSelector:SetupMenu(function(_, rootDescription)
+        for _, position in ipairs({"TOP", "LEFT"}) do
+            rootDescription:CreateRadio(
+                titleBarLabels[position],
+                function() return settings.titleBarPosition == position end,
+                function()
+                    settings.titleBarPosition = position
+                    titleBarSelector:OverrideText(titleBarLabels[position])
+                    MainWindow.ApplyTitleBarPosition()
+                end
+            )
+        end
+    end)
+
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -540)
     positionLabel:SetText("Exact position (advanced)")
@@ -1622,6 +1655,10 @@ local function CreateGeneralSettingsPanel()
         iconCornerSelector:OverrideText(
             iconCornerLabels[settings.minimizedIconCorner]
                 or iconCornerLabels.TOPLEFT
+        )
+        titleBarSelector:OverrideText(
+            titleBarLabels[settings.titleBarPosition]
+                or titleBarLabels.TOP
         )
         addon.MinimizedIconColor.RefreshControl()
         RefreshInactiveControls()

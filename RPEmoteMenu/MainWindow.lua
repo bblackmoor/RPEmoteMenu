@@ -14,10 +14,11 @@ local function Trim(value)
     return strtrim(value or "")
 end
 
-local titleBarHeight = 30
+local titleBarThickness = 30
 -- The first category and emote labels are both centered about 50 pixels below
 -- the top of the window. Keep the minimized icon on that same centerline.
-local firstContentRowCenterOffset = 50
+local topTitleFirstRowCenterOffset = 50
+local leftTitleFirstRowCenterOffset = 20
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumUsableWidth = 220
 local minimumHeight = 150
@@ -71,6 +72,36 @@ local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
 
+local function IsTitleBarOnLeft()
+    return settings and settings.titleBarPosition == "LEFT"
+end
+
+local function GetContentWidth()
+    return sidebarWidth + emoteColumnWidth + columnChromeWidth
+end
+
+local function GetExpandedWidth()
+    return GetContentWidth() + (IsTitleBarOnLeft() and titleBarThickness or 0)
+end
+
+local function GetCurrentFrameSize(width, height)
+    width = width or GetExpandedWidth()
+    height = height or settings.height
+
+    if not isWindowAutoHidden then
+        return width, height
+    end
+
+    if IsTitleBarOnLeft() then
+        if settings.minimizeToIcon then
+            return width, height
+        end
+        return titleBarThickness, height
+    end
+
+    return width, titleBarThickness
+end
+
 local function SetInternalFrameSize(width, height)
     isApplyingColumnSize = true
     MainFrame:SetSize(width, height)
@@ -78,12 +109,11 @@ local function SetInternalFrameSize(width, height)
 end
 
 local function SetCompactResizeBounds()
-    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
-    MainFrame:SetResizeBounds(width, 1, width, maximumHeight)
+    MainFrame:SetResizeBounds(1, 1, GetExpandedWidth(), maximumHeight)
 end
 
 local function SetNormalResizeBounds()
-    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    local width = GetExpandedWidth()
     MainFrame:SetResizeBounds(
         width,
         minimumHeight,
@@ -148,6 +178,7 @@ end
 
 local ApplyColumnLayout
 local ApplyAutomaticWidth
+local ApplyTitleBarLayout
 
 local function CalculateColumnWidths()
     local widestCategory = 0
@@ -203,16 +234,16 @@ local function CalculateColumnWidths()
         maximumEmoteColumnWidth
     )
 
-    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    local width = GetContentWidth()
     if width < minimumUsableWidth then
         emoteColumnWidth = math.min(
             maximumEmoteColumnWidth,
             emoteColumnWidth + minimumUsableWidth - width
         )
-        width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+        width = GetContentWidth()
     end
 
-    return width
+    return width + (IsTitleBarOnLeft() and titleBarThickness or 0)
 end
 
 local function ClampWindowGeometry(x, y, width, height)
@@ -220,7 +251,7 @@ local function ClampWindowGeometry(x, y, width, height)
     local screenHeight = math.floor(UIParent:GetHeight() + 0.5)
 
     width = math.floor(tonumber(width)
-        or sidebarWidth + emoteColumnWidth + columnChromeWidth)
+        or GetExpandedWidth())
     height = math.floor(tonumber(height) or settings.height or defaults.height)
 
     width = math.min(screenWidth, width)
@@ -250,13 +281,8 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height)
     MainFrame:ClearAllPoints()
     MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
 
-    isApplyingColumnSize = true
-    if IsWindowBodyHidden() then
-        MainFrame:SetSize(width, titleBarHeight)
-    else
-        MainFrame:SetSize(width, height)
-    end
-    isApplyingColumnSize = false
+    local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
+    SetInternalFrameSize(frameWidth, frameHeight)
     if IsWindowBodyHidden() then
         SetCompactResizeBounds()
     else
@@ -279,7 +305,7 @@ local function SaveWindowPosition()
     settings.point = "TOPLEFT"
     settings.relativePoint = "BOTTOMLEFT"
 
-    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    local width = GetExpandedWidth()
     local x, y = ClampWindowGeometry(left, top, width, settings.height)
     settings.x = x
     settings.y = y
@@ -300,7 +326,7 @@ end
 
 local function SaveWindowSize()
     if not IsWindowBodyHidden() then
-        local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+        local width = GetExpandedWidth()
         local x, y, _, height = ClampWindowGeometry(
             settings.x,
             settings.y,
@@ -313,6 +339,7 @@ local function SaveWindowSize()
         settings.height = height
     end
 
+    ApplyTitleBarLayout()
     RefreshGeneralWindowFields()
 end
 
@@ -328,9 +355,8 @@ local function RestoreWindowSize()
     settings.x = x
     settings.y = y
     settings.height = height
-    isApplyingColumnSize = true
-    MainFrame:SetSize(width, height)
-    isApplyingColumnSize = false
+    local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
+    SetInternalFrameSize(frameWidth, frameHeight)
     if IsWindowBodyHidden() then
         SetCompactResizeBounds()
     else
@@ -357,7 +383,8 @@ function MainWindow.ResetWindowPosition()
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        SetInternalFrameSize(width, titleBarHeight)
+        local frameWidth, frameHeight = GetCurrentFrameSize(width, defaults.height)
+        SetInternalFrameSize(frameWidth, frameHeight)
     end
 
     if IsWindowBodyHidden() then
@@ -383,6 +410,58 @@ function MainWindow.CenterWindow()
     RefreshGeneralWindowFields()
 end
 
+ApplyTitleBarLayout = function()
+    if not MainFrame or not TitleBar or not TitleText
+        or not PinBtn or not SettingsBtn then
+        return
+    end
+
+    local fullTitle = "RP Emote Menu " .. addon.VERSION
+    local shortTitle = "RP Emote Menu"
+
+    TitleBar:ClearAllPoints()
+    TitleText:ClearAllPoints()
+    PinBtn:ClearAllPoints()
+    SettingsBtn:ClearAllPoints()
+    TitleText:SetWordWrap(false)
+
+    if IsTitleBarOnLeft() then
+        TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+        TitleBar:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
+        TitleBar:SetWidth(titleBarThickness)
+
+        PinBtn:SetPoint("TOP", TitleBar, "TOP", 0, -5)
+        SettingsBtn:SetPoint("BOTTOM", TitleBar, "BOTTOM", 0, 5)
+
+        local availableLength = math.max(MainFrame:GetHeight() - 62, 1)
+        TitleText:SetRotation(math.rad(90))
+        TitleText:SetSize(availableLength, 20)
+        TitleText:SetPoint("CENTER", TitleBar, "CENTER", 0, 0)
+        TitleText:SetText(fullTitle)
+
+        local textWidth = TitleText.GetUnboundedStringWidth
+            and TitleText:GetUnboundedStringWidth()
+            or TitleText:GetStringWidth()
+        TitleBar.titleTextShortened = textWidth > availableLength
+        if TitleBar.titleTextShortened then
+            TitleText:SetText(shortTitle)
+        end
+    else
+        TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+        TitleBar:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
+        TitleBar:SetHeight(titleBarThickness)
+
+        PinBtn:SetPoint("TOPRIGHT", TitleBar, "TOPRIGHT", -5, -5)
+        SettingsBtn:SetPoint("RIGHT", PinBtn, "LEFT", -4, 0)
+
+        TitleText:SetRotation(0)
+        TitleText:SetSize(math.max(MainFrame:GetWidth() - 80, 1), 20)
+        TitleText:SetPoint("TOPLEFT", TitleBar, "TOPLEFT", 10, -7)
+        TitleText:SetText(fullTitle)
+        TitleBar.titleTextShortened = false
+    end
+end
+
 ApplyColumnLayout = function()
     if not MainFrame or not CategorySidebar or not CategoryScrollChild
         or not ScrollFrame or not ScrollChild then
@@ -399,8 +478,34 @@ ApplyColumnLayout = function()
         button:SetWidth(sidebarWidth - 7)
     end
 
+    local leftInset = IsTitleBarOnLeft() and titleBarThickness or 0
+    local categoryTop = IsTitleBarOnLeft() and -5 or -36
+    local emoteTop = IsTitleBarOnLeft() and -10 or -40
+
+    CategorySidebar:ClearAllPoints()
+    CategorySidebar:SetPoint(
+        "TOPLEFT",
+        MainFrame,
+        "TOPLEFT",
+        leftInset + 5,
+        categoryTop
+    )
+    CategorySidebar:SetPoint(
+        "BOTTOMLEFT",
+        MainFrame,
+        "BOTTOMLEFT",
+        leftInset + 5,
+        10
+    )
+
     ScrollFrame:ClearAllPoints()
-    ScrollFrame:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", sidebarWidth + 10, -40)
+    ScrollFrame:SetPoint(
+        "TOPLEFT",
+        MainFrame,
+        "TOPLEFT",
+        leftInset + sidebarWidth + 10,
+        emoteTop
+    )
     ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25, 10)
 
     ScrollChild:SetWidth(emoteColumnWidth)
@@ -412,6 +517,8 @@ ApplyColumnLayout = function()
         button:SetWidth(math.max(emoteColumnWidth - 5, 1))
     end
 
+    ApplyTitleBarLayout()
+
     RefreshGeneralWindowFields()
 end
 
@@ -421,8 +528,9 @@ ApplyAutomaticWidth = function()
     end
 
     local width = CalculateColumnWidths()
+    local frameWidth = GetCurrentFrameSize(width, settings.height)
     isApplyingColumnSize = true
-    MainFrame:SetWidth(width)
+    MainFrame:SetWidth(frameWidth)
     isApplyingColumnSize = false
 
     if IsWindowBodyHidden() then
@@ -1628,14 +1736,21 @@ local function ApplyMinimizedIconAnchor()
         MainFrame,
         windowPoint,
         0,
-        -firstContentRowCenterOffset
+        -(IsTitleBarOnLeft()
+            and leftTitleFirstRowCenterOffset
+            or topTitleFirstRowCenterOffset)
     )
 end
 
 local function UpdateWindowBodyVisibility()
-    -- Keep the title bar fixed while the bottom edge rises or falls.
+    -- Keep the upper-left corner fixed while the hidden frame collapses toward
+    -- whichever edge owns the title bar.
     AnchorFrameByTopLeft()
-    local width = sidebarWidth + emoteColumnWidth + columnChromeWidth
+    local width = GetExpandedWidth()
+    local compactWidth, compactHeight = GetCurrentFrameSize(
+        width,
+        settings.height
+    )
 
     if IsWindowBodyHidden() then
         SetCompactResizeBounds()
@@ -1656,7 +1771,7 @@ local function UpdateWindowBodyVisibility()
             )
             ApplyMinimizedIconAnchor()
             MinimizedIconButton:SetShown(MainFrame:IsShown())
-            SetInternalFrameSize(width, titleBarHeight)
+            SetInternalFrameSize(compactWidth, compactHeight)
         else
             TitleBar:Show()
             TitleText:Show()
@@ -1665,12 +1780,12 @@ local function UpdateWindowBodyVisibility()
             MainFrame:EnableMouse(true)
             ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
-            SetInternalFrameSize(width, titleBarHeight)
+            SetInternalFrameSize(compactWidth, compactHeight)
         end
     else
         -- Restore the saved height before raising the minimum resize bound.
         -- Applying the normal bounds while the frame is still collapsed to
-        -- titleBarHeight makes WoW clamp it to minimumHeight. OnSizeChanged
+        -- titleBarThickness makes WoW clamp it to minimumHeight. OnSizeChanged
         -- then persists that clamped value over the user's chosen height.
         SetInternalFrameSize(width, settings.height)
         SetNormalResizeBounds()
@@ -1687,6 +1802,7 @@ local function UpdateWindowBodyVisibility()
         C_Timer.After(0, UpdateScrollIndicators)
     end
 
+    ApplyColumnLayout()
     MainWindow.ApplyMovementLock()
 end
 
@@ -1705,6 +1821,20 @@ function MainWindow.ApplyMinimizeToIconSettings()
     ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
     RefreshGeneralWindowFields()
+end
+
+function MainWindow.ApplyTitleBarPosition()
+    settings.titleBarPosition = settings.titleBarPosition == "LEFT"
+        and "LEFT"
+        or "TOP"
+    MainWindow.ApplyWindowGeometry(
+        settings.x,
+        settings.y,
+        nil,
+        settings.height
+    )
+    ApplyMinimizedIconAnchor()
+    UpdateWindowBodyVisibility()
 end
 
 SetWindowAutoHidden = function(hidden)
@@ -1774,7 +1904,7 @@ function MainWindow.CreateMainWindow()
     selectedCategoryIndex = settings.selectedCategory
     MainFrame = CreateFrame("Frame", "RPEmoteMenu", UIParent, "BackdropTemplate")
     MainFrame:SetSize(
-        sidebarWidth + emoteColumnWidth + columnChromeWidth,
+        GetExpandedWidth(),
         defaults.height
     )
     WidthMeasurementText = MainFrame:CreateFontString(nil, "OVERLAY")
@@ -1797,7 +1927,10 @@ function MainWindow.CreateMainWindow()
 
     MainFrame:SetScript("OnSizeChanged", function(self, width, height)
         if isApplyingColumnSize then return end
-        local automaticWidth = sidebarWidth + emoteColumnWidth + columnChromeWidth
+        local automaticWidth = GetCurrentFrameSize(
+            GetExpandedWidth(),
+            settings.height
+        )
         if isUserResizing and not IsWindowBodyHidden() then
             settings.height = math.max(
                 minimumHeight,
@@ -1814,7 +1947,7 @@ function MainWindow.CreateMainWindow()
     TitleBar = CreateFrame("Frame", nil, MainFrame)
     TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
     TitleBar:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
-    TitleBar:SetHeight(titleBarHeight)
+    TitleBar:SetHeight(titleBarThickness)
     TitleBar:SetFrameLevel(MainFrame:GetFrameLevel() + 1)
     TitleBar:EnableMouse(true)
     TitleBar:RegisterForDrag("LeftButton")
@@ -1831,6 +1964,17 @@ function MainWindow.CreateMainWindow()
         if button == "RightButton" then
             addon.Settings.Open()
         end
+    end)
+    TitleBar:SetScript("OnEnter", function(self)
+        if self.titleTextShortened
+            or (IsTitleBarOnLeft() and TitleText:IsTruncated()) then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText("RP Emote Menu " .. addon.VERSION)
+            GameTooltip:Show()
+        end
+    end)
+    TitleBar:SetScript("OnLeave", function()
+        GameTooltip:Hide()
     end)
 
     TitleText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2119,7 +2263,10 @@ function MainWindow.CreateMainWindow()
     end)
 
     PinBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetOwner(
+            self,
+            IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+        )
         GameTooltip:SetText(settings.keepOpen and "Window pinned" or "Window unpinned")
         GameTooltip:AddLine(
             settings.keepOpen
@@ -2157,7 +2304,10 @@ function MainWindow.CreateMainWindow()
     end)
 
     SettingsBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:SetOwner(
+            self,
+            IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+        )
         GameTooltip:SetText("RP Emote Menu Settings")
         GameTooltip:Show()
     end)

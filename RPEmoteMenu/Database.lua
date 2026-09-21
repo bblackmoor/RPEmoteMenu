@@ -10,7 +10,7 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 9
+local SCHEMA_VERSION = 10
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local DEFAULT_PROFILE_NAME = "Default"
@@ -29,6 +29,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
+local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
     TOP = true,
@@ -198,6 +199,9 @@ local function NormalizeSettings(source)
     ))
     if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
         result.minimizedIconCorner = defaults.minimizedIconCorner
+    end
+    if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
+        result.titleBarPosition = defaults.titleBarPosition
     end
     result.x = math.floor(ClampNumber(source.x, -100000, 100000, defaults.x))
     result.y = math.floor(ClampNumber(source.y, -100000, 100000, defaults.y))

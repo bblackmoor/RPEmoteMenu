@@ -217,6 +217,7 @@ end
 addon.DefaultSettings = {
     locked = false,
     hideSettingsGear = false,
+    titleBarPosition = "TOP",
     showAtLogin = true,
     keepOpen = false,
     minimizeToIcon = false,

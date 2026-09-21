@@ -36,6 +36,7 @@ local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = tru
 local PROFILE_SETTINGS_FIELDS = {
     locked = true,
     hideSettingsGear = true,
+    titleBarPosition = true,
     showAtLogin = true,
     keepOpen = true,
     minimizeToIcon = true,
@@ -98,6 +99,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
+local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
     TOP = true,
@@ -350,6 +352,13 @@ local function ValidateProfileSettings(value)
     else
         return nil, "Setting minimizedIconCorner is not supported."
     end
+    if value.titleBarPosition == nil then
+        imported.titleBarPosition = addon.DefaultSettings.titleBarPosition
+    elseif VALID_TITLE_BAR_POSITIONS[value.titleBarPosition] then
+        imported.titleBarPosition = value.titleBarPosition
+    else
+        return nil, "Setting titleBarPosition is not supported."
+    end
 
     if not VALID_ANCHOR_POINTS[value.point] then
         return nil, "Setting point is not supported."
@@ -516,7 +525,7 @@ local function ExportProfileSettings(source)
         exported[key] = source[key]
     end
     for _, key in ipairs({
-        "point", "relativePoint", "x", "y", "height",
+        "point", "relativePoint", "x", "y", "height", "titleBarPosition",
         "minimizedIconSize", "minimizedIconCorner",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",

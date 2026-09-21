@@ -17,7 +17,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Drag-and-drop sorting:** Visible emotes can be reordered directly in the menu with a clear insertion marker.
 - **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, side, color tint, and live preview.
 - **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
-- **Smarter layout:** Column widths automatically fit their labels, while height, position, and lock state remain persistent.
+- **Smarter layout:** Column widths automatically fit their labels, while height, position, title-bar placement, and lock state remain persistent.
 - **Improved profiles:** Six bundled visual themes—including a high-contrast, colorblind-friendly option—accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
 
 ## Screenshots
@@ -142,6 +142,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 The **General** settings screen controls the current profile's window behavior and layout:
 
 - The window position and height can be locked.
+- The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.
 - Inactivity fading can be enabled with a configurable delay and inactive opacity. It is disabled by default, so the menu remains visible.
