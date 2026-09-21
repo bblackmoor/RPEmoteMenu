@@ -1450,7 +1450,7 @@ local function CreateGeneralSettingsPanel()
 
     local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -375)
-    iconCornerLabel:SetText("Icon corner")
+    iconCornerLabel:SetText("Icon side")
 
     local iconCornerSelector = CreateFrame(
         "DropdownButton",
@@ -1460,11 +1460,11 @@ local function CreateGeneralSettingsPanel()
     )
     iconCornerSelector:SetWidth(150)
     iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -396)
-    iconCornerSelector:SetDefaultText("Upper left")
+    iconCornerSelector:SetDefaultText("Left")
 
     local iconCornerLabels = {
-        TOPLEFT = "Upper left",
-        TOPRIGHT = "Upper right"
+        TOPLEFT = "Left",
+        TOPRIGHT = "Right"
     }
 
     iconCornerSelector:SetupMenu(function(_, rootDescription)

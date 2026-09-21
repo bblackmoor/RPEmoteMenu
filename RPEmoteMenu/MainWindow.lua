@@ -15,6 +15,9 @@ local function Trim(value)
 end
 
 local titleBarHeight = 30
+-- The first category and emote labels are both centered about 50 pixels below
+-- the top of the window. Keep the minimized icon on that same centerline.
+local firstContentRowCenterOffset = 50
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumUsableWidth = 220
 local minimumHeight = 150
@@ -1615,12 +1618,18 @@ local function ApplyMinimizedIconAnchor()
         return
     end
 
-    local corner = settings.minimizedIconCorner == "TOPRIGHT"
-        and "TOPRIGHT"
-        or "TOPLEFT"
+    local rightAligned = settings.minimizedIconCorner == "TOPRIGHT"
+    local iconPoint = rightAligned and "RIGHT" or "LEFT"
+    local windowPoint = rightAligned and "TOPRIGHT" or "TOPLEFT"
 
     MinimizedIconButton:ClearAllPoints()
-    MinimizedIconButton:SetPoint(corner, MainFrame, corner)
+    MinimizedIconButton:SetPoint(
+        iconPoint,
+        MainFrame,
+        windowPoint,
+        0,
+        -firstContentRowCenterOffset
+    )
 end
 
 local function UpdateWindowBodyVisibility()

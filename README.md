@@ -15,7 +15,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 - **Easier editing:** Version 2 adds row-level emote editing, streamlined settings, emote and category duplication, and direct editing links in empty menus.
 - **Drag-and-drop sorting:** Visible emotes can be reordered directly in the menu with a clear insertion marker.
-- **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, corner, color tint, and live preview.
+- **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, side, color tint, and live preview.
 - **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
 - **Smarter layout:** Column widths automatically fit their labels, while height, position, and lock state remain persistent.
 - **Improved profiles:** Six bundled visual themes—including a high-contrast, colorblind-friendly option—accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
@@ -146,7 +146,7 @@ The **General** settings screen controls the current profile's window behavior a
 - The addon can be shown or hidden at login.
 - Inactivity fading can be enabled with a configurable delay and inactive opacity. It is disabled by default, so the menu remains visible.
 - The auto-hidden title bar can be replaced by a square addon icon sized from 16 to 64 pixels, independently of the main window dimensions.
-- The minimized icon can occupy the upper-left or upper-right corner of the main window and can use a custom color tint.
+- The minimized icon can occupy the left or right edge of the main window, centered alongside the first category and emote, and can use a custom color tint. Its black antialiased outline remains visible against light backgrounds.
 - The window can be dragged or centered, with exact coordinates available as an advanced option.
 - The window height can be set manually, while its width automatically fits every category and emote label in the profile.
 - The default position and size can be restored.
