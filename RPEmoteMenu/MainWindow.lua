@@ -71,6 +71,7 @@ local autoHideFading = false
 local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
+local windowDragState
 
 local function IsTitleBarOnLeft()
     return settings and settings.titleBarPosition == "LEFT"
@@ -1803,9 +1804,10 @@ local function UpdateWindowBodyVisibility()
             ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
             SetInternalFrameSize(compactWidth, compactHeight)
-            SetWindowOpacity(
-                math.min(settings.inactiveOpacity, settings.windowOpacity)
-            )
+            -- The body has finished fading and is now hidden. Keep the
+            -- surviving title bar at the user's normal window opacity so it
+            -- remains an obvious, usable way to restore the menu.
+            SetWindowOpacity(settings.windowOpacity)
         end
     else
         -- Restore the saved height before raising the minimum resize bound.
@@ -1920,14 +1922,77 @@ ScheduleWindowAutoHide = function()
             end
 
             SetWindowAutoHidden(true)
-            if settings.minimizeToIcon then
-                SetWindowOpacity(hiddenOpacity)
-            end
+            -- The minimized icon is parented to UIParent and therefore does
+            -- not inherit MainFrame's alpha. Restoring MainFrame here keeps
+            -- both minimized affordances at their normal visibility and also
+            -- prevents a dim flash when the body is shown again.
+            SetWindowOpacity(settings.windowOpacity)
         end)
     end)
 end
 
 -- MAIN WINDOW
+local function StartWindowMoving()
+    if settings.locked or settings.keepOpen then
+        return
+    end
+
+    local left = MainFrame:GetLeft()
+    local top = MainFrame:GetTop()
+    if not left or not top then
+        return
+    end
+
+    local scale = UIParent:GetEffectiveScale()
+    local cursorX, cursorY = GetCursorPosition()
+    windowDragState = {
+        cursorX = cursorX / scale,
+        cursorY = cursorY / scale,
+        left = left,
+        top = top,
+    }
+end
+
+local function StopWindowMoving()
+    windowDragState = nil
+
+    local left = MainFrame:GetLeft()
+    local top = MainFrame:GetTop()
+    if left and top then
+        -- Clamp using the expanded dimensions, even while the window is
+        -- collapsed, so restoring the menu cannot place part of it off-screen.
+        MainWindow.ApplyWindowGeometry(left, top, nil, settings.height)
+    else
+        SaveWindowPosition()
+    end
+end
+
+local function UpdateWindowDrag()
+    if not windowDragState then
+        return false
+    end
+
+    local scale = UIParent:GetEffectiveScale()
+    local cursorX, cursorY = GetCursorPosition()
+    local left = windowDragState.left
+        + (cursorX / scale) - windowDragState.cursorX
+    local top = windowDragState.top
+        + (cursorY / scale) - windowDragState.cursorY
+
+    -- Calculate every position from the initial mouse/frame coordinates. This
+    -- avoids both Blizzard's sticky edge clamping and the anchor-dependent
+    -- jump produced by StartMoving() with the vertical title bar.
+    left, top = ClampWindowGeometry(
+        left,
+        top,
+        GetExpandedWidth(),
+        settings.height
+    )
+    MainFrame:ClearAllPoints()
+    MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+    return true
+end
+
 function MainWindow.CreateMainWindow()
     settings = Database.GetSettings()
     selectedCategoryIndex = settings.selectedCategory
@@ -1943,16 +2008,8 @@ function MainWindow.CreateMainWindow()
     MainFrame:EnableMouse(true)
     MainFrame:RegisterForDrag("LeftButton")
 
-    MainFrame:SetScript("OnDragStart", function(self)
-        if not settings.locked and not settings.keepOpen then
-            self:StartMoving()
-        end
-    end)
-
-    MainFrame:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        SaveWindowPosition()
-    end)
+    MainFrame:SetScript("OnDragStart", StartWindowMoving)
+    MainFrame:SetScript("OnDragStop", StopWindowMoving)
 
     MainFrame:SetScript("OnSizeChanged", function(self, width, height)
         if isApplyingColumnSize then return end
@@ -1980,15 +2037,8 @@ function MainWindow.CreateMainWindow()
     TitleBar:SetFrameLevel(MainFrame:GetFrameLevel() + 1)
     TitleBar:EnableMouse(true)
     TitleBar:RegisterForDrag("LeftButton")
-    TitleBar:SetScript("OnDragStart", function()
-        if not settings.locked and not settings.keepOpen then
-            MainFrame:StartMoving()
-        end
-    end)
-    TitleBar:SetScript("OnDragStop", function()
-        MainFrame:StopMovingOrSizing()
-        SaveWindowPosition()
-    end)
+    TitleBar:SetScript("OnDragStart", StartWindowMoving)
+    TitleBar:SetScript("OnDragStop", StopWindowMoving)
     TitleBar:SetScript("OnMouseUp", function(_, button)
         if button == "RightButton" then
             addon.Settings.Open()
@@ -2029,15 +2079,8 @@ function MainWindow.CreateMainWindow()
         SetWindowAutoHidden(false)
         MainWindow.NotifyActivity()
     end)
-    MinimizedIconButton:SetScript("OnDragStart", function()
-        if not settings.locked then
-            MainFrame:StartMoving()
-        end
-    end)
-    MinimizedIconButton:SetScript("OnDragStop", function()
-        MainFrame:StopMovingOrSizing()
-        SaveWindowPosition()
-    end)
+    MinimizedIconButton:SetScript("OnDragStart", StartWindowMoving)
+    MinimizedIconButton:SetScript("OnDragStop", StopWindowMoving)
     MinimizedIconButton:Hide()
 
     CategorySidebar = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
@@ -2386,6 +2429,10 @@ function MainWindow.CreateMainWindow()
     end)
     local mouseCheckElapsed = 0
     MainFrame:SetScript("OnUpdate", function(self, elapsed)
+        if UpdateWindowDrag() then
+            return
+        end
+
         mouseCheckElapsed = mouseCheckElapsed + elapsed
         if mouseCheckElapsed < 0.05 then
             return
