@@ -18,7 +18,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, side, color tint, and live preview.
 - **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
 - **Smarter layout:** Column widths automatically fit their labels, while height, position, title-bar placement, and lock state remain persistent.
-- **Improved profiles:** Six bundled visual themes—including a high-contrast, colorblind-friendly option—accompany clearer tools for creating, copying, restoring, importing, and exporting profiles. Existing Version 1 profiles and character assignments migrate automatically.
+- **Improved profiles:** Default is editable and restorable while remaining the reserved fallback. Six bundled themes include a high-contrast, colorblind-friendly option. Existing Version 1 profiles and character assignments migrate automatically.
 
 ## Screenshots
 
@@ -63,7 +63,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
 5. Category names and their emote commands can be edited under **Emotes**.
 
-The built-in **Default** profile is always available and fully editable. Its reserved name cannot be renamed or deleted, ensuring that the addon always has a fallback profile.
+The built-in **Default** profile is editable and always available. Its reserved name cannot be renamed or deleted.
 
 ## Categories and Emotes
 
@@ -91,7 +91,7 @@ The **Emotes** screen can restore the selected category or every category in the
 
 A profile contains its categories, emotes, window layout, and appearance. Profiles are available to all characters, while an active profile is selected independently for each character.
 
-The **Default** profile can be edited, imported into, exported, and restored like other profiles. Its reserved name cannot be renamed or deleted because it remains the addon's guaranteed fallback profile. Importing an exported profile named **Default** creates a uniquely named copy rather than replacing the fallback profile.
+The **Default** profile can be edited, imported into, exported, and restored. Importing a profile named **Default** creates a uniquely named copy.
 
 The **Profiles** settings screen includes:
 
@@ -107,7 +107,9 @@ Imported profiles do not replace or activate existing profiles. If an imported n
 
 Profile names cannot be blank, exceed 64 characters, duplicate another name regardless of case, or use the reserved name **Default**.
 
-The addon includes six editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. **High Contrast** is colorblind-friendly: it combines bright neutral text, dark opaque backgrounds, and a bold yellow selection background with dark selected text, so selection does not depend on red–green color differences alone. It uses Teal's fonts and font sizes. Bundled profiles start visible at login, unlocked, unfaded, with the settings gear shown, and without minimizing to an icon. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
+The six bundled profiles are **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. **High Contrast** uses bright neutral text, dark backgrounds, and a yellow selection background that does not rely on red–green differences. Bundled profiles start visible, unlocked, unfaded, with the settings gear shown and minimized mode disabled.
+
+Bundled profiles can be edited, renamed, exported, or deleted. **Restore Bundled Profiles** resets categories, appearance, General settings, and layout for profiles still using bundled names, and recreates missing profiles. Renamed profiles are unchanged.
 
 Bundled profile names are marked **(Bundled)** in the profile selector. Each also displays a short description of its visual theme.
 
@@ -142,7 +144,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 The **General** settings screen controls the current profile's window behavior and layout:
 
 - The window position and height can be locked.
-- Default and new or restored bundled profiles open in the center of the screen. Resetting one of these profiles' window height and position also restores every option on its General tab to the defaults.
+- Default and new or restored bundled profiles open in the center. **Reset Window Height & Position** also resets every General setting for Default and bundled profiles.
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.

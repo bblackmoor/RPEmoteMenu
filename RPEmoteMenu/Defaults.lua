@@ -7,7 +7,7 @@ local _, addon = ...
 --     {"Button label", "default command", "targeted command"}
 --
 -- The targeted command is optional. It is used only when a target exists and
--- that target is not your own character. Otherwise, the default command is used.
+-- that target is not the current character. Otherwise, the default command is used.
 --
 -- Example:
 --     {"Observe",
@@ -16,7 +16,7 @@ local _, addon = ...
 --
 -- Tokens supported in either command:
 --     {target}  Target's name without the realm.
---     {player}  Your character's name without the realm.
+--     {player}  Current character's name without the realm.
 --
 -- Blizzard also supports %t in many chat commands as the current target's name,
 -- but the {target} tokens above are expanded by this addon before the command

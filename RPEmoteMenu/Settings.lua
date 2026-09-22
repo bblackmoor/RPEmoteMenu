@@ -659,7 +659,7 @@ local function CreateAboutPanel()
 
         "Character-name tokens\n" ..
         "    {target}  Target's name without the realm.\n" ..
-        "    {player}  Your character's name without the realm."
+        "    {player}  Current character's name without the realm."
     )
     return panel
 end
@@ -1753,10 +1753,9 @@ local function CreateProfilesSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Choose a profile for this character, create or copy an editable profile, " ..
-        "or import a new one. Default is fully editable and can be restored to its " ..
-        "built-in contents, but its reserved name cannot be renamed or deleted. " ..
-        "Bundled profiles are ordinary editable profiles and may be renamed or deleted."
+        "Choose, create, copy, or import a profile. Default is editable and " ..
+        "restorable, but its reserved name cannot be renamed or deleted. Bundled " ..
+        "profiles are editable and may be renamed or deleted."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1911,7 +1910,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_DELETE_BUNDLED_PROFILE"] = {
-        text = 'Delete the bundled profile "%s"?\n\nCharacters using it will return to Default. You can recreate it later with Restore Bundled Profiles.',
+        text = 'Delete the bundled profile "%s"?\n\nCharacters using it will return to Default. Restore Bundled Profiles can recreate it.',
         button1 = DELETE or "Delete",
         button2 = CANCEL or "Cancel",
         OnAccept = DeleteProfile,
@@ -2052,9 +2051,8 @@ local function CreateProfilesSettingsPanel()
     bundledDescription:SetWidth(620)
     bundledDescription:SetJustifyH("LEFT")
     bundledDescription:SetText(
-        "Reset Gilded Shadow, Crimson Night, Teal, High Contrast, Joker, " ..
-        "and Moonlight to their original designs and recreate any that " ..
-        "are missing."
+        "Reset bundled categories, appearance, General settings, and layout; " ..
+        "recreate missing bundled profiles."
     )
     bundledDescription:SetTextColor(0.8, 0.8, 0.8)
 
@@ -2223,7 +2221,7 @@ local function CreateCategoriesSettingsPanel()
     placeholderText:SetText(
         "Named categories appear in the sidebar; blank categories stay hidden.\n" ..
         "{target} - Target's name without the realm.\n" ..
-        "{player} - Your character's name without the realm.\n" ..
+        "{player} - Current character's name without the realm.\n" ..
         "Targeted Command is used only when another unit is targeted.\n" ..
         "Drag an emote row to reorder it. Import replaces this category."
     )

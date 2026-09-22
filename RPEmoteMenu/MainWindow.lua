@@ -1005,7 +1005,7 @@ local function GetEmoteEditorDialog()
     helpText:SetJustifyH("LEFT")
     helpText:SetText(
         "{target} - Target's name without the realm.   " ..
-        "{player} - Your character's name without the realm.\n" ..
+        "{player} - Current character's name without the realm.\n" ..
         "Targeted Emote is used only when another unit is targeted. " ..
         "An emote appears only when it has both a name and a default emote."
     )

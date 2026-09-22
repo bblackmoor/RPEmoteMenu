@@ -701,7 +701,7 @@ function Database.SetActiveProfile(profileName)
 
     local characterKey = Database.GetCharacterKey()
     if not characterKey then
-        return false, "Your character is not available yet."
+        return false, "The current character is not available yet."
     end
 
     RPEmoteMenuDB.activeProfiles[characterKey] = profileName
@@ -718,7 +718,7 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings)
 
     local characterKey = Database.GetCharacterKey()
     if not characterKey then
-        return false, "Your character is not available yet."
+        return false, "The current character is not available yet."
     end
 
     local settingsSource = type(sourceSettings) == "table"
