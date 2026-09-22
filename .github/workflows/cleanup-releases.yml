@@ -1,0 +1,35 @@
+name: Remove legacy release entries
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.event.head_commit.message == 'Remove legacy release entries'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete obsolete releases while preserving tags
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          for release_id in \
+            393494593 \
+            393491991 \
+            393464699 \
+            393384668 \
+            393367033 \
+            393364119 \
+            392822249 \
+            392818962 \
+            392814318 \
+            392804816 \
+            392603120
+          do
+            gh api --method DELETE "repos/${{ github.repository }}/releases/$release_id"
+          done
