@@ -3,7 +3,7 @@ local _, addon = ...
 -- Bundled profiles use the built-in emote categories. Settings intentionally
 -- contain only each profile's visual design; Database.lua fills
 -- every omitted setting from the current defaults.
-addon.BuiltInProfileVersion = 4
+addon.BuiltInProfileVersion = 5
 
 addon.BuiltInProfiles = {
     {

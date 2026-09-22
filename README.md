@@ -107,7 +107,7 @@ Imported profiles do not replace or activate existing profiles. If an imported n
 
 Profile names cannot be blank, exceed 64 characters, duplicate another name regardless of case, or use the reserved name **Default**.
 
-The addon includes six editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. **High Contrast** is colorblind-friendly: it combines bright neutral text, dark opaque backgrounds, and a bold yellow selection background with dark selected text, so selection does not depend on red–green color differences alone. It uses Teal's fonts and font sizes. Bundled profiles start unlocked and do not minimize to an icon. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
+The addon includes six editable starter profiles: **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. They use the built-in emote categories with different visual designs. **High Contrast** is colorblind-friendly: it combines bright neutral text, dark opaque backgrounds, and a bold yellow selection background with dark selected text, so selection does not depend on red–green color differences alone. It uses Teal's fonts and font sizes. Bundled profiles start visible at login, unlocked, unfaded, with the settings gear shown, and without minimizing to an icon. They can be edited, renamed, exported, or deleted like any custom profile. Restoring bundled profiles resets profiles still using those names and recreates missing ones; renamed profiles are left unchanged.
 
 Bundled profile names are marked **(Bundled)** in the profile selector. Each also displays a short description of its visual theme.
 
@@ -142,7 +142,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 The **General** settings screen controls the current profile's window behavior and layout:
 
 - The window position and height can be locked.
-- New and restored bundled profiles open in the center of the screen. Resetting window height and position also returns the window to the center.
+- New and restored bundled profiles open in the center of the screen. Resetting a bundled profile's window height and position also restores every option on its General tab to the defaults.
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.

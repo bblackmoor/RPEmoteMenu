@@ -408,6 +408,31 @@ local function RestoreWindowSize()
 end
 
 function MainWindow.ResetWindowPosition()
+    if Database.IsBuiltInProfileName(Database.GetActiveProfileName()) then
+        -- Reset every option exposed on the General tab for bundled profiles,
+        -- while leaving the profile's appearance and emotes unchanged.
+        settings.locked = defaults.locked
+        settings.hideSettingsGear = defaults.hideSettingsGear
+        settings.showAtLogin = defaults.showAtLogin
+        settings.fadeEnabled = defaults.fadeEnabled
+        settings.fadeDelay = defaults.fadeDelay
+        settings.inactiveOpacity = defaults.inactiveOpacity
+        settings.minimizeToIcon = defaults.minimizeToIcon
+        settings.minimizedIconSize = defaults.minimizedIconSize
+        settings.minimizedIconCorner = defaults.minimizedIconCorner
+        settings.minimizedIconColor = {
+            r = defaults.minimizedIconColor.r,
+            g = defaults.minimizedIconColor.g,
+            b = defaults.minimizedIconColor.b
+        }
+        settings.titleBarPosition = defaults.titleBarPosition
+
+        MainWindow.ApplyFadeSettings()
+        MainWindow.ApplyMinimizeToIconSettings()
+        MainWindow.ApplyMovementLock()
+        MainWindow.ApplySettingsGearVisibility()
+    end
+
     settings.point = defaults.point
     settings.relativePoint = defaults.relativePoint
     settings.x = defaults.x

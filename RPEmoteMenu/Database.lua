@@ -14,6 +14,7 @@ local SCHEMA_VERSION = 10
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local UNLOCKED_BUILT_IN_VERSION = 4
+local SAFE_GENERAL_DEFAULTS_BUILT_IN_VERSION = 5
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -369,8 +370,11 @@ end
 
 local function CopyBuiltInProfile(definition)
     local profileSettings = CopySettings(definition.settings)
+    profileSettings.fadeEnabled = false
+    profileSettings.hideSettingsGear = false
     profileSettings.locked = false
     profileSettings.minimizeToIcon = false
+    profileSettings.showAtLogin = true
 
     return {
         categories = CopyDefaultCategories(),
@@ -390,27 +394,40 @@ local function InstallBuiltInProfileUpdates()
 
         if not existingName then
             RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
-        elseif installedVersion < UNLOCKED_BUILT_IN_VERSION then
+        else
             local profileSettings = RPEmoteMenuDB.profiles[existingName].settings
-            profileSettings.locked = false
-            profileSettings.minimizeToIcon = false
 
-            -- Version 4 replaces High Contrast's thick simulated text outline,
-            -- which can obscure large category labels, with a yellow selection
-            -- background and nearly black selected text.
-            if definition.name == "High Contrast" then
-                profileSettings.categoryHighlightColor = NormalizeColor(
-                    definition.settings.categoryHighlightColor,
-                    defaults.categoryHighlightColor
-                )
-                profileSettings.categoryHighlightEffect =
-                    definition.settings.categoryHighlightEffect
-                profileSettings.categoryHighlightThickness =
-                    definition.settings.categoryHighlightThickness
-                profileSettings.selectedCategoryTextColor = NormalizeColor(
-                    definition.settings.selectedCategoryTextColor,
-                    defaults.selectedCategoryTextColor
-                )
+            if installedVersion < UNLOCKED_BUILT_IN_VERSION then
+                profileSettings.locked = false
+                profileSettings.minimizeToIcon = false
+
+                -- Version 4 replaces High Contrast's thick simulated text
+                -- outline, which can obscure large category labels, with a
+                -- yellow selection background and nearly black selected text.
+                if definition.name == "High Contrast" then
+                    profileSettings.categoryHighlightColor = NormalizeColor(
+                        definition.settings.categoryHighlightColor,
+                        defaults.categoryHighlightColor
+                    )
+                    profileSettings.categoryHighlightEffect =
+                        definition.settings.categoryHighlightEffect
+                    profileSettings.categoryHighlightThickness =
+                        definition.settings.categoryHighlightThickness
+                    profileSettings.selectedCategoryTextColor = NormalizeColor(
+                        definition.settings.selectedCategoryTextColor,
+                        defaults.selectedCategoryTextColor
+                    )
+                end
+            end
+
+            -- Version 5 gives every existing bundled profile the same safe,
+            -- visible starting behavior as newly installed profiles.
+            if installedVersion < SAFE_GENERAL_DEFAULTS_BUILT_IN_VERSION then
+                profileSettings.fadeEnabled = false
+                profileSettings.hideSettingsGear = false
+                profileSettings.locked = false
+                profileSettings.minimizeToIcon = false
+                profileSettings.showAtLogin = true
             end
         end
     end
