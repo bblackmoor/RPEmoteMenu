@@ -53,6 +53,24 @@ local COLOR_SETTING_KEYS = {
     "borderColor",
     "minimizedIconColor"
 }
+local GENERAL_SETTING_KEYS = {
+    "locked",
+    "hideSettingsGear",
+    "showAtLogin",
+    "fadeEnabled",
+    "fadeDelay",
+    "inactiveOpacity",
+    "minimizeToIcon",
+    "minimizedIconSize",
+    "minimizedIconCorner",
+    "minimizedIconColor",
+    "titleBarPosition",
+    "point",
+    "relativePoint",
+    "x",
+    "y",
+    "height"
+}
 
 local function NormalizeString(value)
     return type(value) == "string" and value or ""
@@ -335,6 +353,37 @@ function Database.CopySettings(source)
 end
 
 
+local function ResetGeneralSettings(target, source)
+    local resetSettings = CopySettings(source or defaults)
+
+    for _, key in ipairs(GENERAL_SETTING_KEYS) do
+        local value = resetSettings[key]
+
+        if type(value) == "table" then
+            target[key] = {
+                r = value.r,
+                g = value.g,
+                b = value.b
+            }
+        else
+            target[key] = value
+        end
+    end
+end
+
+
+function Database.ResetBuiltInGeneralSettings(profileName, target)
+    local definition = builtInProfileByName[profileName]
+    if not definition then
+        return false
+    end
+
+    target = target or RPEmoteMenuDB.profiles[profileName].settings
+    ResetGeneralSettings(target, definition.settings)
+    return true
+end
+
+
 function Database.IsDefaultProfile()
     return Database.GetActiveProfileName() == DEFAULT_PROFILE_NAME
 end
@@ -370,11 +419,7 @@ end
 
 local function CopyBuiltInProfile(definition)
     local profileSettings = CopySettings(definition.settings)
-    profileSettings.fadeEnabled = false
-    profileSettings.hideSettingsGear = false
-    profileSettings.locked = false
-    profileSettings.minimizeToIcon = false
-    profileSettings.showAtLogin = true
+    ResetGeneralSettings(profileSettings, definition.settings)
 
     return {
         categories = CopyDefaultCategories(),

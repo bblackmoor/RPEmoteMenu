@@ -101,7 +101,7 @@ The **Profiles** settings screen includes:
 - **Delete Profile:** Deletes the current custom profile after confirmation.
 - **Export Profile:** Copies the current custom profile as JSON.
 - **Import Profile:** Adds a profile from exported JSON.
-- **Restore Bundled Profiles:** Resets the six bundled profiles and recreates any that were deleted.
+- **Restore Bundled Profiles:** Resets the six bundled profiles, including their General settings, and recreates any that were deleted.
 
 Imported profiles do not replace or activate existing profiles. If an imported name is already in use, the addon assigns the new profile a unique name. Deleting a profile returns characters using it to **Default**.
 

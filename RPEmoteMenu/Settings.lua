@@ -1943,7 +1943,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES"] = {
-        text = "Restore all bundled profiles to their original categories, appearance, and layout?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
+        text = "Restore all bundled profiles to their original categories, appearance, General settings, and layout?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
         OnAccept = function()
