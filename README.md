@@ -39,7 +39,9 @@ https://github.com/user-attachments/assets/b5bad169-6a50-4085-a0c7-5366533300af
 
 ## Download
 
-Ready-to-install ZIP files are available from the [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases) page. Each release contains a versioned `RPEmoteMenu-<version>.zip` archive.
+Permanent, ready-to-install ZIP files are available from the [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases) page. Each release contains a `RPEmoteMenu-<version>.zip` archive.
+
+Every commit to `main` also creates a development build under [GitHub Actions](https://github.com/bblackmoor/RPEmoteMenu/actions/workflows/release.yml). Development archives are named `RPEmoteMenu-<version>-dev-<commit>.zip` and retained for 90 days. Downloading an Actions artifact requires signing in to GitHub. A version tag such as `v2.0.180` publishes the corresponding permanent release.
 
 ## Installation
 
@@ -184,4 +186,5 @@ The **Targeted Command** is used only when another unit is targeted. Without a t
 Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
 Licensed under the GNU General Public License v3.0 (GPL-3.0):  
 https://www.gnu.org/licenses/gpl-3.0.en.html  
+Release history: [CHANGELOG.md](CHANGELOG.md)  
 Source: https://github.com/bblackmoor/rpemotemenu
