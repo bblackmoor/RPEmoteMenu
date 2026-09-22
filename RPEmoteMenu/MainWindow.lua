@@ -756,6 +756,16 @@ function MainWindow.ApplyFadeSettings()
     if not settings.fadeEnabled then
         CancelWindowAutoHide()
         SetWindowAutoHidden(false)
+    elseif isWindowAutoHidden then
+        local hiddenOpacity = math.min(
+            settings.inactiveOpacity,
+            settings.windowOpacity
+        )
+        if settings.minimizeToIcon then
+            MinimizedIconButton:SetAlpha(hiddenOpacity)
+        else
+            SetWindowOpacity(hiddenOpacity)
+        end
     elseif MainFrame and not MainFrame:IsMouseOver() then
         ScheduleInactiveFade()
         ScheduleWindowAutoHide()
@@ -1809,6 +1819,10 @@ local function UpdateWindowBodyVisibility()
     )
 
     if IsWindowBodyHidden() then
+        local hiddenOpacity = math.min(
+            settings.inactiveOpacity,
+            settings.windowOpacity
+        )
         SetCompactResizeBounds()
         CategorySidebar:Hide()
         ScrollFrame:Hide()
@@ -1826,6 +1840,7 @@ local function UpdateWindowBodyVisibility()
                 settings.minimizedIconSize
             )
             ApplyMinimizedIconAnchor()
+            MinimizedIconButton:SetAlpha(hiddenOpacity)
             MinimizedIconButton:SetShown(MainFrame:IsShown())
             SetInternalFrameSize(compactWidth, compactHeight)
         else
@@ -1837,10 +1852,7 @@ local function UpdateWindowBodyVisibility()
             ApplyMainFrameBackdrop()
             MainWindow.ApplySettingsGearVisibility()
             SetInternalFrameSize(compactWidth, compactHeight)
-            -- The body has finished fading and is now hidden. Keep the
-            -- surviving title bar at the user's normal window opacity so it
-            -- remains an obvious, usable way to restore the menu.
-            SetWindowOpacity(settings.windowOpacity)
+            SetWindowOpacity(hiddenOpacity)
         end
     else
         -- Restore the saved height before raising the minimum resize bound.
@@ -1852,6 +1864,7 @@ local function UpdateWindowBodyVisibility()
         TitleBar:Show()
         TitleText:Show()
         PinBtn:Show()
+        MinimizedIconButton:SetAlpha(1)
         MinimizedIconButton:Hide()
         MainFrame:EnableMouse(true)
         ApplyMainFrameBackdrop()
@@ -1955,11 +1968,11 @@ ScheduleWindowAutoHide = function()
             end
 
             SetWindowAutoHidden(true)
-            -- The minimized icon is parented to UIParent and therefore does
-            -- not inherit MainFrame's alpha. Restoring MainFrame here keeps
-            -- both minimized affordances at their normal visibility and also
-            -- prevents a dim flash when the body is shown again.
-            SetWindowOpacity(settings.windowOpacity)
+            if settings.minimizeToIcon then
+                -- The icon is parented to UIParent, so MainFrame can remain
+                -- ready at active opacity behind it.
+                SetWindowOpacity(settings.windowOpacity)
+            end
         end)
     end)
 end

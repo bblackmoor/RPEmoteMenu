@@ -1338,7 +1338,19 @@ local function CreateAppearanceSettingsPanel()
 end
 
 local function CreateGeneralSettingsPanel()
-    local panel = CreateFrame("Frame")
+    local container = CreateFrame("Frame")
+    local scrollFrame = CreateFrame(
+        "ScrollFrame",
+        nil,
+        container,
+        "UIPanelScrollFrameTemplate"
+    )
+    scrollFrame:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
+    scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
+
+    local panel = CreateFrame("Frame", nil, scrollFrame)
+    panel:SetSize(700, 700)
+    scrollFrame:SetScrollChild(panel)
     local checkboxes = {}
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -1534,7 +1546,7 @@ local function CreateGeneralSettingsPanel()
     layoutHeading:SetText("Layout")
 
     local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -510)
+    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -545)
     titleBarLabel:SetText("Title bar")
 
     local titleBarSelector = CreateFrame(
@@ -1544,7 +1556,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 310, -505)
+    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -540)
     titleBarSelector:SetDefaultText("Top")
 
     local titleBarLabels = {
@@ -1567,11 +1579,11 @@ local function CreateGeneralSettingsPanel()
     end)
 
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -540)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -580)
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 230, -536, 70,
+        panel, 230, -576, 70,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1586,7 +1598,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 310, -536, 70,
+        panel, 310, -576, 70,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1610,16 +1622,16 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -536)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -576)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -575)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 230, -571, 70,
+        panel, 230, -611, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1632,7 +1644,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -610)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -650)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -1667,8 +1679,8 @@ local function CreateGeneralSettingsPanel()
         AddonSettings.RefreshGeneralWindowFields()
     end
 
-    panel.RefreshControls = RefreshControls
-    panel:SetScript("OnShow", RefreshControls)
+    container.RefreshControls = RefreshControls
+    container:SetScript("OnShow", RefreshControls)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(200, 24)
@@ -1676,7 +1688,7 @@ local function CreateGeneralSettingsPanel()
     resetButton:SetText("Reset Window Height & Position")
     resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
 
-    return panel
+    return container
 end
 
 local function CreateImportExportSettingsPanel()
@@ -2118,7 +2130,7 @@ local function CreateCategoriesSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     selector:SetWidth(300)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -12)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -48)
 
     local function GetCategoryLabel(categoryIndex)
         local category = Database.GetCategory(categoryIndex)
@@ -2178,7 +2190,7 @@ local function CreateCategoriesSettingsPanel()
         "UIPanelButtonTemplate"
     )
     resetAllCategoriesButton:SetSize(240, 24)
-    resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -80)
+    resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, -114)
     resetAllCategoriesButton:SetText("Restore All Built-in Categories")
     resetAllCategoriesButton:SetEnabled(Database.CanEditActiveProfile())
     resetAllCategoriesButton:SetScript("OnClick", function()
@@ -2192,7 +2204,7 @@ local function CreateCategoriesSettingsPanel()
         "UIPanelButtonTemplate"
     )
     duplicateCategoryButton:SetSize(160, 24)
-    duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -80)
+    duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -114)
     duplicateCategoryButton:SetText("Duplicate Category")
 
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -2205,7 +2217,7 @@ local function CreateCategoriesSettingsPanel()
 
     local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportButton:SetSize(90, 24)
-    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 196, -48)
+    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -82)
     exportButton:SetText("Export")
     exportButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenExport(selectedCategoryIndex)
@@ -2215,7 +2227,7 @@ local function CreateCategoriesSettingsPanel()
     resetButton:SetPoint("LEFT", importButton, "RIGHT", 8, 0)
 
     local placeholderText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -120)
+    placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -154)
     placeholderText:SetWidth(630)
     placeholderText:SetJustifyH("LEFT")
     placeholderText:SetText(
@@ -2231,24 +2243,19 @@ local function CreateCategoriesSettingsPanel()
         panel,
         "Category Name",
         16,
-        -196,
+        -230,
         420,
         selectedCategoryIndex,
         nil,
         "name"
     )
     local listHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -235)
+    listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -269)
     listHeading:SetText("Emotes in this category")
 
     local countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     countText:SetPoint("LEFT", listHeading, "RIGHT", 10, 0)
     countText:SetTextColor(0.7, 0.7, 0.7, 1)
-
-    local addButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    addButton:SetSize(110, 24)
-    addButton:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -52, -228)
-    addButton:SetText("Add Emote")
 
     local listScrollFrame = CreateFrame(
         "ScrollFrame",
@@ -2256,16 +2263,20 @@ local function CreateCategoriesSettingsPanel()
         panel,
         "UIPanelScrollFrameTemplate"
     )
-    listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -265)
+    listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -299)
     listScrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -48, 18)
 
     local listContent = CreateFrame("Frame", nil, listScrollFrame)
     listContent:SetSize(590, 1)
     listScrollFrame:SetScrollChild(listContent)
 
+    local addButton = CreateFrame("Button", nil, listContent, "UIPanelButtonTemplate")
+    addButton:SetSize(110, 24)
+    addButton:SetText("Add Emote")
+
     local emptyText = listContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     emptyText:SetPoint("TOPLEFT", listContent, "TOPLEFT", 10, -15)
-    emptyText:SetText("No emotes yet. Use Add Emote above.")
+    emptyText:SetText("No emotes yet. Use Add Emote below.")
     emptyText:SetTextColor(0.65, 0.65, 0.65, 1)
 
     local emoteRows = {}
@@ -2316,7 +2327,11 @@ local function CreateCategoriesSettingsPanel()
         countText:SetText("(" .. #populated .. " of " .. MAX_EMOTES .. ")")
         emptyText:SetShown(#populated == 0)
         addButton:SetEnabled(editable and #populated < MAX_EMOTES)
-        listContent:SetHeight(math.max(#populated * 45, 45))
+        local rowsHeight = #populated * 45
+        local addButtonOffset = rowsHeight + (#populated == 0 and 38 or 6)
+        addButton:ClearAllPoints()
+        addButton:SetPoint("TOP", listContent, "TOP", 0, -addButtonOffset)
+        listContent:SetHeight(math.max(addButtonOffset + 30, 68))
 
         for rowIndex, row in ipairs(emoteRows) do
             local entry = populated[rowIndex]
@@ -2575,6 +2590,8 @@ local function CreateCategoriesSettingsPanel()
         return selectedCategoryIndex
     end
     AddonSettings.RefreshCategorySelector = RefreshCategorySelector
+
+    panel.RefreshEditors()
 
     return panel
 end
