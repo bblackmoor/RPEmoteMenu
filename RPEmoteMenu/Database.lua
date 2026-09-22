@@ -13,6 +13,7 @@ local MAX_EMOTES = addon.MAX_EMOTES
 local SCHEMA_VERSION = 10
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
+local UNLOCKED_BUILT_IN_VERSION = 4
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -367,22 +368,50 @@ end
 
 
 local function CopyBuiltInProfile(definition)
+    local profileSettings = CopySettings(definition.settings)
+    profileSettings.locked = false
+    profileSettings.minimizeToIcon = false
+
     return {
         categories = CopyDefaultCategories(),
-        settings = CopySettings(definition.settings)
+        settings = profileSettings
     }
 end
 
 
-local function InstallMissingBuiltInProfiles()
+local function InstallBuiltInProfileUpdates()
     local installedVersion = tonumber(RPEmoteMenuDB.builtInProfileVersion) or 0
     if installedVersion >= builtInProfileVersion then
         return
     end
 
     for _, definition in ipairs(builtInProfiles) do
-        if not FindProfileByName(definition.name) then
+        local existingName = FindProfileByName(definition.name)
+
+        if not existingName then
             RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
+        elseif installedVersion < UNLOCKED_BUILT_IN_VERSION then
+            local profileSettings = RPEmoteMenuDB.profiles[existingName].settings
+            profileSettings.locked = false
+            profileSettings.minimizeToIcon = false
+
+            -- Version 4 replaces High Contrast's thick simulated text outline,
+            -- which can obscure large category labels, with a yellow selection
+            -- background and nearly black selected text.
+            if definition.name == "High Contrast" then
+                profileSettings.categoryHighlightColor = NormalizeColor(
+                    definition.settings.categoryHighlightColor,
+                    defaults.categoryHighlightColor
+                )
+                profileSettings.categoryHighlightEffect =
+                    definition.settings.categoryHighlightEffect
+                profileSettings.categoryHighlightThickness =
+                    definition.settings.categoryHighlightThickness
+                profileSettings.selectedCategoryTextColor = NormalizeColor(
+                    definition.settings.selectedCategoryTextColor,
+                    defaults.selectedCategoryTextColor
+                )
+            end
         end
     end
 
@@ -791,7 +820,7 @@ function Database.InitializeDatabase()
         categories = CopyDefaultCategories(),
         settings = defaultSettings
     }
-    InstallMissingBuiltInProfiles()
+    InstallBuiltInProfileUpdates()
     RPEmoteMenuDB.emoteDataVersion = defaults.emoteDataVersion
     RPEmoteMenuDB.schemaVersion = SCHEMA_VERSION
 
