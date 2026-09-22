@@ -408,12 +408,12 @@ local function RestoreWindowSize()
 end
 
 function MainWindow.ResetWindowPosition()
-    if Database.ResetBuiltInGeneralSettings(
+    if Database.ResetProfileGeneralSettings(
         Database.GetActiveProfileName(),
         settings
     ) then
-        -- Reset every option exposed on the General tab for bundled profiles,
-        -- while leaving the profile's appearance and emotes unchanged.
+        -- Reset every option exposed on the General tab for restorable
+        -- built-in profiles, while leaving appearance and emotes unchanged.
         MainWindow.ApplyFadeSettings()
         MainWindow.ApplyMinimizeToIconSettings()
         MainWindow.ApplyMovementLock()

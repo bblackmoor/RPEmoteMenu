@@ -311,10 +311,7 @@ local function GetExchangeDialog()
     function dialog:UpdateActionState()
         if self.mode == "import" then
             local hasText = strtrim(editBox:GetText() or "") ~= ""
-            local canImport = self.dataType ~= "category"
-                or Database.CanEditActiveProfile()
-
-            actionButton:SetEnabled(canImport and hasText)
+            actionButton:SetEnabled(hasText)
         else
             actionButton:SetEnabled(true)
         end
@@ -348,7 +345,6 @@ local function GetExchangeDialog()
         local success
         local result
         local sourceProfileName
-        local skippedDefaultCount
 
         if dataType == "profile" then
             success, result, sourceProfileName = Serialization.ImportProfileAsNew(importText)
@@ -358,8 +354,7 @@ local function GetExchangeDialog()
                 importText
             )
         else
-            success, result, _, skippedDefaultCount =
-                Serialization.ImportAllProfiles(importText)
+            success, result = Serialization.ImportAllProfiles(importText)
         end
 
         if not success then
@@ -381,17 +376,7 @@ local function GetExchangeDialog()
             SetStatus("Imported category " .. result .. ".")
         else
             local profileLabel = result == 1 and "profile" or "profiles"
-            local message = "Added " .. result .. " " .. profileLabel .. "."
-
-            if skippedDefaultCount and skippedDefaultCount > 0 then
-                local skippedLabel = skippedDefaultCount == 1
-                    and "reserved Default profile"
-                    or "reserved Default profiles"
-                message = message .. " Skipped " .. skippedDefaultCount
-                    .. " " .. skippedLabel .. "."
-            end
-
-            SetStatus(message)
+            SetStatus("Added " .. result .. " " .. profileLabel .. ".")
         end
     end
 
@@ -464,10 +449,6 @@ local function GetExchangeDialog()
     end
 
     function dialog:OpenImport(categoryIndex)
-        if not Database.CanEditActiveProfile() then
-            return false, "The Default profile cannot receive imports."
-        end
-
         self.mode = "import"
         self.dataType = "category"
         self.categoryIndex = categoryIndex
@@ -546,10 +527,9 @@ local function GetExchangeDialog()
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
-        title:SetText("Export Custom Profiles")
+        title:SetText("Export All Profiles")
         instructions:SetText(
-            "Copy this JSON to save every custom profile. The local-only Default "
-            .. "profile and character assignments are not included."
+            "Copy this JSON to save every profile. Character assignments are not included."
         )
         actionButton:SetText("Select All")
         SetStatus("")
@@ -569,13 +549,13 @@ local function GetExchangeDialog()
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
-        title:SetText("Import Custom Profiles")
+        title:SetText("Import Profiles")
         instructions:SetText(
-            "Paste a custom-profiles export below. Importing only adds profiles; it "
-            .. "does not replace, activate, or assign them to characters. Any Default "
-            .. "profile in the import is skipped."
+            "Paste an all-profiles export below. Importing only adds profiles; it "
+            .. "does not replace, activate, or assign them to characters. Imported "
+            .. "Default profiles receive a unique name."
         )
-        actionButton:SetText("Import Custom Profiles")
+        actionButton:SetText("Import Profiles")
         SetStatus("")
         editBox:SetText("")
         scrollFrame:SetVerticalScroll(0)
@@ -1711,8 +1691,7 @@ local function CreateImportExportSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Save or transfer custom profiles. Default is a built-in, local-only profile "
-        .. "and is never imported or exported as a profile."
+        "Save or transfer profiles, including the editable Default profile."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1725,7 +1704,7 @@ local function CreateImportExportSettingsPanel()
     profilesDescription:SetWidth(620)
     profilesDescription:SetJustifyH("LEFT")
     profilesDescription:SetText(
-        "Each custom profile includes its window settings, appearance, categories, "
+        "Each profile includes its window settings, appearance, categories, "
         .. "and emotes. The addon does not add character names, realms, or character "
         .. "assignments to exports."
     )
@@ -1734,7 +1713,7 @@ local function CreateImportExportSettingsPanel()
     local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportButton:SetSize(160, 24)
     exportButton:SetPoint("TOPLEFT", profilesDescription, "BOTTOMLEFT", 0, -18)
-    exportButton:SetText("Export Custom Profiles")
+    exportButton:SetText("Export All Profiles")
     exportButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenAllProfilesExport()
     end)
@@ -1742,7 +1721,7 @@ local function CreateImportExportSettingsPanel()
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     importButton:SetSize(160, 24)
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
-    importButton:SetText("Import Custom Profiles")
+    importButton:SetText("Import Profiles")
     importButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenAllProfilesImport()
     end)
@@ -1752,9 +1731,9 @@ local function CreateImportExportSettingsPanel()
     importNote:SetWidth(620)
     importNote:SetJustifyH("LEFT")
     importNote:SetText(
-        "Importing only adds custom profiles. It does not replace existing profiles, "
-        .. "change the current profile, or assign profiles to characters. Default entries "
-        .. "are skipped, and name conflicts are renamed automatically. "
+        "Importing only adds profiles. It does not replace existing profiles, "
+        .. "change the current profile, or assign profiles to characters. Imported "
+        .. "Default entries and other name conflicts are renamed automatically. "
         .. "Review profile names and custom emote text before sharing."
     )
     importNote:SetTextColor(0.7, 0.7, 0.7)
@@ -1775,10 +1754,9 @@ local function CreateProfilesSettingsPanel()
     description:SetJustifyH("LEFT")
     description:SetText(
         "Choose a profile for this character, create or copy an editable profile, " ..
-        "or import a new one. Default's settings are customizable and persistent, but " ..
-        "local-only. Its categories cannot be edited, and the profile cannot be " ..
-        "imported, exported, renamed, or deleted. Bundled profiles are ordinary, " ..
-        "editable profiles and may be renamed or deleted."
+        "or import a new one. Default is fully editable and can be restored to its " ..
+        "built-in contents, but its reserved name cannot be renamed or deleted. " ..
+        "Bundled profiles are ordinary editable profiles and may be renamed or deleted."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1829,12 +1807,13 @@ local function CreateProfilesSettingsPanel()
 
     local function UpdateButtonState()
         local editable = Database.CanEditActiveProfile()
+        local manageable = Database.CanRenameOrDeleteActiveProfile()
         local validNewProfileName = Database.ValidateNewProfileName(nameInput:GetText())
 
         createButton:SetEnabled(validNewProfileName ~= nil)
         copyButton:SetEnabled(validNewProfileName ~= nil)
-        renameButton:SetEnabled(editable)
-        deleteButton:SetEnabled(editable)
+        renameButton:SetEnabled(manageable)
+        deleteButton:SetEnabled(manageable)
         exportProfileButton:SetEnabled(editable)
         importProfileButton:SetEnabled(true)
     end
@@ -2020,7 +1999,7 @@ local function CreateProfilesSettingsPanel()
     renameButton:SetScript("OnClick", function()
         local profileName = Database.GetActiveProfileName()
 
-        if not Database.CanEditActiveProfile() then
+        if not Database.CanRenameOrDeleteActiveProfile() then
             return
         end
 
@@ -2034,7 +2013,7 @@ local function CreateProfilesSettingsPanel()
     deleteButton:SetScript("OnClick", function()
         local profileName = Database.GetActiveProfileName()
 
-        if not Database.CanEditActiveProfile() then
+        if not Database.CanRenameOrDeleteActiveProfile() then
             return
         end
 
@@ -2246,8 +2225,7 @@ local function CreateCategoriesSettingsPanel()
         "{target} - Target's name without the realm.\n" ..
         "{player} - Your character's name without the realm.\n" ..
         "Targeted Command is used only when another unit is targeted.\n" ..
-        "Drag an emote row to reorder it. Import replaces this category.\n" ..
-        "The Default profile's categories cannot be edited."
+        "Drag an emote row to reorder it. Import replaces this category."
     )
     placeholderText:SetTextColor(0.8, 0.8, 0.8)
 

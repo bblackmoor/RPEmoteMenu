@@ -372,7 +372,13 @@ local function ResetGeneralSettings(target, source)
 end
 
 
-function Database.ResetBuiltInGeneralSettings(profileName, target)
+function Database.ResetProfileGeneralSettings(profileName, target)
+    if profileName == DEFAULT_PROFILE_NAME then
+        target = target or RPEmoteMenuDB.profiles[profileName].settings
+        ResetGeneralSettings(target, defaults)
+        return true
+    end
+
     local definition = builtInProfileByName[profileName]
     if not definition then
         return false
@@ -390,6 +396,11 @@ end
 
 
 function Database.CanEditActiveProfile()
+    return true
+end
+
+
+function Database.CanRenameOrDeleteActiveProfile()
     return not Database.IsDefaultProfile()
 end
 
@@ -670,7 +681,7 @@ end
 
 function Database.GetProfileDescription(profileName)
     if profileName == DEFAULT_PROFILE_NAME then
-        return "Protected built-in profile with customizable appearance and layout."
+        return "Editable built-in fallback profile. Its name is reserved."
     end
 
     local definition = builtInProfileByName[profileName]
@@ -843,6 +854,9 @@ function Database.InitializeDatabase()
         or {}
 
     local existingDefault = RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME]
+    local defaultCategories = existingDefault and existingDefault.categories
+        and NormalizeCategories(existingDefault.categories)
+        or CopyDefaultCategories()
     local defaultSettings = existingDefault and existingDefault.settings
         and NormalizeSettings(existingDefault.settings)
         or CopySettings(defaults)
@@ -879,7 +893,7 @@ function Database.InitializeDatabase()
 
     RPEmoteMenuDB.defaultCategories = CopyDefaultCategories()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
-        categories = CopyDefaultCategories(),
+        categories = defaultCategories,
         settings = defaultSettings
     }
     InstallBuiltInProfileUpdates()

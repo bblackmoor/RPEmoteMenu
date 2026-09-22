@@ -63,7 +63,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
 5. Category names and their emote commands can be edited under **Emotes**.
 
-The built-in **Default** profile is always available. Its categories and emotes are protected, but its window and appearance settings can be customized.
+The built-in **Default** profile is always available and fully editable. Its reserved name cannot be renamed or deleted, ensuring that the addon always has a fallback profile.
 
 ## Categories and Emotes
 
@@ -85,21 +85,21 @@ Targeted Command: /e watches {target} quietly.
 
 An emote appears only when it has both a label and a default command. A category appears only when it has a name.
 
-The **Emotes** screen can restore the selected category or every category in the current custom profile to the built-in set.
+The **Emotes** screen can restore the selected category or every category in the current profile to the built-in set.
 
 ## Profiles
 
 A profile contains its categories, emotes, window layout, and appearance. Profiles are available to all characters, while an active profile is selected independently for each character.
 
-The **Default** profile has protected categories and is local only. It cannot be imported, exported, renamed, or deleted. Its window and appearance settings remain customizable and persistent.
+The **Default** profile can be edited, imported into, exported, and restored like other profiles. Its reserved name cannot be renamed or deleted because it remains the addon's guaranteed fallback profile. Importing an exported profile named **Default** creates a uniquely named copy rather than replacing the fallback profile.
 
 The **Profiles** settings screen includes:
 
 - **Create Profile:** Creates a profile with the built-in categories and the current profile's settings.
 - **Copy Profile:** Duplicates the current profile, including its categories, emotes, layout, and appearance.
-- **Rename Profile:** Renames the current custom profile.
-- **Delete Profile:** Deletes the current custom profile after confirmation.
-- **Export Profile:** Copies the current custom profile as JSON.
+- **Rename Profile:** Renames the current profile, except for **Default**.
+- **Delete Profile:** Deletes the current profile after confirmation, except for **Default**.
+- **Export Profile:** Copies the current profile as JSON.
 - **Import Profile:** Adds a profile from exported JSON.
 - **Restore Bundled Profiles:** Resets the six bundled profiles, including their General settings, and recreates any that were deleted.
 
@@ -113,13 +113,13 @@ Bundled profile names are marked **(Bundled)** in the profile selector. Each als
 
 ## Import and Export
 
-The **Emotes** screen can export the selected category or replace that category in the current custom profile with an imported one.
+The **Emotes** screen can export the selected category or replace that category in the current profile with an imported one.
 
-The **Profiles** screen can import or export one custom profile. The separate **Import & Export** screen can import or export all custom profiles at once.
+The **Profiles** screen can import or export one profile. The separate **Import & Export** screen can import or export all profiles at once.
 
-Profile exports include sharable window settings, appearance, categories, and emotes. They do not include the local **Default** profile, character names, realms, character assignments, or the last selected category.
+Profile exports include sharable window settings, appearance, categories, and emotes. They do not include character names, realms, character assignments, or the last selected category.
 
-All transfers use JSON text. Imports are validated before any existing category is replaced or any new profiles are added. Bulk imports skip **Default**, preserve existing profiles, and automatically rename conflicts.
+All transfers use JSON text. Imports are validated before any existing category is replaced or any new profiles are added. Bulk imports preserve existing profiles and automatically rename conflicts, including an imported **Default** profile.
 
 ## Appearance
 
@@ -142,7 +142,7 @@ Changes appear immediately. **Restore Defaults** resets the current profile's ap
 The **General** settings screen controls the current profile's window behavior and layout:
 
 - The window position and height can be locked.
-- New and restored bundled profiles open in the center of the screen. Resetting a bundled profile's window height and position also restores every option on its General tab to the defaults.
+- Default and new or restored bundled profiles open in the center of the screen. Resetting one of these profiles' window height and position also restores every option on its General tab to the defaults.
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.
