@@ -1347,9 +1347,17 @@ local function CreateGeneralSettingsPanel()
     )
     scrollFrame:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
+    scrollFrame:EnableMouseWheel(true)
+    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local nextOffset = (self:GetVerticalScroll() or 0) - (delta * 40)
+        self:SetVerticalScroll(math.max(
+            0,
+            math.min(self:GetVerticalScrollRange() or 0, nextOffset)
+        ))
+    end)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 700)
+    panel:SetSize(700, 790)
     scrollFrame:SetScrollChild(panel)
     local checkboxes = {}
 
@@ -1369,12 +1377,13 @@ local function CreateGeneralSettingsPanel()
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -75)
     behaviorHeading:SetText("Window Behavior")
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Lock window position and height", -100,
+    local lockCheckbox = CreateCheckbox(panel, "Lock Window Position and Height", -100,
         function() return settings.locked end,
         function(value)
             settings.locked = value
             MainWindow.ApplyMovementLock()
         end)
+    checkboxes[#checkboxes + 1] = lockCheckbox
 
     checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Hide settings gear icon", -135,
         function() return settings.hideSettingsGear end,
@@ -1393,7 +1402,7 @@ local function CreateGeneralSettingsPanel()
 
     local RefreshInactiveControls
     local RefreshIconControls
-    local fadeCheckbox = CreateCheckbox(panel, "Fade and hide the menu when inactive", -240,
+    local fadeCheckbox = CreateCheckbox(panel, "Fade the menu when inactive", -240,
         function() return settings.fadeEnabled end,
         function(value)
             settings.fadeEnabled = value
@@ -1427,16 +1436,42 @@ local function CreateGeneralSettingsPanel()
         "%"
     )
 
-    local minimizeCheckbox = CreateCheckbox(panel, "Minimize to icon", -335,
-        function() return settings.minimizeToIcon end,
-        function(value)
-            settings.minimizeToIcon = value
-            if RefreshIconControls then
-                RefreshIconControls()
-            end
-            MainWindow.ApplyMinimizeToIconSettings()
-        end)
-    checkboxes[#checkboxes + 1] = minimizeCheckbox
+    local minimizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    minimizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -340)
+    minimizeLabel:SetText("Minimize to")
+
+    local minimizeSelector = CreateFrame(
+        "DropdownButton",
+        nil,
+        panel,
+        "WowStyle1DropdownTemplate"
+    )
+    minimizeSelector:SetWidth(150)
+    minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -335)
+    minimizeSelector:SetDefaultText("None")
+
+    local minimizeLabels = {
+        NONE = "None",
+        TITLE_BAR = "Title Bar",
+        ICON = "Icon"
+    }
+
+    minimizeSelector:SetupMenu(function(_, rootDescription)
+        for _, mode in ipairs({"NONE", "TITLE_BAR", "ICON"}) do
+            rootDescription:CreateRadio(
+                minimizeLabels[mode],
+                function() return settings.minimizeMode == mode end,
+                function()
+                    settings.minimizeMode = mode
+                    minimizeSelector:OverrideText(minimizeLabels[mode])
+                    MainWindow.ApplyMinimizeToIconSettings()
+                    if RefreshIconControls then
+                        RefreshIconControls()
+                    end
+                end
+            )
+        end
+    end)
 
     local iconSizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -375)
@@ -1452,7 +1487,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -375)
+    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -410)
     iconCornerLabel:SetText("Icon side")
 
     local iconCornerSelector = CreateFrame(
@@ -1462,7 +1497,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     iconCornerSelector:SetWidth(150)
-    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -396)
+    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -405)
     iconCornerSelector:SetDefaultText("Left")
 
     local iconCornerLabels = {
@@ -1490,16 +1525,16 @@ local function CreateGeneralSettingsPanel()
         iconColorPreview = addon.MinimizedIconColor.CreateSettingsControls(
             panel,
             20,
-            -430
+            -450
         )
 
     local iconNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -480)
+    iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -500)
     iconNote:SetText("These options affect only the on-screen minimized icon.")
     iconNote:SetTextColor(0.7, 0.7, 0.7)
 
     RefreshIconControls = function()
-        local enabled = settings.fadeEnabled and settings.minimizeToIcon
+        local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
         local alpha = enabled and 1 or 0.45
 
         for _, control in ipairs({
@@ -1536,17 +1571,18 @@ local function CreateGeneralSettingsPanel()
             control.SuffixLabel:SetAlpha(alpha)
         end
 
-        minimizeCheckbox:SetEnabled(enabled)
-        minimizeCheckbox:SetAlpha(alpha)
+        minimizeSelector:SetEnabled(enabled)
+        minimizeSelector:SetAlpha(alpha)
+        minimizeLabel:SetAlpha(alpha)
         RefreshIconControls()
     end
 
     local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
+    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -550)
     layoutHeading:SetText("Layout")
 
     local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -545)
+    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -585)
     titleBarLabel:SetText("Title bar")
 
     local titleBarSelector = CreateFrame(
@@ -1556,7 +1592,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -540)
+    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -580)
     titleBarSelector:SetDefaultText("Top")
 
     local titleBarLabels = {
@@ -1579,11 +1615,11 @@ local function CreateGeneralSettingsPanel()
     end)
 
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -580)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -620)
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 230, -576, 70,
+        panel, 230, -616, 70,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1598,7 +1634,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 310, -576, 70,
+        panel, 310, -616, 70,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1622,16 +1658,16 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -576)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -616)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 230, -611, 70,
+        panel, 230, -651, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1644,20 +1680,23 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -650)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -690)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
     widthNote:SetTextColor(0.8, 0.8, 0.8, 1)
 
     AddonSettings.RefreshGeneralWindowFields = function()
+        lockCheckbox:RefreshValue()
         positionXBox:RefreshValue()
         positionYBox:RefreshValue()
         heightBox:RefreshValue()
         fadeCheckbox:RefreshValue()
         fadeDelayBox:RefreshValue()
         inactiveOpacityBox:RefreshValue()
-        minimizeCheckbox:RefreshValue()
+        minimizeSelector:OverrideText(
+            minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE
+        )
         iconSizeBox:RefreshValue()
         iconCornerSelector:OverrideText(
             iconCornerLabels[settings.minimizedIconCorner]

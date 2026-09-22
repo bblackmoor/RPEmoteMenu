@@ -77,6 +77,18 @@ local function IsTitleBarOnLeft()
     return settings and settings.titleBarPosition == "LEFT"
 end
 
+local function GetMinimizeMode()
+    return settings and settings.minimizeMode or "NONE"
+end
+
+local function IsMinimizedToIcon()
+    return GetMinimizeMode() == "ICON"
+end
+
+local function UsesMinimizedDisplay()
+    return GetMinimizeMode() ~= "NONE"
+end
+
 local function GetContentWidth()
     return sidebarWidth + emoteColumnWidth + columnChromeWidth
 end
@@ -94,10 +106,14 @@ local function GetCurrentFrameSize(width, height)
     end
 
     if IsTitleBarOnLeft() then
-        if settings.minimizeToIcon then
+        if IsMinimizedToIcon() or not UsesMinimizedDisplay() then
             return width, height
         end
         return titleBarThickness, height
+    end
+
+    if not UsesMinimizedDisplay() then
+        return width, height
     end
 
     return width, titleBarThickness
@@ -136,8 +152,8 @@ local function UpdatePinButton()
         return
     end
 
-    PinBtn.Icon:SetDesaturated(not settings.keepOpen)
-    PinBtn.Icon:SetAlpha(settings.keepOpen and 1 or 0.45)
+    PinBtn.Icon:SetDesaturated(not settings.locked)
+    PinBtn.Icon:SetAlpha(settings.locked and 1 or 0.45)
 end
 
 local function RefreshGeneralWindowFields()
@@ -597,8 +613,9 @@ end
 function MainWindow.ApplyMovementLock()
     local unlocked = not settings.locked
 
-    MainFrame:SetMovable(unlocked and not settings.keepOpen)
+    MainFrame:SetMovable(unlocked)
     MainFrame:SetResizable(unlocked)
+    UpdatePinButton()
 
     if ResizeGrip then
         if unlocked and not IsWindowBodyHidden() then
@@ -615,7 +632,7 @@ function MainWindow.ApplySettingsGearVisibility()
     end
 
     if settings.hideSettingsGear
-        or (isWindowAutoHidden and settings.minimizeToIcon) then
+        or (isWindowAutoHidden and IsMinimizedToIcon()) then
         SettingsBtn:Hide()
     else
         SettingsBtn:Show()
@@ -723,17 +740,16 @@ local function ScheduleInactiveFade()
     fadeGeneration = fadeGeneration + 1
     local requestedGeneration = fadeGeneration
 
-    -- An unpinned window uses ScheduleWindowAutoHide for both its fade and
-    -- collapse. Starting a second opacity animation here can cancel that
-    -- transition and leave the whole frame at zero alpha.
-    if not settings.fadeEnabled or not settings.keepOpen or not MainFrame then
+    -- Minimized modes use ScheduleWindowAutoHide for both their fade and
+    -- collapse. None leaves the complete window visible at inactive opacity.
+    if not settings.fadeEnabled or UsesMinimizedDisplay() or not MainFrame then
         return
     end
 
     C_Timer.After(settings.fadeDelay, function()
         if requestedGeneration ~= fadeGeneration
             or not settings.fadeEnabled
-            or not settings.keepOpen
+            or UsesMinimizedDisplay()
             or MainFrame:IsMouseOver() then
             return
         end
@@ -756,12 +772,18 @@ function MainWindow.ApplyFadeSettings()
     if not settings.fadeEnabled then
         CancelWindowAutoHide()
         SetWindowAutoHidden(false)
+    elseif not UsesMinimizedDisplay() then
+        CancelWindowAutoHide()
+        SetWindowAutoHidden(false)
+        if MainFrame and not MainFrame:IsMouseOver() then
+            ScheduleInactiveFade()
+        end
     elseif isWindowAutoHidden then
         local hiddenOpacity = math.min(
             settings.inactiveOpacity,
             settings.windowOpacity
         )
-        if settings.minimizeToIcon then
+        if IsMinimizedToIcon() then
             MinimizedIconButton:SetAlpha(hiddenOpacity)
         else
             SetWindowOpacity(hiddenOpacity)
@@ -944,7 +966,7 @@ function MainWindow.ApplyAppearance()
     local categoryBackground = settings.categoryBackgroundColor
     local border = settings.borderColor
 
-    if not (isWindowAutoHidden and settings.minimizeToIcon) then
+    if not (isWindowAutoHidden and IsMinimizedToIcon()) then
         ApplyMainFrameBackdrop()
     end
 
@@ -1751,7 +1773,7 @@ function MainWindow.UpdateMenu()
                 return
             end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
-            if not settings.keepOpen then
+            if settings.fadeEnabled and UsesMinimizedDisplay() then
                 SetWindowAutoHidden(true)
             end
         end)
@@ -1828,7 +1850,7 @@ local function UpdateWindowBodyVisibility()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
-        if settings.minimizeToIcon then
+        if IsMinimizedToIcon() then
             TitleBar:Hide()
             TitleText:Hide()
             PinBtn:Hide()
@@ -1880,6 +1902,10 @@ local function UpdateWindowBodyVisibility()
 end
 
 function MainWindow.ApplyMinimizeToIconSettings()
+    if settings.minimizeMode ~= "TITLE_BAR"
+        and settings.minimizeMode ~= "ICON" then
+        settings.minimizeMode = "NONE"
+    end
     settings.minimizedIconSize = math.max(
         addon.MIN_MINIMIZED_ICON_SIZE,
         math.min(
@@ -1891,8 +1917,13 @@ function MainWindow.ApplyMinimizeToIconSettings()
     settings.minimizedIconCorner = settings.minimizedIconCorner == "TOPRIGHT"
         and "TOPRIGHT"
         or "TOPLEFT"
+    CancelWindowAutoHide()
+    if not UsesMinimizedDisplay() then
+        SetWindowAutoHidden(false)
+    end
     ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
+    MainWindow.ApplyFadeSettings()
     RefreshGeneralWindowFields()
 end
 
@@ -1913,7 +1944,7 @@ end
 SetWindowAutoHidden = function(hidden)
     hidden = not not hidden
 
-    if settings.keepOpen or not settings.fadeEnabled then
+    if not settings.fadeEnabled or not UsesMinimizedDisplay() then
         hidden = false
     end
     if isWindowAutoHidden == hidden then
@@ -1925,7 +1956,8 @@ SetWindowAutoHidden = function(hidden)
 end
 
 ScheduleWindowAutoHide = function()
-    if not settings.fadeEnabled or settings.keepOpen or isWindowAutoHidden
+    if not settings.fadeEnabled or not UsesMinimizedDisplay()
+        or isWindowAutoHidden
         or autoHideScheduled or autoHideFading then
         return
     end
@@ -1941,18 +1973,15 @@ ScheduleWindowAutoHide = function()
 
         autoHideScheduled = false
 
-        if not settings.fadeEnabled or settings.keepOpen or isWindowAutoHidden
+        if not settings.fadeEnabled or not UsesMinimizedDisplay()
+            or isWindowAutoHidden
             or not MainFrame or MainFrame:IsMouseOver() then
             return
         end
 
         autoHideFading = true
         fadeGeneration = fadeGeneration + 1
-        local hiddenOpacity = math.min(
-            settings.inactiveOpacity,
-            settings.windowOpacity
-        )
-        local fadeTarget = settings.minimizeToIcon and 0 or hiddenOpacity
+        local fadeTarget = 0
 
         SetWindowOpacity(fadeTarget, fadeOutDuration, function()
             if requestedGeneration ~= autoHideGeneration then
@@ -1961,14 +1990,14 @@ ScheduleWindowAutoHide = function()
 
             autoHideFading = false
 
-            if not settings.fadeEnabled or settings.keepOpen
+            if not settings.fadeEnabled or not UsesMinimizedDisplay()
                 or MainFrame:IsMouseOver() then
                 RestoreActiveOpacity(true)
                 return
             end
 
             SetWindowAutoHidden(true)
-            if settings.minimizeToIcon then
+            if IsMinimizedToIcon() then
                 -- The icon is parented to UIParent, so MainFrame can remain
                 -- ready at active opacity behind it.
                 SetWindowOpacity(settings.windowOpacity)
@@ -1979,7 +2008,7 @@ end
 
 -- MAIN WINDOW
 local function StartWindowMoving()
-    if settings.locked or settings.keepOpen then
+    if settings.locked then
         return
     end
 
@@ -2371,13 +2400,10 @@ function MainWindow.CreateMainWindow()
     )
 
     PinBtn:SetScript("OnClick", function()
-        settings.keepOpen = not settings.keepOpen
+        settings.locked = not settings.locked
         UpdatePinButton()
         MainWindow.ApplyMovementLock()
-        if settings.keepOpen then
-            CancelWindowAutoHide()
-            SetWindowAutoHidden(false)
-        end
+        RefreshGeneralWindowFields()
     end)
 
     PinBtn:SetScript("OnEnter", function(self)
@@ -2385,13 +2411,11 @@ function MainWindow.CreateMainWindow()
             self,
             IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
         )
-        GameTooltip:SetText(settings.keepOpen and "Window pinned" or "Window unpinned")
+        GameTooltip:SetText(settings.locked and "Window locked" or "Window unlocked")
         GameTooltip:AddLine(
-            settings.keepOpen
-                and "The emote menu stays open."
-                or (settings.fadeEnabled
-                    and "The menu opens on hover and hides when not in use."
-                    or "The menu stays visible because fading is disabled."),
+            settings.locked
+                and "The window position and height are locked."
+                or "The window can be moved and resized vertically.",
             1,
             1,
             1,
@@ -2456,7 +2480,7 @@ function MainWindow.CreateMainWindow()
     end)
 
     MainFrame:HookScript("OnEnter", function()
-        if isWindowAutoHidden and not settings.minimizeToIcon then
+        if isWindowAutoHidden and not IsMinimizedToIcon() then
             SetWindowAutoHidden(false)
         end
         MainWindow.NotifyActivity()
@@ -2469,7 +2493,7 @@ function MainWindow.CreateMainWindow()
         MinimizedIconButton:Hide()
     end)
     MainFrame:HookScript("OnShow", function()
-        if isWindowAutoHidden and settings.minimizeToIcon then
+        if isWindowAutoHidden and IsMinimizedToIcon() then
             MinimizedIconButton:Show()
         end
     end)
@@ -2485,8 +2509,8 @@ function MainWindow.CreateMainWindow()
         end
         mouseCheckElapsed = 0
 
-        if not settings.fadeEnabled or settings.keepOpen
-            or (isWindowAutoHidden and settings.minimizeToIcon) then
+        if not settings.fadeEnabled
+            or (isWindowAutoHidden and IsMinimizedToIcon()) then
             return
         end
 
@@ -2531,7 +2555,7 @@ function MainWindow.ApplyProfileSettings()
     MainWindow.ApplyAppearance()
     UpdatePinButton()
 
-    isWindowAutoHidden = settings.fadeEnabled and not settings.keepOpen
+    isWindowAutoHidden = settings.fadeEnabled and UsesMinimizedDisplay()
     UpdateWindowBodyVisibility()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)

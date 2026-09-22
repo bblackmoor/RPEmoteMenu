@@ -6,7 +6,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 - **Emotes:** The addon organizes up to 100 emotes across 10 categories, with optional targeted commands.
 - **Easy organization:** Emotes can be edited from the menu, dragged into order, and duplicated along with complete categories.
-- **Flexible window:** The window remains visible by default; optional inactivity fading can hide it or replace it with a configurable minimized icon.
+- **Flexible window:** The window remains visible by default; optional inactivity fading can dim it or minimize it to the title bar or a configurable icon.
 - **Profiles and sharing:** Profiles provide distinct character setups, while categories and complete profiles can be imported or exported.
 - **Appearance:** Per-profile settings control fonts, colors, selection effects, borders, opacity, and fading.
 - **Commands:** `/rpem` toggles the menu, while `/rpem config` opens its settings.
@@ -15,8 +15,8 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 
 - **Easier editing:** Version 2 adds row-level emote editing, streamlined settings, emote and category duplication, and direct editing links in empty menus.
 - **Drag-and-drop sorting:** Visible emotes can be reordered directly in the menu with a clear insertion marker.
-- **Optional minimize to icon:** The hidden title bar can be replaced by a transparent icon with a configurable size, side, color tint, and live preview.
-- **Refined pinning and hiding:** The menu can remain pinned or fade and collapse when not in use, then reappear when hovered.
+- **Flexible minimization:** Inactive menus can remain full-size, minimize to the title bar, or minimize to a transparent icon with configurable size, side, color tint, and live preview.
+- **Synchronized locking:** The title-bar pin and **Lock Window Position and Height** setting control the same state.
 - **Smarter layout:** Column widths automatically fit their labels, while height, position, title-bar placement, and lock state remain persistent.
 - **Improved profiles:** Default is editable and restorable while remaining the reserved fallback. Six bundled themes include a high-contrast, colorblind-friendly option. Existing Version 1 profiles and character assignments migrate automatically.
 
@@ -58,7 +58,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
    The small icon at the right edge of each row opens that emote's name and command editor.
    Hovering over an emote displays its default and targeted commands.
    Emote labels can be dragged into a new order; an insertion line marks the destination.
-   When inactivity fading is enabled and the menu is unpinned, it hides after use or after the configured delay. The title bar—or the addon icon when **Minimize to icon** is enabled—reveals it when hovered.
+   When inactivity fading is enabled, the complete menu fades or minimizes to its title bar or addon icon after the configured delay. Hovering restores it.
 3. The gear icon, a right-click on the title bar, and the `/rpem config` command open the addon settings.
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.
 5. Category names and their emote commands can be edited under **Emotes**.
@@ -148,14 +148,14 @@ The **General** settings screen controls the current profile's window behavior a
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - The addon can be shown or hidden at login.
-- Inactivity fading can be enabled with a configurable delay and inactive opacity. It is disabled by default, so the menu remains visible.
-- The auto-hidden title bar can be replaced by a square addon icon sized from 16 to 64 pixels, independently of the main window dimensions.
+- Inactivity fading can be enabled with a configurable delay and inactive opacity. **Minimize to** selects **None**, **Title Bar**, or **Icon**. Fading is disabled by default.
+- The minimized square addon icon can be sized from 16 to 64 pixels independently of the main window dimensions.
 - The minimized icon can occupy the left or right edge of the main window, centered alongside the first category and emote, and can use a custom color tint. Its black antialiased outline remains visible against light backgrounds.
 - The window can be dragged or centered, with exact coordinates available as an advanced option.
 - The window height can be set manually, while its width automatically fits every category and emote label in the profile.
 - The default position and size can be restored.
 
-The window can also be moved and resized vertically while it is unlocked. Changing the height does not change the minimized icon, and changing the icon size does not resize the window. The category pane scrolls when necessary, and the pushpin controls whether the body automatically hides.
+The window can also be moved and resized vertically while it is unlocked. Changing the height does not change the minimized icon, and changing the icon size does not resize the window. The category pane and longer settings tabs scroll when necessary. The pushpin toggles the window position and height lock.
 
 ## Slash Commands
 

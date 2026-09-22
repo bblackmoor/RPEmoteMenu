@@ -10,7 +10,7 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 10
+local SCHEMA_VERSION = 11
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local UNLOCKED_BUILT_IN_VERSION = 4
@@ -31,6 +31,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
+local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
@@ -60,7 +61,7 @@ local GENERAL_SETTING_KEYS = {
     "fadeEnabled",
     "fadeDelay",
     "inactiveOpacity",
-    "minimizeToIcon",
+    "minimizeMode",
     "minimizedIconSize",
     "minimizedIconCorner",
     "minimizedIconColor",
@@ -208,6 +209,17 @@ local function NormalizeSettings(source)
                 and source[key]
                 or defaultValue
         end
+    end
+
+    -- Version 2.0.179 replaces the old Minimize to Icon checkbox with a
+    -- three-state selector. Preserve enabled profiles as Icon; an unchecked
+    -- legacy setting means no minimization.
+    if VALID_MINIMIZE_MODES[source.minimizeMode] then
+        result.minimizeMode = source.minimizeMode
+    elseif source.minimizeToIcon == true then
+        result.minimizeMode = "ICON"
+    else
+        result.minimizeMode = defaults.minimizeMode
     end
 
     result.height = math.floor(ClampNumber(source.height, 150, 630, defaults.height))
@@ -455,7 +467,8 @@ local function InstallBuiltInProfileUpdates()
 
             if installedVersion < UNLOCKED_BUILT_IN_VERSION then
                 profileSettings.locked = false
-                profileSettings.minimizeToIcon = false
+                profileSettings.minimizeMode = "NONE"
+                profileSettings.minimizeToIcon = nil
 
                 -- Version 4 replaces High Contrast's thick simulated text
                 -- outline, which can obscure large category labels, with a
@@ -482,7 +495,8 @@ local function InstallBuiltInProfileUpdates()
                 profileSettings.fadeEnabled = false
                 profileSettings.hideSettingsGear = false
                 profileSettings.locked = false
-                profileSettings.minimizeToIcon = false
+                profileSettings.minimizeMode = "NONE"
+                profileSettings.minimizeToIcon = nil
                 profileSettings.showAtLogin = true
             end
         end

@@ -37,6 +37,8 @@ local PROFILE_SETTINGS_FIELDS = {
     hideSettingsGear = true,
     titleBarPosition = true,
     showAtLogin = true,
+    minimizeMode = true,
+    -- Accepted from older Version 2 exports and migrated below.
     keepOpen = true,
     minimizeToIcon = true,
     minimizedIconSize = true,
@@ -81,7 +83,6 @@ local BOOLEAN_SETTING_KEYS = {
     "showAtLogin",
     "fadeEnabled"
 }
-local OPTIONAL_BOOLEAN_SETTING_KEYS = {"keepOpen", "minimizeToIcon"}
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
     "selectedCategoryTextColor",
@@ -98,6 +99,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
+local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true,
@@ -324,13 +326,22 @@ local function ValidateProfileSettings(value)
         imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
         if imported[key] == nil then return nil, errorMessage end
     end
-    for _, key in ipairs(OPTIONAL_BOOLEAN_SETTING_KEYS) do
-        if value[key] == nil then
-            imported[key] = addon.DefaultSettings[key]
+    if value.minimizeMode == nil then
+        if value.minimizeToIcon == nil then
+            imported.minimizeMode = addon.DefaultSettings.minimizeMode
         else
-            imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
-            if imported[key] == nil then return nil, errorMessage end
+            local legacyMinimizeToIcon
+            legacyMinimizeToIcon, errorMessage = ValidateBoolean(
+                value.minimizeToIcon,
+                "Setting minimizeToIcon"
+            )
+            if legacyMinimizeToIcon == nil then return nil, errorMessage end
+            imported.minimizeMode = legacyMinimizeToIcon and "ICON" or "NONE"
         end
+    elseif VALID_MINIMIZE_MODES[value.minimizeMode] then
+        imported.minimizeMode = value.minimizeMode
+    else
+        return nil, "Setting minimizeMode is not supported."
     end
     if value.minimizedIconSize == nil then
         imported.minimizedIconSize = addon.DefaultSettings.minimizedIconSize
@@ -520,11 +531,9 @@ local function ExportProfileSettings(source)
     for _, key in ipairs(BOOLEAN_SETTING_KEYS) do
         exported[key] = source[key]
     end
-    for _, key in ipairs(OPTIONAL_BOOLEAN_SETTING_KEYS) do
-        exported[key] = source[key]
-    end
     for _, key in ipairs({
         "point", "relativePoint", "x", "y", "height", "titleBarPosition",
+        "minimizeMode",
         "minimizedIconSize", "minimizedIconCorner",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
