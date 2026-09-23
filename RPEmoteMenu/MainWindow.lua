@@ -54,6 +54,8 @@ local WidthMeasurementText
 local categoryButtons = {}
 local buttonsPool = {}
 local emoteEditorDialog
+local categoryDropIndicator
+local categoryDragState
 local emoteDropIndicator
 local emoteDragState
 local isWindowAutoHidden = false
@@ -1352,6 +1354,196 @@ local function GetVisibleEmotes(category)
     return visibleEmotes
 end
 
+local function GetVisibleCategories()
+    local visibleCategories = {}
+
+    for categoryIndex = 1, MAX_CATEGORIES do
+        local category = GetCurrentCategory(categoryIndex)
+
+        if IsCategoryVisible(categoryIndex) then
+            table.insert(visibleCategories, {
+                category = category,
+                index = categoryIndex
+            })
+        end
+    end
+
+    return visibleCategories
+end
+
+local function HideCategoryDropIndicator()
+    if categoryDropIndicator then
+        categoryDropIndicator:Hide()
+    end
+end
+
+local function ShowCategoryDropIndicator(button, insertBefore)
+    if not categoryDropIndicator then
+        categoryDropIndicator = CategoryScrollChild:CreateTexture(nil, "OVERLAY")
+        categoryDropIndicator:SetHeight(2)
+    end
+
+    local color = settings.categoryHighlightColor
+    categoryDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
+    categoryDropIndicator:ClearAllPoints()
+    categoryDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
+    categoryDropIndicator:SetPoint("RIGHT", button, "RIGHT", -2, 0)
+
+    if insertBefore then
+        categoryDropIndicator:SetPoint("BOTTOM", button, "TOP", 0, 1)
+    else
+        categoryDropIndicator:SetPoint("TOP", button, "BOTTOM", 0, -1)
+    end
+
+    categoryDropIndicator:Show()
+end
+
+local function UpdateCategoryDragTarget(_, elapsed)
+    if not categoryDragState then
+        return
+    end
+
+    local cursorX, cursorY = GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    cursorX = cursorX / scale
+    cursorY = cursorY / scale
+
+    local scrollTop = CategoryScrollFrame:GetTop()
+    local scrollBottom = CategoryScrollFrame:GetBottom()
+    local maximumScroll = math.max(
+        CategoryScrollChild:GetHeight() - CategoryScrollFrame:GetHeight(),
+        0
+    )
+    local currentScroll = CategoryScrollFrame:GetVerticalScroll() or 0
+    local scrollSpeed = 140 * (elapsed or 0)
+
+    if scrollTop and cursorY > scrollTop - 14 and currentScroll > 0 then
+        CategoryScrollFrame:SetVerticalScroll(
+            math.max(0, currentScroll - scrollSpeed)
+        )
+    elseif scrollBottom
+        and cursorY < scrollBottom + 14
+        and currentScroll < maximumScroll then
+        CategoryScrollFrame:SetVerticalScroll(
+            math.min(maximumScroll, currentScroll + scrollSpeed)
+        )
+    end
+
+    categoryDragState.targetButton = nil
+    categoryDragState.insertBefore = nil
+
+    for _, button in ipairs(categoryButtons) do
+        if button:IsShown() and button.visiblePosition then
+            local left, right = button:GetLeft(), button:GetRight()
+            local top, bottom = button:GetTop(), button:GetBottom()
+
+            if left and right and top and bottom
+                and cursorX >= left and cursorX <= right
+                and cursorY <= top and cursorY >= bottom then
+                categoryDragState.targetButton = button
+                categoryDragState.insertBefore = cursorY >= ((top + bottom) / 2)
+                ShowCategoryDropIndicator(button, categoryDragState.insertBefore)
+                return
+            end
+        end
+    end
+
+    HideCategoryDropIndicator()
+end
+
+local function ReorderVisibleCategories(sourcePosition, insertionPosition)
+    local categories = Database.GetCategories()
+    local visible = GetVisibleCategories()
+    local source = visible[sourcePosition]
+
+    if not source or insertionPosition < 1 or insertionPosition > #visible + 1 then
+        return false
+    end
+
+    if insertionPosition > sourcePosition then
+        insertionPosition = insertionPosition - 1
+    end
+
+    if insertionPosition == sourcePosition then
+        return false
+    end
+
+    local selectedCategory = categories[selectedCategoryIndex]
+    local visibleIndices = {}
+    local records = {}
+    for position, entry in ipairs(visible) do
+        visibleIndices[position] = entry.index
+        records[position] = entry.category
+    end
+
+    local moved = table.remove(records, sourcePosition)
+    table.insert(records, insertionPosition, moved)
+
+    for position, categoryIndex in ipairs(visibleIndices) do
+        categories[categoryIndex] = records[position]
+        if records[position] == selectedCategory then
+            selectedCategoryIndex = categoryIndex
+            settings.selectedCategory = categoryIndex
+        end
+    end
+
+    return true
+end
+
+local function StartCategoryDrag(button)
+    if not Database.CanEditActiveProfile() or not button.visiblePosition then
+        return
+    end
+
+    categoryDragState = {
+        sourceButton = button,
+        sourcePosition = button.visiblePosition
+    }
+    GameTooltip:Hide()
+    button:SetAlpha(0.45)
+    button:SetScript("OnUpdate", UpdateCategoryDragTarget)
+    UpdateCategoryDragTarget(button, 0)
+end
+
+local function StopCategoryDrag(button)
+    if not categoryDragState or categoryDragState.sourceButton ~= button then
+        return
+    end
+
+    UpdateCategoryDragTarget(button, 0)
+    button:SetScript("OnUpdate", nil)
+    button:SetAlpha(1)
+
+    local target = categoryDragState.targetButton
+    local changed = false
+    if target then
+        local insertionPosition = target.visiblePosition
+            + (categoryDragState.insertBefore and 0 or 1)
+        changed = ReorderVisibleCategories(
+            categoryDragState.sourcePosition,
+            insertionPosition
+        )
+    end
+
+    categoryDragState = nil
+    HideCategoryDropIndicator()
+
+    if changed then
+        local previousScroll = CategoryScrollFrame:GetVerticalScroll() or 0
+        MainWindow.UpdateMenu()
+        local maximumScroll = math.max(
+            CategoryScrollChild:GetHeight() - CategoryScrollFrame:GetHeight(),
+            0
+        )
+        CategoryScrollFrame:SetVerticalScroll(
+            math.min(previousScroll, maximumScroll)
+        )
+        if addon.Settings and addon.Settings.RefreshEditors then
+            addon.Settings.RefreshEditors()
+        end
+    end
+end
+
 local function HideEmoteDropIndicator()
     if emoteDropIndicator then
         emoteDropIndicator:Hide()
@@ -1619,6 +1811,7 @@ local function UpdateCategorySidebar()
                 -visibleCount * categoryButtonHeight
             )
             button.Text:SetText(category.name)
+            button.visiblePosition = visibleCount + 1
             for _, outlineText in ipairs(button.TextOutline) do
                 outlineText:SetText(category.name)
             end
@@ -1640,6 +1833,7 @@ local function UpdateCategorySidebar()
             button:Show()
             visibleCount = visibleCount + 1
         elseif button then
+            button.visiblePosition = nil
             button:Hide()
         end
     end
@@ -1706,6 +1900,13 @@ end
 function MainWindow.UpdateMenu()
     MainWindow.NotifyActivity()
     ApplyAutomaticWidth()
+
+    for _, button in ipairs(categoryButtons) do
+        button:SetScript("OnUpdate", nil)
+        button:SetAlpha(1)
+    end
+    categoryDragState = nil
+    HideCategoryDropIndicator()
 
     for _, button in ipairs(buttonsPool) do
         button:SetScript("OnUpdate", nil)
@@ -2316,7 +2517,9 @@ function MainWindow.CreateMainWindow()
 
         button:SetScript("OnEnter", function(self)
             self.isHovered = true
-            if self.categoryIndex ~= selectedCategoryIndex then
+            if categoryDragState then
+                return
+            elseif self.categoryIndex ~= selectedCategoryIndex then
                 MainWindow.SetSelectedCategory(self.categoryIndex)
                 MainWindow.UpdateMenu()
             else
@@ -2336,6 +2539,9 @@ function MainWindow.CreateMainWindow()
             )
             GameTooltip:Hide()
         end)
+        button:RegisterForDrag("LeftButton")
+        button:SetScript("OnDragStart", StartCategoryDrag)
+        button:SetScript("OnDragStop", StopCategoryDrag)
         button:Hide()
 
         categoryButtons[categoryIndex] = button

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.182
+
+- Added drag-and-drop category sorting with the same insertion indicator and edge scrolling used for emotes.
+
 ## 2.0.181
 
 - Added a default-off option to hide each emote's edit gear and edit emotes by right-clicking their menu rows.
