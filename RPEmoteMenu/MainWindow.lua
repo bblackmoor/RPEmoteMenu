@@ -1205,7 +1205,7 @@ local function ScheduleEmoteHoverRefresh(button)
     end)
 end
 
-local function ShowEmoteTooltip(button, owner, showEditHint)
+local function ShowEmoteTooltip(button, owner, editHint)
     if not button.emoteLabel or not button.defaultCommand then
         return
     end
@@ -1230,8 +1230,8 @@ local function ShowEmoteTooltip(button, owner, showEditHint)
         )
     end
 
-    if showEditHint then
-        GameTooltip:AddLine("Click to edit", 1, 0.82, 0, false)
+    if editHint then
+        GameTooltip:AddLine(editHint, 1, 0.82, 0, false)
     end
 
     GameTooltip:Show()
@@ -1276,7 +1276,7 @@ local function GetContainerButton()
     )
     button.EditButton:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
-        ShowEmoteTooltip(button, self, true)
+        ShowEmoteTooltip(button, self, "Click to edit")
     end)
     button.EditButton:SetScript("OnLeave", function()
         ScheduleEmoteHoverRefresh(button)
@@ -1285,7 +1285,7 @@ local function GetContainerButton()
 
     button:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
-        ShowEmoteTooltip(button, self, false)
+        ShowEmoteTooltip(button, self, "Right-click to edit")
     end)
     button:SetScript("OnLeave", function()
         ScheduleEmoteHoverRefresh(button)
@@ -1759,6 +1759,15 @@ function MainWindow.UpdateMenu()
         emoteButton.emoteLabel = label
         emoteButton.defaultCommand = defaultCommand
         emoteButton.targetedCommand = targetedCommand
+        emoteButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        emoteButton.EditButton:SetShown(not settings.hideEmoteEditGears)
+        emoteButton.Text:ClearAllPoints()
+        emoteButton.Text:SetPoint("LEFT", emoteButton, "LEFT", 7, 0)
+        if settings.hideEmoteEditGears then
+            emoteButton.Text:SetPoint("RIGHT", emoteButton, "RIGHT", -3, 0)
+        else
+            emoteButton.Text:SetPoint("RIGHT", emoteButton.EditButton, "LEFT", -8, 0)
+        end
 
         emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
         emoteButton.Text:SetText(label)
@@ -1768,8 +1777,12 @@ function MainWindow.UpdateMenu()
             settings.emoteTextColor.b,
             1
         )
-        emoteButton:SetScript("OnClick", function()
+        emoteButton:SetScript("OnClick", function(_, mouseButton)
             if emoteButton.suppressClick then
+                return
+            end
+            if mouseButton == "RightButton" then
+                MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
                 return
             end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)

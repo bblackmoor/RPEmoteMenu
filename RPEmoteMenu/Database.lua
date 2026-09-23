@@ -10,7 +10,7 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 11
+local SCHEMA_VERSION = 12
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local UNLOCKED_BUILT_IN_VERSION = 4
@@ -57,6 +57,7 @@ local COLOR_SETTING_KEYS = {
 local GENERAL_SETTING_KEYS = {
     "locked",
     "hideSettingsGear",
+    "hideEmoteEditGears",
     "showAtLogin",
     "fadeEnabled",
     "fadeDelay",

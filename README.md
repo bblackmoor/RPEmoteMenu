@@ -57,7 +57,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
 
 1. The `/rpem` command shows or hides the menu.
 2. Hovering over a category displays its emotes, and selecting an emote performs it.
-   The small icon at the right edge of each row opens that emote's name and command editor.
+   The small icon at the right edge of each row opens that emote's name and command editor. Emotes can also be right-clicked to edit them.
    Hovering over an emote displays its default and targeted commands.
    Emote labels can be dragged into a new order; an insertion line marks the destination.
    When inactivity fading is enabled, the complete menu fades or minimizes to its title bar or addon icon after the configured delay. Hovering restores it.
@@ -149,6 +149,7 @@ The **General** settings screen controls the current profile's window behavior a
 - Default and new or restored bundled profiles open in the center. **Reset Window Height & Position** also resets every General setting for Default and bundled profiles.
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
+- Emote-row edit gear icons can be hidden; right-clicking an emote still opens its editor. This option is disabled by default.
 - The addon can be shown or hidden at login.
 - Inactivity fading can be enabled with a configurable delay and inactive opacity. **Minimize to** selects **None**, **Title Bar**, or **Icon**. Fading is disabled by default.
 - The minimized square addon icon can be sized from 16 to 64 pixels independently of the main window dimensions.

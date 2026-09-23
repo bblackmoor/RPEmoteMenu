@@ -35,6 +35,7 @@ local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = tru
 local PROFILE_SETTINGS_FIELDS = {
     locked = true,
     hideSettingsGear = true,
+    hideEmoteEditGears = true,
     titleBarPosition = true,
     showAtLogin = true,
     minimizeMode = true,
@@ -80,6 +81,7 @@ local PROFILE_SETTINGS_FIELDS = {
 local BOOLEAN_SETTING_KEYS = {
     "locked",
     "hideSettingsGear",
+    "hideEmoteEditGears",
     "showAtLogin",
     "fadeEnabled"
 }
@@ -323,8 +325,12 @@ local function ValidateProfileSettings(value)
 
     local imported = {}
     for _, key in ipairs(BOOLEAN_SETTING_KEYS) do
-        imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
-        if imported[key] == nil then return nil, errorMessage end
+        if key == "hideEmoteEditGears" and value[key] == nil then
+            imported[key] = addon.DefaultSettings[key]
+        else
+            imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
+            if imported[key] == nil then return nil, errorMessage end
+        end
     end
     if value.minimizeMode == nil then
         if value.minimizeToIcon == nil then

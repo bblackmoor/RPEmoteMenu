@@ -217,6 +217,7 @@ end
 addon.DefaultSettings = {
     locked = false,
     hideSettingsGear = false,
+    hideEmoteEditGears = false,
     titleBarPosition = "TOP",
     showAtLogin = true,
     minimizeMode = "NONE",
