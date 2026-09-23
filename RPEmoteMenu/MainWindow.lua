@@ -15,6 +15,7 @@ local function Trim(value)
 end
 
 local titleBarThickness = 30
+local leftTitleBarWidth = 44
 -- The first category and emote labels are both centered about 50 pixels below
 -- the top of the window. Keep the minimized icon on that same centerline.
 local topTitleFirstRowCenterOffset = 50
@@ -96,7 +97,7 @@ local function GetContentWidth()
 end
 
 local function GetExpandedWidth()
-    return GetContentWidth() + (IsTitleBarOnLeft() and titleBarThickness or 0)
+    return GetContentWidth() + (IsTitleBarOnLeft() and leftTitleBarWidth or 0)
 end
 
 local function GetCurrentFrameSize(width, height)
@@ -111,7 +112,7 @@ local function GetCurrentFrameSize(width, height)
         if IsMinimizedToIcon() or not UsesMinimizedDisplay() then
             return width, height
         end
-        return titleBarThickness, height
+        return leftTitleBarWidth, height
     end
 
     if not UsesMinimizedDisplay() then
@@ -262,7 +263,7 @@ local function CalculateColumnWidths()
         width = GetContentWidth()
     end
 
-    return width + (IsTitleBarOnLeft() and titleBarThickness or 0)
+    return width + (IsTitleBarOnLeft() and leftTitleBarWidth or 0)
 end
 
 local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
@@ -498,15 +499,15 @@ ApplyTitleBarLayout = function()
     if IsTitleBarOnLeft() then
         TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
         TitleBar:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
-        TitleBar:SetWidth(titleBarThickness)
+        TitleBar:SetWidth(leftTitleBarWidth)
 
-        PinBtn:SetPoint("TOP", TitleBar, "TOP", 0, -5)
-        SettingsBtn:SetPoint("BOTTOM", TitleBar, "BOTTOM", 0, 5)
+        PinBtn:SetPoint("CENTER", TitleBar, "CENTER", -11, 0)
+        SettingsBtn:SetPoint("BOTTOM", TitleBar, "BOTTOM", -11, 5)
 
         local availableLength = math.max(MainFrame:GetHeight() - 62, 1)
         TitleText:SetRotation(math.rad(90))
         TitleText:SetSize(availableLength, 20)
-        TitleText:SetPoint("CENTER", TitleBar, "CENTER", 0, 0)
+        TitleText:SetPoint("CENTER", TitleBar, "CENTER", 11, 0)
         TitleText:SetText(fullTitle)
 
         local textWidth = TitleText.GetUnboundedStringWidth
@@ -548,7 +549,7 @@ ApplyColumnLayout = function()
         button:SetWidth(sidebarWidth - 7)
     end
 
-    local leftInset = IsTitleBarOnLeft() and titleBarThickness or 0
+    local leftInset = IsTitleBarOnLeft() and leftTitleBarWidth or 0
     local categoryTop = IsTitleBarOnLeft() and -5 or -36
     local emoteTop = IsTitleBarOnLeft() and -10 or -40
 
