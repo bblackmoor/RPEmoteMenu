@@ -16,6 +16,7 @@ local appearanceSettingsCategory
 local profilesSettingsCategory
 local categoriesSettingsCategory
 local importExportSettingsCategory
+local categoriesSettingsPanel
 local resetAllCategoriesButton
 local exchangeDialog
 
@@ -2652,7 +2653,7 @@ function AddonSettings.CreateSettingsPanel()
     local generalPanel = CreateGeneralSettingsPanel()
     local appearancePanel = CreateAppearanceSettingsPanel()
     local profilesPanel = CreateProfilesSettingsPanel()
-    local categoriesPanel = CreateCategoriesSettingsPanel()
+    categoriesSettingsPanel = CreateCategoriesSettingsPanel()
     local importExportPanel = CreateImportExportSettingsPanel()
 
     settingsCategory = Settings.RegisterCanvasLayoutCategory(aboutPanel, "RP Emote Menu")
@@ -2680,7 +2681,7 @@ function AddonSettings.CreateSettingsPanel()
 
     categoriesSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
         settingsCategory,
-        categoriesPanel,
+        categoriesSettingsPanel,
         "Emotes"
     )
 
@@ -2695,7 +2696,7 @@ function AddonSettings.CreateSettingsPanel()
         generalPanel.RefreshControls()
         appearancePanel.RefreshControls()
         profilesPanel.Refresh()
-        categoriesPanel.SelectCategory(settings.selectedCategory)
+        categoriesSettingsPanel.SelectCategory(settings.selectedCategory)
     end
 
     AddonSettings.RefreshEditors = function(categoryIndex)
@@ -2707,7 +2708,7 @@ function AddonSettings.CreateSettingsPanel()
             exchangeDialog:UpdateActionState()
         end
 
-        categoriesPanel.RefreshEditors(categoryIndex)
+        categoriesSettingsPanel.RefreshEditors(categoryIndex)
     end
 end
 
@@ -2725,7 +2726,15 @@ AddonSettings.Open = function()
     end
 end
 
-AddonSettings.OpenEmotes = function()
+AddonSettings.OpenEmotes = function(categoryIndex)
+    if categoriesSettingsPanel
+        and type(categoryIndex) == "number"
+        and categoryIndex % 1 == 0
+        and categoryIndex >= 1
+        and categoryIndex <= MAX_CATEGORIES then
+        categoriesSettingsPanel.SelectCategory(categoryIndex)
+    end
+
     if categoriesSettingsCategory then
         Settings.OpenToCategory(categoriesSettingsCategory:GetID())
     else

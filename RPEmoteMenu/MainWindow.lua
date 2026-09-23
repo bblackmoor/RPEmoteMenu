@@ -2525,11 +2525,10 @@ function MainWindow.CreateMainWindow()
             else
                 MainWindow.ApplyCategoryHighlight(self, true)
             end
-            if self.Text:IsTruncated() then
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText(self.Text:GetText())
-                GameTooltip:Show()
-            end
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(self.Text:GetText())
+            GameTooltip:AddLine("Right-click to edit", 1, 0.82, 0, false)
+            GameTooltip:Show()
         end)
         button:SetScript("OnLeave", function(self)
             self.isHovered = false
@@ -2538,6 +2537,14 @@ function MainWindow.CreateMainWindow()
                 self.categoryIndex == selectedCategoryIndex
             )
             GameTooltip:Hide()
+        end)
+        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+        button:SetScript("OnClick", function(self, mouseButton)
+            if mouseButton == "RightButton"
+                and addon.Settings
+                and addon.Settings.OpenEmotes then
+                addon.Settings.OpenEmotes(self.categoryIndex)
+            end
         end)
         button:RegisterForDrag("LeftButton")
         button:SetScript("OnDragStart", StartCategoryDrag)

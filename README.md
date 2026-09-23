@@ -60,6 +60,7 @@ If necessary, **RP Emote Menu** can be enabled from the character-selection scre
    The small icon at the right edge of each row opens that emote's name and command editor. Emotes can also be right-clicked to edit them.
    Hovering over an emote displays its default and targeted commands.
    Category and emote labels can be dragged into a new order; an insertion line marks the destination.
+   Right-clicking a category opens that category in the Emotes settings editor.
    When inactivity fading is enabled, the complete menu fades or minimizes to its title bar or addon icon after the configured delay. Hovering restores it.
 3. The gear icon, a right-click on the title bar, and the `/rpem config` command open the addon settings.
 4. Profiles with customizable categories and emotes can be created or copied under **Profiles**.

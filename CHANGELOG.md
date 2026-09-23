@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.183
+
+- Added right-click category editing from the main menu.
+
 ## 2.0.182
 
 - Added drag-and-drop category sorting with the same insertion indicator and edge scrolling used for emotes.
