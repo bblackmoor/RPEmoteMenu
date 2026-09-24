@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.184
+
+- Added a per-profile 0-1000 ms delay for main-window tooltips, defaulting to 350 ms.
+- Pending tooltips are cancelled when the cursor leaves or moves to another control.
+
 ## 2.0.183
 
 - Added right-click category editing from the main menu.

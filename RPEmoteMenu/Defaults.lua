@@ -218,6 +218,7 @@ addon.DefaultSettings = {
     locked = false,
     hideSettingsGear = false,
     hideEmoteEditGears = false,
+    tooltipDelayMs = 350,
     titleBarPosition = "TOP",
     showAtLogin = true,
     minimizeMode = "NONE",

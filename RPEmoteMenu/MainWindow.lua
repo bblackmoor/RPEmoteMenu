@@ -75,6 +75,48 @@ local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
 local windowDragState
+local tooltipGeneration = 0
+local tooltipOwner
+
+local function CancelTooltip(owner)
+    if owner and tooltipOwner ~= owner then
+        return
+    end
+
+    tooltipGeneration = tooltipGeneration + 1
+    tooltipOwner = nil
+    GameTooltip:Hide()
+end
+
+local function ScheduleTooltip(owner, populateTooltip)
+    tooltipGeneration = tooltipGeneration + 1
+    local generation = tooltipGeneration
+    tooltipOwner = owner
+    GameTooltip:Hide()
+
+    local function ShowIfStillHovered()
+        if generation ~= tooltipGeneration
+            or tooltipOwner ~= owner
+            or not owner:IsShown()
+            or not owner:IsMouseOver() then
+            return
+        end
+
+        if populateTooltip() ~= false then
+            GameTooltip:Show()
+        end
+    end
+
+    local delayMs = math.max(
+        0,
+        math.min(1000, tonumber(settings.tooltipDelayMs) or defaults.tooltipDelayMs)
+    )
+    if delayMs == 0 then
+        ShowIfStillHovered()
+    else
+        C_Timer.After(delayMs / 1000, ShowIfStillHovered)
+    end
+end
 
 local function IsTitleBarOnLeft()
     return settings and settings.titleBarPosition == "LEFT"
@@ -1208,9 +1250,9 @@ local function ScheduleEmoteHoverRefresh(button)
     end)
 end
 
-local function ShowEmoteTooltip(button, owner, editHint)
+local function PopulateEmoteTooltip(button, owner, editHint)
     if not button.emoteLabel or not button.defaultCommand then
-        return
+        return false
     end
 
     GameTooltip:SetOwner(owner or button, "ANCHOR_RIGHT")
@@ -1237,7 +1279,6 @@ local function ShowEmoteTooltip(button, owner, editHint)
         GameTooltip:AddLine(editHint, 1, 0.82, 0, false)
     end
 
-    GameTooltip:Show()
 end
 
 local function GetContainerButton()
@@ -1279,20 +1320,24 @@ local function GetContainerButton()
     )
     button.EditButton:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
-        ShowEmoteTooltip(button, self, "Click to edit")
+        ScheduleTooltip(self, function()
+            return PopulateEmoteTooltip(button, self, "Click to edit")
+        end)
     end)
-    button.EditButton:SetScript("OnLeave", function()
+    button.EditButton:SetScript("OnLeave", function(self)
         ScheduleEmoteHoverRefresh(button)
-        GameTooltip:Hide()
+        CancelTooltip(self)
     end)
 
     button:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
-        ShowEmoteTooltip(button, self, "Right-click to edit")
+        ScheduleTooltip(self, function()
+            return PopulateEmoteTooltip(button, self, "Right-click to edit")
+        end)
     end)
-    button:SetScript("OnLeave", function()
+    button:SetScript("OnLeave", function(self)
         ScheduleEmoteHoverRefresh(button)
-        GameTooltip:Hide()
+        CancelTooltip(self)
     end)
 
     button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
@@ -1500,7 +1545,7 @@ local function StartCategoryDrag(button)
         sourceButton = button,
         sourcePosition = button.visiblePosition
     }
-    GameTooltip:Hide()
+    CancelTooltip()
     button:SetAlpha(0.45)
     button:SetScript("OnUpdate", UpdateCategoryDragTarget)
     UpdateCategoryDragTarget(button, 0)
@@ -1666,7 +1711,7 @@ local function StartEmoteDrag(button)
         sourcePosition = button.visiblePosition,
         categoryIndex = selectedCategoryIndex
     }
-    GameTooltip:Hide()
+    CancelTooltip()
     button:SetAlpha(0.45)
     button:SetScript("OnUpdate", UpdateEmoteDragTarget)
     UpdateEmoteDragTarget(button, 0)
@@ -1899,6 +1944,7 @@ local function UpdateScrollIndicators()
 end
 
 function MainWindow.UpdateMenu()
+    CancelTooltip()
     MainWindow.NotifyActivity()
     ApplyAutomaticWidth()
 
@@ -2337,13 +2383,14 @@ function MainWindow.CreateMainWindow()
     TitleBar:SetScript("OnEnter", function(self)
         if self.titleTextShortened
             or (IsTitleBarOnLeft() and TitleText:IsTruncated()) then
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetText("RP Emote Menu " .. addon.VERSION)
-            GameTooltip:Show()
+            ScheduleTooltip(self, function()
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText("RP Emote Menu " .. addon.VERSION)
+            end)
         end
     end)
-    TitleBar:SetScript("OnLeave", function()
-        GameTooltip:Hide()
+    TitleBar:SetScript("OnLeave", function(self)
+        CancelTooltip(self)
     end)
 
     TitleText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2526,10 +2573,11 @@ function MainWindow.CreateMainWindow()
             else
                 MainWindow.ApplyCategoryHighlight(self, true)
             end
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetText(self.Text:GetText())
-            GameTooltip:AddLine("Right-click to edit", 1, 0.82, 0, false)
-            GameTooltip:Show()
+            ScheduleTooltip(self, function()
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetText(self.Text:GetText())
+                GameTooltip:AddLine("Right-click to edit", 1, 0.82, 0, false)
+            end)
         end)
         button:SetScript("OnLeave", function(self)
             self.isHovered = false
@@ -2537,7 +2585,7 @@ function MainWindow.CreateMainWindow()
                 self,
                 self.categoryIndex == selectedCategoryIndex
             )
-            GameTooltip:Hide()
+            CancelTooltip(self)
         end)
         button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
         button:SetScript("OnClick", function(self, mouseButton)
@@ -2634,25 +2682,26 @@ function MainWindow.CreateMainWindow()
     end)
 
     PinBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(
-            self,
-            IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
-        )
-        GameTooltip:SetText(settings.locked and "Window locked" or "Window unlocked")
-        GameTooltip:AddLine(
-            settings.locked
-                and "The window position and height are locked."
-                or "The window can be moved and resized vertically.",
-            1,
-            1,
-            1,
-            true
-        )
-        GameTooltip:Show()
+        ScheduleTooltip(self, function()
+            GameTooltip:SetOwner(
+                self,
+                IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+            )
+            GameTooltip:SetText(settings.locked and "Window locked" or "Window unlocked")
+            GameTooltip:AddLine(
+                settings.locked
+                    and "The window position and height are locked."
+                    or "The window can be moved and resized vertically.",
+                1,
+                1,
+                1,
+                true
+            )
+        end)
     end)
 
-    PinBtn:SetScript("OnLeave", function()
-        GameTooltip:Hide()
+    PinBtn:SetScript("OnLeave", function(self)
+        CancelTooltip(self)
     end)
 
     SettingsBtn = CreateFrame("Button", nil, MainFrame)
@@ -2673,16 +2722,17 @@ function MainWindow.CreateMainWindow()
     end)
 
     SettingsBtn:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(
-            self,
-            IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
-        )
-        GameTooltip:SetText("RP Emote Menu Settings")
-        GameTooltip:Show()
+        ScheduleTooltip(self, function()
+            GameTooltip:SetOwner(
+                self,
+                IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+            )
+            GameTooltip:SetText("RP Emote Menu Settings")
+        end)
     end)
 
-    SettingsBtn:SetScript("OnLeave", function()
-        GameTooltip:Hide()
+    SettingsBtn:SetScript("OnLeave", function(self)
+        CancelTooltip(self)
     end)
 
     ResizeGrip = CreateFrame("Button", nil, MainFrame)
@@ -2717,6 +2767,7 @@ function MainWindow.CreateMainWindow()
         ScheduleWindowAutoHide()
     end)
     MainFrame:HookScript("OnHide", function()
+        CancelTooltip()
         MinimizedIconButton:Hide()
     end)
     MainFrame:HookScript("OnShow", function()

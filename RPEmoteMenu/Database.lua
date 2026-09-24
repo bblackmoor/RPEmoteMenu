@@ -10,7 +10,7 @@ local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 12
+local SCHEMA_VERSION = 13
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local UNLOCKED_BUILT_IN_VERSION = 4
@@ -58,6 +58,7 @@ local GENERAL_SETTING_KEYS = {
     "locked",
     "hideSettingsGear",
     "hideEmoteEditGears",
+    "tooltipDelayMs",
     "showAtLogin",
     "fadeEnabled",
     "fadeDelay",
@@ -290,6 +291,9 @@ local function NormalizeSettings(source)
     )
     result.fadeDelay = math.floor(ClampNumber(
         source.fadeDelay, 0, 60, defaults.fadeDelay
+    ))
+    result.tooltipDelayMs = math.floor(ClampNumber(
+        source.tooltipDelayMs, 0, 1000, defaults.tooltipDelayMs
     ))
     result.inactiveOpacity = math.min(
         ClampNumber(source.inactiveOpacity, 0.1, 1, defaults.inactiveOpacity),

@@ -36,6 +36,7 @@ local PROFILE_SETTINGS_FIELDS = {
     locked = true,
     hideSettingsGear = true,
     hideEmoteEditGears = true,
+    tooltipDelayMs = true,
     titleBarPosition = true,
     showAtLogin = true,
     minimizeMode = true,
@@ -456,6 +457,14 @@ local function ValidateProfileSettings(value)
         value.fadeDelay, 0, 60, "Fade delay", true
     )
     if imported.fadeDelay == nil then return nil, errorMessage end
+    if value.tooltipDelayMs == nil then
+        imported.tooltipDelayMs = addon.DefaultSettings.tooltipDelayMs
+    else
+        imported.tooltipDelayMs, errorMessage = ValidateNumber(
+            value.tooltipDelayMs, 0, 1000, "Tooltip delay", true
+        )
+        if imported.tooltipDelayMs == nil then return nil, errorMessage end
+    end
     imported.inactiveOpacity, errorMessage = ValidateNumber(
         value.inactiveOpacity, 0.1, 1, "Inactive opacity", false
     )
@@ -543,7 +552,8 @@ local function ExportProfileSettings(source)
         "minimizedIconSize", "minimizedIconCorner",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
-        "backgroundOpacity", "windowOpacity", "fadeDelay", "inactiveOpacity"
+        "backgroundOpacity", "windowOpacity", "fadeDelay", "tooltipDelayMs",
+        "inactiveOpacity"
     }) do
         exported[key] = source[key]
     end

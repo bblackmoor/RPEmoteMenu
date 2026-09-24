@@ -1408,6 +1408,13 @@ local function CreateGeneralSettingsPanel()
         function() return settings.showAtLogin end,
         function(value) settings.showAtLogin = value end)
 
+    local tooltipDelayBox = CreateNumberSetting(
+        panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 400, -100, 0, 1000,
+        function() return settings.tooltipDelayMs end,
+        function(value) settings.tooltipDelayMs = value end,
+        "ms"
+    )
+
     local inactiveHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     inactiveHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -250)
     inactiveHeading:SetText("Inactive Menu")
@@ -1705,6 +1712,7 @@ local function CreateGeneralSettingsPanel()
         heightBox:RefreshValue()
         fadeCheckbox:RefreshValue()
         fadeDelayBox:RefreshValue()
+        tooltipDelayBox:RefreshValue()
         inactiveOpacityBox:RefreshValue()
         minimizeSelector:OverrideText(
             minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE
