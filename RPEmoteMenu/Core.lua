@@ -12,6 +12,11 @@ local function HandleSlashCommand(message)
         return
     end
 
+    if command == "about" then
+        addon.Settings.OpenAbout()
+        return
+    end
+
     if command == "" then
         local mainFrame = addon.MainWindow.GetFrame()
 
@@ -24,7 +29,10 @@ local function HandleSlashCommand(message)
         return
     end
 
-    print("|cffffd100RP Emote Menu:|r /rpem, /rpem config, /rpem options, /rpem settings")
+    print(
+        "|cffffd100RP Emote Menu:|r /rpem, /rpem about, /rpem config, " ..
+        "/rpem options, /rpem settings"
+    )
 end
 
 -- INITIALIZATION

@@ -654,6 +654,7 @@ local function CreateAboutPanel()
 
         "Slash commands\n" ..
         "    /rpem - Show or hide the RP Emote Menu.\n" ..
+        "    /rpem about - Open the About page.\n" ..
         "    /rpem config - Open the addon settings.\n" ..
         "    /rpem options - Open the addon settings.\n" ..
         "    /rpem settings - Open the addon settings.\n\n" ..
