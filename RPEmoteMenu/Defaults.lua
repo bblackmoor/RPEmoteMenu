@@ -219,7 +219,6 @@ addon.DefaultGlobalSettings = {
     hideSettingsGear = false,
     hideEmoteEditGears = false,
     tooltipDelayMs = 350,
-    titleBarPosition = "TOP",
     showAtLogin = true,
     minimizeMode = "NONE",
     minimizedIconSize = 32,
@@ -236,6 +235,7 @@ addon.DefaultGlobalSettings = {
 }
 
 addon.DefaultProfileSettings = {
+    titleBarPosition = "TOP",
     minimizedIconColor = {r = 1.0, g = 0.82, b = 0.0},
     categoryFont = "Friz Quadrata",
     emoteFont = "Friz Quadrata",
@@ -260,7 +260,6 @@ addon.GlobalSettingKeys = {
     "hideSettingsGear",
     "hideEmoteEditGears",
     "tooltipDelayMs",
-    "titleBarPosition",
     "showAtLogin",
     "minimizeMode",
     "minimizedIconSize",
@@ -277,6 +276,7 @@ addon.GlobalSettingKeys = {
 }
 
 addon.ProfileSettingKeys = {
+    "titleBarPosition",
     "minimizedIconColor",
     "categoryFont",
     "emoteFont",

@@ -47,6 +47,7 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     separator = true
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
+local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 
 local function ValidateObject(value, allowedFields, description)
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
@@ -268,6 +269,9 @@ local function ValidateProfileSettings(value)
     if VALID_BORDER_STYLES[value.borderStyle] then
         imported.borderStyle = value.borderStyle
     end
+    if VALID_TITLE_BAR_POSITIONS[value.titleBarPosition] then
+        imported.titleBarPosition = value.titleBarPosition
+    end
 
     local backgroundOpacity = ValidateNumber(
         value.backgroundOpacity, 0, 1, "Background opacity", false
@@ -342,7 +346,7 @@ local function ExportProfileSettings(source)
     for _, key in ipairs({
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
-        "backgroundOpacity", "windowOpacity"
+        "titleBarPosition", "backgroundOpacity", "windowOpacity"
     }) do
         exported[key] = source[key]
     end

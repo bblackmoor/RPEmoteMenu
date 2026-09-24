@@ -219,9 +219,6 @@ local function NormalizeGlobalSettings(source)
     if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
         result.minimizedIconCorner = globalDefaults.minimizedIconCorner
     end
-    if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
-        result.titleBarPosition = globalDefaults.titleBarPosition
-    end
     result.x = math.floor(ClampNumber(source.x, -100000, 100000, globalDefaults.x))
     result.y = math.floor(ClampNumber(source.y, -100000, 100000, globalDefaults.y))
 
@@ -292,6 +289,9 @@ local function NormalizeProfileSettings(source)
     end
     if not VALID_BORDER_STYLES[result.borderStyle] then
         result.borderStyle = profileDefaults.borderStyle
+    end
+    if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
+        result.titleBarPosition = profileDefaults.titleBarPosition
     end
 
     result.backgroundOpacity = ClampNumber(

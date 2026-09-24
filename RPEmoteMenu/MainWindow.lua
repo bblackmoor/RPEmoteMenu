@@ -2176,11 +2176,16 @@ function MainWindow.ApplyTitleBarPosition()
     settings.titleBarPosition = settings.titleBarPosition == "LEFT"
         and "LEFT"
         or "TOP"
+
+    -- Orientation changes the calculated frame width, but not the saved
+    -- global anchor or offsets. This preserves centered windows and advanced
+    -- signed coordinates when switching profiles.
     MainWindow.ApplyWindowGeometry(
-        MainFrame:GetLeft() or settings.x,
-        MainFrame:GetTop() or settings.y,
+        settings.x,
+        settings.y,
         nil,
-        settings.height
+        settings.height,
+        true
     )
     ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
@@ -2854,6 +2859,8 @@ function MainWindow.ApplyProfileSettings()
         return
     end
 
+    -- Apply profile layout before restoring the saved global geometry.
+    MainWindow.ApplyTitleBarPosition()
     RestoreWindowSize()
     RestoreWindowPosition()
     MainWindow.ApplyMovementLock()

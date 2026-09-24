@@ -985,7 +985,7 @@ local function CreateAppearanceSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 760)
+    panel:SetSize(700, 850)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
 
@@ -1267,11 +1267,47 @@ local function CreateAppearanceSettingsPanel()
         "%"
     )
 
+    local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
+    layoutHeading:SetText("Layout")
+
+    local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -643)
+    titleBarLabel:SetText("Title bar")
+
+    local titleBarSelector = CreateFrame(
+        "DropdownButton",
+        nil,
+        panel,
+        "WowStyle1DropdownTemplate"
+    )
+    titleBarSelector:SetWidth(150)
+    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -664)
+    titleBarSelector:SetDefaultText("Top")
+    titleBarSelector.settingKey = "titleBarPosition"
+    controls.titleBarPosition = titleBarSelector
+
+    local titleBarLabels = {TOP = "Top", LEFT = "Left"}
+
+    titleBarSelector:SetupMenu(function(_, rootDescription)
+        for _, position in ipairs({"TOP", "LEFT"}) do
+            rootDescription:CreateRadio(
+                titleBarLabels[position],
+                function() return settings.titleBarPosition == position end,
+                function()
+                    settings.titleBarPosition = position
+                    titleBarSelector:OverrideText(titleBarLabels[position])
+                    MainWindow.ApplyTitleBarPosition()
+                end
+            )
+        end
+    end)
+
     local iconHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
+    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -720)
     iconHeading:SetText("Minimized Icon")
 
-    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -645)
+    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -750)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(170, 24)
@@ -1281,6 +1317,7 @@ local function CreateAppearanceSettingsPanel()
     controls.resetAppearance = resetButton
 
     local appearanceKeys = {
+        "titleBarPosition",
         "categoryFont",
         "emoteFont",
         "categoryFontSize",
@@ -1315,6 +1352,9 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshHighlightControls()
         borderSelector:OverrideText(borderLabels[settings.borderStyle])
+        titleBarSelector:OverrideText(
+            titleBarLabels[settings.titleBarPosition] or titleBarLabels.TOP
+        )
         addon.MinimizedIconColor.RefreshControl()
     end
 
@@ -1331,6 +1371,7 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshControls()
         MainWindow.ApplyAppearance()
+        MainWindow.ApplyTitleBarPosition()
     end)
 
     container.RefreshControls = RefreshControls
@@ -1582,45 +1623,12 @@ local function CreateGeneralSettingsPanel()
     layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -585)
     layoutHeading:SetText("Layout")
 
-    local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -620)
-    titleBarLabel:SetText("Title bar")
-
-    local titleBarSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        panel,
-        "WowStyle1DropdownTemplate"
-    )
-    titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -615)
-    titleBarSelector:SetDefaultText("Top")
-
-    local titleBarLabels = {
-        TOP = "Top",
-        LEFT = "Left"
-    }
-
-    titleBarSelector:SetupMenu(function(_, rootDescription)
-        for _, position in ipairs({"TOP", "LEFT"}) do
-            rootDescription:CreateRadio(
-                titleBarLabels[position],
-                function() return settings.titleBarPosition == position end,
-                function()
-                    settings.titleBarPosition = position
-                    titleBarSelector:OverrideText(titleBarLabels[position])
-                    MainWindow.ApplyTitleBarPosition()
-                end
-            )
-        end
-    end)
-
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -620)
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 230, -651, 70,
+        panel, 230, -616, 70,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1635,7 +1643,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 310, -651, 70,
+        panel, 310, -616, 70,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1659,16 +1667,16 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -651)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -616)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -690)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 230, -686, 70,
+        panel, 230, -651, 70,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1681,7 +1689,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -760)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -725)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -1703,10 +1711,6 @@ local function CreateGeneralSettingsPanel()
         iconCornerSelector:OverrideText(
             iconCornerLabels[settings.minimizedIconCorner]
                 or iconCornerLabels.TOPLEFT
-        )
-        titleBarSelector:OverrideText(
-            titleBarLabels[settings.titleBarPosition]
-                or titleBarLabels.TOP
         )
         RefreshInactiveControls()
     end
