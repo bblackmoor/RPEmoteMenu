@@ -2270,7 +2270,11 @@ local function CreateCategoriesSettingsPanel()
         text = "Replace every category and emote in the current profile with the built-in set?\n\nThis cannot be undone.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
-        OnAccept = Database.ResetAllCategoriesToDefaults,
+        OnAccept = function()
+            if Database.ResetAllCategoriesToDefaults() then
+                print("RP Emote Menu: Restored all built-in categories and emotes.")
+            end
+        end,
         timeout = 0,
         whileDead = true,
         hideOnEscape = true,
