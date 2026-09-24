@@ -10,7 +10,6 @@ addon.BuiltInProfiles = {
         name = "Gilded Shadow",
         description = "Black, gold, and cyan with a narrow, highly legible typeface.",
         settings = {
-            backgroundOpacity = 0.6,
             borderColor = {r = 0, g = 0, b = 0},
             borderStyle = "blizzard",
             categoryBackgroundColor = {r = 0, g = 0, b = 0},
@@ -32,7 +31,6 @@ addon.BuiltInProfiles = {
         name = "Crimson Night",
         description = "A clean black-and-crimson design with strong contrast.",
         settings = {
-            backgroundOpacity = 0.6,
             borderColor = {r = 0, g = 0, b = 0},
             borderStyle = "blizzard",
             categoryBackgroundColor = {r = 0, g = 0, b = 0},
@@ -54,7 +52,6 @@ addon.BuiltInProfiles = {
         name = "Teal",
         description = "Large teal text with a spacious, high-contrast layout.",
         settings = {
-            backgroundOpacity = 1,
             borderColor = {r = 0.2, g = 0.2, b = 0.2},
             borderStyle = "thin",
             categoryBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
@@ -76,7 +73,6 @@ addon.BuiltInProfiles = {
         name = "High Contrast",
         description = "A colorblind-friendly theme with bright text and a bold yellow selection.",
         settings = {
-            backgroundOpacity = 1,
             borderColor = {r = 0.3372549, g = 0.7058824, b = 0.9137255},
             borderStyle = "thin",
             categoryBackgroundColor = {r = 0.0627451, g = 0.0941176, b = 0.1254902},
@@ -98,7 +94,6 @@ addon.BuiltInProfiles = {
         name = "Joker",
         description = "An intentionally loud green-and-magenta fantasy theme.",
         settings = {
-            backgroundOpacity = 0.6,
             borderColor = {r = 0.8, g = 0, b = 1},
             borderStyle = "none",
             categoryBackgroundColor = {r = 0.2, g = 1, b = 0.2},
@@ -120,7 +115,6 @@ addon.BuiltInProfiles = {
         name = "Moonlight",
         description = "A restrained blue-and-silver theme designed for easy reading.",
         settings = {
-            backgroundOpacity = 0.9,
             borderColor = {r = 0.24, g = 0.35, b = 0.5},
             borderStyle = "thin",
             categoryBackgroundColor = {r = 0.04, g = 0.06, b = 0.12},

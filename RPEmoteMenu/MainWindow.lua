@@ -38,6 +38,10 @@ local TitleBar
 local TitleText
 local MinimizedIconButton
 local CategorySidebar
+local EmoteBackgroundTop
+local EmoteBackgroundBottom
+local EmoteBackgroundLeft
+local EmoteBackgroundRight
 local CategoryScrollFrame
 local CategoryScrollChild
 local CategoryEmptyLabel
@@ -595,6 +599,26 @@ ApplyColumnLayout = function()
         10
     )
 
+    -- The category background fills the sidebar. Fill only the remaining
+    -- space with the emote color so opacity is applied once at every point.
+    EmoteBackgroundTop:ClearAllPoints()
+    EmoteBackgroundTop:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
+    EmoteBackgroundTop:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
+    EmoteBackgroundTop:SetHeight(-categoryTop)
+
+    EmoteBackgroundBottom:ClearAllPoints()
+    EmoteBackgroundBottom:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
+    EmoteBackgroundBottom:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT")
+    EmoteBackgroundBottom:SetHeight(10)
+
+    EmoteBackgroundLeft:ClearAllPoints()
+    EmoteBackgroundLeft:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 0, categoryTop)
+    EmoteBackgroundLeft:SetPoint("BOTTOMRIGHT", CategorySidebar, "BOTTOMLEFT")
+
+    EmoteBackgroundRight:ClearAllPoints()
+    EmoteBackgroundRight:SetPoint("TOPLEFT", CategorySidebar, "TOPRIGHT")
+    EmoteBackgroundRight:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", 0, 10)
+
     ScrollFrame:ClearAllPoints()
     ScrollFrame:SetPoint(
         "TOPLEFT",
@@ -978,11 +1002,11 @@ local function ApplyMainFrameBackdrop()
     end
 
     MainFrame:SetBackdrop(backdrop)
+    -- In compact title-bar mode there are no body backgrounds. In the
+    -- expanded window the four adjoining regions paint around the sidebar.
     MainFrame:SetBackdropColor(
-        emoteBackground.r,
-        emoteBackground.g,
-        emoteBackground.b,
-        settings.backgroundOpacity
+        emoteBackground.r, emoteBackground.g, emoteBackground.b,
+        IsWindowBodyHidden() and 1 or 0
     )
     MainFrame:SetBackdropBorderColor(border.r, border.g, border.b, 1)
 end
@@ -1003,8 +1027,18 @@ function MainWindow.ApplyAppearance()
         categoryBackground.r,
         categoryBackground.g,
         categoryBackground.b,
-        settings.backgroundOpacity
+        1
     )
+
+    local emoteBackground = settings.emoteBackgroundColor
+    for _, region in ipairs({
+        EmoteBackgroundTop, EmoteBackgroundBottom,
+        EmoteBackgroundLeft, EmoteBackgroundRight
+    }) do
+        region:SetColorTexture(
+            emoteBackground.r, emoteBackground.g, emoteBackground.b, 1
+        )
+    end
 
     if settings.borderStyle == "none" then
         SidebarDivider:Hide()
@@ -2095,6 +2129,10 @@ local function UpdateWindowBodyVisibility()
         ScrollFrame:Hide()
         ScrollTopIndicator:Hide()
         ScrollBottomIndicator:Hide()
+        EmoteBackgroundTop:Hide()
+        EmoteBackgroundBottom:Hide()
+        EmoteBackgroundLeft:Hide()
+        EmoteBackgroundRight:Hide()
         if IsMinimizedToIcon() then
             TitleBar:Hide()
             TitleText:Hide()
@@ -2138,6 +2176,10 @@ local function UpdateWindowBodyVisibility()
         MainWindow.ApplySettingsGearVisibility()
         CategorySidebar:Show()
         ScrollFrame:Show()
+        EmoteBackgroundTop:Show()
+        EmoteBackgroundBottom:Show()
+        EmoteBackgroundLeft:Show()
+        EmoteBackgroundRight:Show()
         MainWindow.UpdateMenu()
         C_Timer.After(0, UpdateScrollIndicators)
     end
@@ -2419,6 +2461,11 @@ local function CreateMinimizedIcon()
 end
 
 local function CreateCategorySidebar()
+    EmoteBackgroundTop = MainFrame:CreateTexture(nil, "BACKGROUND")
+    EmoteBackgroundBottom = MainFrame:CreateTexture(nil, "BACKGROUND")
+    EmoteBackgroundLeft = MainFrame:CreateTexture(nil, "BACKGROUND")
+    EmoteBackgroundRight = MainFrame:CreateTexture(nil, "BACKGROUND")
+
     CategorySidebar = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
     CategorySidebar:SetWidth(sidebarWidth)
     CategorySidebar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 5, -36)

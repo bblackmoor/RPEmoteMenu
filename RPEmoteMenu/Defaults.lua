@@ -251,7 +251,6 @@ addon.DefaultProfileSettings = {
     emoteBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
     borderColor = {r = 0.2, g = 0.2, b = 0.2},
     borderStyle = "thin",
-    backgroundOpacity = 1.0,
     windowOpacity = 1.0
 }
 
@@ -292,7 +291,6 @@ addon.ProfileSettingKeys = {
     "emoteBackgroundColor",
     "borderColor",
     "borderStyle",
-    "backgroundOpacity",
     "windowOpacity"
 }
 

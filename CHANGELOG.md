@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.197
+
+- Applied one visible-menu opacity to adjoining category and emote backgrounds, removing the darker overlap.
+- Removed the separate background opacity control; opacity now affects the whole visible menu.
+
 ## 2.0.185
 
 - Separated global app behavior and preferences from per-profile appearance.

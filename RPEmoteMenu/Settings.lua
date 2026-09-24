@@ -1247,18 +1247,8 @@ local function CreateAppearanceSettingsPanel()
     opacityHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -525)
     opacityHeading:SetText("Opacity")
 
-    controls.backgroundOpacity = CreateNumberSetting(
-        panel, "Background opacity", "backgroundOpacity", 230, -553, 0, 100,
-        function() return settings.backgroundOpacity * 100 end,
-        function(value)
-            settings.backgroundOpacity = value / 100
-            MainWindow.ApplyAppearance()
-        end,
-        "%"
-    )
-
     controls.windowOpacity = CreateNumberSetting(
-        panel, "Active window opacity", "windowOpacity", 20, -553, 10, 100,
+        panel, "Visible menu opacity", "windowOpacity", 20, -553, 10, 100,
         function() return settings.windowOpacity * 100 end,
         function(value)
             settings.windowOpacity = value / 100
@@ -1332,7 +1322,6 @@ local function CreateAppearanceSettingsPanel()
         "emoteBackgroundColor",
         "borderColor",
         "borderStyle",
-        "backgroundOpacity",
         "windowOpacity",
         "minimizedIconColor"
     }

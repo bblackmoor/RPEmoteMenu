@@ -294,9 +294,6 @@ local function NormalizeProfileSettings(source)
         result.titleBarPosition = profileDefaults.titleBarPosition
     end
 
-    result.backgroundOpacity = ClampNumber(
-        source.backgroundOpacity, 0, 1, profileDefaults.backgroundOpacity
-    )
     result.windowOpacity = ClampNumber(
         source.windowOpacity, 0.1, 1, profileDefaults.windowOpacity
     )

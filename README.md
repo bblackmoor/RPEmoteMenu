@@ -134,7 +134,7 @@ The **Appearance** settings screen provides these options for the current profil
 - Category text, selected text, emote text, selection, background, and border colors.
 - Selection effects: **Background**, **Outline**, **Separator**, **Underline**, or **Drop shadow**.
 - Border styles: **None**, **Thin**, or **Blizzard**.
-- Background opacity and active window opacity.
+- Visible menu opacity, applied to the entire menu.
 - Minimized icon color.
 
 The font menus include WoW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.

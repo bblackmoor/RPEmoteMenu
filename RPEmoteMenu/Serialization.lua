@@ -273,10 +273,6 @@ local function ValidateProfileSettings(value)
         imported.titleBarPosition = value.titleBarPosition
     end
 
-    local backgroundOpacity = ValidateNumber(
-        value.backgroundOpacity, 0, 1, "Background opacity", false
-    )
-    if backgroundOpacity then imported.backgroundOpacity = backgroundOpacity end
     local windowOpacity = ValidateNumber(
         value.windowOpacity, 0.1, 1, "Window opacity", false
     )
@@ -346,7 +342,7 @@ local function ExportProfileSettings(source)
     for _, key in ipairs({
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
-        "titleBarPosition", "backgroundOpacity", "windowOpacity"
+        "titleBarPosition", "windowOpacity"
     }) do
         exported[key] = source[key]
     end
