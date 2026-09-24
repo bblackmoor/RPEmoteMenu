@@ -972,6 +972,7 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
     return selector
 end
 
+-- Appearance is organized by pane typography/colors, selection effects, borders, opacity, and icon styling.
 local function CreateAppearanceSettingsPanel()
     local container = CreateFrame("Frame")
     local scrollFrame = CreateFrame(
@@ -1339,6 +1340,7 @@ local function CreateAppearanceSettingsPanel()
     return container
 end
 
+-- Global behavior is organized by startup/interaction, inactivity/minimize behavior, and layout.
 local function CreateGeneralSettingsPanel()
     local container = CreateFrame("Frame")
     local scrollFrame = CreateFrame(
@@ -1800,6 +1802,7 @@ local function CreateImportExportSettingsPanel()
     return panel
 end
 
+-- Profile management keeps selection, lifecycle actions, import/export, and bundled-profile restore together.
 local function CreateProfilesSettingsPanel()
     local panel = CreateFrame("Frame")
 
@@ -2156,6 +2159,44 @@ local function CreateProfilesSettingsPanel()
     return panel
 end
 
+local function HasEmptyCategorySlot(selectedCategoryIndex)
+    for categoryIndex = 1, MAX_CATEGORIES do
+        if categoryIndex ~= selectedCategoryIndex then
+            local category = Database.GetCategory(categoryIndex)
+            local empty = category and strtrim(category.name or "") == ""
+
+            for emoteIndex = 1, MAX_EMOTES do
+                if empty and EmoteHasContent(category.emotes[emoteIndex]) then
+                    empty = false
+                end
+            end
+
+            if empty then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+
+local function GetPopulatedEmotes(categoryIndex)
+    local populated = {}
+    local category = Database.GetCategory(categoryIndex)
+
+    for emoteIndex = 1, MAX_EMOTES do
+        local emote = category and category.emotes[emoteIndex]
+        if EmoteHasContent(emote) then
+            populated[#populated + 1] = {
+                emote = emote,
+                index = emoteIndex
+            }
+        end
+    end
+
+    return populated
+end
+
 local function CreateCategoriesSettingsPanel()
     local panel = CreateFrame("Frame")
     local selectedCategoryIndex = settings.selectedCategory
@@ -2329,46 +2370,8 @@ local function CreateCategoriesSettingsPanel()
     local emoteRows = {}
     local draggedRow
 
-    local function HasEmptyCategorySlot()
-        for categoryIndex = 1, MAX_CATEGORIES do
-            if categoryIndex ~= selectedCategoryIndex then
-                local category = Database.GetCategory(categoryIndex)
-                local empty = category and strtrim(category.name or "") == ""
-
-                for emoteIndex = 1, MAX_EMOTES do
-                    if empty and EmoteHasContent(category.emotes[emoteIndex]) then
-                        empty = false
-                    end
-                end
-
-                if empty then
-                    return true
-                end
-            end
-        end
-
-        return false
-    end
-
-    local function GetPopulatedEmotes()
-        local populated = {}
-        local category = Database.GetCategory(selectedCategoryIndex)
-
-        for emoteIndex = 1, MAX_EMOTES do
-            local emote = category and category.emotes[emoteIndex]
-            if EmoteHasContent(emote) then
-                populated[#populated + 1] = {
-                    emote = emote,
-                    index = emoteIndex
-                }
-            end
-        end
-
-        return populated
-    end
-
     local function RefreshEmoteRows()
-        local populated = GetPopulatedEmotes()
+        local populated = GetPopulatedEmotes(selectedCategoryIndex)
         local editable = Database.CanEditActiveProfile()
 
         countText:SetText("(" .. #populated .. " of " .. MAX_EMOTES .. ")")
@@ -2454,7 +2457,7 @@ local function CreateCategoriesSettingsPanel()
         end
 
         local category = Database.GetCategory(selectedCategoryIndex)
-        local populated = GetPopulatedEmotes()
+        local populated = GetPopulatedEmotes(selectedCategoryIndex)
         local records = {}
         for _, entry in ipairs(populated) do
             records[#records + 1] = entry.emote
@@ -2474,7 +2477,7 @@ local function CreateCategoriesSettingsPanel()
         RefreshEmoteRows()
     end
 
-    for rowIndex = 1, MAX_EMOTES do
+    local function CreateEmoteRow(rowIndex)
         local row = CreateFrame("Button", nil, listContent, "BackdropTemplate")
         row:SetSize(590, 42)
         row:SetPoint("TOPLEFT", listContent, "TOPLEFT", 0, -((rowIndex - 1) * 45))
@@ -2552,7 +2555,11 @@ local function CreateCategoriesSettingsPanel()
         end)
         row:SetScript("OnDragStop", FinishRowDrag)
         row:Hide()
-        emoteRows[rowIndex] = row
+        return row
+    end
+
+    for rowIndex = 1, MAX_EMOTES do
+        emoteRows[rowIndex] = CreateEmoteRow(rowIndex)
     end
 
     addButton:SetScript("OnClick", function()
@@ -2619,7 +2626,7 @@ local function CreateCategoriesSettingsPanel()
         resetButton:SetEnabled(editable)
         resetAllCategoriesButton:SetEnabled(editable)
         importButton:SetEnabled(editable)
-        duplicateCategoryButton:SetEnabled(editable and HasEmptyCategorySlot())
+        duplicateCategoryButton:SetEnabled(editable and HasEmptyCategorySlot(selectedCategoryIndex))
 
         nameBox:RefreshFromDatabase()
         RefreshEmoteRows()
