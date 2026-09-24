@@ -1404,7 +1404,7 @@ local function CreateGeneralSettingsPanel()
     end)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 870)
+    panel:SetSize(700, 780)
     scrollFrame:SetScrollChild(panel)
     local checkboxes = {}
 
@@ -1423,7 +1423,7 @@ local function CreateGeneralSettingsPanel()
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -75)
     behaviorHeading:SetText("Startup & Interaction")
 
-    local lockCheckbox = CreateCheckbox(panel, "Lock window position and height", -725,
+    local lockCheckbox = CreateCheckbox(panel, "Lock window position and height", -665,
         function() return settings.locked end,
         function(value)
             settings.locked = value
@@ -1620,15 +1620,15 @@ local function CreateGeneralSettingsPanel()
     end
 
     local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -585)
+    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
     layoutHeading:SetText("Layout")
 
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -620)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -550)
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 230, -616, 70,
+        panel, 250, -546, 80,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1643,7 +1643,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 310, -616, 70,
+        panel, 370, -546, 80,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1667,16 +1667,16 @@ local function CreateGeneralSettingsPanel()
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 400, -616)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 490, -546)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -590)
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 230, -651, 70,
+        panel, 250, -586, 80,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1689,7 +1689,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -725)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -630)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -1739,7 +1739,7 @@ local function CreateGeneralSettingsPanel()
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(200, 24)
-    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -815)
+    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -710)
     resetButton:SetText("Reset Window Height & Position")
     resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
 
