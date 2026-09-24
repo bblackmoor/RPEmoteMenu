@@ -1049,6 +1049,7 @@ local function CreateAppearanceSettingsPanel()
         end,
         "px"
     )
+    controls.categoryFontSize:SetWidth(52)
 
     controls.emoteFont = CreateFontSetting(
         panel, "Emote font", "emoteFont", 330, -132
@@ -1063,6 +1064,7 @@ local function CreateAppearanceSettingsPanel()
         end,
         "px"
     )
+    controls.emoteFontSize:SetWidth(52)
 
     controls.categoryTextColor = CreateColorSetting(
         panel, "Category text", "categoryTextColor", 20, -238,
