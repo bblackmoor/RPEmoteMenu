@@ -32,60 +32,6 @@ local PROFILES_DOCUMENT_FIELDS = {
 local CATEGORY_FIELDS = {name = true, emotes = true}
 local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true}
 
-local PROFILE_SETTINGS_FIELDS = {
-    locked = true,
-    hideSettingsGear = true,
-    hideEmoteEditGears = true,
-    tooltipDelayMs = true,
-    titleBarPosition = true,
-    showAtLogin = true,
-    minimizeMode = true,
-    -- Accepted from older Version 2 exports and migrated below.
-    keepOpen = true,
-    minimizeToIcon = true,
-    minimizedIconSize = true,
-    minimizedIconCorner = true,
-    minimizedIconColor = true,
-    -- Accepted from Version 1 exports, then discarded because Version 2 no
-    -- longer has a manually remembered collapsed state.
-    rememberMinimized = true,
-    point = true,
-    relativePoint = true,
-    x = true,
-    y = true,
-    height = true,
-    -- Accepted for compatibility, then discarded because width is automatic.
-    width = true,
-    sidebarWidth = true,
-    emoteColumnWidth = true,
-    categoryFont = true,
-    emoteFont = true,
-    categoryFontSize = true,
-    emoteFontSize = true,
-    categoryTextColor = true,
-    selectedCategoryTextColor = true,
-    emoteTextColor = true,
-    categoryHighlightColor = true,
-    categoryHighlightEffect = true,
-    categoryHighlightThickness = true,
-    categoryBackgroundColor = true,
-    emoteBackgroundColor = true,
-    borderColor = true,
-    borderStyle = true,
-    backgroundOpacity = true,
-    windowOpacity = true,
-    fadeEnabled = true,
-    fadeDelay = true,
-    inactiveOpacity = true
-}
-
-local BOOLEAN_SETTING_KEYS = {
-    "locked",
-    "hideSettingsGear",
-    "hideEmoteEditGears",
-    "showAtLogin",
-    "fadeEnabled"
-}
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
     "selectedCategoryTextColor",
@@ -101,20 +47,6 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     separator = true
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
-local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
-local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
-local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
-local VALID_ANCHOR_POINTS = {
-    TOPLEFT = true,
-    TOP = true,
-    TOPRIGHT = true,
-    LEFT = true,
-    CENTER = true,
-    RIGHT = true,
-    BOTTOMLEFT = true,
-    BOTTOM = true,
-    BOTTOMRIGHT = true
-}
 
 local function ValidateObject(value, allowedFields, description)
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
@@ -137,14 +69,6 @@ local function ValidateString(value, maximumLength, description)
     end
     if #value > maximumLength then
         return nil, description .. " exceeds " .. maximumLength .. " characters."
-    end
-    return value
-end
-
-
-local function ValidateBoolean(value, description)
-    if type(value) ~= "boolean" then
-        return nil, description .. " must be true or false."
     end
     return value
 end
@@ -317,169 +241,44 @@ end
 
 
 local function ValidateProfileSettings(value)
-    local valid, errorMessage = ValidateObject(
-        value, PROFILE_SETTINGS_FIELDS, "Profile settings"
-    )
-    if not valid then
-        return nil, errorMessage
-    end
-
-    local imported = {}
-    for _, key in ipairs(BOOLEAN_SETTING_KEYS) do
-        if key == "hideEmoteEditGears" and value[key] == nil then
-            imported[key] = addon.DefaultSettings[key]
-        else
-            imported[key], errorMessage = ValidateBoolean(value[key], "Setting " .. key)
-            if imported[key] == nil then return nil, errorMessage end
-        end
-    end
-    if value.minimizeMode == nil then
-        if value.minimizeToIcon == nil then
-            imported.minimizeMode = addon.DefaultSettings.minimizeMode
-        else
-            local legacyMinimizeToIcon
-            legacyMinimizeToIcon, errorMessage = ValidateBoolean(
-                value.minimizeToIcon,
-                "Setting minimizeToIcon"
-            )
-            if legacyMinimizeToIcon == nil then return nil, errorMessage end
-            imported.minimizeMode = legacyMinimizeToIcon and "ICON" or "NONE"
-        end
-    elseif VALID_MINIMIZE_MODES[value.minimizeMode] then
-        imported.minimizeMode = value.minimizeMode
-    else
-        return nil, "Setting minimizeMode is not supported."
-    end
-    if value.minimizedIconSize == nil then
-        imported.minimizedIconSize = addon.DefaultSettings.minimizedIconSize
-    else
-        imported.minimizedIconSize, errorMessage = ValidateNumber(
-            value.minimizedIconSize,
-            addon.MIN_MINIMIZED_ICON_SIZE,
-            addon.MAX_MINIMIZED_ICON_SIZE,
-            "Minimized icon size",
-            true
-        )
-        if not imported.minimizedIconSize then return nil, errorMessage end
-    end
-    if value.minimizedIconCorner == nil then
-        imported.minimizedIconCorner = addon.DefaultSettings.minimizedIconCorner
-    elseif VALID_MINIMIZED_ICON_CORNERS[value.minimizedIconCorner] then
-        imported.minimizedIconCorner = value.minimizedIconCorner
-    else
-        return nil, "Setting minimizedIconCorner is not supported."
-    end
-    if value.titleBarPosition == nil then
-        imported.titleBarPosition = addon.DefaultSettings.titleBarPosition
-    elseif VALID_TITLE_BAR_POSITIONS[value.titleBarPosition] then
-        imported.titleBarPosition = value.titleBarPosition
-    else
-        return nil, "Setting titleBarPosition is not supported."
-    end
-
-    if not VALID_ANCHOR_POINTS[value.point] then
-        return nil, "Setting point is not supported."
-    end
-    if not VALID_ANCHOR_POINTS[value.relativePoint] then
-        return nil, "Setting relativePoint is not supported."
-    end
-    imported.point = value.point
-    imported.relativePoint = value.relativePoint
-
-    if value.x == nil or value.y == nil then
-        return nil, "Window position must contain both x and y."
-    end
-    imported.x, errorMessage = ValidateNumber(
-        value.x, -100000, 100000, "Window position x", true
-    )
-    if imported.x == nil then return nil, errorMessage end
-    imported.y, errorMessage = ValidateNumber(
-        value.y, -100000, 100000, "Window position y", true
-    )
-    if imported.y == nil then return nil, errorMessage end
-
-    imported.height, errorMessage = ValidateNumber(value.height, 150, 630, "Window height", true)
-    if not imported.height then return nil, errorMessage end
+    value = type(value) == "table" and not JSON.IsArray(value)
+        and value ~= JSON.Null and value or {}
+    local imported = Database.CopyProfileSettings(addon.DefaultProfileSettings)
 
     for _, key in ipairs({"categoryFont", "emoteFont"}) do
-        imported[key], errorMessage = ValidateString(
-            value[key], MAX_FONT_NAME_LENGTH, "Setting " .. key
-        )
-        if not imported[key] then return nil, errorMessage end
-        if imported[key] == "" then
-            return nil, "Setting " .. key .. " cannot be empty."
-        end
+        local setting = ValidateString(value[key], MAX_FONT_NAME_LENGTH, key)
+        if setting and setting ~= "" then imported[key] = setting end
     end
-
-    imported.categoryFontSize, errorMessage = ValidateNumber(
-        value.categoryFontSize, 8, 24, "Category font size", true
-    )
-    if not imported.categoryFontSize then return nil, errorMessage end
-    imported.emoteFontSize, errorMessage = ValidateNumber(
-        value.emoteFontSize, 8, 24, "Emote font size", true
-    )
-    if not imported.emoteFontSize then return nil, errorMessage end
-
-    for _, key in ipairs(COLOR_SETTING_KEYS) do
-        if value[key] == nil and key == "minimizedIconColor" then
-            imported[key] = CopyColor(addon.DefaultSettings[key])
-        else
-            imported[key], errorMessage = ValidateColor(
-                value[key], "Setting " .. key
-            )
-            if not imported[key] then return nil, errorMessage end
-        end
+    for _, key in ipairs({"categoryFontSize", "emoteFontSize"}) do
+        local setting = ValidateNumber(value[key], 8, 24, key, true)
+        if setting then imported[key] = setting end
     end
-
-    if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[value.categoryHighlightEffect] then
-        return nil, "Setting categoryHighlightEffect is not supported."
-    end
-    imported.categoryHighlightEffect = value.categoryHighlightEffect
-    imported.categoryHighlightThickness, errorMessage = ValidateNumber(
+    local thickness = ValidateNumber(
         value.categoryHighlightThickness, 1, 6, "Selection thickness", true
     )
-    if not imported.categoryHighlightThickness then return nil, errorMessage end
+    if thickness then imported.categoryHighlightThickness = thickness end
 
-    if not VALID_BORDER_STYLES[value.borderStyle] then
-        return nil, "Setting borderStyle is not supported."
+    for _, key in ipairs(COLOR_SETTING_KEYS) do
+        local setting = ValidateColor(value[key], key)
+        if setting then imported[key] = setting end
     end
-    imported.borderStyle = value.borderStyle
+    if VALID_CATEGORY_HIGHLIGHT_EFFECTS[value.categoryHighlightEffect] then
+        imported.categoryHighlightEffect = value.categoryHighlightEffect
+    end
+    if VALID_BORDER_STYLES[value.borderStyle] then
+        imported.borderStyle = value.borderStyle
+    end
 
-    imported.backgroundOpacity, errorMessage = ValidateNumber(
+    local backgroundOpacity = ValidateNumber(
         value.backgroundOpacity, 0, 1, "Background opacity", false
     )
-    if imported.backgroundOpacity == nil then return nil, errorMessage end
-    imported.windowOpacity, errorMessage = ValidateNumber(
-        value.windowOpacity, 0.1, 1, "Active window opacity", false
+    if backgroundOpacity then imported.backgroundOpacity = backgroundOpacity end
+    local windowOpacity = ValidateNumber(
+        value.windowOpacity, 0.1, 1, "Window opacity", false
     )
-    if not imported.windowOpacity then return nil, errorMessage end
-    imported.fadeDelay, errorMessage = ValidateNumber(
-        value.fadeDelay, 0, 60, "Fade delay", true
-    )
-    if imported.fadeDelay == nil then return nil, errorMessage end
-    if value.tooltipDelayMs == nil then
-        imported.tooltipDelayMs = addon.DefaultSettings.tooltipDelayMs
-    else
-        imported.tooltipDelayMs, errorMessage = ValidateNumber(
-            value.tooltipDelayMs, 0, 1000, "Tooltip delay", true
-        )
-        if imported.tooltipDelayMs == nil then return nil, errorMessage end
-    end
-    imported.inactiveOpacity, errorMessage = ValidateNumber(
-        value.inactiveOpacity, 0.1, 1, "Inactive opacity", false
-    )
-    if not imported.inactiveOpacity then return nil, errorMessage end
-    if imported.inactiveOpacity > imported.windowOpacity then
-        return nil, "Inactive opacity cannot exceed active window opacity."
-    end
+    if windowOpacity then imported.windowOpacity = windowOpacity end
 
-    local base = Database.CopySettings(Database.GetSettings())
-    for key, settingValue in pairs(imported) do
-        base[key] = settingValue
-    end
-    base.selectedCategory = addon.DefaultSettings.selectedCategory
-
-    return Database.CopySettings(base)
+    return Database.CopyProfileSettings(imported)
 end
 
 
@@ -500,9 +299,6 @@ local function ValidateProfile(value, description, allowedFields)
     categories, errorMessage = ValidateCategories(value.categories, description)
     if not categories then return nil, errorMessage end
 
-    if value.settings == nil then
-        return nil, description .. " settings are missing."
-    end
     local profileSettings
     profileSettings, errorMessage = ValidateProfileSettings(value.settings)
     if not profileSettings then return nil, errorMessage end
@@ -543,17 +339,10 @@ end
 local function ExportProfileSettings(source)
     local exported = {}
 
-    for _, key in ipairs(BOOLEAN_SETTING_KEYS) do
-        exported[key] = source[key]
-    end
     for _, key in ipairs({
-        "point", "relativePoint", "x", "y", "height", "titleBarPosition",
-        "minimizeMode",
-        "minimizedIconSize", "minimizedIconCorner",
         "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
         "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
-        "backgroundOpacity", "windowOpacity", "fadeDelay", "tooltipDelayMs",
-        "inactiveOpacity"
+        "backgroundOpacity", "windowOpacity"
     }) do
         exported[key] = source[key]
     end

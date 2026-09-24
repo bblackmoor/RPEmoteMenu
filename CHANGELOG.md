@@ -1,8 +1,14 @@
 # Changelog
 
+## 2.0.185
+
+- Separated global app behavior and preferences from per-profile appearance.
+- Reorganized settings into Behavior and Appearance sections with independent resets.
+- Profile imports ignore unknown or invalid appearance settings while retaining valid categories, emotes, and appearance values.
+
 ## 2.0.184
 
-- Added a per-profile 0-1000 ms delay for main-window tooltips, defaulting to 350 ms.
+- Added a 0-1000 ms delay for main-window tooltips, defaulting to 350 ms.
 - Pending tooltips are cancelled when the cursor leaves or moves to another control.
 
 ## 2.0.183

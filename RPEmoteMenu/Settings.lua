@@ -480,8 +480,8 @@ local function GetExchangeDialog()
         self.onProfileImported = nil
         title:SetText("Export Profile: " .. Database.GetActiveProfileName())
         instructions:SetText(
-            "Copy this JSON to share or save this profile's window settings, "
-            .. "appearance, categories, and emotes."
+            "Copy this JSON to share or save this profile's appearance, "
+            .. "categories, and emotes."
         )
         actionButton:SetText("Select All")
         SetStatus("")
@@ -609,7 +609,7 @@ local function CreateAboutPanel()
     description:SetText(
         "A customizable roleplaying emote menu with profiles, targeted " ..
         "commands, category and custom-profile sharing, and " ..
-        "per-profile fonts, colors, layout, opacity, and inactivity fading."
+        "per-profile fonts, colors, and appearance."
     )
 
     local details = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -983,7 +983,7 @@ local function CreateAppearanceSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 700)
+    panel:SetSize(700, 760)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
 
@@ -1258,14 +1258,16 @@ local function CreateAppearanceSettingsPanel()
         function() return settings.windowOpacity * 100 end,
         function(value)
             settings.windowOpacity = value / 100
-            settings.inactiveOpacity = math.min(
-                settings.inactiveOpacity,
-                settings.windowOpacity
-            )
             MainWindow.ApplyAppearance()
         end,
         "%"
     )
+
+    local iconHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
+    iconHeading:SetText("Minimized Icon")
+
+    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -645)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(170, 24)
@@ -1291,9 +1293,7 @@ local function CreateAppearanceSettingsPanel()
         "borderStyle",
         "backgroundOpacity",
         "windowOpacity",
-        "fadeEnabled",
-        "fadeDelay",
-        "inactiveOpacity"
+        "minimizedIconColor"
     }
 
     local function RefreshFontControls()
@@ -1311,6 +1311,7 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshHighlightControls()
         borderSelector:OverrideText(borderLabels[settings.borderStyle])
+        addon.MinimizedIconColor.RefreshControl()
     end
 
     resetButton:SetScript("OnClick", function()
@@ -1326,7 +1327,6 @@ local function CreateAppearanceSettingsPanel()
 
         RefreshControls()
         MainWindow.ApplyAppearance()
-        MainWindow.ResetWindowPosition()
     end)
 
     container.RefreshControls = RefreshControls
@@ -1358,27 +1358,26 @@ local function CreateGeneralSettingsPanel()
     end)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 825)
+    panel:SetSize(700, 870)
     scrollFrame:SetScrollChild(panel)
     local checkboxes = {}
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
-    heading:SetText("General")
+    heading:SetText("App Behavior & Preferences")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetText(
-        "Configure window visibility, movement, height, and login behavior "
-        .. "for the current profile."
+        "These settings apply globally, regardless of the active profile."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
     local behaviorHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -75)
-    behaviorHeading:SetText("Window Behavior")
+    behaviorHeading:SetText("Startup & Interaction")
 
-    local lockCheckbox = CreateCheckbox(panel, "Lock Window Position and Height", -100,
+    local lockCheckbox = CreateCheckbox(panel, "Lock window position and height", -725,
         function() return settings.locked end,
         function(value)
             settings.locked = value
@@ -1404,7 +1403,7 @@ local function CreateGeneralSettingsPanel()
         end
     )
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Show the addon at login", -205,
+    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Show the addon at login", -100,
         function() return settings.showAtLogin end,
         function(value) settings.showAtLogin = value end)
 
@@ -1417,7 +1416,7 @@ local function CreateGeneralSettingsPanel()
 
     local inactiveHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     inactiveHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -250)
-    inactiveHeading:SetText("Inactive Menu")
+    inactiveHeading:SetText("Window Behavior")
 
     local RefreshInactiveControls
     local RefreshIconControls
@@ -1446,10 +1445,7 @@ local function CreateGeneralSettingsPanel()
         panel, "Inactive opacity", "inactiveOpacity", 230, -315, 10, 100,
         function() return settings.inactiveOpacity * 100 end,
         function(value)
-            settings.inactiveOpacity = math.min(
-                value / 100,
-                settings.windowOpacity
-            )
+            settings.inactiveOpacity = value / 100
             MainWindow.ApplyFadeSettings()
         end,
         "%"
@@ -1538,29 +1534,13 @@ local function CreateGeneralSettingsPanel()
         end
     end)
 
-    local iconColorLabel,
-        iconColorButton,
-        iconColorResetButton,
-        iconColorPreview = addon.MinimizedIconColor.CreateSettingsControls(
-            panel,
-            20,
-            -485
-        )
-
-    local iconNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    iconNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -535)
-    iconNote:SetText("These options affect only the on-screen minimized icon.")
-    iconNote:SetTextColor(0.7, 0.7, 0.7)
-
     RefreshIconControls = function()
         local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
         local alpha = enabled and 1 or 0.45
 
         for _, control in ipairs({
             iconSizeBox,
-            iconCornerSelector,
-            iconColorButton,
-            iconColorResetButton
+            iconCornerSelector
         }) do
             control:SetEnabled(enabled)
             control:SetAlpha(alpha)
@@ -1568,9 +1548,6 @@ local function CreateGeneralSettingsPanel()
 
         iconSizeLabel:SetAlpha(alpha)
         iconCornerLabel:SetAlpha(alpha)
-        iconColorLabel:SetAlpha(alpha)
-        iconColorPreview:SetAlpha(alpha)
-        iconNote:SetAlpha(alpha)
     end
 
     RefreshInactiveControls = function()
@@ -1699,7 +1676,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -725)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -760)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -1726,7 +1703,6 @@ local function CreateGeneralSettingsPanel()
             titleBarLabels[settings.titleBarPosition]
                 or titleBarLabels.TOP
         )
-        addon.MinimizedIconColor.RefreshControl()
         RefreshInactiveControls()
     end
 
@@ -1741,9 +1717,20 @@ local function CreateGeneralSettingsPanel()
     container.RefreshControls = RefreshControls
     container:SetScript("OnShow", RefreshControls)
 
+    local defaultsButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    defaultsButton:SetSize(170, 24)
+    defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 450, -14)
+    defaultsButton:SetText("Restore Global Defaults")
+    defaultsButton:SetScript("OnClick", function()
+        Database.ResetGlobalSettings()
+        settings = Database.GetSettings()
+        MainWindow.ApplyProfileSettings()
+        RefreshControls()
+    end)
+
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(200, 24)
-    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 450, -14)
+    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -815)
     resetButton:SetText("Reset Window Height & Position")
     resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
 
@@ -1775,9 +1762,9 @@ local function CreateImportExportSettingsPanel()
     profilesDescription:SetWidth(620)
     profilesDescription:SetJustifyH("LEFT")
     profilesDescription:SetText(
-        "Each profile includes its window settings, appearance, categories, "
-        .. "and emotes. The addon does not add character names, realms, or character "
-        .. "assignments to exports."
+        "Each profile includes appearance, categories, and emotes. Global "
+        .. "behavior, preferences, window layout, character names, realms, and "
+        .. "character assignments are not exported."
     )
     profilesDescription:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1992,7 +1979,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES"] = {
-        text = "Restore all bundled profiles to their original categories, appearance, General settings, and layout?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
+        text = "Restore all bundled profiles to their original categories and appearance?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
         OnAccept = function()
@@ -2122,7 +2109,7 @@ local function CreateProfilesSettingsPanel()
     bundledDescription:SetWidth(620)
     bundledDescription:SetJustifyH("LEFT")
     bundledDescription:SetText(
-        "Reset bundled categories, appearance, General settings, and layout; " ..
+        "Reset bundled categories and appearance; " ..
         "recreate missing bundled profiles."
     )
     bundledDescription:SetTextColor(0.8, 0.8, 0.8)
@@ -2670,7 +2657,7 @@ function AddonSettings.CreateSettingsPanel()
     generalSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
         settingsCategory,
         generalPanel,
-        "General"
+        "Behavior"
     )
 
     appearanceSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(

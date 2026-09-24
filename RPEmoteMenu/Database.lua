@@ -5,16 +5,19 @@ addon.Database = {}
 local Database = addon.Database
 local defaultSections = addon.DefaultSections
 local defaults = addon.DefaultSettings
+local globalDefaults = addon.DefaultGlobalSettings
+local profileDefaults = addon.DefaultProfileSettings
+local globalSettingKeys = addon.GlobalSettingKeys
+local profileSettingKeys = addon.ProfileSettingKeys
 local builtInProfiles = addon.BuiltInProfiles or {}
 local builtInProfileVersion = addon.BuiltInProfileVersion or 0
 local builtInProfileByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 13
+local SCHEMA_VERSION = 14
 local VERSION_ONE_SCHEMA_MAX = 6
 local HIGH_CONTRAST_BUILT_IN_VERSION = 3
 local UNLOCKED_BUILT_IN_VERSION = 4
-local SAFE_GENERAL_DEFAULTS_BUILT_IN_VERSION = 5
 local DEFAULT_PROFILE_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
@@ -54,26 +57,15 @@ local COLOR_SETTING_KEYS = {
     "borderColor",
     "minimizedIconColor"
 }
-local GENERAL_SETTING_KEYS = {
-    "locked",
-    "hideSettingsGear",
-    "hideEmoteEditGears",
-    "tooltipDelayMs",
-    "showAtLogin",
-    "fadeEnabled",
-    "fadeDelay",
-    "inactiveOpacity",
-    "minimizeMode",
-    "minimizedIconSize",
-    "minimizedIconCorner",
-    "minimizedIconColor",
-    "titleBarPosition",
-    "point",
-    "relativePoint",
-    "x",
-    "y",
-    "height"
-}
+local globalSettingLookup = {}
+local profileSettingLookup = {}
+
+for _, key in ipairs(globalSettingKeys) do
+    globalSettingLookup[key] = true
+end
+for _, key in ipairs(profileSettingKeys) do
+    profileSettingLookup[key] = true
+end
 
 local function NormalizeString(value)
     return type(value) == "string" and value or ""
@@ -201,111 +193,120 @@ local function NormalizeColor(value, defaultValue)
 end
 
 
-local function NormalizeSettings(source)
+local function NormalizeGlobalSettings(source)
     source = type(source) == "table" and source or {}
     local result = {}
 
-    for key, defaultValue in pairs(defaults) do
-        if key ~= "emoteDataVersion" and type(defaultValue) ~= "table" then
-            result[key] = IsValidSavedValue(source[key], defaultValue)
+    for key, defaultValue in pairs(globalDefaults) do
+        result[key] = IsValidSavedValue(source[key], defaultValue)
                 and source[key]
                 or defaultValue
-        end
     end
 
-    -- Version 2.0.179 replaces the old Minimize to Icon checkbox with a
-    -- three-state selector. Preserve enabled profiles as Icon; an unchecked
-    -- legacy setting means no minimization.
     if VALID_MINIMIZE_MODES[source.minimizeMode] then
         result.minimizeMode = source.minimizeMode
-    elseif source.minimizeToIcon == true then
-        result.minimizeMode = "ICON"
     else
-        result.minimizeMode = defaults.minimizeMode
+        result.minimizeMode = globalDefaults.minimizeMode
     end
 
-    result.height = math.floor(ClampNumber(source.height, 150, 630, defaults.height))
+    result.height = math.floor(ClampNumber(source.height, 150, 630, globalDefaults.height))
     result.minimizedIconSize = math.floor(ClampNumber(
         source.minimizedIconSize,
         addon.MIN_MINIMIZED_ICON_SIZE,
         addon.MAX_MINIMIZED_ICON_SIZE,
-        defaults.minimizedIconSize
+        globalDefaults.minimizedIconSize
     ))
     if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
-        result.minimizedIconCorner = defaults.minimizedIconCorner
+        result.minimizedIconCorner = globalDefaults.minimizedIconCorner
     end
     if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
-        result.titleBarPosition = defaults.titleBarPosition
+        result.titleBarPosition = globalDefaults.titleBarPosition
     end
-    result.x = math.floor(ClampNumber(source.x, -100000, 100000, defaults.x))
-    result.y = math.floor(ClampNumber(source.y, -100000, 100000, defaults.y))
+    result.x = math.floor(ClampNumber(source.x, -100000, 100000, globalDefaults.x))
+    result.y = math.floor(ClampNumber(source.y, -100000, 100000, globalDefaults.y))
 
     if not VALID_ANCHOR_POINTS[result.point] then
-        result.point = defaults.point
+        result.point = globalDefaults.point
     end
     if not VALID_ANCHOR_POINTS[result.relativePoint] then
-        result.relativePoint = defaults.relativePoint
+        result.relativePoint = globalDefaults.relativePoint
     end
     if result.selectedCategory % 1 ~= 0
         or result.selectedCategory < 1
         or result.selectedCategory > MAX_CATEGORIES then
-        result.selectedCategory = defaults.selectedCategory
+        result.selectedCategory = globalDefaults.selectedCategory
     end
 
-    if strtrim(result.categoryFont) == "" then
-        result.categoryFont = defaults.categoryFont
-    end
-    if strtrim(result.emoteFont) == "" then
-        result.emoteFont = defaults.emoteFont
-    end
-
-    result.categoryFontSize = math.floor(ClampNumber(
-        source.categoryFontSize, 8, 24, defaults.categoryFontSize
-    ))
-    result.emoteFontSize = math.floor(ClampNumber(
-        source.emoteFontSize, 8, 24, defaults.emoteFontSize
-    ))
-    result.categoryHighlightThickness = math.floor(ClampNumber(
-        source.categoryHighlightThickness,
-        1,
-        6,
-        defaults.categoryHighlightThickness
-    ))
-
-    for _, key in ipairs(COLOR_SETTING_KEYS) do
-        result[key] = NormalizeColor(source[key], defaults[key])
-    end
-
-    if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[result.categoryHighlightEffect] then
-        result.categoryHighlightEffect = defaults.categoryHighlightEffect
-    end
-    if not VALID_BORDER_STYLES[result.borderStyle] then
-        result.borderStyle = defaults.borderStyle
-    end
-
-    result.backgroundOpacity = ClampNumber(
-        source.backgroundOpacity, 0, 1, defaults.backgroundOpacity
-    )
-    result.windowOpacity = ClampNumber(
-        source.windowOpacity, 0.1, 1, defaults.windowOpacity
-    )
     result.fadeDelay = math.floor(ClampNumber(
-        source.fadeDelay, 0, 60, defaults.fadeDelay
+        source.fadeDelay, 0, 60, globalDefaults.fadeDelay
     ))
     result.tooltipDelayMs = math.floor(ClampNumber(
-        source.tooltipDelayMs, 0, 1000, defaults.tooltipDelayMs
+        source.tooltipDelayMs, 0, 1000, globalDefaults.tooltipDelayMs
     ))
-    result.inactiveOpacity = math.min(
-        ClampNumber(source.inactiveOpacity, 0.1, 1, defaults.inactiveOpacity),
-        result.windowOpacity
+    result.inactiveOpacity = ClampNumber(
+        source.inactiveOpacity, 0.1, 1, globalDefaults.inactiveOpacity
     )
 
     return result
 end
 
 
-local function CopySettings(source)
-    return NormalizeSettings(source)
+local function NormalizeProfileSettings(source)
+    source = type(source) == "table" and source or {}
+    local result = {}
+
+    for key, defaultValue in pairs(profileDefaults) do
+        if type(defaultValue) ~= "table" then
+            result[key] = IsValidSavedValue(source[key], defaultValue)
+                and source[key]
+                or defaultValue
+        end
+    end
+
+    if strtrim(result.categoryFont) == "" then
+        result.categoryFont = profileDefaults.categoryFont
+    end
+    if strtrim(result.emoteFont) == "" then
+        result.emoteFont = profileDefaults.emoteFont
+    end
+
+    result.categoryFontSize = math.floor(ClampNumber(
+        source.categoryFontSize, 8, 24, profileDefaults.categoryFontSize
+    ))
+    result.emoteFontSize = math.floor(ClampNumber(
+        source.emoteFontSize, 8, 24, profileDefaults.emoteFontSize
+    ))
+    result.categoryHighlightThickness = math.floor(ClampNumber(
+        source.categoryHighlightThickness,
+        1,
+        6,
+        profileDefaults.categoryHighlightThickness
+    ))
+
+    for _, key in ipairs(COLOR_SETTING_KEYS) do
+        result[key] = NormalizeColor(source[key], profileDefaults[key])
+    end
+
+    if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[result.categoryHighlightEffect] then
+        result.categoryHighlightEffect = profileDefaults.categoryHighlightEffect
+    end
+    if not VALID_BORDER_STYLES[result.borderStyle] then
+        result.borderStyle = profileDefaults.borderStyle
+    end
+
+    result.backgroundOpacity = ClampNumber(
+        source.backgroundOpacity, 0, 1, profileDefaults.backgroundOpacity
+    )
+    result.windowOpacity = ClampNumber(
+        source.windowOpacity, 0.1, 1, profileDefaults.windowOpacity
+    )
+
+    return result
+end
+
+
+local function CopyProfileSettings(source)
+    return NormalizeProfileSettings(source)
 end
 
 
@@ -360,50 +361,64 @@ function Database.GetProfiles()
 end
 
 
-function Database.GetSettings()
-    return Database.GetActiveProfile().settings
-end
-
-
-function Database.CopySettings(source)
-    return CopySettings(source)
-end
-
-
-local function ResetGeneralSettings(target, source)
-    local resetSettings = CopySettings(source or defaults)
-
-    for _, key in ipairs(GENERAL_SETTING_KEYS) do
-        local value = resetSettings[key]
-
-        if type(value) == "table" then
-            target[key] = {
-                r = value.r,
-                g = value.g,
-                b = value.b
-            }
-        else
-            target[key] = value
+local settingsProxy = setmetatable({}, {
+    __index = function(_, key)
+        if globalSettingLookup[key] then
+            return RPEmoteMenuDB.globalSettings[key]
         end
+        if profileSettingLookup[key] then
+            local profile = Database.GetActiveProfile()
+            return profile and profile.settings[key] or profileDefaults[key]
+        end
+    end,
+    __newindex = function(_, key, value)
+        if globalSettingLookup[key] then
+            RPEmoteMenuDB.globalSettings[key] = value
+            return
+        end
+        if profileSettingLookup[key] then
+            Database.GetActiveProfile().settings[key] = value
+            return
+        end
+
+        error("Unknown setting: " .. tostring(key))
     end
+})
+
+
+function Database.GetSettings()
+    return settingsProxy
 end
 
 
-function Database.ResetProfileGeneralSettings(profileName, target)
-    if profileName == DEFAULT_PROFILE_NAME then
-        target = target or RPEmoteMenuDB.profiles[profileName].settings
-        ResetGeneralSettings(target, defaults)
-        return true
-    end
+function Database.GetGlobalSettings()
+    return RPEmoteMenuDB.globalSettings
+end
 
-    local definition = builtInProfileByName[profileName]
-    if not definition then
-        return false
-    end
 
-    target = target or RPEmoteMenuDB.profiles[profileName].settings
-    ResetGeneralSettings(target, definition.settings)
-    return true
+function Database.GetProfileSettings(profileName)
+    local profile = profileName and RPEmoteMenuDB.profiles[profileName]
+        or Database.GetActiveProfile()
+    return profile and profile.settings
+end
+
+
+function Database.CopyProfileSettings(source)
+    return CopyProfileSettings(source)
+end
+
+
+function Database.ResetGlobalSettings()
+    RPEmoteMenuDB.globalSettings = NormalizeGlobalSettings(globalDefaults)
+end
+
+
+function Database.ResetWindowLayout()
+    local globalSettings = RPEmoteMenuDB.globalSettings
+
+    for _, key in ipairs({"point", "relativePoint", "x", "y", "height"}) do
+        globalSettings[key] = globalDefaults[key]
+    end
 end
 
 
@@ -446,12 +461,9 @@ end
 
 
 local function CopyBuiltInProfile(definition)
-    local profileSettings = CopySettings(definition.settings)
-    ResetGeneralSettings(profileSettings, definition.settings)
-
     return {
         categories = CopyDefaultCategories(),
-        settings = profileSettings
+        settings = CopyProfileSettings(definition.settings)
     }
 end
 
@@ -471,17 +483,13 @@ local function InstallBuiltInProfileUpdates()
             local profileSettings = RPEmoteMenuDB.profiles[existingName].settings
 
             if installedVersion < UNLOCKED_BUILT_IN_VERSION then
-                profileSettings.locked = false
-                profileSettings.minimizeMode = "NONE"
-                profileSettings.minimizeToIcon = nil
-
                 -- Version 4 replaces High Contrast's thick simulated text
                 -- outline, which can obscure large category labels, with a
                 -- yellow selection background and nearly black selected text.
                 if definition.name == "High Contrast" then
                     profileSettings.categoryHighlightColor = NormalizeColor(
                         definition.settings.categoryHighlightColor,
-                        defaults.categoryHighlightColor
+                        profileDefaults.categoryHighlightColor
                     )
                     profileSettings.categoryHighlightEffect =
                         definition.settings.categoryHighlightEffect
@@ -489,20 +497,9 @@ local function InstallBuiltInProfileUpdates()
                         definition.settings.categoryHighlightThickness
                     profileSettings.selectedCategoryTextColor = NormalizeColor(
                         definition.settings.selectedCategoryTextColor,
-                        defaults.selectedCategoryTextColor
+                        profileDefaults.selectedCategoryTextColor
                     )
                 end
-            end
-
-            -- Version 5 gives every existing bundled profile the same safe,
-            -- visible starting behavior as newly installed profiles.
-            if installedVersion < SAFE_GENERAL_DEFAULTS_BUILT_IN_VERSION then
-                profileSettings.fadeEnabled = false
-                profileSettings.hideSettingsGear = false
-                profileSettings.locked = false
-                profileSettings.minimizeMode = "NONE"
-                profileSettings.minimizeToIcon = nil
-                profileSettings.showAtLogin = true
             end
         end
     end
@@ -742,13 +739,13 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings)
 
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings
-        or Database.GetSettings()
+        or Database.GetProfileSettings()
 
     RPEmoteMenuDB.profiles[validName] = {
         categories = type(sourceCategories) == "table"
             and CopyCategories(sourceCategories)
             or CopyDefaultCategories(),
-        settings = CopySettings(settingsSource)
+        settings = CopyProfileSettings(settingsSource)
     }
     RPEmoteMenuDB.activeProfiles[characterKey] = validName
 
@@ -852,7 +849,7 @@ function Database.AddImportedProfiles(importedProfiles)
         local profileName = ImportedProfileName(imported.name)
         RPEmoteMenuDB.profiles[profileName] = {
             categories = CopyCategories(imported.categories),
-            settings = CopySettings(imported.settings)
+            settings = CopyProfileSettings(imported.settings)
         }
         createdNames[#createdNames + 1] = profileName
     end
@@ -877,8 +874,8 @@ function Database.InitializeDatabase()
         and NormalizeCategories(existingDefault.categories)
         or CopyDefaultCategories()
     local defaultSettings = existingDefault and existingDefault.settings
-        and NormalizeSettings(existingDefault.settings)
-        or CopySettings(defaults)
+        and NormalizeProfileSettings(existingDefault.settings)
+        or CopyProfileSettings(profileDefaults)
 
     local invalidProfiles = {}
     for profileName, profile in pairs(RPEmoteMenuDB.profiles) do
@@ -891,8 +888,8 @@ function Database.InitializeDatabase()
                 and NormalizeCategories(profile.categories)
                 or CopyDefaultCategories()
             profile.settings = type(profile.settings) == "table"
-                and NormalizeSettings(profile.settings)
-                or CopySettings(defaults)
+                and NormalizeProfileSettings(profile.settings)
+                or CopyProfileSettings(profileDefaults)
         end
     end
 
@@ -911,6 +908,9 @@ function Database.InitializeDatabase()
     PreserveHighContrastNameCollision()
 
     RPEmoteMenuDB.defaultCategories = CopyDefaultCategories()
+    RPEmoteMenuDB.globalSettings = NormalizeGlobalSettings(
+        RPEmoteMenuDB.globalSettings
+    )
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
         categories = defaultCategories,
         settings = defaultSettings

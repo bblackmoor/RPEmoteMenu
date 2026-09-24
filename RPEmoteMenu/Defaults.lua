@@ -214,7 +214,7 @@ function addon.GetFontPath(fontName)
     return STANDARD_TEXT_FONT or addon.BuiltInFonts[1].path
 end
 
-addon.DefaultSettings = {
+addon.DefaultGlobalSettings = {
     locked = false,
     hideSettingsGear = false,
     hideEmoteEditGears = false,
@@ -224,13 +224,19 @@ addon.DefaultSettings = {
     minimizeMode = "NONE",
     minimizedIconSize = 32,
     minimizedIconCorner = "TOPLEFT",
-    minimizedIconColor = {r = 1.0, g = 0.82, b = 0.0},
     selectedCategory = 1,
     point = "CENTER",
     relativePoint = "CENTER",
     x = 0,
     y = 0,
     height = 250,
+    fadeEnabled = false,
+    fadeDelay = 5,
+    inactiveOpacity = 0.35
+}
+
+addon.DefaultProfileSettings = {
+    minimizedIconColor = {r = 1.0, g = 0.82, b = 0.0},
     categoryFont = "Friz Quadrata",
     emoteFont = "Friz Quadrata",
     categoryFontSize = 12,
@@ -246,12 +252,58 @@ addon.DefaultSettings = {
     borderColor = {r = 0.2, g = 0.2, b = 0.2},
     borderStyle = "thin",
     backgroundOpacity = 1.0,
-    windowOpacity = 1.0,
-    fadeEnabled = false,
-    fadeDelay = 5,
-    inactiveOpacity = 0.35,
-    emoteDataVersion = 5
+    windowOpacity = 1.0
 }
+
+addon.GlobalSettingKeys = {
+    "locked",
+    "hideSettingsGear",
+    "hideEmoteEditGears",
+    "tooltipDelayMs",
+    "titleBarPosition",
+    "showAtLogin",
+    "minimizeMode",
+    "minimizedIconSize",
+    "minimizedIconCorner",
+    "selectedCategory",
+    "point",
+    "relativePoint",
+    "x",
+    "y",
+    "height",
+    "fadeEnabled",
+    "fadeDelay",
+    "inactiveOpacity"
+}
+
+addon.ProfileSettingKeys = {
+    "minimizedIconColor",
+    "categoryFont",
+    "emoteFont",
+    "categoryFontSize",
+    "emoteFontSize",
+    "categoryTextColor",
+    "selectedCategoryTextColor",
+    "emoteTextColor",
+    "categoryHighlightColor",
+    "categoryHighlightEffect",
+    "categoryHighlightThickness",
+    "categoryBackgroundColor",
+    "emoteBackgroundColor",
+    "borderColor",
+    "borderStyle",
+    "backgroundOpacity",
+    "windowOpacity"
+}
+
+addon.DefaultSettings = {}
+for key, value in pairs(addon.DefaultGlobalSettings) do
+    addon.DefaultSettings[key] = value
+end
+for key, value in pairs(addon.DefaultProfileSettings) do
+    addon.DefaultSettings[key] = value
+end
+addon.DefaultSettings.emoteDataVersion = 5
 
 addon.EmoteAliases = {
     lol = "LAUGH",

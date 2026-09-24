@@ -469,23 +469,7 @@ local function RestoreWindowSize()
 end
 
 function MainWindow.ResetWindowPosition()
-    if Database.ResetProfileGeneralSettings(
-        Database.GetActiveProfileName(),
-        settings
-    ) then
-        -- Reset every option exposed on the General tab for restorable
-        -- built-in profiles, while leaving appearance and emotes unchanged.
-        MainWindow.ApplyFadeSettings()
-        MainWindow.ApplyMinimizeToIconSettings()
-        MainWindow.ApplyMovementLock()
-        MainWindow.ApplySettingsGearVisibility()
-    end
-
-    settings.point = defaults.point
-    settings.relativePoint = defaults.relativePoint
-    settings.x = defaults.x
-    settings.y = defaults.y
-    settings.height = defaults.height
+    Database.ResetWindowLayout()
     local width = CalculateColumnWidths()
 
     -- Restore the full-size frame before applying its default anchor so the

@@ -8,7 +8,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Easy organization:** Emotes can be edited from the menu, dragged into order, and duplicated along with complete categories.
 - **Flexible window:** The window remains visible by default; optional inactivity fading can dim it or minimize it to the title bar or a configurable icon.
 - **Profiles and sharing:** Profiles provide distinct character setups, while categories and complete profiles can be imported or exported.
-- **Appearance:** Per-profile settings control fonts, colors, selection effects, borders, opacity, and fading.
+- **Appearance:** Per-profile settings control fonts, colors, selection effects, borders, and opacity.
 - **Commands:** `/rpem` toggles the menu, while `/rpem config` opens its settings.
 
 ## What's New In Version 2
@@ -92,27 +92,27 @@ The **Emotes** screen can restore the selected category or every category in the
 
 ## Profiles
 
-A profile contains its categories, emotes, window layout, and appearance. Profiles are available to all characters, while an active profile is selected independently for each character.
+A profile contains its categories, emotes, and appearance. Profiles are available to all characters, while an active profile is selected independently for each character. App behavior, user preferences, and window layout are global.
 
 The **Default** profile can be edited, imported into, exported, and restored. Importing a profile named **Default** creates a uniquely named copy.
 
 The **Profiles** settings screen includes:
 
-- **Create Profile:** Creates a profile with the built-in categories and the current profile's settings.
-- **Copy Profile:** Duplicates the current profile, including its categories, emotes, layout, and appearance.
+- **Create Profile:** Creates a profile with the built-in categories and the current profile's appearance.
+- **Copy Profile:** Duplicates the current profile, including its categories, emotes, and appearance.
 - **Rename Profile:** Renames the current profile, except for **Default**.
 - **Delete Profile:** Deletes the current profile after confirmation, except for **Default**.
 - **Export Profile:** Copies the current profile as JSON.
 - **Import Profile:** Adds a profile from exported JSON.
-- **Restore Bundled Profiles:** Resets the six bundled profiles, including their General settings, and recreates any that were deleted.
+- **Restore Bundled Profiles:** Resets the six bundled profiles' categories and appearance and recreates any that were deleted.
 
 Imported profiles do not replace or activate existing profiles. If an imported name is already in use, the addon assigns the new profile a unique name. Deleting a profile returns characters using it to **Default**.
 
 Profile names cannot be blank, exceed 64 characters, duplicate another name regardless of case, or use the reserved name **Default**.
 
-The six bundled profiles are **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. **High Contrast** uses bright neutral text, dark backgrounds, and a yellow selection background that does not rely on red–green differences. Bundled profiles start visible, unlocked, unfaded, with the settings gear shown and minimized mode disabled.
+The six bundled profiles are **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. **High Contrast** uses bright neutral text, dark backgrounds, and a yellow selection background that does not rely on red–green differences.
 
-Bundled profiles can be edited, renamed, exported, or deleted. **Restore Bundled Profiles** resets categories, appearance, General settings, and layout for profiles still using bundled names, and recreates missing profiles. Renamed profiles are unchanged.
+Bundled profiles can be edited, renamed, exported, or deleted. **Restore Bundled Profiles** resets categories and appearance for profiles still using bundled names and recreates missing profiles. Renamed profiles are unchanged.
 
 Bundled profile names are marked **(Bundled)** in the profile selector. Each also displays a short description of its visual theme.
 
@@ -122,9 +122,9 @@ The **Emotes** screen can export the selected category or replace that category 
 
 The **Profiles** screen can import or export one profile. The separate **Import & Export** screen can import or export all profiles at once.
 
-Profile exports include sharable window settings, appearance, categories, and emotes. They do not include character names, realms, character assignments, or the last selected category.
+Profile exports include appearance, categories, and emotes. They do not include global behavior, preferences, window layout, character names, realms, character assignments, or the last selected category.
 
-All transfers use JSON text. Imports are validated before any existing category is replaced or any new profiles are added. Bulk imports preserve existing profiles and automatically rename conflicts, including an imported **Default** profile.
+All transfers use JSON text. Categories and emotes are validated before any existing category is replaced or any new profiles are added. Unknown or invalid profile setting fields are ignored. Bulk imports preserve existing profiles and automatically rename conflicts, including an imported **Default** profile.
 
 ## Appearance
 
@@ -135,30 +135,32 @@ The **Appearance** settings screen provides these options for the current profil
 - Selection effects: **Background**, **Outline**, **Separator**, **Underline**, or **Drop shadow**.
 - Border styles: **None**, **Thin**, or **Blizzard**.
 - Background opacity and active window opacity.
+- Minimized icon color.
 
 The font menus include WoW's built-in fonts and fonts made available by LibSharedMedia-3.0 (if any). A custom font may take 10 to 30 seconds to appear the first time it is selected.
 
 If a saved custom font is unavailable, the font selector marks it in red and the menu temporarily displays Friz Quadrata instead.
 
-Changes appear immediately. **Restore Defaults** resets the current profile's appearance, window height, and window position.
+Changes appear immediately. **Restore Defaults** resets the current profile's appearance.
 
 ## Window Settings
 
-The **General** settings screen controls the current profile's window behavior and layout:
+The **Behavior** settings screen controls global app behavior, user preferences, and window layout:
 
 - The window position and height can be locked.
-- Default and new or restored bundled profiles open in the center. **Reset Window Height & Position** also resets every General setting for Default and bundled profiles.
+- **Reset Window Height & Position** restores the global window geometry without changing other preferences.
 - The title bar can run across the top or down the left edge. In left-edge mode, its text rotates counterclockwise while the pin and settings icons remain upright.
 - The settings gear icon can be hidden; right-clicking the title bar still opens the settings.
 - Emote-row edit gear icons can be hidden; right-clicking an emote still opens its editor. This option is disabled by default.
-- Main-window tooltips have a per-profile delay from 0 to 1000 milliseconds. The default is 350 milliseconds; 0 displays them immediately.
+- Main-window tooltips have a global delay from 0 to 1000 milliseconds. The default is 350 milliseconds; 0 displays them immediately.
 - The addon can be shown or hidden at login.
 - Inactivity fading can be enabled with a configurable delay and inactive opacity. **Minimize to** selects **None**, **Title Bar**, or **Icon**. Fading is disabled by default.
 - The minimized square addon icon can be sized from 16 to 64 pixels independently of the main window dimensions.
-- The minimized icon can occupy the left or right edge of the main window, centered alongside the first category and emote, and can use a custom color tint. Its black antialiased outline remains visible against light backgrounds.
+- The minimized icon can occupy the left or right edge of the main window, centered alongside the first category and emote. Its profile-specific color tint is set under **Appearance**, and its black antialiased outline remains visible against light backgrounds.
 - The window can be dragged or centered, with exact coordinates available as an advanced option.
 - The window height can be set manually, while its width automatically fits every category and emote label in the profile.
 - The default position and size can be restored.
+- **Restore Global Defaults** resets all behavior, preferences, and window layout.
 
 The window can also be moved and resized vertically while it is unlocked. Changing the height does not change the minimized icon, and changing the icon size does not resize the window. The category pane and longer settings tabs scroll when necessary. The pushpin toggles the window position and height lock.
 
