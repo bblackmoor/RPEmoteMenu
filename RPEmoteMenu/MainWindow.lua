@@ -2313,9 +2313,7 @@ local function UpdateWindowDrag()
     return true
 end
 
-function MainWindow.CreateMainWindow()
-    settings = Database.GetSettings()
-    selectedCategoryIndex = settings.selectedCategory
+local function CreateMainFrame()
     MainFrame = CreateFrame("Frame", "RPEmoteMenu", UIParent, "BackdropTemplate")
     MainFrame:SetSize(
         GetExpandedWidth(),
@@ -2350,6 +2348,10 @@ function MainWindow.CreateMainWindow()
         end
     end)
 
+
+end
+
+local function CreateTitleBar()
     TitleBar = CreateFrame("Frame", nil, MainFrame)
     TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
     TitleBar:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
@@ -2382,6 +2384,10 @@ function MainWindow.CreateMainWindow()
     TitleText:SetText("RP Emote Menu " .. addon.VERSION)
     TitleText:SetTextColor(1, 1, 1, 1)
 
+
+end
+
+local function CreateMinimizedIcon()
     MinimizedIconButton = CreateFrame("Button", nil, UIParent)
     ApplyMinimizedIconAnchor()
     MinimizedIconButton:SetSize(
@@ -2404,6 +2410,10 @@ function MainWindow.CreateMainWindow()
     MinimizedIconButton:SetScript("OnDragStop", StopWindowMoving)
     MinimizedIconButton:Hide()
 
+
+end
+
+local function CreateCategorySidebar()
     CategorySidebar = CreateFrame("Frame", nil, MainFrame, "BackdropTemplate")
     CategorySidebar:SetWidth(sidebarWidth)
     CategorySidebar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 5, -36)
@@ -2587,6 +2597,10 @@ function MainWindow.CreateMainWindow()
         categoryButtons[categoryIndex] = button
     end
 
+
+end
+
+local function CreateEmoteArea()
     ScrollFrame = CreateFrame("ScrollFrame", nil, MainFrame, "UIPanelScrollFrameTemplate")
     ScrollFrame:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", sidebarWidth + 10, -40)
     ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25, 10)
@@ -2643,6 +2657,10 @@ function MainWindow.CreateMainWindow()
         C_Timer.After(0, UpdateScrollIndicators)
     end)
 
+
+end
+
+local function CreateTitleBarControls()
     PinBtn = CreateFrame("Button", nil, MainFrame)
     PinBtn:SetSize(20, 20)
     PinBtn:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT", -5, -5)
@@ -2719,6 +2737,10 @@ function MainWindow.CreateMainWindow()
         CancelTooltip(self)
     end)
 
+
+end
+
+local function CreateResizeGrip()
     ResizeGrip = CreateFrame("Button", nil, MainFrame)
     ResizeGrip:SetSize(18, 18)
     ResizeGrip:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -2, 2)
@@ -2740,6 +2762,10 @@ function MainWindow.CreateMainWindow()
         end
     end)
 
+
+end
+
+local function InstallWindowScripts()
     MainFrame:HookScript("OnEnter", function()
         if isWindowAutoHidden and not IsMinimizedToIcon() then
             SetWindowAutoHidden(false)
@@ -2788,6 +2814,10 @@ function MainWindow.CreateMainWindow()
         end
     end)
 
+
+end
+
+local function FinishMainWindowCreation()
     MainWindow.ApplyProfileSettings()
 
     -- SetAtlas can finish applying after the button is created and overwrite
@@ -2800,6 +2830,20 @@ function MainWindow.CreateMainWindow()
     else
         MainFrame:Hide()
     end
+end
+
+function MainWindow.CreateMainWindow()
+    settings = Database.GetSettings()
+    selectedCategoryIndex = settings.selectedCategory
+    CreateMainFrame()
+    CreateTitleBar()
+    CreateMinimizedIcon()
+    CreateCategorySidebar()
+    CreateEmoteArea()
+    CreateTitleBarControls()
+    CreateResizeGrip()
+    InstallWindowScripts()
+    FinishMainWindowCreation()
 end
 
 function MainWindow.ApplyProfileSettings()
