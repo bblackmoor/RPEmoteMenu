@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.198
+
+- Keep the first category, first emote, and minimized icon at nearly the same screen height when changing title bar orientation.
+
 ## 2.0.197
 
 - Applied one visible-menu opacity to adjoining category and emote backgrounds, removing the darker overlap.

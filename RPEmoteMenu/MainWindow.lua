@@ -79,6 +79,7 @@ local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
 local windowDragState
+local appliedTitleBarPosition
 local tooltipGeneration = 0
 local tooltipOwner
 
@@ -2214,21 +2215,45 @@ function MainWindow.ApplyMinimizeToIconSettings()
     RefreshGeneralWindowFields()
 end
 
-function MainWindow.ApplyTitleBarPosition()
+function MainWindow.ApplyTitleBarPosition(preserveSavedPosition)
     settings.titleBarPosition = settings.titleBarPosition == "LEFT"
         and "LEFT"
         or "TOP"
 
-    -- Orientation changes the calculated frame width, but not the saved
-    -- global anchor or offsets. This preserves centered windows and advanced
-    -- signed coordinates when switching profiles.
-    MainWindow.ApplyWindowGeometry(
-        settings.x,
-        settings.y,
-        nil,
-        settings.height,
-        true
-    )
+    local x, y = settings.x, settings.y
+    if not preserveSavedPosition and appliedTitleBarPosition
+        and appliedTitleBarPosition ~= settings.titleBarPosition then
+        -- Keep the first content row (and its minimized-icon counterpart) at
+        -- the same screen height while the title bar changes orientation.
+        local oldOffset = appliedTitleBarPosition == "LEFT"
+            and leftTitleFirstRowCenterOffset
+            or topTitleFirstRowCenterOffset
+        local newOffset = IsTitleBarOnLeft()
+            and leftTitleFirstRowCenterOffset
+            or topTitleFirstRowCenterOffset
+        local top = MainFrame:GetTop()
+        if top then
+            local targetTop = top + newOffset - oldOffset
+            if settings.point == "CENTER"
+                and settings.relativePoint == "CENTER" then
+                local left = MainFrame:GetLeft()
+                local width = CalculateColumnWidths()
+                local frameWidth, frameHeight = GetCurrentFrameSize(
+                    width,
+                    settings.height
+                )
+                if left then
+                    x = left + frameWidth / 2 - UIParent:GetWidth() / 2
+                end
+                y = targetTop - UIParent:GetHeight() / 2 + frameHeight / 2
+            else
+                y = targetTop
+            end
+        end
+    end
+
+    MainWindow.ApplyWindowGeometry(x, y, nil, settings.height, true)
+    appliedTitleBarPosition = settings.titleBarPosition
     ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
 end
@@ -2907,7 +2932,7 @@ function MainWindow.ApplyProfileSettings()
     end
 
     -- Apply profile layout before restoring the saved global geometry.
-    MainWindow.ApplyTitleBarPosition()
+    MainWindow.ApplyTitleBarPosition(true)
     RestoreWindowSize()
     RestoreWindowPosition()
     MainWindow.ApplyMovementLock()
