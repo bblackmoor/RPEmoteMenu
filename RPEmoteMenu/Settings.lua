@@ -1454,14 +1454,14 @@ local function CreateGeneralSettingsPanel()
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -95)
     behaviorHeading:SetText("Startup & Interaction")
 
-    local lockSwitch = CreateSwitch(panel, "Lock window position and height", -625,
+    local lockSwitch = CreateSwitch(panel, "Lock window", -625,
         function() return settings.locked end,
         function(value)
             settings.locked = value
             MainWindow.ApplyMovementLock()
         end)
     lockSwitch:ClearAllPoints()
-    lockSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -621)
+    lockSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -621)
     switches[#switches + 1] = lockSwitch
 
     local hideSettingsSwitch = CreateSwitch(panel, "Hide settings gear icon", -185,
@@ -1471,7 +1471,7 @@ local function CreateGeneralSettingsPanel()
             MainWindow.ApplySettingsGearVisibility()
         end)
     hideSettingsSwitch:ClearAllPoints()
-    hideSettingsSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -181)
+    hideSettingsSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -181)
     switches[#switches + 1] = hideSettingsSwitch
 
     local hideEmoteSwitch = CreateSwitch(
@@ -1485,14 +1485,14 @@ local function CreateGeneralSettingsPanel()
         end
     )
     hideEmoteSwitch:ClearAllPoints()
-    hideEmoteSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -211)
+    hideEmoteSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -211)
     switches[#switches + 1] = hideEmoteSwitch
 
     local showAtLoginSwitch = CreateSwitch(panel, "Show the addon at login", -125,
         function() return settings.showAtLogin end,
         function(value) settings.showAtLogin = value end)
     showAtLoginSwitch:ClearAllPoints()
-    showAtLoginSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -121)
+    showAtLoginSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -121)
     switches[#switches + 1] = showAtLoginSwitch
 
     local tooltipDelayBox = CreateNumberSetting(
@@ -1503,10 +1503,10 @@ local function CreateGeneralSettingsPanel()
     )
 
     tooltipDelayBox:ClearAllPoints()
-    tooltipDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -151)
+    tooltipDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -151)
 
     local emoteGearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    emoteGearNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 245, -215)
+    emoteGearNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 310, -215)
     emoteGearNote:SetText("(right-click an emote to edit)")
 
     local inactiveHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1525,7 +1525,7 @@ local function CreateGeneralSettingsPanel()
             end
         end)
     fadeSwitch:ClearAllPoints()
-    fadeSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -286)
+    fadeSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -286)
     switches[#switches + 1] = fadeSwitch
 
     local fadeDelayBox = CreateNumberSetting(
@@ -1549,9 +1549,9 @@ local function CreateGeneralSettingsPanel()
     )
 
     fadeDelayBox:ClearAllPoints()
-    fadeDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -316)
+    fadeDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -316)
     inactiveOpacityBox:ClearAllPoints()
-    inactiveOpacityBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -346)
+    inactiveOpacityBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -346)
 
     local minimizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     minimizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -380)
@@ -1564,7 +1564,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     minimizeSelector:SetWidth(150)
-    minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -375)
+    minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -375)
     minimizeSelector:SetDefaultText("None")
 
     local minimizeLabels = {
@@ -1595,7 +1595,7 @@ local function CreateGeneralSettingsPanel()
     iconSizeLabel:SetText("Minimized icon size")
 
     local iconSizeBox = CreateIntegerEditBox(
-        panel, 190, -406, 70,
+        panel, 255, -406, 70,
         function() return settings.minimizedIconSize end,
         function(value)
             settings.minimizedIconSize = value
@@ -1618,7 +1618,7 @@ local function CreateGeneralSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     iconCornerSelector:SetWidth(150)
-    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 190, -435)
+    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -435)
     iconCornerSelector:SetDefaultText("Left")
 
     local iconCornerLabels = {
@@ -1688,7 +1688,7 @@ local function CreateGeneralSettingsPanel()
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 200, -551, 80,
+        panel, 255, -551, 80,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1703,7 +1703,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 350, -551, 80,
+        panel, 405, -551, 80,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1736,7 +1736,7 @@ local function CreateGeneralSettingsPanel()
     heightLabel:SetText("Window height")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 200, -586, 80,
+        panel, 255, -586, 80,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1753,7 +1753,7 @@ local function CreateGeneralSettingsPanel()
     heightRange:SetText("(150-630 px)")
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -665)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
