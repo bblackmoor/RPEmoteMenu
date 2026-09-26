@@ -1938,13 +1938,13 @@ local function CreateProfilesSettingsPanel()
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -200)
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -195)
     profileDescription:SetWidth(620)
     profileDescription:SetJustifyH("LEFT")
     profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -308)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -300)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -2183,7 +2183,7 @@ local function CreateProfilesSettingsPanel()
     CreateInfoLink(panel, restoreDefaultButton, "RPEMOTEMENU_PROFILE_INFO")
 
     local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -233)
+    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -230)
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
     profileNote:SetText("Each character remembers its selection. Create starts with built-in emotes and the current appearance; Copy duplicates the selected profile.")
@@ -2200,7 +2200,7 @@ local function CreateProfilesSettingsPanel()
 
     createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     createButton:SetSize(95, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -272)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -268)
     createButton:SetText("Create")
     createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
 
@@ -2243,7 +2243,7 @@ local function CreateProfilesSettingsPanel()
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -345)
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -342)
     exportProfileButton:SetText("Export Profile")
     exportProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileExport()
@@ -2258,7 +2258,7 @@ local function CreateProfilesSettingsPanel()
     end)
 
     local bundledHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -405)
+    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -398)
     bundledHeading:SetText("Bundled Profiles")
 
     local bundledDescription = panel:CreateFontString(
