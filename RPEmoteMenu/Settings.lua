@@ -1027,7 +1027,7 @@ local function CreateAppearanceSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 850)
+    panel:SetSize(700, 760)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
 
@@ -1049,7 +1049,7 @@ local function CreateAppearanceSettingsPanel()
         "OVERLAY",
         "GameFontNormal"
     )
-    categoryPaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -104)
+    categoryPaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -120)
     categoryPaneHeading:SetText("Category Pane")
 
     local emotePaneHeading = panel:CreateFontString(
@@ -1057,20 +1057,20 @@ local function CreateAppearanceSettingsPanel()
         "OVERLAY",
         "GameFontNormal"
     )
-    emotePaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -104)
+    emotePaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -120)
     emotePaneHeading:SetText("Emote Pane")
 
     local columnDivider = panel:CreateTexture(nil, "ARTWORK")
     columnDivider:SetColorTexture(0.35, 0.35, 0.35, 0.45)
-    columnDivider:SetPoint("TOPLEFT", panel, "TOPLEFT", 314, -102)
-    columnDivider:SetSize(1, 290)
+    columnDivider:SetPoint("TOPLEFT", panel, "TOPLEFT", 314, -118)
+    columnDivider:SetSize(1, 300)
 
     local fontLoadingNote = panel:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    fontLoadingNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -76)
+    fontLoadingNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -92)
     fontLoadingNote:SetWidth(620)
     fontLoadingNote:SetJustifyH("LEFT")
     fontLoadingNote:SetText(
@@ -1079,11 +1079,11 @@ local function CreateAppearanceSettingsPanel()
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
     controls.categoryFont = CreateFontSetting(
-        panel, "Category font", "categoryFont", 20, -132
+        panel, "Font", "categoryFont", 20, -148
     )
 
     controls.categoryFontSize = CreateNumberSetting(
-        panel, "Font size", "categoryFontSize", 20, -184, 8, 24,
+        panel, "Font size", "categoryFontSize", 20, -200, 8, 24,
         function() return settings.categoryFontSize end,
         function(value)
             settings.categoryFontSize = value
@@ -1094,11 +1094,11 @@ local function CreateAppearanceSettingsPanel()
     controls.categoryFontSize:SetWidth(52)
 
     controls.emoteFont = CreateFontSetting(
-        panel, "Emote font", "emoteFont", 330, -132
+        panel, "Font", "emoteFont", 330, -148
     )
 
     controls.emoteFontSize = CreateNumberSetting(
-        panel, "Font size", "emoteFontSize", 330, -184, 8, 24,
+        panel, "Font size", "emoteFontSize", 330, -200, 8, 24,
         function() return settings.emoteFontSize end,
         function(value)
             settings.emoteFontSize = value
@@ -1109,7 +1109,7 @@ local function CreateAppearanceSettingsPanel()
     controls.emoteFontSize:SetWidth(52)
 
     controls.categoryTextColor = CreateColorSetting(
-        panel, "Category text", "categoryTextColor", 20, -238,
+        panel, "Category text", "categoryTextColor", 20, -254,
         function() return settings.categoryTextColor end,
         function(value)
             settings.categoryTextColor = value
@@ -1118,7 +1118,7 @@ local function CreateAppearanceSettingsPanel()
     )
 
     controls.selectedCategoryTextColor = CreateColorSetting(
-        panel, "Selected text", "selectedCategoryTextColor", 165, -238,
+        panel, "Selected text", "selectedCategoryTextColor", 20, -292,
         function() return settings.selectedCategoryTextColor end,
         function(value)
             settings.selectedCategoryTextColor = value
@@ -1127,7 +1127,7 @@ local function CreateAppearanceSettingsPanel()
     )
 
     controls.emoteTextColor = CreateColorSetting(
-        panel, "Emote-label text", "emoteTextColor", 330, -238,
+        panel, "Emote-label text", "emoteTextColor", 330, -254,
         function() return settings.emoteTextColor end,
         function(value)
             settings.emoteTextColor = value
@@ -1139,8 +1139,8 @@ local function CreateAppearanceSettingsPanel()
         panel,
         "Selection color",
         "categoryHighlightColor",
-        165,
-        -292,
+        20,
+        -368,
         function() return settings.categoryHighlightColor end,
         function(value)
             settings.categoryHighlightColor = value
@@ -1149,7 +1149,7 @@ local function CreateAppearanceSettingsPanel()
     )
 
     controls.categoryBackgroundColor = CreateColorSetting(
-        panel, "Background", "categoryBackgroundColor", 20, -292,
+        panel, "Background", "categoryBackgroundColor", 20, -330,
         function() return settings.categoryBackgroundColor end,
         function(value)
             settings.categoryBackgroundColor = value
@@ -1166,12 +1166,30 @@ local function CreateAppearanceSettingsPanel()
         end
     )
 
+    controls.categoryFontSize:ClearAllPoints()
+    controls.categoryFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -196)
+    controls.emoteFontSize:ClearAllPoints()
+    controls.emoteFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -196)
+
+    controls.categoryTextColor:ClearAllPoints()
+    controls.categoryTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -250)
+    controls.selectedCategoryTextColor:ClearAllPoints()
+    controls.selectedCategoryTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -288)
+    controls.categoryBackgroundColor:ClearAllPoints()
+    controls.categoryBackgroundColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -326)
+    controls.categoryHighlightColor:ClearAllPoints()
+    controls.categoryHighlightColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -364)
+    controls.emoteTextColor:ClearAllPoints()
+    controls.emoteTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -250)
+    controls.emoteBackgroundColor:ClearAllPoints()
+    controls.emoteBackgroundColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -288)
+
     local highlightEffectLabel = panel:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontHighlight"
     )
-    highlightEffectLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -346)
+    highlightEffectLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -406)
     highlightEffectLabel:SetText("Selection effect")
 
     local highlightEffectSelector = CreateFrame(
@@ -1181,13 +1199,13 @@ local function CreateAppearanceSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     highlightEffectSelector:SetWidth(135)
-    highlightEffectSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -367)
+    highlightEffectSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -401)
     highlightEffectSelector:SetDefaultText("Background")
     highlightEffectSelector.settingKey = "categoryHighlightEffect"
     controls.categoryHighlightEffect = highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
-        panel, "Thickness", "categoryHighlightThickness", 180, -346, 1, 6,
+        panel, "Thickness", "categoryHighlightThickness", 330, -406, 1, 6,
         function() return settings.categoryHighlightThickness end,
         function(value)
             settings.categoryHighlightThickness = value
@@ -1235,11 +1253,11 @@ local function CreateAppearanceSettingsPanel()
     end)
 
     local windowHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    windowHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -425)
+    windowHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -460)
     windowHeading:SetText("Borders")
 
     controls.borderColor = CreateColorSetting(
-        panel, "Border color", "borderColor", 20, -453,
+        panel, "Border color", "borderColor", 20, -488,
         function() return settings.borderColor end,
         function(value)
             settings.borderColor = value
@@ -1247,8 +1265,11 @@ local function CreateAppearanceSettingsPanel()
         end
     )
 
+    controls.borderColor:ClearAllPoints()
+    controls.borderColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -484)
+
     local borderLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    borderLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -453)
+    borderLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -526)
     borderLabel:SetText("Border style")
 
     local borderSelector = CreateFrame(
@@ -1258,7 +1279,7 @@ local function CreateAppearanceSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     borderSelector:SetWidth(170)
-    borderSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 230, -474)
+    borderSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -521)
     borderSelector:SetDefaultText("Thin")
     borderSelector.settingKey = "borderStyle"
     controls.borderStyle = borderSelector
@@ -1286,11 +1307,11 @@ local function CreateAppearanceSettingsPanel()
     borderSelector:SetupMenu(BuildBorderMenu)
 
     local opacityHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    opacityHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -525)
+    opacityHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -565)
     opacityHeading:SetText("Opacity")
 
     controls.windowOpacity = CreateNumberSetting(
-        panel, "Visible menu opacity", "windowOpacity", 20, -553, 10, 100,
+        panel, "Menu opacity", "windowOpacity", 20, -593, 10, 100,
         function() return settings.windowOpacity * 100 end,
         function(value)
             settings.windowOpacity = value / 100
@@ -1299,12 +1320,19 @@ local function CreateAppearanceSettingsPanel()
         "%"
     )
 
+    controls.windowOpacity:ClearAllPoints()
+    controls.windowOpacity:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -589)
+
+    local opacityVisibleNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    opacityVisibleNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 270, -619)
+    opacityVisibleNote:SetText("(when visible)")
+
     local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -615)
+    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -635)
     layoutHeading:SetText("Layout")
 
     local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -643)
+    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -663)
     titleBarLabel:SetText("Title bar")
 
     local titleBarSelector = CreateFrame(
@@ -1314,7 +1342,7 @@ local function CreateAppearanceSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -664)
+    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -658)
     titleBarSelector:SetDefaultText("Top")
     titleBarSelector.settingKey = "titleBarPosition"
     controls.titleBarPosition = titleBarSelector
@@ -1336,14 +1364,14 @@ local function CreateAppearanceSettingsPanel()
     end)
 
     local iconHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -720)
+    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -705)
     iconHeading:SetText("Minimized Icon")
 
-    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -750)
+    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -735)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(170, 24)
-    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 450, -14)
+    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
     resetButton:SetText("Restore Defaults")
     resetButton.settingKey = "resetAppearance"
     controls.resetAppearance = resetButton
