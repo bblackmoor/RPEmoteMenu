@@ -61,14 +61,18 @@ local function SetColor(color)
 end
 
 
-function MinimizedIconColor.CreateSettingsControls(parent, x, y)
+function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     label:SetText("Icon color")
 
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(52, 24)
-    button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
+    if inline then
+        button:SetPoint("LEFT", label, "RIGHT", 16, 0)
+    else
+        button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
+    end
     button:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
