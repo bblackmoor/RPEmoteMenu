@@ -1085,7 +1085,7 @@ local function CreateAppearanceSettingsPanel()
     controls.categoryFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 95, -143)
 
     controls.categoryFontSize = CreateNumberSetting(
-        panel, "Font size", "categoryFontSize", 20, -200, 8, 24,
+        panel, "Font size", "categoryFontSize", 20, -187, 8, 24,
         function() return settings.categoryFontSize end,
         function(value)
             settings.categoryFontSize = value
@@ -1102,7 +1102,7 @@ local function CreateAppearanceSettingsPanel()
     controls.emoteFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 405, -143)
 
     controls.emoteFontSize = CreateNumberSetting(
-        panel, "Font size", "emoteFontSize", 330, -200, 8, 24,
+        panel, "Font size", "emoteFontSize", 330, -187, 8, 24,
         function() return settings.emoteFontSize end,
         function(value)
             settings.emoteFontSize = value
@@ -1171,9 +1171,9 @@ local function CreateAppearanceSettingsPanel()
     )
 
     controls.categoryFontSize:ClearAllPoints()
-    controls.categoryFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -196)
+    controls.categoryFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -183)
     controls.emoteFontSize:ClearAllPoints()
-    controls.emoteFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -196)
+    controls.emoteFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -183)
 
     controls.categoryTextColor:ClearAllPoints()
     controls.categoryTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -250)
