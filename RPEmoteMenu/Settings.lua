@@ -46,24 +46,66 @@ local function CategoryHasContent(category)
 end
 
 -- SETTINGS PANEL
-local function CreateCheckbox(parent, label, y, getValue, setValue)
-    local checkbox = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
-    checkbox:SetPoint("TOPLEFT", parent, "TOPLEFT", 16, y)
-    checkbox:SetChecked(getValue())
+local FIELD_GAP = 12
 
-    local checkboxLabel = checkbox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    checkboxLabel:SetPoint("LEFT", checkbox, "RIGHT", 4, 0)
-    checkboxLabel:SetText(label)
+local function CreateSwitch(parent, label, y, getValue, setValue)
+    local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    caption:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    caption:SetText(label)
 
-    checkbox:SetScript("OnClick", function(self)
-        setValue(self:GetChecked() and true or false)
-    end)
+    local switch = CreateFrame("Button", nil, parent)
+    switch:SetSize(44, 20)
+    switch:SetPoint("LEFT", caption, "RIGHT", FIELD_GAP, 0)
+    local track = switch:CreateTexture(nil, "BACKGROUND")
+    track:SetAllPoints()
+    local thumb = switch:CreateTexture(nil, "ARTWORK")
+    thumb:SetSize(18, 16)
+    thumb:SetColorTexture(0.72, 0.72, 0.73, 1)
 
-    checkbox.RefreshValue = function(self)
-        self:SetChecked(getValue())
+    function switch:SetChecked(value)
+        self.checked = value == true
+        thumb:ClearAllPoints()
+        if self.checked then
+            track:SetColorTexture(0.19, 0.42, 0.31, 1)
+            thumb:SetPoint("RIGHT", self, "RIGHT", -2, 0)
+        else
+            track:SetColorTexture(0.25, 0.25, 0.26, 1)
+            thumb:SetPoint("LEFT", self, "LEFT", 2, 0)
+        end
     end
 
-    return checkbox
+    function switch:GetChecked()
+        return self.checked
+    end
+
+    switch:SetScript("OnClick", function(self)
+        self:SetChecked(not self:GetChecked())
+        setValue(self:GetChecked())
+    end)
+    switch.RefreshValue = function(self)
+        self:SetChecked(getValue())
+    end
+    switch:RefreshValue()
+    return switch
+end
+
+local function CreateInfoLink(parent, anchor, dialogName)
+    local link = CreateFrame("Button", nil, parent)
+    link:SetPoint("LEFT", anchor, "RIGHT", FIELD_GAP, 0)
+    local circle = link:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+    circle:SetPoint("CENTER")
+    circle:SetText("O")
+    local letter = link:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    letter:SetPoint("CENTER")
+    letter:SetText("i")
+    link:SetSize(
+        math.ceil(math.max(circle:GetStringWidth(), letter:GetStringWidth()) + 6),
+        math.ceil(math.max(circle:GetStringHeight(), letter:GetStringHeight()) + 4)
+    )
+    link:SetScript("OnClick", function()
+        StaticPopup_Show(dialogName)
+    end)
+    return link
 end
 
 local function CreateLabeledEditBox(
@@ -85,7 +127,7 @@ local function CreateLabeledEditBox(
 
     local editBox = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
     editBox:SetSize(width, 24)
-    editBox:SetPoint("TOPLEFT", parent, "TOPLEFT", x + labelWidth, y)
+    editBox:SetPoint("TOPLEFT", parent, "TOPLEFT", x + labelWidth + FIELD_GAP, y)
     editBox:SetAutoFocus(false)
     editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
     editBox:SetTextColor(1, 1, 1, 1)
@@ -779,7 +821,7 @@ local function CreateNumberSetting(
     local editBox = CreateIntegerEditBox(
         parent,
         x,
-        y - 22,
+        y - 26,
         70,
         getValue,
         function(value)
@@ -795,7 +837,7 @@ local function CreateNumberSetting(
             "OVERLAY",
             "GameFontHighlightSmall"
         )
-        suffixLabel:SetPoint("LEFT", editBox, "RIGHT", 6, 0)
+        suffixLabel:SetPoint("LEFT", editBox, "RIGHT", FIELD_GAP, 0)
         suffixLabel:SetText(suffix)
         editBox.SuffixLabel = suffixLabel
     end
@@ -818,7 +860,7 @@ local function CreateColorSetting(
 
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(52, 24)
-    button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
+    button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 26)
     button:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -874,7 +916,7 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
         "WowStyle1DropdownTemplate"
     )
     selector:SetWidth(190)
-    selector:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 21)
+    selector:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 26)
     selector.settingKey = settingKey
 
     local internalText = selector.Text
@@ -1395,7 +1437,7 @@ local function CreateGeneralSettingsPanel()
     local panel = CreateFrame("Frame", nil, scrollFrame)
     panel:SetSize(700, 780)
     scrollFrame:SetScrollChild(panel)
-    local checkboxes = {}
+    local switches = {}
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
@@ -1412,22 +1454,22 @@ local function CreateGeneralSettingsPanel()
     behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -75)
     behaviorHeading:SetText("Startup & Interaction")
 
-    local lockCheckbox = CreateCheckbox(panel, "Lock window position and height", -665,
+    local lockSwitch = CreateSwitch(panel, "Lock window position and height", -665,
         function() return settings.locked end,
         function(value)
             settings.locked = value
             MainWindow.ApplyMovementLock()
         end)
-    checkboxes[#checkboxes + 1] = lockCheckbox
+    switches[#switches + 1] = lockSwitch
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Hide settings gear icon", -135,
+    switches[#switches + 1] = CreateSwitch(panel, "Hide settings gear icon", -135,
         function() return settings.hideSettingsGear end,
         function(value)
             settings.hideSettingsGear = value
             MainWindow.ApplySettingsGearVisibility()
         end)
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(
+    switches[#switches + 1] = CreateSwitch(
         panel,
         "Hide emote edit gear icons (right-click an emote to edit)",
         -170,
@@ -1438,7 +1480,7 @@ local function CreateGeneralSettingsPanel()
         end
     )
 
-    checkboxes[#checkboxes + 1] = CreateCheckbox(panel, "Show the addon at login", -100,
+    switches[#switches + 1] = CreateSwitch(panel, "Show the addon at login", -100,
         function() return settings.showAtLogin end,
         function(value) settings.showAtLogin = value end)
 
@@ -1455,7 +1497,7 @@ local function CreateGeneralSettingsPanel()
 
     local RefreshInactiveControls
     local RefreshIconControls
-    local fadeCheckbox = CreateCheckbox(panel, "Fade the menu when inactive", -275,
+    local fadeSwitch = CreateSwitch(panel, "Fade the menu when inactive", -275,
         function() return settings.fadeEnabled end,
         function(value)
             settings.fadeEnabled = value
@@ -1464,7 +1506,7 @@ local function CreateGeneralSettingsPanel()
                 RefreshInactiveControls()
             end
         end)
-    checkboxes[#checkboxes + 1] = fadeCheckbox
+    switches[#switches + 1] = fadeSwitch
 
     local fadeDelayBox = CreateNumberSetting(
         panel, "Fade after", "fadeDelay", 20, -315, 0, 60,
@@ -1528,7 +1570,7 @@ local function CreateGeneralSettingsPanel()
     iconSizeLabel:SetText("Minimized icon size (16-64 px)")
 
     local iconSizeBox = CreateIntegerEditBox(
-        panel, 230, -406, 70,
+        panel, 260, -406, 70,
         function() return settings.minimizedIconSize end,
         function(value)
             settings.minimizedIconSize = value
@@ -1617,7 +1659,7 @@ local function CreateGeneralSettingsPanel()
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 250, -546, 80,
+        panel, 270, -546, 80,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1632,7 +1674,7 @@ local function CreateGeneralSettingsPanel()
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 370, -546, 80,
+        panel, 410, -546, 80,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1647,16 +1689,16 @@ local function CreateGeneralSettingsPanel()
     )
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    xLabel:SetPoint("RIGHT", positionXBox, "LEFT", -5, 0)
+    xLabel:SetPoint("RIGHT", positionXBox, "LEFT", -FIELD_GAP, 0)
     xLabel:SetText("X")
 
     local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    yLabel:SetPoint("RIGHT", positionYBox, "LEFT", -5, 0)
+    yLabel:SetPoint("RIGHT", positionYBox, "LEFT", -FIELD_GAP, 0)
     yLabel:SetText("Y")
 
     local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 490, -546)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 515, -546)
     centerButton:SetText("Center Window")
     centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
@@ -1665,7 +1707,7 @@ local function CreateGeneralSettingsPanel()
     heightLabel:SetText("Window height (150-630 px)")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 250, -586, 80,
+        panel, 270, -586, 80,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -1685,11 +1727,11 @@ local function CreateGeneralSettingsPanel()
     widthNote:SetTextColor(0.8, 0.8, 0.8, 1)
 
     AddonSettings.RefreshGeneralWindowFields = function()
-        lockCheckbox:RefreshValue()
+        lockSwitch:RefreshValue()
         positionXBox:RefreshValue()
         positionYBox:RefreshValue()
         heightBox:RefreshValue()
-        fadeCheckbox:RefreshValue()
+        fadeSwitch:RefreshValue()
         fadeDelayBox:RefreshValue()
         tooltipDelayBox:RefreshValue()
         inactiveOpacityBox:RefreshValue()
@@ -1705,8 +1747,8 @@ local function CreateGeneralSettingsPanel()
     end
 
     local function RefreshControls()
-        for _, checkbox in ipairs(checkboxes) do
-            checkbox:RefreshValue()
+        for _, switch in ipairs(switches) do
+            switch:RefreshValue()
         end
 
         AddonSettings.RefreshGeneralWindowFields()
@@ -1810,19 +1852,18 @@ local function CreateProfilesSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Choose, create, copy, or import a profile. Default is editable and " ..
-        "restorable, but its reserved name cannot be renamed or deleted. Bundled " ..
-        "profiles are editable and may be renamed or deleted."
+        "Profiles are shared account-wide; each character selects one. Default " ..
+        "can be edited and restored. Bundled profiles can be edited, renamed, or deleted."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
     local currentProfileLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -80)
-    currentProfileLabel:SetText("Current profile")
+    currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -85)
+    currentProfileLabel:SetText("Selected profile")
 
     local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
-    selector:SetWidth(300)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -100)
+    selector:SetWidth(250)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -112)
     selector:SetDefaultText(
         Database.GetProfileDisplayName(Database.GetActiveProfileName())
     )
@@ -1832,25 +1873,13 @@ local function CreateProfilesSettingsPanel()
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -165)
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -200)
     profileDescription:SetWidth(620)
     profileDescription:SetJustifyH("LEFT")
     profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
-    local nameLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    nameLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -205)
-    nameLabel:SetText("New profile name")
-
-    local nameInput = CreateFrame("EditBox", nil, panel, "InputBoxTemplate")
-    nameInput:SetSize(290, 24)
-    nameInput:SetPoint("TOPLEFT", panel, "TOPLEFT", 26, -227)
-    nameInput:SetAutoFocus(false)
-    nameInput:SetMaxLetters(64)
-    nameInput:SetFont(STANDARD_TEXT_FONT, 12, "")
-    nameInput:SetTextColor(1, 1, 1, 1)
-
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -303)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -308)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -1864,10 +1893,6 @@ local function CreateProfilesSettingsPanel()
     local function UpdateButtonState()
         local editable = Database.CanEditActiveProfile()
         local manageable = Database.CanRenameOrDeleteActiveProfile()
-        local validNewProfileName = Database.ValidateNewProfileName(nameInput:GetText())
-
-        createButton:SetEnabled(validNewProfileName ~= nil)
-        copyButton:SetEnabled(validNewProfileName ~= nil)
         renameButton:SetEnabled(manageable)
         deleteButton:SetEnabled(manageable)
         exportProfileButton:SetEnabled(editable)
@@ -1891,6 +1916,75 @@ local function CreateProfilesSettingsPanel()
     local function GetPopupButton1(popup)
         return popup.GetButton1 and popup:GetButton1() or popup.button1
     end
+
+    StaticPopupDialogs["RPEMOTEMENU_NEW_PROFILE"] = {
+        text = "Enter a name for the new profile.",
+        button1 = "Create",
+        button2 = CANCEL or "Cancel",
+        hasEditBox = true,
+        maxLetters = 64,
+        editBoxWidth = 260,
+        OnShow = function(self, data)
+            local editBox = GetPopupEditBox(self)
+            editBox:SetText(data.initial)
+            editBox:SetFocus()
+            editBox:HighlightText()
+            GetPopupButton1(self):SetText(data.action == "copy" and "Copy" or "Create")
+            local valid = Database.ValidateNewProfileName(editBox:GetText())
+            GetPopupButton1(self):SetEnabled(valid ~= nil)
+        end,
+        OnAccept = function(self, data)
+            local name = GetPopupEditBox(self):GetText()
+            local success, result
+            if data.action == "copy" then
+                success, result = Database.CopyProfile(data.source, name)
+            else
+                success, result = Database.CreateProfile(name)
+            end
+            if success then
+                SetStatus((data.action == "copy" and "Copied profile to "
+                    or "Created profile ") .. result .. ".")
+            else
+                SetStatus(result, true)
+            end
+        end,
+        EditBoxOnTextChanged = function(self)
+            local valid = Database.ValidateNewProfileName(self:GetText())
+            GetPopupButton1(self:GetParent()):SetEnabled(valid ~= nil)
+        end,
+        EditBoxOnEnterPressed = function(self)
+            local button = GetPopupButton1(self:GetParent())
+            if button:IsEnabled() then button:Click() end
+        end,
+        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
+
+    StaticPopupDialogs["RPEMOTEMENU_RESTORE_DEFAULT_PROFILE"] = {
+        text = "Restore Default's original appearance, categories, and emotes?\n\nChanges to Default will be lost. Other profiles will not be changed.",
+        button1 = "Restore",
+        button2 = CANCEL or "Cancel",
+        OnAccept = function()
+            Database.RestoreDefaultProfile()
+            SetStatus("Restored the Default profile.")
+        end,
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
+
+    StaticPopupDialogs["RPEMOTEMENU_PROFILE_INFO"] = {
+        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current appearance. Copy duplicates the selected profile. Bundled profiles may be edited or deleted; Restore Bundled Profiles recreates and resets them.",
+        button1 = OKAY or "Okay",
+        timeout = 0,
+        whileDead = true,
+        hideOnEscape = true,
+        preferredIndex = 3
+    }
 
     StaticPopupDialogs["RPEMOTEMENU_RENAME_PROFILE"] = {
         text = 'Rename the profile "%s".',
@@ -2013,45 +2107,48 @@ local function CreateProfilesSettingsPanel()
 
     selector:SetupMenu(BuildProfileMenu)
 
-    createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    createButton:SetSize(125, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -265)
-    createButton:SetText("Create Profile")
-    createButton:SetScript("OnClick", function()
-        local success, result = Database.CreateProfile(nameInput:GetText())
-
-        if success then
-            nameInput:SetText("")
-            SetStatus("Created profile " .. result .. ".")
-            UpdateButtonState()
-        else
-            SetStatus(result, true)
-        end
+    local restoreDefaultButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    restoreDefaultButton:SetSize(140, 24)
+    restoreDefaultButton:SetPoint("LEFT", selector, "RIGHT", FIELD_GAP, 0)
+    restoreDefaultButton:SetText("Restore Default")
+    restoreDefaultButton:SetScript("OnClick", function()
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
     end)
+
+    CreateInfoLink(panel, restoreDefaultButton, "RPEMOTEMENU_PROFILE_INFO")
+
+    local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -233)
+    profileNote:SetWidth(620)
+    profileNote:SetJustifyH("LEFT")
+    profileNote:SetText("Each character remembers its selection. Create starts with built-in emotes and the current appearance; Copy duplicates the selected profile.")
+    profileNote:SetTextColor(0.8, 0.8, 0.8)
+
+    local function OpenNameDialog(action)
+        local name = Database.GetActiveProfileName()
+        StaticPopup_Show("RPEMOTEMENU_NEW_PROFILE", nil, nil, {
+            action = action,
+            source = name,
+            initial = action == "copy" and name .. " Copy" or ""
+        })
+    end
+
+    createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    createButton:SetSize(95, 24)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -272)
+    createButton:SetText("Create")
+    createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
 
     copyButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    copyButton:SetSize(125, 24)
+    copyButton:SetSize(95, 24)
     copyButton:SetPoint("LEFT", createButton, "RIGHT", 8, 0)
-    copyButton:SetText("Copy Profile")
-    copyButton:SetScript("OnClick", function()
-        local success, result = Database.CopyProfile(
-            Database.GetActiveProfileName(),
-            nameInput:GetText()
-        )
-
-        if success then
-            nameInput:SetText("")
-            SetStatus("Copied profile to " .. result .. ".")
-            UpdateButtonState()
-        else
-            SetStatus(result, true)
-        end
-    end)
+    copyButton:SetText("Copy")
+    copyButton:SetScript("OnClick", function() OpenNameDialog("copy") end)
 
     renameButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    renameButton:SetSize(125, 24)
-    renameButton:SetPoint("TOPLEFT", selector, "BOTTOMLEFT", 0, -8)
-    renameButton:SetText("Rename Profile")
+    renameButton:SetSize(95, 24)
+    renameButton:SetPoint("LEFT", copyButton, "RIGHT", 8, 0)
+    renameButton:SetText("Rename")
     renameButton:SetScript("OnClick", function()
         local profileName = Database.GetActiveProfileName()
 
@@ -2063,9 +2160,9 @@ local function CreateProfilesSettingsPanel()
     end)
 
     deleteButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    deleteButton:SetSize(125, 24)
+    deleteButton:SetSize(95, 24)
     deleteButton:SetPoint("LEFT", renameButton, "RIGHT", 8, 0)
-    deleteButton:SetText("Delete Profile")
+    deleteButton:SetText("Delete")
     deleteButton:SetScript("OnClick", function()
         local profileName = Database.GetActiveProfileName()
 
@@ -2081,7 +2178,7 @@ local function CreateProfilesSettingsPanel()
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("LEFT", selector, "RIGHT", 8, 0)
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -345)
     exportProfileButton:SetText("Export Profile")
     exportProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileExport()
@@ -2096,7 +2193,7 @@ local function CreateProfilesSettingsPanel()
     end)
 
     local bundledHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -350)
+    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -405)
     bundledHeading:SetText("Bundled Profiles")
 
     local bundledDescription = panel:CreateFontString(
@@ -2124,21 +2221,6 @@ local function CreateProfilesSettingsPanel()
     restoreBuiltInsButton:SetText("Restore Bundled Profiles")
     restoreBuiltInsButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES")
-    end)
-
-    nameInput:SetScript("OnTextChanged", function(_, userInput)
-        if userInput then
-            UpdateButtonState()
-        end
-    end)
-
-    nameInput:SetScript("OnEnterPressed", function(self)
-        createButton:Click()
-        self:ClearFocus()
-    end)
-
-    nameInput:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus()
     end)
 
     panel.Refresh = function()
@@ -2311,7 +2393,7 @@ local function CreateCategoriesSettingsPanel()
     end)
 
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 8, 0)
-    resetButton:SetPoint("LEFT", importButton, "RIGHT", 8, 0)
+    resetButton:SetPoint("LEFT", selector, "RIGHT", FIELD_GAP, 0)
 
     local placeholderText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -154)

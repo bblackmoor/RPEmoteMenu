@@ -98,10 +98,11 @@ The **Default** profile can be edited, imported into, exported, and restored. Im
 
 The **Profiles** settings screen includes:
 
-- **Create Profile:** Creates a profile with the built-in categories and the current profile's appearance.
-- **Copy Profile:** Duplicates the current profile, including its categories, emotes, and appearance.
-- **Rename Profile:** Renames the current profile, except for **Default**.
-- **Delete Profile:** Deletes the current profile after confirmation, except for **Default**.
+- **Restore Default:** Resets Default's categories, emotes, and appearance, including when another profile is selected.
+- **Create:** Prompts for a name, then creates a profile with the built-in categories and the current profile's appearance.
+- **Copy:** Prompts for a name, then duplicates the current profile, including its categories, emotes, and appearance.
+- **Rename:** Renames the current profile, except for **Default**.
+- **Delete:** Deletes the current profile after confirmation, except for **Default**.
 - **Export Profile:** Copies the current profile as JSON.
 - **Import Profile:** Adds a profile from exported JSON.
 - **Restore Bundled Profiles:** Resets the six bundled profiles' categories and appearance and recreates any that were deleted.

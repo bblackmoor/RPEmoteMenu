@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.201
+
+- Replaced settings checkboxes with sliding on/off switches and standardized control spacing.
+- Reorganized profile controls around selection, restore, create, copy, rename, and delete; added a confirmation dialog to restore Default.
+
 ## 2.0.198
 
 - Keep the first category, first emote, and minimized icon at nearly the same screen height when changing title bar orientation.

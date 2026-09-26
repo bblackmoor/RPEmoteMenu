@@ -948,6 +948,16 @@ function Database.RestoreBuiltInProfiles()
 end
 
 
+function Database.RestoreDefaultProfile()
+    RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
+        categories = CopyDefaultCategories(),
+        settings = CopyProfileSettings(profileDefaults)
+    }
+    RefreshProfileViews()
+    return true
+end
+
+
 function Database.ResetCategoryToDefaults(categoryIndex)
     if not Database.CanEditActiveProfile() then
         return false
