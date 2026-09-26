@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.0.202
+
+- Stack the pin and settings controls above the text in the left title bar.
+
 ## 2.0.201
 
 - Replaced settings checkboxes with sliding on/off switches and standardized control spacing.

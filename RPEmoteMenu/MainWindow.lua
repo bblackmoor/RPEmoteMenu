@@ -532,13 +532,16 @@ ApplyTitleBarLayout = function()
         TitleBar:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
         TitleBar:SetWidth(leftTitleBarWidth)
 
-        PinBtn:SetPoint("CENTER", TitleBar, "CENTER", -11, 0)
-        SettingsBtn:SetPoint("BOTTOM", TitleBar, "BOTTOM", -11, 5)
+        -- Keep both controls inside the bar, stacked above the title.
+        PinBtn:SetPoint("TOP", TitleBar, "TOP", 0, -2)
+        SettingsBtn:SetPoint("TOP", PinBtn, "BOTTOM", 0, -4)
 
-        local availableLength = math.max(MainFrame:GetHeight() - 62, 1)
+        -- Reserve the top 60 pixels for controls and a gap before the text.
+        -- The remaining title region has a six-pixel bottom margin.
+        local availableLength = math.max(MainFrame:GetHeight() - 66, 1)
         TitleText:SetRotation(math.rad(90))
         TitleText:SetSize(availableLength, 20)
-        TitleText:SetPoint("CENTER", TitleBar, "CENTER", 11, 0)
+        TitleText:SetPoint("CENTER", TitleBar, "CENTER", 0, -27)
         TitleText:SetText(fullTitle)
 
         local textWidth = TitleText.GetUnboundedStringWidth
