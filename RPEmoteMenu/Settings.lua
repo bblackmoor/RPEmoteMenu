@@ -1938,13 +1938,13 @@ local function CreateProfilesSettingsPanel()
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -195)
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -188)
     profileDescription:SetWidth(620)
     profileDescription:SetJustifyH("LEFT")
     profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -300)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -330)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -2174,19 +2174,22 @@ local function CreateProfilesSettingsPanel()
 
     local restoreDefaultButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     restoreDefaultButton:SetSize(140, 24)
-    restoreDefaultButton:SetPoint("LEFT", selector, "RIGHT", FIELD_GAP, 0)
+    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -150)
     restoreDefaultButton:SetText("Restore Default")
     restoreDefaultButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
     end)
 
-    CreateInfoLink(panel, restoreDefaultButton, "RPEMOTEMENU_PROFILE_INFO")
+    CreateInfoLink(panel, selector, "RPEMOTEMENU_PROFILE_INFO")
 
     local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -230)
+    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -218)
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
-    profileNote:SetText("Each character remembers its selection. Create starts with built-in emotes and the current appearance; Copy duplicates the selected profile.")
+    profileNote:SetText(
+        "Create starts with built-in emotes and the current appearance; Copy duplicates " ..
+        "the selected profile."
+    )
     profileNote:SetTextColor(0.8, 0.8, 0.8)
 
     local function OpenNameDialog(action)
@@ -2200,7 +2203,7 @@ local function CreateProfilesSettingsPanel()
 
     createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     createButton:SetSize(95, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -268)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -258)
     createButton:SetText("Create")
     createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
 
@@ -2243,7 +2246,7 @@ local function CreateProfilesSettingsPanel()
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -342)
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -290)
     exportProfileButton:SetText("Export Profile")
     exportProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileExport()
@@ -2257,23 +2260,7 @@ local function CreateProfilesSettingsPanel()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
     end)
 
-    local bundledHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    bundledHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -398)
-    bundledHeading:SetText("Bundled Profiles")
-
-    local bundledDescription = panel:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlightSmall"
-    )
-    bundledDescription:SetPoint("TOPLEFT", bundledHeading, "BOTTOMLEFT", 0, -8)
-    bundledDescription:SetWidth(620)
-    bundledDescription:SetJustifyH("LEFT")
-    bundledDescription:SetText(
-        "Reset bundled categories and appearance; " ..
-        "recreate missing bundled profiles."
-    )
-    bundledDescription:SetTextColor(0.8, 0.8, 0.8)
+    restoreBuiltInsButton:SetPoint("LEFT", restoreDefaultButton, "RIGHT", 8, 0)
 
     local restoreBuiltInsButton = CreateFrame(
         "Button",
