@@ -1081,6 +1081,8 @@ local function CreateAppearanceSettingsPanel()
     controls.categoryFont = CreateFontSetting(
         panel, "Font", "categoryFont", 20, -148
     )
+    controls.categoryFont:ClearAllPoints()
+    controls.categoryFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 95, -143)
 
     controls.categoryFontSize = CreateNumberSetting(
         panel, "Font size", "categoryFontSize", 20, -200, 8, 24,
@@ -1096,6 +1098,8 @@ local function CreateAppearanceSettingsPanel()
     controls.emoteFont = CreateFontSetting(
         panel, "Font", "emoteFont", 330, -148
     )
+    controls.emoteFont:ClearAllPoints()
+    controls.emoteFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 405, -143)
 
     controls.emoteFontSize = CreateNumberSetting(
         panel, "Font size", "emoteFontSize", 330, -200, 8, 24,
@@ -1324,7 +1328,7 @@ local function CreateAppearanceSettingsPanel()
     controls.windowOpacity:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -589)
 
     local opacityVisibleNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    opacityVisibleNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 270, -619)
+    opacityVisibleNote:SetPoint("LEFT", controls.windowOpacity.SuffixLabel, "RIGHT", FIELD_GAP, 0)
     opacityVisibleNote:SetText("(when visible)")
 
     local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1367,7 +1371,7 @@ local function CreateAppearanceSettingsPanel()
     iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -705)
     iconHeading:SetText("Minimized Icon")
 
-    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -735)
+    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -735, true)
 
     local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     resetButton:SetSize(170, 24)
