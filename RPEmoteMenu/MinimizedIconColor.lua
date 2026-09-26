@@ -69,7 +69,7 @@ function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(52, 24)
     if inline then
-        button:SetPoint("LEFT", label, "RIGHT", 71, 0)
+        button:SetPoint("LEFT", label, "RIGHT", 80, 0)
     else
         button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
     end
