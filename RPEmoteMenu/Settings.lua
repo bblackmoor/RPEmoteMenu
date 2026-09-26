@@ -2260,8 +2260,6 @@ local function CreateProfilesSettingsPanel()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
     end)
 
-    restoreBuiltInsButton:SetPoint("LEFT", restoreDefaultButton, "RIGHT", 8, 0)
-
     local restoreBuiltInsButton = CreateFrame(
         "Button",
         nil,
@@ -2269,7 +2267,7 @@ local function CreateProfilesSettingsPanel()
         "UIPanelButtonTemplate"
     )
     restoreBuiltInsButton:SetSize(190, 24)
-    restoreBuiltInsButton:SetPoint("TOPLEFT", bundledDescription, "BOTTOMLEFT", 0, -12)
+    restoreBuiltInsButton:SetPoint("LEFT", restoreDefaultButton, "RIGHT", 8, 0)
     restoreBuiltInsButton:SetText("Restore Bundled Profiles")
     restoreBuiltInsButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES")
