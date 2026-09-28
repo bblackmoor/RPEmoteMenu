@@ -18,8 +18,7 @@ Global preferences are account-wide and are not part of a Profile or Theme:
 
 - Show at login (`showAtLogin`)
 - Tooltip delay (`tooltipDelayMs`)
-- Hide settings gear (`hideSettingsGear`)
-- Hide emote edit gears (`hideEmoteEditGears`)
+- Hide all setting gear icons (`hideSettingsGear`)
 
 ## Profiles
 

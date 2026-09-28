@@ -216,7 +216,6 @@ end
 
 addon.DefaultGlobalSettings = {
     hideSettingsGear = false,
-    hideEmoteEditGears = false,
     tooltipDelayMs = 350,
     showAtLogin = true
 }
@@ -258,7 +257,6 @@ addon.DefaultThemeSettings = {
 
 addon.GlobalSettingKeys = {
     "hideSettingsGear",
-    "hideEmoteEditGears",
     "tooltipDelayMs",
     "showAtLogin"
 }

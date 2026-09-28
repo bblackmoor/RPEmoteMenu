@@ -127,6 +127,28 @@ local found={}
 for _,w in ipairs(widgets) do if w.text then found[w.text]=true end end
 assert(found['Import Theme'] and found['Export Theme'] and found['Restore Bundled Themes'])
 assert(found['Theme assigned to this Profile'])
+assert(found['Hide setting gear icons'])
+assert(not found['Hide settings gear icon'] and not found['Hide emote edit gear icons'])
+local gearSwitch
+for _,w in ipairs(widgets) do
+  if w.text=='Hide setting gear icons' then
+    for _,candidate in ipairs(widgets) do
+      if candidate.parent==w.parent and candidate.anchor
+        and candidate.anchor.y==w.anchor.y+4 and candidate.scripts.OnClick then
+        gearSwitch=candidate; break
+      end
+    end
+    break
+  end
+end
+assert(gearSwitch, 'Unified gear toggle missing')
+local gearRefreshes,menuRefreshes=0,0
+addon.MainWindow.ApplySettingsGearVisibility=function() gearRefreshes=gearRefreshes+1 end
+addon.MainWindow.UpdateMenu=function() menuRefreshes=menuRefreshes+1 end
+gearSwitch.scripts.OnClick(gearSwitch)
+assert(merged.hideSettingsGear and gearRefreshes==1 and menuRefreshes==1)
+gearSwitch.scripts.OnClick(gearSwitch)
+assert(not merged.hideSettingsGear and gearRefreshes==2 and menuRefreshes==2)
 local function assertControlPosition(key, x, y)
   for _,w in ipairs(widgets) do
     if w.settingKey==key then

@@ -25,30 +25,18 @@ local function CreateStartupSection(panel, switches, rows)
         "ms", 255
     )
 
-    local hideSettingsSwitch = CreateSwitch(panel, "Hide settings gear icon", rows:Next(),
+    local hideSettingsSwitch = CreateSwitch(panel, "Hide setting gear icons", rows:Next(),
         function() return settings.hideSettingsGear end,
         function(value)
             settings.hideSettingsGear = value
             MainWindow.ApplySettingsGearVisibility()
+            MainWindow.UpdateMenu()
         end, 255)
     switches[#switches + 1] = hideSettingsSwitch
 
-    local hideEmoteSwitch = CreateSwitch(
-        panel,
-        "Hide emote edit gear icons",
-        rows:Next(),
-        function() return settings.hideEmoteEditGears end,
-        function(value)
-            settings.hideEmoteEditGears = value
-            MainWindow.UpdateMenu()
-        end,
-        255
-    )
-    switches[#switches + 1] = hideEmoteSwitch
-
-    local emoteGearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    emoteGearNote:SetPoint("LEFT", hideEmoteSwitch, "RIGHT", FIELD_GAP, 0)
-    emoteGearNote:SetText("(right-click an emote to edit)")
+    local gearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    gearNote:SetPoint("LEFT", hideSettingsSwitch, "RIGHT", FIELD_GAP, 0)
+    gearNote:SetText("(right-click an emote to edit)")
 
     return tooltipDelayBox
 end

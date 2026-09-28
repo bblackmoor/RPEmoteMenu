@@ -12,6 +12,7 @@ local function getUpvalue(fn,name)
   error('Missing upvalue '..name)
 end
 local iconAnchor=getUpvalue(apply,'ApplyMinimizedIconAnchor')
+local applyEmoteGearVisibility=getUpvalue(addon.MainWindow.UpdateMenu,'ApplyEmoteGearVisibility')
 local function setUpvalue(fn,name,value)
   for i=1,40 do
     local current=debug.getupvalue(fn,i)
@@ -70,6 +71,21 @@ theme.titleBarPosition='LEFT'
 iconAnchor()
 assert(icon.point[1]=='CENTER' and icon.point[2]==frame
   and icon.point[3]=='TOPLEFT' and icon.point[4]==16 and icon.point[5]==-16)
+
+local gearSettings={hideSettingsGear=true}
+setUpvalue(applyEmoteGearVisibility,'globalSettings',gearSettings)
+local emoteButton={EditButton={},EditHoverIcon={},Text={points={}}}
+function emoteButton.EditButton:SetShown(shown) self.shown=shown end
+function emoteButton.EditHoverIcon:SetShown(shown) self.shown=shown end
+function emoteButton.Text:ClearAllPoints() self.points={} end
+function emoteButton.Text:SetPoint(...) self.points[#self.points+1]={...} end
+applyEmoteGearVisibility(emoteButton)
+assert(not emoteButton.EditButton.shown and not emoteButton.EditHoverIcon.shown)
+assert(emoteButton.Text.points[2][2]==emoteButton)
+gearSettings.hideSettingsGear=false
+applyEmoteGearVisibility(emoteButton)
+assert(emoteButton.EditButton.shown and emoteButton.EditHoverIcon.shown)
+assert(emoteButton.Text.points[2][2]==emoteButton.EditButton)
 icon.size=16
 iconAnchor()
 assert(icon.point[4]==16 and icon.point[5]==-16)
@@ -96,4 +112,4 @@ assert(preservePosition==false and preserveGeometry==false)
 setUpvalue(refresh,'appliedTitleBarPosition','LEFT')
 refresh()
 assert(preservePosition==true and preserveGeometry==true)
-print('PASS fixed window corner, moving content, and stationary minimized icon')
+print('PASS fixed window corner, moving content, stationary icon, and emote gear visibility')

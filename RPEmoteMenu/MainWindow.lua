@@ -1314,6 +1314,19 @@ local function PopulateEmoteTooltip(button, owner, editHint)
 
 end
 
+local function ApplyEmoteGearVisibility(button)
+    local showGear = not globalSettings.hideSettingsGear
+    button.EditButton:SetShown(showGear)
+    button.EditHoverIcon:SetShown(showGear)
+    button.Text:ClearAllPoints()
+    button.Text:SetPoint("LEFT", button, "LEFT", 7, 0)
+    if showGear then
+        button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
+    else
+        button.Text:SetPoint("RIGHT", button, "RIGHT", -3, 0)
+    end
+end
+
 local function GetContainerButton()
     for _, button in ipairs(buttonsPool) do
         if not button:IsShown() then
@@ -2041,14 +2054,7 @@ function MainWindow.UpdateMenu()
         emoteButton.defaultCommand = defaultCommand
         emoteButton.targetedCommand = targetedCommand
         emoteButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        emoteButton.EditButton:SetShown(not globalSettings.hideEmoteEditGears)
-        emoteButton.Text:ClearAllPoints()
-        emoteButton.Text:SetPoint("LEFT", emoteButton, "LEFT", 7, 0)
-        if globalSettings.hideEmoteEditGears then
-            emoteButton.Text:SetPoint("RIGHT", emoteButton, "RIGHT", -3, 0)
-        else
-            emoteButton.Text:SetPoint("RIGHT", emoteButton.EditButton, "LEFT", -8, 0)
-        end
+        ApplyEmoteGearVisibility(emoteButton)
 
         emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
         emoteButton.Text:SetText(label)

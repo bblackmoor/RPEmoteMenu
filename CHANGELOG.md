@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.208
+
+- Combine the title bar and emote gear visibility options into one global toggle.
+- Keep hidden emote gears hidden on hover, while retaining right-click editing.
+
 ## 2.0.207
 
 - Use import/export format version 2, rejecting other versions without migration.
