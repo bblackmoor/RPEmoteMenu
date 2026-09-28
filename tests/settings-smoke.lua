@@ -254,4 +254,47 @@ exchange:OpenThemeImport(function(name) imported=name end)
 exchange.editBox:SetText('{"type":"theme"}')
 exchange.actionButton.scripts.OnClick()
 assert(imported=='Imported')
-print('PASS settings registration, row positions, Theme actions, Emote drag, exchange')
+assert(addon.Settings.RefreshEditors and addon.Settings.RefreshCategorySelector)
+assert(addon.Settings.RefreshGeneralWindowFields and addon.Settings.RefreshFontControls)
+addon.Settings.RefreshEditors(1)
+addon.Settings.RefreshGeneralWindowFields()
+addon.Settings.RefreshFontControls()
+
+-- Load Core last, as the .toc does, and exercise its ADDON_LOADED registration.
+local toc={}
+for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
+  if line:match('%.lua$') then
+    assert(io.open('RPEmoteMenu/'..line,'r')):close()
+    toc[#toc+1]=line
+  end
+end
+assert(toc[1]=='Defaults.lua' and toc[#toc]=='Core.lua')
+local openedSettings,openedAbout=0,0
+local originalOpen,originalAbout=addon.Settings.Open,addon.Settings.OpenAbout
+addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() end
+addon.Settings.OpenAbout=function() openedAbout=openedAbout+1; originalAbout() end
+DB.InitializeDatabase=function() end
+addon.MainWindow.CreateMainWindow=function() end
+addon.Settings.CreateSettingsPanel=function() end
+local mainFrame=CreateFrame('Frame')
+function mainFrame:IsShown() return self.shown==true end
+function mainFrame:Show() self.shown=true end
+function mainFrame:Hide() self.shown=false end
+addon.MainWindow.GetFrame=function() return mainFrame end
+addon.MainWindow.UpdateMenu=function() end
+C_AddOns={GetAddOnMetadata=function() return '2.0.203' end}
+SlashCmdList={}
+local previousCount=#widgets
+loadModule('RPEmoteMenu/Core.lua')
+local eventFrame=widgets[previousCount+1]
+assert(eventFrame and eventFrame.scripts.OnEvent)
+eventFrame.scripts.OnEvent(eventFrame,'ADDON_LOADED','RPEmoteMenu')
+assert(SLASH_ELLEMOTE1=='/rpem' and SlashCmdList.ELLEMOTE)
+for _,command in ipairs({'config','options','settings'}) do SlashCmdList.ELLEMOTE(command) end
+SlashCmdList.ELLEMOTE('about')
+assert(openedSettings==3 and openedAbout==1,'Slash routes did not open Settings/About')
+SlashCmdList.ELLEMOTE('')
+assert(mainFrame:IsShown(),'Slash toggle did not show the menu')
+SlashCmdList.ELLEMOTE('')
+assert(not mainFrame:IsShown(),'Slash toggle did not hide the menu')
+print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.203
+
+- Completed the Profile and Theme settings refactor, with small row layout helpers and clearer module boundaries.
+- Updated the documentation for shared Themes, per-character Profile selection, and Profile-owned window settings.
+- Expanded settings smoke checks for row placement and slash-command routing.
+
 ## 2.0.202
 
 - Stack the pin and settings controls above the text in the left title bar.

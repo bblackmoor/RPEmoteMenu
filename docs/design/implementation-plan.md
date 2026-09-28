@@ -135,14 +135,22 @@ Behavior, Theme, Profile, and Emote anchors; the in-game matrix remains outstand
 
 ## Phase 8 — Cleanup and verification
 
-- [ ] Remove transitional APIs and obsolete Profile/Appearance terminology.
-- [ ] Search for old `BuiltInProfiles`, old setting-key ownership, and stale Profile-appearance assumptions.
-- [ ] Update README/help/About text.
-- [ ] Verify `.toc` load order after any file split.
-- [ ] Verify Settings registration and slash-command opening.
-- [ ] Verify settings refresh entry points.
-- [ ] Review Lua function/upvalue complexity after the refactor.
-- [ ] Update version/changelog as appropriate.
+- [x] Remove transitional APIs and obsolete Profile/Appearance terminology.
+- [x] Search for old `BuiltInProfiles`, old setting-key ownership, and stale Profile-appearance assumptions.
+- [x] Update README/help/About text.
+- [x] Verify `.toc` load order after any file split.
+- [x] Verify Settings registration and slash-command opening.
+- [x] Verify settings refresh entry points.
+- [x] Review Lua function/upvalue complexity after the refactor.
+- [x] Update version/changelog as appropriate.
+
+The `.toc` paths exist and load the Settings dependencies before `Core.lua`.
+The settings smoke test covers registration, refresh, About/Settings slash routes,
+Theme editing and assignment, Emote drag, and JSON exchange. A data-model smoke test
+covers per-character selection, shared Theme references, deletion, and reload.
+All Lua modules compile;
+the largest function has 33 upvalues (in `MainWindow.lua`). The integration matrix
+below still needs a live WoW session and has not been marked complete.
 
 ### Integration test matrix
 

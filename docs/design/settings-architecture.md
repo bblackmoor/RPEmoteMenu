@@ -1,6 +1,6 @@
 # Settings Architecture
 
-Status: approved design specification for the settings readability refactor.
+Status: implemented in Phases 6–8; in-game integration checks remain open.
 
 ## Goal
 
@@ -35,9 +35,14 @@ Likely organization:
 
 ```text
 Settings.lua
-    common settings UI primitives
     settings registration
     refresh orchestration
+
+SettingsControls.lua
+    common settings controls and row cursor
+
+SettingsExchange.lua
+    shared JSON transfer dialog
 
 SettingsBehavior.lua
     global/startup preferences
@@ -65,7 +70,7 @@ SettingsEmotes.lua
     category management
     emote list
 
-SettingsImportExport.lua
+SettingsTransfer.lua
     complete-data import/export
 ```
 
@@ -196,6 +201,7 @@ A settings refactor is not complete merely because the files load; the addon mus
 
 ## Refactor timing
 
-The structural settings refactor follows the new data model, runtime ownership, serialization, and initial Profile/Theme UI conversion. This avoids carefully reorganizing the obsolete hybrid Profile/Appearance model.
-
-The readability refactor is nevertheless a required phase of the same project, not optional later cleanup.
+The structural settings refactor followed the new data model, runtime ownership,
+serialization, and initial Profile/Theme UI conversion. Ordinary settings rows now
+use a small cursor; the two-column Theme editor and dynamic Emote list keep their
+own layouts. Manual in-game verification is still required.

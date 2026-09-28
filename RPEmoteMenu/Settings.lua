@@ -11,7 +11,6 @@ local settings
 local SOURCE_URL = "https://github.com/bblackmoor/rpemotemenu"
 local settingsCategory
 local generalSettingsCategory
-local appearanceSettingsCategory
 local profilesSettingsCategory
 local categoriesSettingsCategory
 local importExportSettingsCategory
@@ -55,8 +54,8 @@ local function CreateAboutPanel()
     description:SetJustifyH("LEFT")
     description:SetText(
         "A customizable roleplaying emote menu with profiles, targeted " ..
-        "commands, category and Profile sharing, and shared Themes " ..
-        "for fonts, colors, and appearance."
+        "commands, Profile sharing, and shared Themes for appearance. " ..
+        "Each character selects a Profile; Profiles assign a Theme."
     )
 
     local details = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -117,7 +116,7 @@ function AddonSettings.CreateSettingsPanel()
     settings = Database.GetSettings()
     local aboutPanel = CreateAboutPanel()
     local generalPanel = UI.CreateGeneralSettingsPanel()
-    local appearancePanel = UI.CreateAppearanceSettingsPanel()
+    local themesPanel = UI.CreateThemesSettingsPanel()
     local profilesPanel = UI.CreateProfilesSettingsPanel()
     categoriesSettingsPanel = UI.CreateCategoriesSettingsPanel()
     local importExportPanel = UI.CreateImportExportSettingsPanel()
@@ -131,9 +130,9 @@ function AddonSettings.CreateSettingsPanel()
         "Behavior"
     )
 
-    appearanceSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
+    Settings.RegisterCanvasLayoutSubcategory(
         settingsCategory,
-        appearancePanel,
+        themesPanel,
         "Themes"
     )
 
@@ -160,7 +159,7 @@ function AddonSettings.CreateSettingsPanel()
     AddonSettings.RefreshSettingsPanels = function()
         settings = Database.GetSettings()
         generalPanel.RefreshControls()
-        appearancePanel.RefreshControls()
+        themesPanel.RefreshControls()
         profilesPanel.Refresh()
         categoriesSettingsPanel.SelectCategory(settings.selectedCategory)
     end

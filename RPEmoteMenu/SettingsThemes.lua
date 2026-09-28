@@ -475,8 +475,8 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
     return titleBarSelector, titleBarLabels, refreshIconColor
 end
 
--- The appearance editor operates on the Theme selected above it.
-local function CreateAppearanceSettingsPanel()
+-- The editor operates on the Theme selected above it.
+local function CreateThemesSettingsPanel()
     local container = CreateFrame("Frame")
     local scrollFrame = CreateFrame(
         "ScrollFrame",
@@ -567,7 +567,7 @@ local function CreateAppearanceSettingsPanel()
         RefreshControls()
     end
     container.RefreshFontControls = RefreshFontControls
-    container.appearanceControls = controls
+    container.themeControls = controls
     AddonSettings.RefreshFontControls = RefreshFontControls
     container:SetScript("OnShow", container.RefreshControls)
     container.RefreshControls()
@@ -575,4 +575,4 @@ local function CreateAppearanceSettingsPanel()
 end
 
 
-UI.CreateAppearanceSettingsPanel = CreateAppearanceSettingsPanel
+UI.CreateThemesSettingsPanel = CreateThemesSettingsPanel
