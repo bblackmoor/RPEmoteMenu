@@ -38,6 +38,7 @@ addon.BuiltInThemes = {
             emoteFontSize = 18,
             emoteTextColor = {r = 1, g = 0, b = 0},
             selectedCategoryTextColor = {r = 1, g = 1, b = 1},
+            titleBarPosition = "LEFT",
             windowOpacity = 0.9
         }
     },
