@@ -17,11 +17,53 @@ assert(db.GetActiveProfileName() == 'Default')
 assert(db.GetActiveThemeName() == 'Default')
 assert(db.GetProfileSettings().inactiveOpacity == 0.5)
 assert(db.GetTheme('Teal') and not db.GetProfile('Teal'))
-local oldExport=assert(addon.JSON.Decode(assert(addon.Serialization.ExportProfile())))
-oldExport.settings.minimizedIconCorner='TOPRIGHT'
-local imported=assert(addon.Serialization.Decode(
-  addon.JSON.Encode(oldExport,true),'profile'))
-assert(imported.settings.minimizedIconCorner==nil)
+local serialization = addon.Serialization
+local json = addon.JSON
+local function decodeDocument(document, expectedType)
+    return serialization.Decode(json.Encode(document, true), expectedType)
+end
+local categoryExport = assert(json.Decode(assert(serialization.ExportCategory(1))))
+local profileExport = assert(json.Decode(assert(serialization.ExportProfile())))
+local themeExport = assert(json.Decode(assert(serialization.ExportTheme('Teal'))))
+local everythingExport = assert(json.Decode(assert(serialization.ExportEverything())))
+assert(categoryExport.version == 2 and profileExport.version == 2)
+assert(themeExport.version == 2 and everythingExport.version == 2)
+profileExport.settings.height = 333
+profileExport.settings.fadeDelay = 90
+profileExport.settings.x = 'invalid'
+profileExport.settings.locked = true
+profileExport.settings.minimizedIconCorner = 'TOPRIGHT'
+profileExport.settings.unrecognized = {value = true}
+local imported = assert(decodeDocument(profileExport, 'profile'))
+assert(imported.settings.height == 333 and imported.settings.locked)
+assert(imported.settings.fadeDelay == addon.DefaultProfileSettings.fadeDelay)
+assert(imported.settings.x == addon.DefaultProfileSettings.x)
+assert(imported.settings.minimizedIconCorner == nil and imported.settings.unrecognized == nil)
+profileExport.settings = 'invalid'
+imported = assert(decodeDocument(profileExport, 'profile'))
+assert(imported.settings.height == addon.DefaultProfileSettings.height)
+profileExport.version = 3
+assert(not decodeDocument(profileExport, 'profile'))
+profileExport.version = 2
+profileExport.categories[1].emotes[1].label = 42
+assert(not decodeDocument(profileExport, 'profile'))
+
+themeExport.settings.categoryFontSize = 20
+themeExport.settings.windowOpacity = 4
+themeExport.settings.borderColor = {r = 1, g = -1, b = 0}
+themeExport.settings.titleBarPosition = 'SIDE'
+themeExport.settings.unrecognized = true
+local importedTheme = assert(decodeDocument(themeExport, 'theme'))
+assert(importedTheme.settings.categoryFontSize == 20)
+assert(importedTheme.settings.windowOpacity == addon.DefaultThemeSettings.windowOpacity)
+assert(importedTheme.settings.borderColor.g == addon.DefaultThemeSettings.borderColor.g)
+assert(importedTheme.settings.titleBarPosition == addon.DefaultThemeSettings.titleBarPosition)
+assert(importedTheme.settings.unrecognized == nil)
+everythingExport.profiles[1].settings.fadeDelay = -1
+everythingExport.themes[1].settings.categoryFontSize = 18
+local importedEverything = assert(decodeDocument(everythingExport, 'everything'))
+assert(importedEverything.profiles[1].settings.fadeDelay == addon.DefaultProfileSettings.fadeDelay)
+assert(importedEverything.themes[1].settings.categoryFontSize == 18)
 RPEmoteMenuDB.profiles.Default.settings.minimizedIconCorner='TOPRIGHT'
 db.InitializeDatabase()
 assert(db.GetProfileSettings().minimizedIconCorner==nil)

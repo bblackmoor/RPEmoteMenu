@@ -110,7 +110,7 @@ There are no bundled Profiles other than Default. If a Profile import references
 
 The **Emotes** screen can export the selected category or replace it with an imported one. The **Profiles** and **Themes** screens import or export a single Profile or Theme. **Import & Export** transfers Everything: all Profiles and Themes and their relationships.
 
-Transfers use JSON text. A Profile export contains its settings, categories, emotes, and assigned Theme name; a Theme export contains its visual settings. Neither includes global preferences or character-to-Profile assignments. Imports add uniquely named Profiles and Themes without overwriting existing ones. A missing Theme reference in an imported Profile falls back to Default Theme and is reported.
+Transfers use version 2 JSON text. A Profile export contains its settings, categories, emotes, and assigned Theme name; a Theme export contains its visual settings. Neither includes global preferences or character-to-Profile assignments. Imports add uniquely named Profiles and Themes without overwriting existing ones. Invalid or unknown Profile and Theme settings are silently ignored and use defaults; invalid category and emote data is rejected. Other format versions are rejected without conversion. A missing Theme reference in an imported Profile falls back to Default Theme and is reported.
 
 ## Themes
 

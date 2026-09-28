@@ -6,7 +6,7 @@ addon.Serialization = Serialization
 local Database = addon.Database
 local JSON = addon.JSON
 local FORMAT_NAME = "RPEmoteMenu"
-local FORMAT_VERSION = 3
+local FORMAT_VERSION = 2
 local MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 local MAX_PROFILE_NAME_LENGTH = 64
 local MAX_THEME_NAME_LENGTH = 64
@@ -37,14 +37,6 @@ local EVERYTHING_DOCUMENT_FIELDS = {
 }
 local CATEGORY_FIELDS = {name = true, emotes = true}
 local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true}
-local PROFILE_SETTING_FIELDS = {}
-local THEME_SETTING_FIELDS = {}
-for _, key in ipairs(addon.ProfileSettingKeys) do PROFILE_SETTING_FIELDS[key] = true end
-for _, key in ipairs(addon.ThemeSettingKeys) do THEME_SETTING_FIELDS[key] = true end
--- Earlier version 3 Profile exports included this retired setting. Accept it
--- when importing those exports, but leave it out of new Profile data.
-PROFILE_SETTING_FIELDS.minimizedIconCorner = true
-
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
     "selectedCategoryTextColor",
@@ -62,7 +54,6 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
-local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
 local VALID_ANCHOR_POINTS = {
     TOPLEFT = true, TOP = true, TOPRIGHT = true,
     LEFT = true, CENTER = true, RIGHT = true,
@@ -107,14 +98,6 @@ local function ValidateNumber(value, minimum, maximum, description, integer)
     end
     if value < minimum or value > maximum then
         return nil, description .. " must be between " .. minimum .. " and " .. maximum .. "."
-    end
-    return value
-end
-
-
-local function ValidateBoolean(value, description)
-    if type(value) ~= "boolean" then
-        return nil, description .. " must be true or false."
     end
     return value
 end
@@ -287,22 +270,27 @@ local function ValidateCategories(value, description)
 end
 
 
-local function ValidateProfileSettings(value)
-    local valid, errorMessage = ValidateObject(
-        value, PROFILE_SETTING_FIELDS, "Profile settings"
-    )
-    if not valid then return nil, errorMessage end
+-- Settings are optional per field. Ignore invalid or unknown values and let the
+-- Database fill each missing setting with its current default.
+local function SettingsObject(value)
+    if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
+        return {}
+    end
+    return value
+end
 
+
+local function ValidateProfileSettings(value)
+    value = SettingsObject(value)
     local settings = {}
+
     for _, key in ipairs({"locked", "fadeEnabled"}) do
-        settings[key], errorMessage = ValidateBoolean(value[key], key)
-        if settings[key] == nil then return nil, errorMessage end
+        if type(value[key]) == "boolean" then
+            settings[key] = value[key]
+        end
     end
     for _, key in ipairs({"x", "y"}) do
-        settings[key], errorMessage = ValidateNumber(
-            value[key], -100000, 100000, key, true
-        )
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateNumber(value[key], -100000, 100000, key, true)
     end
     for _, field in ipairs({
         {"height", 150, 630},
@@ -310,68 +298,45 @@ local function ValidateProfileSettings(value)
         {"selectedCategory", 1, addon.MAX_CATEGORIES},
         {"fadeDelay", 0, 60}
     }) do
-        local key, minimum, maximum = field[1], field[2], field[3]
-        settings[key], errorMessage = ValidateNumber(
-            value[key], minimum, maximum, key, true
+        local key = field[1]
+        settings[key] = ValidateNumber(
+            value[key], field[2], field[3], key, true
         )
-        if not settings[key] then return nil, errorMessage end
     end
-    settings.inactiveOpacity, errorMessage = ValidateNumber(
+    settings.inactiveOpacity = ValidateNumber(
         value.inactiveOpacity, 0.1, 1, "inactiveOpacity", false
     )
-    if not settings.inactiveOpacity then return nil, errorMessage end
-
-    if value.minimizedIconCorner ~= nil then
-        local unusedCorner
-        unusedCorner, errorMessage = ValidateEnum(
-            value.minimizedIconCorner, VALID_MINIMIZED_ICON_CORNERS,
-            "minimizedIconCorner"
-        )
-        if not unusedCorner then return nil, errorMessage end
-    end
-
     for _, field in ipairs({
         {"minimizeMode", VALID_MINIMIZE_MODES},
         {"point", VALID_ANCHOR_POINTS},
         {"relativePoint", VALID_ANCHOR_POINTS}
     }) do
         local key = field[1]
-        settings[key], errorMessage = ValidateEnum(value[key], field[2], key)
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateEnum(value[key], field[2], key)
     end
     return Database.CopyProfileSettings(settings)
 end
 
 
 local function ValidateThemeSettings(value)
-    local valid, errorMessage = ValidateObject(
-        value, THEME_SETTING_FIELDS, "Theme settings"
-    )
-    if not valid then return nil, errorMessage end
-
+    value = SettingsObject(value)
     local settings = {}
+
     for _, key in ipairs({"categoryFont", "emoteFont"}) do
-        settings[key], errorMessage = ValidateName(
-            value[key], MAX_FONT_NAME_LENGTH, key
-        )
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateName(value[key], MAX_FONT_NAME_LENGTH, key)
     end
     for _, key in ipairs({"categoryFontSize", "emoteFontSize"}) do
-        settings[key], errorMessage = ValidateNumber(value[key], 8, 24, key, true)
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateNumber(value[key], 8, 24, key, true)
     end
-    settings.categoryHighlightThickness, errorMessage = ValidateNumber(
+    settings.categoryHighlightThickness = ValidateNumber(
         value.categoryHighlightThickness, 1, 6, "categoryHighlightThickness", true
     )
-    if not settings.categoryHighlightThickness then return nil, errorMessage end
-    settings.windowOpacity, errorMessage = ValidateNumber(
+    settings.windowOpacity = ValidateNumber(
         value.windowOpacity, 0.1, 1, "windowOpacity", false
     )
-    if not settings.windowOpacity then return nil, errorMessage end
 
     for _, key in ipairs(COLOR_SETTING_KEYS) do
-        settings[key], errorMessage = ValidateColor(value[key], key)
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateColor(value[key], key)
     end
     for _, field in ipairs({
         {"categoryHighlightEffect", VALID_CATEGORY_HIGHLIGHT_EFFECTS},
@@ -379,8 +344,7 @@ local function ValidateThemeSettings(value)
         {"titleBarPosition", VALID_TITLE_BAR_POSITIONS}
     }) do
         local key = field[1]
-        settings[key], errorMessage = ValidateEnum(value[key], field[2], key)
-        if not settings[key] then return nil, errorMessage end
+        settings[key] = ValidateEnum(value[key], field[2], key)
     end
     return Database.CopyThemeSettings(settings)
 end

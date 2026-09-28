@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.207
+
+- Use import/export format version 2, rejecting other versions without migration.
+- Silently ignore invalid or unknown Profile and Theme settings while retaining valid settings and strict category and emote validation.
+
 ## 2.0.206
 
 - Anchor the minimized icon to the upper-left corner for both title-bar orientations.
