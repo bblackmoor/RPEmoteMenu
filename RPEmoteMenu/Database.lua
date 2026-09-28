@@ -18,6 +18,7 @@ local SCHEMA_VERSION = 15
 local DEFAULT_PROFILE_NAME = "Default"
 local DEFAULT_THEME_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
+local MAX_THEME_NAME_LENGTH = 64
 
 for _, definition in ipairs(builtInThemes) do
     builtInThemeByName[definition.name] = definition
@@ -378,6 +379,16 @@ function Database.GetProfiles()
 end
 
 
+function Database.GetThemes()
+    return RPEmoteMenuDB.themes
+end
+
+
+function Database.GetTheme(themeName)
+    return type(themeName) == "string" and RPEmoteMenuDB.themes[themeName] or nil
+end
+
+
 local function GetProfileTheme(profile)
     local themeName = profile and profile.theme
     local theme = type(themeName) == "string" and RPEmoteMenuDB.themes[themeName]
@@ -386,6 +397,26 @@ local function GetProfileTheme(profile)
         if profile then profile.theme = DEFAULT_THEME_NAME end
     end
     return theme
+end
+
+
+function Database.GetActiveThemeName()
+    local profile = Database.GetActiveProfile()
+    GetProfileTheme(profile)
+    return profile.theme
+end
+
+
+function Database.GetActiveTheme()
+    return GetProfileTheme(Database.GetActiveProfile())
+end
+
+
+function Database.GetProfileThemeName(profileName)
+    local profile = Database.GetProfile(profileName)
+    if not profile then return nil end
+    GetProfileTheme(profile)
+    return profile.theme
 end
 
 
@@ -433,15 +464,23 @@ end
 
 
 function Database.GetProfileSettings(profileName)
-    local profile = profileName and RPEmoteMenuDB.profiles[profileName]
-        or Database.GetActiveProfile()
+    local profile
+    if profileName == nil then
+        profile = Database.GetActiveProfile()
+    else
+        profile = Database.GetProfile(profileName)
+    end
     return profile and profile.settings
 end
 
 
 function Database.GetThemeSettings(themeName)
-    local theme = themeName and RPEmoteMenuDB.themes[themeName]
-        or GetProfileTheme(Database.GetActiveProfile())
+    local theme
+    if themeName == nil then
+        theme = Database.GetActiveTheme()
+    else
+        theme = Database.GetTheme(themeName)
+    end
     return theme and theme.settings
 end
 
@@ -556,6 +595,51 @@ function Database.ValidateNewProfileName(profileName, existingProfileName)
 end
 
 
+local function FindThemeByName(themeName)
+    local requestedName = string.lower(themeName)
+    for existingName in pairs(RPEmoteMenuDB.themes) do
+        if type(existingName) == "string"
+            and string.lower(existingName) == requestedName then
+            return existingName
+        end
+    end
+    return nil
+end
+
+
+local function ValidateNewThemeName(themeName, existingThemeName)
+    if type(themeName) ~= "string" then
+        return nil, "Enter a theme name."
+    end
+
+    themeName = strtrim(themeName)
+    if themeName == "" then
+        return nil, "Enter a theme name."
+    end
+    if #themeName > MAX_THEME_NAME_LENGTH then
+        return nil, "Theme names cannot exceed 64 characters."
+    end
+    if string.lower(themeName) == string.lower(DEFAULT_THEME_NAME) then
+        return nil, "Default is reserved and cannot be changed."
+    end
+
+    local matchingTheme = FindThemeByName(themeName)
+    if matchingTheme and matchingTheme ~= existingThemeName then
+        return nil, "A theme with that name already exists."
+    end
+    if matchingTheme == existingThemeName and themeName == existingThemeName then
+        return nil, "Enter a different theme name."
+    end
+
+    return themeName
+end
+
+
+function Database.ValidateNewThemeName(themeName, existingThemeName)
+    return ValidateNewThemeName(themeName, existingThemeName)
+end
+
+
 local function RefreshProfileViews()
     if addon.MainWindow and addon.MainWindow.ApplyProfileSettings then
         addon.MainWindow.ApplyProfileSettings()
@@ -600,6 +684,48 @@ function Database.GetProfileNames()
 end
 
 
+function Database.GetThemeNames()
+    local names = {}
+    for themeName in pairs(RPEmoteMenuDB.themes) do
+        names[#names + 1] = themeName
+    end
+    table.sort(names, function(first, second)
+        if first == DEFAULT_THEME_NAME then return true end
+        if second == DEFAULT_THEME_NAME then return false end
+        local firstLower, secondLower = string.lower(first), string.lower(second)
+        return firstLower == secondLower and first < second
+            or firstLower < secondLower
+    end)
+    return names
+end
+
+
+function Database.GetProfilesUsingTheme(themeName)
+    local names = {}
+    if type(themeName) ~= "string" then return names end
+    for _, profileName in ipairs(Database.GetProfileNames()) do
+        if RPEmoteMenuDB.profiles[profileName].theme == themeName then
+            names[#names + 1] = profileName
+        end
+    end
+    return names
+end
+
+
+function Database.IsBuiltInThemeName(themeName)
+    return builtInThemeByName[themeName] ~= nil
+end
+
+
+function Database.GetThemeDescription(themeName)
+    if themeName == DEFAULT_THEME_NAME then
+        return "Editable built-in fallback theme. Its name is reserved."
+    end
+    local definition = builtInThemeByName[themeName]
+    return definition and definition.description or "Custom theme."
+end
+
+
 function Database.GetProfileDisplayName(profileName)
     return profileName
 end
@@ -611,6 +737,109 @@ function Database.GetProfileDescription(profileName)
     end
 
     return "Custom profile."
+end
+
+
+function Database.SetProfileTheme(profileName, themeName)
+    local profile = Database.GetProfile(profileName)
+    if type(profile) ~= "table" then
+        return false, "That profile does not exist."
+    end
+    if not Database.GetTheme(themeName) then
+        return false, "That theme does not exist."
+    end
+
+    profile.theme = themeName
+    RefreshProfileViews()
+    return true
+end
+
+
+function Database.CreateTheme(themeName, sourceSettings)
+    local validName, errorMessage = ValidateNewThemeName(themeName)
+    if not validName then return false, errorMessage end
+
+    local settingsSource = type(sourceSettings) == "table"
+        and sourceSettings or Database.GetThemeSettings()
+    RPEmoteMenuDB.themes[validName] = {
+        settings = CopyThemeSettings(settingsSource)
+    }
+    RefreshProfileViews()
+    return true, validName
+end
+
+
+function Database.CopyTheme(sourceThemeName, newThemeName)
+    local source = Database.GetTheme(sourceThemeName)
+    if not source then return false, "The source theme does not exist." end
+    return Database.CreateTheme(newThemeName, source.settings)
+end
+
+
+function Database.RenameTheme(oldThemeName, newThemeName)
+    if oldThemeName == DEFAULT_THEME_NAME then
+        return false, "The Default theme cannot be renamed."
+    end
+    local theme = Database.GetTheme(oldThemeName)
+    if not theme then return false, "That theme does not exist." end
+
+    local validName, errorMessage = ValidateNewThemeName(newThemeName, oldThemeName)
+    if not validName then return false, errorMessage end
+
+    RPEmoteMenuDB.themes[validName] = theme
+    RPEmoteMenuDB.themes[oldThemeName] = nil
+    for _, profile in pairs(RPEmoteMenuDB.profiles) do
+        if profile.theme == oldThemeName then
+            profile.theme = validName
+        end
+    end
+    RefreshProfileViews()
+    return true, validName
+end
+
+
+function Database.DeleteTheme(themeName, confirmedInUse)
+    if themeName == DEFAULT_THEME_NAME then
+        return false, "The Default theme cannot be deleted."
+    end
+    if not Database.GetTheme(themeName) then
+        return false, "That theme does not exist."
+    end
+
+    local users = Database.GetProfilesUsingTheme(themeName)
+    if #users > 0 and confirmedInUse ~= true then
+        return false, "This theme is used by profiles.", users
+    end
+
+    for _, profileName in ipairs(users) do
+        RPEmoteMenuDB.profiles[profileName].theme = DEFAULT_THEME_NAME
+    end
+    RPEmoteMenuDB.themes[themeName] = nil
+    RefreshProfileViews()
+    return true, users
+end
+
+
+function Database.RestoreTheme(themeName)
+    local source
+    if themeName == DEFAULT_THEME_NAME then
+        source = themeDefaults
+    else
+        local definition = builtInThemeByName[themeName]
+        source = definition and definition.settings
+    end
+    if not source then
+        return false, "Only Default and bundled themes have factory settings."
+    end
+
+    RPEmoteMenuDB.themes[themeName] = {settings = CopyThemeSettings(source)}
+    RefreshProfileViews()
+    return true
+end
+
+
+function Database.RestoreDefaultTheme()
+    return Database.RestoreTheme(DEFAULT_THEME_NAME)
 end
 
 
@@ -641,15 +870,16 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings, s
     if not characterKey then
         return false, "The current character is not available yet."
     end
+    if sourceThemeName ~= nil and not Database.GetTheme(sourceThemeName) then
+        return false, "The source theme does not exist."
+    end
 
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings
         or Database.GetProfileSettings()
 
     RPEmoteMenuDB.profiles[validName] = {
-        theme = type(sourceThemeName) == "string"
-            and RPEmoteMenuDB.themes[sourceThemeName] and sourceThemeName
-            or Database.GetActiveProfile().theme,
+        theme = sourceThemeName or Database.GetActiveThemeName(),
         categories = type(sourceCategories) == "table"
             and CopyCategories(sourceCategories)
             or CopyDefaultCategories(),
@@ -875,7 +1105,10 @@ function Database.RestoreBuiltInThemes()
 end
 
 
-function Database.RestoreDefaultProfile()
+function Database.RestoreProfile(profileName)
+    if profileName ~= DEFAULT_PROFILE_NAME then
+        return false, "Only the Default profile has factory settings."
+    end
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
         theme = DEFAULT_THEME_NAME,
         categories = CopyDefaultCategories(),
@@ -883,6 +1116,11 @@ function Database.RestoreDefaultProfile()
     }
     RefreshProfileViews()
     return true
+end
+
+
+function Database.RestoreDefaultProfile()
+    return Database.RestoreProfile(DEFAULT_PROFILE_NAME)
 end
 
 

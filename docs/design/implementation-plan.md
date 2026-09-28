@@ -37,16 +37,18 @@ Phase 1 keeps the merged `GetSettings()` view as a temporary runtime bridge; it 
 
 ## Phase 2 — Create explicit Database Profile and Theme APIs
 
-- [ ] Provide explicit Global, Profile, and Theme getters.
-- [ ] Implement Profile create/copy/rename/delete/restore operations.
-- [ ] Implement Theme create/copy/rename/delete/restore operations.
-- [ ] Implement bundled Theme restore/recreation.
-- [ ] Preserve per-character active Profile selection.
-- [ ] Add Profile -> Theme assignment operations.
-- [ ] Add queries for Profiles referencing a Theme.
-- [ ] On confirmed deletion of an in-use Theme, reassign referencing Profiles to Default Theme.
-- [ ] Normalize invalid Profile/Theme references to their Default fallbacks.
-- [ ] Reduce reliance on the current merged writable `GetSettings()` proxy; writes should make ownership apparent.
+- [x] Provide explicit Global, Profile, and Theme getters.
+- [x] Implement Profile create/copy/rename/delete/restore operations.
+- [x] Implement Theme create/copy/rename/delete/restore operations.
+- [x] Implement bundled Theme restore/recreation.
+- [x] Preserve per-character active Profile selection.
+- [x] Add Profile -> Theme assignment operations.
+- [x] Add queries for Profiles referencing a Theme.
+- [x] On confirmed deletion of an in-use Theme, reassign referencing Profiles to Default Theme.
+- [x] Normalize invalid Profile/Theme references to their Default fallbacks.
+- [x] Reduce reliance on the current merged writable `GetSettings()` proxy; writes should make ownership apparent.
+
+Phase 2 provides explicit access and lifecycle operations for Profiles and Themes. An in-use Theme deletion requires a confirmation flag; callers can query the affected Profiles before presenting the warning. The merged `GetSettings()` proxy remains for the existing runtime/settings consumers until Phases 3 and 5 convert those call sites.
 
 ## Phase 3 — Convert runtime consumers to the three scopes
 
