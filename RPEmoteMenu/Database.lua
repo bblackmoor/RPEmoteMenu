@@ -640,13 +640,7 @@ function Database.ValidateNewThemeName(themeName, existingThemeName)
 end
 
 
-local function RefreshProfileViews()
-    if addon.MainWindow and addon.MainWindow.ApplyProfileSettings then
-        addon.MainWindow.ApplyProfileSettings()
-    elseif addon.MainWindow and addon.MainWindow.UpdateMenu then
-        addon.MainWindow.UpdateMenu()
-    end
-
+local function RefreshSettingsViews()
     if addon.Settings and addon.Settings.RefreshSettingsPanels then
         addon.Settings.RefreshSettingsPanels()
     else
@@ -657,6 +651,24 @@ local function RefreshProfileViews()
             addon.Settings.RefreshProfiles()
         end
     end
+end
+
+
+local function RefreshProfileViews()
+    if addon.MainWindow and addon.MainWindow.ApplyProfileSettings then
+        addon.MainWindow.ApplyProfileSettings()
+    elseif addon.MainWindow and addon.MainWindow.UpdateMenu then
+        addon.MainWindow.UpdateMenu()
+    end
+    RefreshSettingsViews()
+end
+
+
+local function RefreshThemeViews()
+    if addon.MainWindow and addon.MainWindow.ApplyThemeSettings then
+        addon.MainWindow.ApplyThemeSettings()
+    end
+    RefreshSettingsViews()
 end
 
 
@@ -750,7 +762,11 @@ function Database.SetProfileTheme(profileName, themeName)
     end
 
     profile.theme = themeName
-    RefreshProfileViews()
+    if profileName == Database.GetActiveProfileName() then
+        RefreshThemeViews()
+    else
+        RefreshSettingsViews()
+    end
     return true
 end
 
@@ -764,7 +780,7 @@ function Database.CreateTheme(themeName, sourceSettings)
     RPEmoteMenuDB.themes[validName] = {
         settings = CopyThemeSettings(settingsSource)
     }
-    RefreshProfileViews()
+    RefreshSettingsViews()
     return true, validName
 end
 
@@ -793,7 +809,11 @@ function Database.RenameTheme(oldThemeName, newThemeName)
             profile.theme = validName
         end
     end
-    RefreshProfileViews()
+    if Database.GetActiveThemeName() == validName then
+        RefreshThemeViews()
+    else
+        RefreshSettingsViews()
+    end
     return true, validName
 end
 
@@ -815,7 +835,16 @@ function Database.DeleteTheme(themeName, confirmedInUse)
         RPEmoteMenuDB.profiles[profileName].theme = DEFAULT_THEME_NAME
     end
     RPEmoteMenuDB.themes[themeName] = nil
-    RefreshProfileViews()
+    local activeProfileName = Database.GetActiveProfileName()
+    local affected = false
+    for _, profileName in ipairs(users) do
+        if profileName == activeProfileName then affected = true end
+    end
+    if affected then
+        RefreshThemeViews()
+    else
+        RefreshSettingsViews()
+    end
     return true, users
 end
 
@@ -833,7 +862,11 @@ function Database.RestoreTheme(themeName)
     end
 
     RPEmoteMenuDB.themes[themeName] = {settings = CopyThemeSettings(source)}
-    RefreshProfileViews()
+    if Database.GetActiveThemeName() == themeName then
+        RefreshThemeViews()
+    else
+        RefreshSettingsViews()
+    end
     return true
 end
 
@@ -1100,7 +1133,11 @@ function Database.RestoreBuiltInThemes()
     for _, definition in ipairs(builtInThemes) do
         RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
     end
-    RefreshProfileViews()
+    if builtInThemeByName[Database.GetActiveThemeName()] then
+        RefreshThemeViews()
+    else
+        RefreshSettingsViews()
+    end
     return #builtInThemes
 end
 

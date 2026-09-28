@@ -52,13 +52,15 @@ Phase 2 provides explicit access and lifecycle operations for Profiles and Theme
 
 ## Phase 3 — Convert runtime consumers to the three scopes
 
-- [ ] Update MainWindow to obtain Global/Profile/Theme values from the correct owner.
-- [ ] Separate application of Profile state from application of Theme appearance where useful.
-- [ ] Update minimized-icon color behavior to read Theme state.
-- [ ] Ensure Profile switching applies categories, window state, and referenced Theme.
-- [ ] Ensure Theme changes update appearance without changing Profile content/state.
-- [ ] Ensure Global preference changes remain independent.
-- [ ] Verify character-specific Profile selection and Default fallback.
+- [x] Update MainWindow to obtain Global/Profile/Theme values from the correct owner.
+- [x] Separate application of Profile state from application of Theme appearance where useful.
+- [x] Update minimized-icon color behavior to read Theme state.
+- [x] Ensure Profile switching applies categories, window state, and referenced Theme.
+- [x] Ensure Theme changes update appearance without changing Profile content/state.
+- [x] Ensure Global preference changes remain independent.
+- [x] Verify character-specific Profile selection and Default fallback.
+
+MainWindow and minimized-icon color now read their explicit scopes. Profile switching rebinds all three scopes and cancels pending fades; Theme changes refresh appearance without running the full Profile switch or writing saved Profile geometry. Settings controls still use the temporary merged proxy until the UI phases. WoW frame geometry requires an in-game smoke test.
 
 ## Phase 4 — Redesign serialization
 

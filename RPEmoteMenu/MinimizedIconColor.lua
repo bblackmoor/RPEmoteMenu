@@ -14,12 +14,14 @@ local function CopyColor(color)
     }
 end
 
-local function GetSettings()
-    local settings = addon.Database.GetSettings()
-    if type(settings.minimizedIconColor) ~= "table" then
-        settings.minimizedIconColor = CopyColor(addon.DefaultSettings.minimizedIconColor)
+local function GetThemeSettings()
+    local themeSettings = addon.Database.GetThemeSettings()
+    if type(themeSettings.minimizedIconColor) ~= "table" then
+        themeSettings.minimizedIconColor = CopyColor(
+            addon.DefaultThemeSettings.minimizedIconColor
+        )
     end
-    return settings
+    return themeSettings
 end
 
 local function GetMinimizedIconButton()
@@ -33,7 +35,7 @@ function MinimizedIconColor.Apply()
         return
     end
 
-    local color = GetSettings().minimizedIconColor
+    local color = GetThemeSettings().minimizedIconColor
 
     -- Desaturating first lets the tint cover the full RGB range. A plain
     -- vertex multiply cannot turn the yellow source art blue, grey, etc.
@@ -43,7 +45,7 @@ end
 
 
 local function RefreshSwatch()
-    local color = GetSettings().minimizedIconColor
+    local color = GetThemeSettings().minimizedIconColor
     if colorControl then
         colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
     end
@@ -55,7 +57,7 @@ end
 
 
 local function SetColor(color)
-    GetSettings().minimizedIconColor = CopyColor(color)
+    GetThemeSettings().minimizedIconColor = CopyColor(color)
     RefreshSwatch()
     MinimizedIconColor.Apply()
 end
@@ -87,7 +89,7 @@ function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
     colorControl = button
 
     button:SetScript("OnClick", function()
-        local original = CopyColor(GetSettings().minimizedIconColor)
+        local original = CopyColor(GetThemeSettings().minimizedIconColor)
 
         local function ApplyPickerColor()
             local r, g, b = ColorPickerFrame:GetColorRGB()
@@ -114,7 +116,7 @@ function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
     resetButton:SetPoint("LEFT", button, "RIGHT", 12, 0)
     resetButton:SetText("Restore Yellow")
     resetButton:SetScript("OnClick", function()
-        SetColor(addon.DefaultSettings.minimizedIconColor)
+        SetColor(addon.DefaultThemeSettings.minimizedIconColor)
     end)
 
     local preview = CreateFrame("Frame", nil, parent)
@@ -146,6 +148,11 @@ hooksecurefunc(addon.MainWindow, "ApplyMinimizeToIconSettings", function()
 end)
 
 hooksecurefunc(addon.MainWindow, "ApplyProfileSettings", function()
+    MinimizedIconColor.Apply()
+    RefreshSwatch()
+end)
+
+hooksecurefunc(addon.MainWindow, "ApplyThemeSettings", function()
     MinimizedIconColor.Apply()
     RefreshSwatch()
 end)

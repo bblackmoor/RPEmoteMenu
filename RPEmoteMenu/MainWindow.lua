@@ -4,8 +4,18 @@ addon.MainWindow = {}
 
 local MainWindow = addon.MainWindow
 local Database = addon.Database
-local defaults = addon.DefaultSettings
-local settings
+local globalDefaults = addon.DefaultGlobalSettings
+local profileDefaults = addon.DefaultProfileSettings
+local themeDefaults = addon.DefaultThemeSettings
+local globalSettings
+local profileSettings
+local themeSettings
+
+local function BindSettings()
+    globalSettings = Database.GetGlobalSettings()
+    profileSettings = Database.GetProfileSettings()
+    themeSettings = Database.GetThemeSettings()
+end
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
 local selectedCategoryIndex = 1
@@ -114,7 +124,7 @@ local function ScheduleTooltip(owner, populateTooltip)
 
     local delayMs = math.max(
         0,
-        math.min(1000, tonumber(settings.tooltipDelayMs) or defaults.tooltipDelayMs)
+        math.min(1000, tonumber(globalSettings.tooltipDelayMs) or globalDefaults.tooltipDelayMs)
     )
     if delayMs == 0 then
         ShowIfStillHovered()
@@ -124,11 +134,11 @@ local function ScheduleTooltip(owner, populateTooltip)
 end
 
 local function IsTitleBarOnLeft()
-    return settings and settings.titleBarPosition == "LEFT"
+    return themeSettings and themeSettings.titleBarPosition == "LEFT"
 end
 
 local function GetMinimizeMode()
-    return settings and settings.minimizeMode or "NONE"
+    return profileSettings and profileSettings.minimizeMode or "NONE"
 end
 
 local function IsMinimizedToIcon()
@@ -149,7 +159,7 @@ end
 
 local function GetCurrentFrameSize(width, height)
     width = width or GetExpandedWidth()
-    height = height or settings.height
+    height = height or profileSettings.height
 
     if not isWindowAutoHidden then
         return width, height
@@ -198,12 +208,12 @@ function MainWindow.GetMinimizedIconButton()
 end
 
 local function UpdatePinButton()
-    if not PinBtn or not settings then
+    if not PinBtn or not profileSettings then
         return
     end
 
-    PinBtn.Icon:SetDesaturated(not settings.locked)
-    PinBtn.Icon:SetAlpha(settings.locked and 1 or 0.45)
+    PinBtn.Icon:SetDesaturated(not profileSettings.locked)
+    PinBtn.Icon:SetAlpha(profileSettings.locked and 1 or 0.45)
 end
 
 local function RefreshGeneralWindowFields()
@@ -258,8 +268,8 @@ local function CalculateColumnWidths()
                 widestCategory,
                 MeasureText(
                     categoryName,
-                    settings.categoryFont,
-                    settings.categoryFontSize
+                    themeSettings.categoryFont,
+                    themeSettings.categoryFontSize
                 )
             )
         end
@@ -271,8 +281,8 @@ local function CalculateColumnWidths()
                     widestEmote,
                     MeasureText(
                         label,
-                        settings.emoteFont,
-                        settings.emoteFontSize
+                        themeSettings.emoteFont,
+                        themeSettings.emoteFontSize
                     )
                 )
             end
@@ -282,8 +292,8 @@ local function CalculateColumnWidths()
     if widestCategory == 0 then
         widestCategory = MeasureText(
             "Add Category",
-            settings.categoryFont,
-            settings.categoryFontSize
+            themeSettings.categoryFont,
+            themeSettings.categoryFontSize
         )
     end
 
@@ -319,13 +329,13 @@ local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
 
     width = math.floor(tonumber(width)
         or GetExpandedWidth())
-    height = math.floor(tonumber(height) or settings.height or defaults.height)
+    height = math.floor(tonumber(height) or profileSettings.height or profileDefaults.height)
 
     width = math.min(screenWidth, width)
     height = math.max(minimumHeight, math.min(maximumHeight, screenHeight, height))
 
-    x = math.floor(tonumber(x) or settings.x or 0)
-    y = math.floor(tonumber(y) or settings.y or screenHeight)
+    x = math.floor(tonumber(x) or profileSettings.x or 0)
+    y = math.floor(tonumber(y) or profileSettings.y or screenHeight)
 
     -- Normal movement supplies the window's TOPLEFT point relative to
     -- UIParent's BOTTOMLEFT and keeps the entire frame on-screen. Advanced
@@ -342,7 +352,9 @@ local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
     return x, y, width, height
 end
 
-function MainWindow.ApplyWindowGeometry(x, y, width, height, preserveAnchor)
+function MainWindow.ApplyWindowGeometry(
+    x, y, width, height, preserveAnchor, preserveProfileGeometry
+)
     width = CalculateColumnWidths()
     x, y, width, height = ClampWindowGeometry(
         x,
@@ -352,19 +364,21 @@ function MainWindow.ApplyWindowGeometry(x, y, width, height, preserveAnchor)
         preserveAnchor
     )
 
-    if not preserveAnchor then
-        settings.point = "TOPLEFT"
-        settings.relativePoint = "BOTTOMLEFT"
+    if not preserveProfileGeometry then
+        if not preserveAnchor then
+            profileSettings.point = "TOPLEFT"
+            profileSettings.relativePoint = "BOTTOMLEFT"
+        end
+        profileSettings.x = x
+        profileSettings.y = y
+        profileSettings.height = height
     end
-    settings.x = x
-    settings.y = y
-    settings.height = height
 
     MainFrame:ClearAllPoints()
     MainFrame:SetPoint(
-        settings.point,
+        profileSettings.point,
         UIParent,
-        settings.relativePoint,
+        profileSettings.relativePoint,
         x,
         y
     )
@@ -390,13 +404,13 @@ local function SaveWindowPosition()
     end
 
     -- Always save the window relative to its upper-left corner.
-    settings.point = "TOPLEFT"
-    settings.relativePoint = "BOTTOMLEFT"
+    profileSettings.point = "TOPLEFT"
+    profileSettings.relativePoint = "BOTTOMLEFT"
 
     local width = GetExpandedWidth()
-    local x, y = ClampWindowGeometry(left, top, width, settings.height)
-    settings.x = x
-    settings.y = y
+    local x, y = ClampWindowGeometry(left, top, width, profileSettings.height)
+    profileSettings.x = x
+    profileSettings.y = y
 
     RefreshGeneralWindowFields()
 end
@@ -404,11 +418,11 @@ end
 local function RestoreWindowPosition()
     MainFrame:ClearAllPoints()
     MainFrame:SetPoint(
-        settings.point,
+        profileSettings.point,
         UIParent,
-        settings.relativePoint,
-        settings.x,
-        settings.y
+        profileSettings.relativePoint,
+        profileSettings.x,
+        profileSettings.y
     )
 end
 
@@ -424,11 +438,11 @@ local function SaveWindowSize()
             MainFrame:GetHeight()
         )
 
-        settings.point = "TOPLEFT"
-        settings.relativePoint = "BOTTOMLEFT"
-        settings.x = x
-        settings.y = y
-        settings.height = height
+        profileSettings.point = "TOPLEFT"
+        profileSettings.relativePoint = "BOTTOMLEFT"
+        profileSettings.x = x
+        profileSettings.y = y
+        profileSettings.height = height
 
         MainFrame:ClearAllPoints()
         MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
@@ -445,22 +459,22 @@ local function RestoreWindowSize()
         math.min(
             maximumHeight,
             math.floor(UIParent:GetHeight() + 0.5),
-            math.floor(tonumber(settings.height) or defaults.height)
+            math.floor(tonumber(profileSettings.height) or profileDefaults.height)
         )
     )
 
-    if settings.point ~= "CENTER" or settings.relativePoint ~= "CENTER" then
+    if profileSettings.point ~= "CENTER" or profileSettings.relativePoint ~= "CENTER" then
         local x, y
         x, y, width, height = ClampWindowGeometry(
-            settings.x,
-            settings.y,
+            profileSettings.x,
+            profileSettings.y,
             width,
             height
         )
-        settings.x = x
-        settings.y = y
+        profileSettings.x = x
+        profileSettings.y = y
     end
-    settings.height = height
+    profileSettings.height = height
     local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
     SetInternalFrameSize(frameWidth, frameHeight)
     if IsWindowBodyHidden() then
@@ -480,12 +494,12 @@ function MainWindow.ResetWindowPosition()
     -- Restore the full-size frame before applying its default anchor so the
     -- same saved geometry is used whether the body is visible or hidden.
     isApplyingColumnSize = true
-    MainFrame:SetSize(width, defaults.height)
+    MainFrame:SetSize(width, profileDefaults.height)
     isApplyingColumnSize = false
     RestoreWindowPosition()
 
     if IsWindowBodyHidden() then
-        local frameWidth, frameHeight = GetCurrentFrameSize(width, defaults.height)
+        local frameWidth, frameHeight = GetCurrentFrameSize(width, profileDefaults.height)
         SetInternalFrameSize(frameWidth, frameHeight)
     end
 
@@ -503,10 +517,10 @@ function MainWindow.CenterWindow()
         return
     end
 
-    settings.point = "CENTER"
-    settings.relativePoint = "CENTER"
-    settings.x = 0
-    settings.y = 0
+    profileSettings.point = "CENTER"
+    profileSettings.relativePoint = "CENTER"
+    profileSettings.x = 0
+    profileSettings.y = 0
     MainFrame:ClearAllPoints()
     MainFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     RefreshGeneralWindowFields()
@@ -653,7 +667,7 @@ ApplyAutomaticWidth = function()
     end
 
     local width = CalculateColumnWidths()
-    local frameWidth = GetCurrentFrameSize(width, settings.height)
+    local frameWidth = GetCurrentFrameSize(width, profileSettings.height)
     isApplyingColumnSize = true
     MainFrame:SetWidth(frameWidth)
     isApplyingColumnSize = false
@@ -668,7 +682,7 @@ ApplyAutomaticWidth = function()
 end
 
 function MainWindow.ApplyMovementLock()
-    local unlocked = not settings.locked
+    local unlocked = not profileSettings.locked
 
     MainFrame:SetMovable(unlocked)
     MainFrame:SetResizable(unlocked)
@@ -688,7 +702,7 @@ function MainWindow.ApplySettingsGearVisibility()
         return
     end
 
-    if settings.hideSettingsGear
+    if globalSettings.hideSettingsGear
         or (isWindowAutoHidden and IsMinimizedToIcon()) then
         SettingsBtn:Hide()
     else
@@ -787,7 +801,7 @@ local function RestoreActiveOpacity(animate)
 
     if MainFrame then
         SetWindowOpacity(
-            settings.windowOpacity,
+            themeSettings.windowOpacity,
             animate and fadeInDuration or nil
         )
     end
@@ -799,20 +813,20 @@ local function ScheduleInactiveFade()
 
     -- Minimized modes use ScheduleWindowAutoHide for both their fade and
     -- collapse. None leaves the complete window visible at inactive opacity.
-    if not settings.fadeEnabled or UsesMinimizedDisplay() or not MainFrame then
+    if not profileSettings.fadeEnabled or UsesMinimizedDisplay() or not MainFrame then
         return
     end
 
-    C_Timer.After(settings.fadeDelay, function()
+    C_Timer.After(profileSettings.fadeDelay, function()
         if requestedGeneration ~= fadeGeneration
-            or not settings.fadeEnabled
+            or not profileSettings.fadeEnabled
             or UsesMinimizedDisplay()
             or MainFrame:IsMouseOver() then
             return
         end
 
         SetWindowOpacity(
-            math.min(settings.inactiveOpacity, settings.windowOpacity),
+            math.min(profileSettings.inactiveOpacity, themeSettings.windowOpacity),
             fadeOutDuration
         )
     end)
@@ -826,7 +840,7 @@ end
 function MainWindow.ApplyFadeSettings()
     RestoreActiveOpacity()
 
-    if not settings.fadeEnabled then
+    if not profileSettings.fadeEnabled then
         CancelWindowAutoHide()
         SetWindowAutoHidden(false)
     elseif not UsesMinimizedDisplay() then
@@ -837,8 +851,8 @@ function MainWindow.ApplyFadeSettings()
         end
     elseif isWindowAutoHidden then
         local hiddenOpacity = math.min(
-            settings.inactiveOpacity,
-            settings.windowOpacity
+            profileSettings.inactiveOpacity,
+            themeSettings.windowOpacity
         )
         if IsMinimizedToIcon() then
             MinimizedIconButton:SetAlpha(hiddenOpacity)
@@ -858,8 +872,8 @@ function MainWindow.RefreshFontDisplays(updateLayout)
 
     local categoryApplied = true
     local emoteApplied = true
-    categoryButtonHeight = math.max(24, settings.categoryFontSize + 10)
-    emoteButtonHeight = math.max(20, settings.emoteFontSize + 8)
+    categoryButtonHeight = math.max(24, themeSettings.categoryFontSize + 10)
+    emoteButtonHeight = math.max(20, themeSettings.emoteFontSize + 8)
 
     -- Build and position every required button before applying fonts. Otherwise
     -- a newly created final label can miss the pane-wide consistency pass.
@@ -870,13 +884,13 @@ function MainWindow.RefreshFontDisplays(updateLayout)
     for _, button in ipairs(categoryButtons) do
         button:SetHeight(categoryButtonHeight)
         local textColor = button.categoryIndex == selectedCategoryIndex
-            and settings.selectedCategoryTextColor
-            or settings.categoryTextColor
+            and themeSettings.selectedCategoryTextColor
+            or themeSettings.categoryTextColor
 
         if not ApplyFont(
             button.Text,
-            settings.categoryFont,
-            settings.categoryFontSize,
+            themeSettings.categoryFont,
+            themeSettings.categoryFontSize,
             textColor,
             true
         ) then
@@ -886,9 +900,9 @@ function MainWindow.RefreshFontDisplays(updateLayout)
         for _, outlineText in ipairs(button.TextOutline) do
             if not ApplyFont(
                 outlineText,
-                settings.categoryFont,
-                settings.categoryFontSize,
-                settings.categoryHighlightColor,
+                themeSettings.categoryFont,
+                themeSettings.categoryFontSize,
+                themeSettings.categoryHighlightColor,
                 true
             ) then
                 categoryApplied = false
@@ -899,21 +913,21 @@ function MainWindow.RefreshFontDisplays(updateLayout)
     if not categoryApplied then
         for _, button in ipairs(categoryButtons) do
             local textColor = button.categoryIndex == selectedCategoryIndex
-                and settings.selectedCategoryTextColor
-                or settings.categoryTextColor
+                and themeSettings.selectedCategoryTextColor
+                or themeSettings.categoryTextColor
             ApplyFont(
                 button.Text,
-                defaults.categoryFont,
-                settings.categoryFontSize,
+                themeDefaults.categoryFont,
+                themeSettings.categoryFontSize,
                 textColor,
                 true
             )
             for _, outlineText in ipairs(button.TextOutline) do
                 ApplyFont(
                     outlineText,
-                    defaults.categoryFont,
-                    settings.categoryFontSize,
-                    settings.categoryHighlightColor,
+                    themeDefaults.categoryFont,
+                    themeSettings.categoryFontSize,
+                    themeSettings.categoryHighlightColor,
                     true
                 )
             end
@@ -924,9 +938,9 @@ function MainWindow.RefreshFontDisplays(updateLayout)
         button:SetHeight(emoteButtonHeight)
         if not ApplyFont(
             button.Text,
-            settings.emoteFont,
-            settings.emoteFontSize,
-            settings.emoteTextColor,
+            themeSettings.emoteFont,
+            themeSettings.emoteFontSize,
+            themeSettings.emoteTextColor,
             true
         ) then
             emoteApplied = false
@@ -937,15 +951,15 @@ function MainWindow.RefreshFontDisplays(updateLayout)
         for _, button in ipairs(buttonsPool) do
             ApplyFont(
                 button.Text,
-                defaults.emoteFont,
-                settings.emoteFontSize,
-                settings.emoteTextColor,
+                themeDefaults.emoteFont,
+                themeSettings.emoteFontSize,
+                themeSettings.emoteTextColor,
                 true
             )
         end
     end
 
-    local emoteColor = settings.emoteTextColor
+    local emoteColor = themeSettings.emoteTextColor
     if ScrollTopIndicator then
         ScrollTopIndicator:SetColorTexture(
             emoteColor.r, emoteColor.g, emoteColor.b, 1
@@ -990,16 +1004,16 @@ function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
 end
 
 local function ApplyMainFrameBackdrop()
-    local emoteBackground = settings.emoteBackgroundColor
-    local border = settings.borderColor
+    local emoteBackground = themeSettings.emoteBackgroundColor
+    local border = themeSettings.borderColor
     local backdrop = {
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground"
     }
 
-    if settings.borderStyle == "thin" then
+    if themeSettings.borderStyle == "thin" then
         backdrop.edgeFile = "Interface\\ChatFrame\\ChatFrameBackground"
         backdrop.edgeSize = 1
-    elseif settings.borderStyle == "blizzard" then
+    elseif themeSettings.borderStyle == "blizzard" then
         backdrop.edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border"
         backdrop.edgeSize = 12
         backdrop.insets = {left = 3, right = 3, top = 3, bottom = 3}
@@ -1020,8 +1034,8 @@ function MainWindow.ApplyAppearance()
         return
     end
 
-    local categoryBackground = settings.categoryBackgroundColor
-    local border = settings.borderColor
+    local categoryBackground = themeSettings.categoryBackgroundColor
+    local border = themeSettings.borderColor
 
     if not (isWindowAutoHidden and IsMinimizedToIcon()) then
         ApplyMainFrameBackdrop()
@@ -1034,7 +1048,7 @@ function MainWindow.ApplyAppearance()
         1
     )
 
-    local emoteBackground = settings.emoteBackgroundColor
+    local emoteBackground = themeSettings.emoteBackgroundColor
     for _, region in ipairs({
         EmoteBackgroundTop, EmoteBackgroundBottom,
         EmoteBackgroundLeft, EmoteBackgroundRight
@@ -1044,7 +1058,7 @@ function MainWindow.ApplyAppearance()
         )
     end
 
-    if settings.borderStyle == "none" then
+    if themeSettings.borderStyle == "none" then
         SidebarDivider:Hide()
     else
         SidebarDivider:SetColorTexture(border.r, border.g, border.b, 0.9)
@@ -1238,8 +1252,8 @@ local function ApplyEmoteHoverHighlight(button)
     -- Keep emote hover related to the category selection color, but quieter.
     -- Blending it toward the emote pane background reduces its saturation and
     -- contrast without introducing another profile setting.
-    local highlight = settings.categoryHighlightColor
-    local background = settings.emoteBackgroundColor
+    local highlight = themeSettings.categoryHighlightColor
+    local background = themeSettings.emoteBackgroundColor
     local blend = 0.45
 
     button.HoverHighlight:SetColorTexture(
@@ -1367,9 +1381,9 @@ local function GetContainerButton()
     button.Text:SetWordWrap(false)
     ApplyFont(
         button.Text,
-        settings.emoteFont,
-        settings.emoteFontSize,
-        settings.emoteTextColor
+        themeSettings.emoteFont,
+        themeSettings.emoteFontSize,
+        themeSettings.emoteTextColor
     )
 
     table.insert(buttonsPool, button)
@@ -1451,7 +1465,7 @@ local function ShowCategoryDropIndicator(button, insertBefore)
         categoryDropIndicator:SetHeight(2)
     end
 
-    local color = settings.categoryHighlightColor
+    local color = themeSettings.categoryHighlightColor
     categoryDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
     categoryDropIndicator:ClearAllPoints()
     categoryDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
@@ -1551,7 +1565,7 @@ local function ReorderVisibleCategories(sourcePosition, insertionPosition)
         categories[categoryIndex] = records[position]
         if records[position] == selectedCategory then
             selectedCategoryIndex = categoryIndex
-            settings.selectedCategory = categoryIndex
+            profileSettings.selectedCategory = categoryIndex
         end
     end
 
@@ -1624,7 +1638,7 @@ local function ShowEmoteDropIndicator(button, insertBefore)
         emoteDropIndicator:SetHeight(2)
     end
 
-    local color = settings.categoryHighlightColor
+    local color = themeSettings.categoryHighlightColor
     emoteDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
     emoteDropIndicator:ClearAllPoints()
     emoteDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
@@ -1806,10 +1820,10 @@ function MainWindow.ApplyCategoryHighlight(button, isSelected)
         return
     end
 
-    local color = settings.categoryHighlightColor
+    local color = themeSettings.categoryHighlightColor
     local effect = not isSelected and button.isHovered
         and "background"
-        or settings.categoryHighlightEffect
+        or themeSettings.categoryHighlightEffect
 
     if effect == "background" then
         button.Selection:SetColorTexture(
@@ -1820,7 +1834,7 @@ function MainWindow.ApplyCategoryHighlight(button, isSelected)
         )
         button.Selection:Show()
     elseif effect == "outline" then
-        local thickness = settings.categoryHighlightThickness
+        local thickness = themeSettings.categoryHighlightThickness
         for _, outlineText in ipairs(button.TextOutline) do
             outlineText:ClearAllPoints()
             outlineText:SetPoint(
@@ -1841,7 +1855,7 @@ function MainWindow.ApplyCategoryHighlight(button, isSelected)
             outlineText:Show()
         end
     elseif effect == "underline" then
-        button.SelectionUnderline:SetHeight(settings.categoryHighlightThickness)
+        button.SelectionUnderline:SetHeight(themeSettings.categoryHighlightThickness)
         button.SelectionUnderline:SetColorTexture(
             color.r, color.g, color.b, strength
         )
@@ -1850,7 +1864,7 @@ function MainWindow.ApplyCategoryHighlight(button, isSelected)
         button.Text:SetShadowColor(color.r, color.g, color.b, strength)
         button.Text:SetShadowOffset(2, -2)
     elseif effect == "separator" then
-        button.SelectionOutline.right:SetWidth(settings.categoryHighlightThickness)
+        button.SelectionOutline.right:SetWidth(themeSettings.categoryHighlightThickness)
         button.SelectionOutline.right:SetColorTexture(
             color.r, color.g, color.b, strength
         )
@@ -1888,8 +1902,8 @@ local function UpdateCategorySidebar()
             MainWindow.ApplyCategoryHighlight(button, isSelected)
 
             local textColor = isSelected
-                and settings.selectedCategoryTextColor
-                or settings.categoryTextColor
+                and themeSettings.selectedCategoryTextColor
+                or themeSettings.categoryTextColor
 
             button.Text:SetTextColor(
                 textColor.r,
@@ -1999,7 +2013,7 @@ function MainWindow.UpdateMenu()
         selectedCategoryIndex = FindFirstVisibleCategory()
     end
 
-    settings.selectedCategory = selectedCategoryIndex or defaults.selectedCategory
+    profileSettings.selectedCategory = selectedCategoryIndex or profileDefaults.selectedCategory
     UpdateCategorySidebar()
 
     if not selectedCategoryIndex then
@@ -2030,10 +2044,10 @@ function MainWindow.UpdateMenu()
         emoteButton.defaultCommand = defaultCommand
         emoteButton.targetedCommand = targetedCommand
         emoteButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        emoteButton.EditButton:SetShown(not settings.hideEmoteEditGears)
+        emoteButton.EditButton:SetShown(not globalSettings.hideEmoteEditGears)
         emoteButton.Text:ClearAllPoints()
         emoteButton.Text:SetPoint("LEFT", emoteButton, "LEFT", 7, 0)
-        if settings.hideEmoteEditGears then
+        if globalSettings.hideEmoteEditGears then
             emoteButton.Text:SetPoint("RIGHT", emoteButton, "RIGHT", -3, 0)
         else
             emoteButton.Text:SetPoint("RIGHT", emoteButton.EditButton, "LEFT", -8, 0)
@@ -2042,9 +2056,9 @@ function MainWindow.UpdateMenu()
         emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
         emoteButton.Text:SetText(label)
         emoteButton.Text:SetTextColor(
-            settings.emoteTextColor.r,
-            settings.emoteTextColor.g,
-            settings.emoteTextColor.b,
+            themeSettings.emoteTextColor.r,
+            themeSettings.emoteTextColor.g,
+            themeSettings.emoteTextColor.b,
             1
         )
         emoteButton:SetScript("OnClick", function(_, mouseButton)
@@ -2056,7 +2070,7 @@ function MainWindow.UpdateMenu()
                 return
             end
             addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
-            if settings.fadeEnabled and UsesMinimizedDisplay() then
+            if profileSettings.fadeEnabled and UsesMinimizedDisplay() then
                 SetWindowAutoHidden(true)
             end
         end)
@@ -2097,7 +2111,7 @@ local function ApplyMinimizedIconAnchor()
         return
     end
 
-    local rightAligned = settings.minimizedIconCorner == "TOPRIGHT"
+    local rightAligned = profileSettings.minimizedIconCorner == "TOPRIGHT"
     local iconPoint = rightAligned and "RIGHT" or "LEFT"
     local windowPoint = rightAligned and "TOPRIGHT" or "TOPLEFT"
 
@@ -2120,13 +2134,13 @@ local function UpdateWindowBodyVisibility()
     local width = GetExpandedWidth()
     local compactWidth, compactHeight = GetCurrentFrameSize(
         width,
-        settings.height
+        profileSettings.height
     )
 
     if IsWindowBodyHidden() then
         local hiddenOpacity = math.min(
-            settings.inactiveOpacity,
-            settings.windowOpacity
+            profileSettings.inactiveOpacity,
+            themeSettings.windowOpacity
         )
         SetCompactResizeBounds()
         CategorySidebar:Hide()
@@ -2145,8 +2159,8 @@ local function UpdateWindowBodyVisibility()
             MainFrame:SetBackdrop(nil)
             MainFrame:EnableMouse(false)
             MinimizedIconButton:SetSize(
-                settings.minimizedIconSize,
-                settings.minimizedIconSize
+                profileSettings.minimizedIconSize,
+                profileSettings.minimizedIconSize
             )
             ApplyMinimizedIconAnchor()
             MinimizedIconButton:SetAlpha(hiddenOpacity)
@@ -2168,7 +2182,7 @@ local function UpdateWindowBodyVisibility()
         -- Applying the normal bounds while the frame is still collapsed to
         -- titleBarThickness makes WoW clamp it to minimumHeight. OnSizeChanged
         -- then persists that clamped value over the user's chosen height.
-        SetInternalFrameSize(width, settings.height)
+        SetInternalFrameSize(width, profileSettings.height)
         SetNormalResizeBounds()
         TitleBar:Show()
         TitleText:Show()
@@ -2193,19 +2207,19 @@ local function UpdateWindowBodyVisibility()
 end
 
 function MainWindow.ApplyMinimizeToIconSettings()
-    if settings.minimizeMode ~= "TITLE_BAR"
-        and settings.minimizeMode ~= "ICON" then
-        settings.minimizeMode = "NONE"
+    if profileSettings.minimizeMode ~= "TITLE_BAR"
+        and profileSettings.minimizeMode ~= "ICON" then
+        profileSettings.minimizeMode = "NONE"
     end
-    settings.minimizedIconSize = math.max(
+    profileSettings.minimizedIconSize = math.max(
         addon.MIN_MINIMIZED_ICON_SIZE,
         math.min(
             addon.MAX_MINIMIZED_ICON_SIZE,
-            math.floor(tonumber(settings.minimizedIconSize)
-                or defaults.minimizedIconSize)
+            math.floor(tonumber(profileSettings.minimizedIconSize)
+                or profileDefaults.minimizedIconSize)
         )
     )
-    settings.minimizedIconCorner = settings.minimizedIconCorner == "TOPRIGHT"
+    profileSettings.minimizedIconCorner = profileSettings.minimizedIconCorner == "TOPRIGHT"
         and "TOPRIGHT"
         or "TOPLEFT"
     CancelWindowAutoHide()
@@ -2218,14 +2232,16 @@ function MainWindow.ApplyMinimizeToIconSettings()
     RefreshGeneralWindowFields()
 end
 
-function MainWindow.ApplyTitleBarPosition(preserveSavedPosition)
-    settings.titleBarPosition = settings.titleBarPosition == "LEFT"
+function MainWindow.ApplyTitleBarPosition(
+    preserveSavedPosition, preserveProfileGeometry
+)
+    themeSettings.titleBarPosition = themeSettings.titleBarPosition == "LEFT"
         and "LEFT"
         or "TOP"
 
-    local x, y = settings.x, settings.y
+    local x, y = profileSettings.x, profileSettings.y
     if not preserveSavedPosition and appliedTitleBarPosition
-        and appliedTitleBarPosition ~= settings.titleBarPosition then
+        and appliedTitleBarPosition ~= themeSettings.titleBarPosition then
         -- Keep the first content row (and its minimized-icon counterpart) at
         -- the same screen height while the title bar changes orientation.
         local oldOffset = appliedTitleBarPosition == "LEFT"
@@ -2237,13 +2253,13 @@ function MainWindow.ApplyTitleBarPosition(preserveSavedPosition)
         local top = MainFrame:GetTop()
         if top then
             local targetTop = top + newOffset - oldOffset
-            if settings.point == "CENTER"
-                and settings.relativePoint == "CENTER" then
+            if profileSettings.point == "CENTER"
+                and profileSettings.relativePoint == "CENTER" then
                 local left = MainFrame:GetLeft()
                 local width = CalculateColumnWidths()
                 local frameWidth, frameHeight = GetCurrentFrameSize(
                     width,
-                    settings.height
+                    profileSettings.height
                 )
                 if left then
                     x = left + frameWidth / 2 - UIParent:GetWidth() / 2
@@ -2255,8 +2271,10 @@ function MainWindow.ApplyTitleBarPosition(preserveSavedPosition)
         end
     end
 
-    MainWindow.ApplyWindowGeometry(x, y, nil, settings.height, true)
-    appliedTitleBarPosition = settings.titleBarPosition
+    MainWindow.ApplyWindowGeometry(
+        x, y, nil, profileSettings.height, true, preserveProfileGeometry
+    )
+    appliedTitleBarPosition = themeSettings.titleBarPosition
     ApplyMinimizedIconAnchor()
     UpdateWindowBodyVisibility()
 end
@@ -2264,7 +2282,7 @@ end
 SetWindowAutoHidden = function(hidden)
     hidden = not not hidden
 
-    if not settings.fadeEnabled or not UsesMinimizedDisplay() then
+    if not profileSettings.fadeEnabled or not UsesMinimizedDisplay() then
         hidden = false
     end
     if isWindowAutoHidden == hidden then
@@ -2276,7 +2294,7 @@ SetWindowAutoHidden = function(hidden)
 end
 
 ScheduleWindowAutoHide = function()
-    if not settings.fadeEnabled or not UsesMinimizedDisplay()
+    if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
         or isWindowAutoHidden
         or autoHideScheduled or autoHideFading then
         return
@@ -2286,14 +2304,14 @@ ScheduleWindowAutoHide = function()
     local requestedGeneration = autoHideGeneration
     autoHideScheduled = true
 
-    C_Timer.After(math.max(tonumber(settings.fadeDelay) or 0, 0), function()
+    C_Timer.After(math.max(tonumber(profileSettings.fadeDelay) or 0, 0), function()
         if requestedGeneration ~= autoHideGeneration then
             return
         end
 
         autoHideScheduled = false
 
-        if not settings.fadeEnabled or not UsesMinimizedDisplay()
+        if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
             or isWindowAutoHidden
             or not MainFrame or MainFrame:IsMouseOver() then
             return
@@ -2310,7 +2328,7 @@ ScheduleWindowAutoHide = function()
 
             autoHideFading = false
 
-            if not settings.fadeEnabled or not UsesMinimizedDisplay()
+            if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
                 or MainFrame:IsMouseOver() then
                 RestoreActiveOpacity(true)
                 return
@@ -2320,7 +2338,7 @@ ScheduleWindowAutoHide = function()
             if IsMinimizedToIcon() then
                 -- The icon is parented to UIParent, so MainFrame can remain
                 -- ready at active opacity behind it.
-                SetWindowOpacity(settings.windowOpacity)
+                SetWindowOpacity(themeSettings.windowOpacity)
             end
         end)
     end)
@@ -2328,7 +2346,7 @@ end
 
 -- MAIN WINDOW
 local function StartWindowMoving()
-    if settings.locked then
+    if profileSettings.locked then
         return
     end
 
@@ -2356,7 +2374,7 @@ local function StopWindowMoving()
     if left and top then
         -- Clamp using the expanded dimensions, even while the window is
         -- collapsed, so restoring the menu cannot place part of it off-screen.
-        MainWindow.ApplyWindowGeometry(left, top, nil, settings.height)
+        MainWindow.ApplyWindowGeometry(left, top, nil, profileSettings.height)
     else
         SaveWindowPosition()
     end
@@ -2381,7 +2399,7 @@ local function UpdateWindowDrag()
         left,
         top,
         GetExpandedWidth(),
-        settings.height
+        profileSettings.height
     )
     MainFrame:ClearAllPoints()
     MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
@@ -2392,7 +2410,7 @@ local function CreateMainFrame()
     MainFrame = CreateFrame("Frame", "RPEmoteMenu", UIParent, "BackdropTemplate")
     MainFrame:SetSize(
         GetExpandedWidth(),
-        defaults.height
+        profileDefaults.height
     )
     WidthMeasurementText = MainFrame:CreateFontString(nil, "OVERLAY")
     WidthMeasurementText:SetAlpha(0)
@@ -2408,10 +2426,10 @@ local function CreateMainFrame()
         if isApplyingColumnSize then return end
         local automaticWidth = GetCurrentFrameSize(
             GetExpandedWidth(),
-            settings.height
+            profileSettings.height
         )
         if isUserResizing and not IsWindowBodyHidden() then
-            settings.height = math.max(
+            profileSettings.height = math.max(
                 minimumHeight,
                 math.min(maximumHeight, math.floor(height + 0.5))
             )
@@ -2466,8 +2484,8 @@ local function CreateMinimizedIcon()
     MinimizedIconButton = CreateFrame("Button", nil, UIParent)
     ApplyMinimizedIconAnchor()
     MinimizedIconButton:SetSize(
-        defaults.minimizedIconSize,
-        defaults.minimizedIconSize
+        profileDefaults.minimizedIconSize,
+        profileDefaults.minimizedIconSize
     )
     MinimizedIconButton:SetFrameStrata(MainFrame:GetFrameStrata())
     MinimizedIconButton:SetFrameLevel(MainFrame:GetFrameLevel() + 5)
@@ -2632,9 +2650,9 @@ local function CreateCategorySidebar()
             button.defaultShadowA = button.Text:GetShadowColor()
         ApplyFont(
             button.Text,
-            settings.categoryFont,
-            settings.categoryFontSize,
-            settings.categoryTextColor
+            themeSettings.categoryFont,
+            themeSettings.categoryFontSize,
+            themeSettings.categoryTextColor
         )
 
         button:SetScript("OnEnter", function(self)
@@ -2710,9 +2728,9 @@ local function CreateEmoteArea()
     ScrollTopIndicator:SetPoint("TOPLEFT", ScrollFrame, "TOPLEFT", 6, -1)
     ScrollTopIndicator:SetPoint("TOPRIGHT", ScrollFrame, "TOPRIGHT", -6, -1)
     ScrollTopIndicator:SetColorTexture(
-        settings.emoteTextColor.r,
-        settings.emoteTextColor.g,
-        settings.emoteTextColor.b,
+        themeSettings.emoteTextColor.r,
+        themeSettings.emoteTextColor.g,
+        themeSettings.emoteTextColor.b,
         1
     )
     ScrollTopIndicator:Hide()
@@ -2722,9 +2740,9 @@ local function CreateEmoteArea()
     ScrollBottomIndicator:SetPoint("BOTTOMLEFT", ScrollFrame, "BOTTOMLEFT", 6, 1)
     ScrollBottomIndicator:SetPoint("BOTTOMRIGHT", ScrollFrame, "BOTTOMRIGHT", -6, 1)
     ScrollBottomIndicator:SetColorTexture(
-        settings.emoteTextColor.r,
-        settings.emoteTextColor.g,
-        settings.emoteTextColor.b,
+        themeSettings.emoteTextColor.r,
+        themeSettings.emoteTextColor.g,
+        themeSettings.emoteTextColor.b,
         1
     )
     ScrollBottomIndicator:Hide()
@@ -2757,7 +2775,7 @@ local function CreateTitleBarControls()
     )
 
     PinBtn:SetScript("OnClick", function()
-        settings.locked = not settings.locked
+        profileSettings.locked = not profileSettings.locked
         UpdatePinButton()
         MainWindow.ApplyMovementLock()
         RefreshGeneralWindowFields()
@@ -2769,9 +2787,9 @@ local function CreateTitleBarControls()
                 self,
                 IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
             )
-            GameTooltip:SetText(settings.locked and "Window locked" or "Window unlocked")
+            GameTooltip:SetText(profileSettings.locked and "Window locked" or "Window unlocked")
             GameTooltip:AddLine(
-                settings.locked
+                profileSettings.locked
                     and "The window position and height are locked."
                     or "The window can be moved and resized vertically.",
                 1,
@@ -2828,7 +2846,7 @@ local function CreateResizeGrip()
     ResizeGrip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     ResizeGrip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
     ResizeGrip:SetScript("OnMouseDown", function(_, button)
-        if button == "LeftButton" and not settings.locked
+        if button == "LeftButton" and not profileSettings.locked
             and not IsWindowBodyHidden() then
             isUserResizing = true
             MainFrame:StartSizing("BOTTOM")
@@ -2877,7 +2895,7 @@ local function InstallWindowScripts()
         end
         mouseCheckElapsed = 0
 
-        if not settings.fadeEnabled
+        if not profileSettings.fadeEnabled
             or (isWindowAutoHidden and IsMinimizedToIcon()) then
             return
         end
@@ -2905,7 +2923,7 @@ local function FinishMainWindowCreation()
     -- button instead of trying to rediscover it by its not-yet-ready atlas.
     C_Timer.After(0, UpdatePinButton)
 
-    if settings.showAtLogin then
+    if globalSettings.showAtLogin then
         MainFrame:Show()
     else
         MainFrame:Hide()
@@ -2913,8 +2931,8 @@ local function FinishMainWindowCreation()
 end
 
 function MainWindow.CreateMainWindow()
-    settings = Database.GetSettings()
-    selectedCategoryIndex = settings.selectedCategory
+    BindSettings()
+    selectedCategoryIndex = profileSettings.selectedCategory
     CreateMainFrame()
     CreateTitleBar()
     CreateMinimizedIcon()
@@ -2926,15 +2944,32 @@ function MainWindow.CreateMainWindow()
     FinishMainWindowCreation()
 end
 
+function MainWindow.ApplyThemeSettings()
+    -- A Theme change keeps the current Profile and its selected category.
+    themeSettings = Database.GetThemeSettings()
+    if not MainFrame then return end
+
+    MainWindow.ApplyTitleBarPosition(true, true)
+    MainWindow.ApplyAppearance()
+    MainWindow.UpdateMenu()
+    MainWindow.ScheduleFontRefreshes(true)
+end
+
 function MainWindow.ApplyProfileSettings()
-    settings = Database.GetSettings()
-    selectedCategoryIndex = settings.selectedCategory
+    BindSettings()
+    selectedCategoryIndex = profileSettings.selectedCategory
 
     if not MainFrame then
         return
     end
 
-    -- Apply profile layout before restoring the saved global geometry.
+    -- Stop delayed fades from the previous Profile before applying its
+    -- replacement. Window geometry and minimize behavior belong to Profile.
+    CancelWindowAutoHide()
+    fadeGeneration = fadeGeneration + 1
+    isWindowAutoHidden = profileSettings.fadeEnabled and UsesMinimizedDisplay()
+
+    -- Apply Theme layout before restoring the saved Profile geometry.
     MainWindow.ApplyTitleBarPosition(true)
     RestoreWindowSize()
     RestoreWindowPosition()
@@ -2943,7 +2978,6 @@ function MainWindow.ApplyProfileSettings()
     MainWindow.ApplyAppearance()
     UpdatePinButton()
 
-    isWindowAutoHidden = settings.fadeEnabled and UsesMinimizedDisplay()
     UpdateWindowBodyVisibility()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)
@@ -2959,8 +2993,8 @@ function MainWindow.SetSelectedCategory(categoryIndex)
 
     selectedCategoryIndex = categoryIndex
 
-    if settings then
-        settings.selectedCategory = categoryIndex
+    if profileSettings then
+        profileSettings.selectedCategory = categoryIndex
     end
 end
 
