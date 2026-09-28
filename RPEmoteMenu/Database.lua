@@ -4,25 +4,23 @@ addon.Database = {}
 
 local Database = addon.Database
 local defaultSections = addon.DefaultSections
-local defaults = addon.DefaultSettings
 local globalDefaults = addon.DefaultGlobalSettings
 local profileDefaults = addon.DefaultProfileSettings
+local themeDefaults = addon.DefaultThemeSettings
 local globalSettingKeys = addon.GlobalSettingKeys
 local profileSettingKeys = addon.ProfileSettingKeys
-local builtInProfiles = addon.BuiltInProfiles or {}
-local builtInProfileVersion = addon.BuiltInProfileVersion or 0
-local builtInProfileByName = {}
+local themeSettingKeys = addon.ThemeSettingKeys
+local builtInThemes = addon.BuiltInThemes or {}
+local builtInThemeByName = {}
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
-local SCHEMA_VERSION = 14
-local VERSION_ONE_SCHEMA_MAX = 6
-local HIGH_CONTRAST_BUILT_IN_VERSION = 3
-local UNLOCKED_BUILT_IN_VERSION = 4
+local SCHEMA_VERSION = 15
 local DEFAULT_PROFILE_NAME = "Default"
+local DEFAULT_THEME_NAME = "Default"
 local MAX_PROFILE_NAME_LENGTH = 64
 
-for _, definition in ipairs(builtInProfiles) do
-    builtInProfileByName[definition.name] = definition
+for _, definition in ipairs(builtInThemes) do
+    builtInThemeByName[definition.name] = definition
 end
 
 local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
@@ -59,12 +57,16 @@ local COLOR_SETTING_KEYS = {
 }
 local globalSettingLookup = {}
 local profileSettingLookup = {}
+local themeSettingLookup = {}
 
 for _, key in ipairs(globalSettingKeys) do
     globalSettingLookup[key] = true
 end
 for _, key in ipairs(profileSettingKeys) do
     profileSettingLookup[key] = true
+end
+for _, key in ipairs(themeSettingKeys) do
+    themeSettingLookup[key] = true
 end
 
 local function NormalizeString(value)
@@ -203,46 +205,9 @@ local function NormalizeGlobalSettings(source)
                 or defaultValue
     end
 
-    if VALID_MINIMIZE_MODES[source.minimizeMode] then
-        result.minimizeMode = source.minimizeMode
-    else
-        result.minimizeMode = globalDefaults.minimizeMode
-    end
-
-    result.height = math.floor(ClampNumber(source.height, 150, 630, globalDefaults.height))
-    result.minimizedIconSize = math.floor(ClampNumber(
-        source.minimizedIconSize,
-        addon.MIN_MINIMIZED_ICON_SIZE,
-        addon.MAX_MINIMIZED_ICON_SIZE,
-        globalDefaults.minimizedIconSize
-    ))
-    if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
-        result.minimizedIconCorner = globalDefaults.minimizedIconCorner
-    end
-    result.x = math.floor(ClampNumber(source.x, -100000, 100000, globalDefaults.x))
-    result.y = math.floor(ClampNumber(source.y, -100000, 100000, globalDefaults.y))
-
-    if not VALID_ANCHOR_POINTS[result.point] then
-        result.point = globalDefaults.point
-    end
-    if not VALID_ANCHOR_POINTS[result.relativePoint] then
-        result.relativePoint = globalDefaults.relativePoint
-    end
-    if result.selectedCategory % 1 ~= 0
-        or result.selectedCategory < 1
-        or result.selectedCategory > MAX_CATEGORIES then
-        result.selectedCategory = globalDefaults.selectedCategory
-    end
-
-    result.fadeDelay = math.floor(ClampNumber(
-        source.fadeDelay, 0, 60, globalDefaults.fadeDelay
-    ))
     result.tooltipDelayMs = math.floor(ClampNumber(
         source.tooltipDelayMs, 0, 1000, globalDefaults.tooltipDelayMs
     ))
-    result.inactiveOpacity = ClampNumber(
-        source.inactiveOpacity, 0.1, 1, globalDefaults.inactiveOpacity
-    )
 
     return result
 end
@@ -251,8 +216,58 @@ end
 local function NormalizeProfileSettings(source)
     source = type(source) == "table" and source or {}
     local result = {}
-
     for key, defaultValue in pairs(profileDefaults) do
+        result[key] = IsValidSavedValue(source[key], defaultValue)
+            and source[key] or defaultValue
+    end
+
+    if VALID_MINIMIZE_MODES[source.minimizeMode] then
+        result.minimizeMode = source.minimizeMode
+    else
+        result.minimizeMode = profileDefaults.minimizeMode
+    end
+
+    result.height = math.floor(ClampNumber(source.height, 150, 630, profileDefaults.height))
+    result.minimizedIconSize = math.floor(ClampNumber(
+        source.minimizedIconSize,
+        addon.MIN_MINIMIZED_ICON_SIZE,
+        addon.MAX_MINIMIZED_ICON_SIZE,
+        profileDefaults.minimizedIconSize
+    ))
+    if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
+        result.minimizedIconCorner = profileDefaults.minimizedIconCorner
+    end
+    result.x = math.floor(ClampNumber(source.x, -100000, 100000, profileDefaults.x))
+    result.y = math.floor(ClampNumber(source.y, -100000, 100000, profileDefaults.y))
+
+    if not VALID_ANCHOR_POINTS[result.point] then
+        result.point = profileDefaults.point
+    end
+    if not VALID_ANCHOR_POINTS[result.relativePoint] then
+        result.relativePoint = profileDefaults.relativePoint
+    end
+    if result.selectedCategory % 1 ~= 0
+        or result.selectedCategory < 1
+        or result.selectedCategory > MAX_CATEGORIES then
+        result.selectedCategory = profileDefaults.selectedCategory
+    end
+
+    result.fadeDelay = math.floor(ClampNumber(
+        source.fadeDelay, 0, 60, profileDefaults.fadeDelay
+    ))
+    result.inactiveOpacity = ClampNumber(
+        source.inactiveOpacity, 0.1, 1, profileDefaults.inactiveOpacity
+    )
+
+    return result
+end
+
+
+local function NormalizeThemeSettings(source)
+    source = type(source) == "table" and source or {}
+    local result = {}
+
+    for key, defaultValue in pairs(themeDefaults) do
         if type(defaultValue) ~= "table" then
             result[key] = IsValidSavedValue(source[key], defaultValue)
                 and source[key]
@@ -261,41 +276,41 @@ local function NormalizeProfileSettings(source)
     end
 
     if strtrim(result.categoryFont) == "" then
-        result.categoryFont = profileDefaults.categoryFont
+        result.categoryFont = themeDefaults.categoryFont
     end
     if strtrim(result.emoteFont) == "" then
-        result.emoteFont = profileDefaults.emoteFont
+        result.emoteFont = themeDefaults.emoteFont
     end
 
     result.categoryFontSize = math.floor(ClampNumber(
-        source.categoryFontSize, 8, 24, profileDefaults.categoryFontSize
+        source.categoryFontSize, 8, 24, themeDefaults.categoryFontSize
     ))
     result.emoteFontSize = math.floor(ClampNumber(
-        source.emoteFontSize, 8, 24, profileDefaults.emoteFontSize
+        source.emoteFontSize, 8, 24, themeDefaults.emoteFontSize
     ))
     result.categoryHighlightThickness = math.floor(ClampNumber(
         source.categoryHighlightThickness,
         1,
         6,
-        profileDefaults.categoryHighlightThickness
+        themeDefaults.categoryHighlightThickness
     ))
 
     for _, key in ipairs(COLOR_SETTING_KEYS) do
-        result[key] = NormalizeColor(source[key], profileDefaults[key])
+        result[key] = NormalizeColor(source[key], themeDefaults[key])
     end
 
     if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[result.categoryHighlightEffect] then
-        result.categoryHighlightEffect = profileDefaults.categoryHighlightEffect
+        result.categoryHighlightEffect = themeDefaults.categoryHighlightEffect
     end
     if not VALID_BORDER_STYLES[result.borderStyle] then
-        result.borderStyle = profileDefaults.borderStyle
+        result.borderStyle = themeDefaults.borderStyle
     end
     if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
-        result.titleBarPosition = profileDefaults.titleBarPosition
+        result.titleBarPosition = themeDefaults.titleBarPosition
     end
 
     result.windowOpacity = ClampNumber(
-        source.windowOpacity, 0.1, 1, profileDefaults.windowOpacity
+        source.windowOpacity, 0.1, 1, themeDefaults.windowOpacity
     )
 
     return result
@@ -304,6 +319,11 @@ end
 
 local function CopyProfileSettings(source)
     return NormalizeProfileSettings(source)
+end
+
+
+local function CopyThemeSettings(source)
+    return NormalizeThemeSettings(source)
 end
 
 
@@ -358,6 +378,17 @@ function Database.GetProfiles()
 end
 
 
+local function GetProfileTheme(profile)
+    local themeName = profile and profile.theme
+    local theme = type(themeName) == "string" and RPEmoteMenuDB.themes[themeName]
+    if type(theme) ~= "table" then
+        theme = RPEmoteMenuDB.themes[DEFAULT_THEME_NAME]
+        if profile then profile.theme = DEFAULT_THEME_NAME end
+    end
+    return theme
+end
+
+
 local settingsProxy = setmetatable({}, {
     __index = function(_, key)
         if globalSettingLookup[key] then
@@ -367,6 +398,10 @@ local settingsProxy = setmetatable({}, {
             local profile = Database.GetActiveProfile()
             return profile and profile.settings[key] or profileDefaults[key]
         end
+        if themeSettingLookup[key] then
+            local theme = GetProfileTheme(Database.GetActiveProfile())
+            return theme and theme.settings[key] or themeDefaults[key]
+        end
     end,
     __newindex = function(_, key, value)
         if globalSettingLookup[key] then
@@ -375,6 +410,10 @@ local settingsProxy = setmetatable({}, {
         end
         if profileSettingLookup[key] then
             Database.GetActiveProfile().settings[key] = value
+            return
+        end
+        if themeSettingLookup[key] then
+            GetProfileTheme(Database.GetActiveProfile()).settings[key] = value
             return
         end
 
@@ -400,8 +439,20 @@ function Database.GetProfileSettings(profileName)
 end
 
 
+function Database.GetThemeSettings(themeName)
+    local theme = themeName and RPEmoteMenuDB.themes[themeName]
+        or GetProfileTheme(Database.GetActiveProfile())
+    return theme and theme.settings
+end
+
+
 function Database.CopyProfileSettings(source)
     return CopyProfileSettings(source)
+end
+
+
+function Database.CopyThemeSettings(source)
+    return CopyThemeSettings(source)
 end
 
 
@@ -411,10 +462,10 @@ end
 
 
 function Database.ResetWindowLayout()
-    local globalSettings = RPEmoteMenuDB.globalSettings
+    local settings = Database.GetProfileSettings()
 
     for _, key in ipairs({"point", "relativePoint", "x", "y", "height"}) do
-        globalSettings[key] = globalDefaults[key]
+        settings[key] = profileDefaults[key]
     end
 end
 
@@ -457,145 +508,16 @@ local function FindProfileByName(profileName)
 end
 
 
-local function CopyBuiltInProfile(definition)
-    return {
-        categories = CopyDefaultCategories(),
-        settings = CopyProfileSettings(definition.settings)
-    }
+local function CopyBuiltInTheme(definition)
+    return {settings = CopyThemeSettings(definition.settings)}
 end
 
 
-local function InstallBuiltInProfileUpdates()
-    local installedVersion = tonumber(RPEmoteMenuDB.builtInProfileVersion) or 0
-    if installedVersion >= builtInProfileVersion then
-        return
-    end
-
-    for _, definition in ipairs(builtInProfiles) do
-        local existingName = FindProfileByName(definition.name)
-
-        if not existingName then
-            RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
-        else
-            local profileSettings = RPEmoteMenuDB.profiles[existingName].settings
-
-            if installedVersion < UNLOCKED_BUILT_IN_VERSION then
-                -- Version 4 replaces High Contrast's thick simulated text
-                -- outline, which can obscure large category labels, with a
-                -- yellow selection background and nearly black selected text.
-                if definition.name == "High Contrast" then
-                    profileSettings.categoryHighlightColor = NormalizeColor(
-                        definition.settings.categoryHighlightColor,
-                        profileDefaults.categoryHighlightColor
-                    )
-                    profileSettings.categoryHighlightEffect =
-                        definition.settings.categoryHighlightEffect
-                    profileSettings.categoryHighlightThickness =
-                        definition.settings.categoryHighlightThickness
-                    profileSettings.selectedCategoryTextColor = NormalizeColor(
-                        definition.settings.selectedCategoryTextColor,
-                        profileDefaults.selectedCategoryTextColor
-                    )
-                end
-            end
+local function InstallBuiltInThemes()
+    for _, definition in ipairs(builtInThemes) do
+        if type(RPEmoteMenuDB.themes[definition.name]) ~= "table" then
+            RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
         end
-    end
-
-    RPEmoteMenuDB.builtInProfileVersion = builtInProfileVersion
-end
-
-
-local function UniqueVersionOneProfileName(profileName)
-    local suffixNumber = 1
-
-    while true do
-        local suffix = suffixNumber == 1
-            and " (Version 1)"
-            or " (Version 1 " .. suffixNumber .. ")"
-        local base = strtrim(
-            profileName:sub(1, MAX_PROFILE_NAME_LENGTH - #suffix)
-        )
-        local candidate = base .. suffix
-
-        if not FindProfileByName(candidate) then
-            return candidate
-        end
-
-        suffixNumber = suffixNumber + 1
-    end
-end
-
-
-local function UniqueCustomProfileName(profileName)
-    local suffixNumber = 1
-
-    while true do
-        local suffix = suffixNumber == 1
-            and " (Custom)"
-            or " (Custom " .. suffixNumber .. ")"
-        local base = strtrim(
-            profileName:sub(1, MAX_PROFILE_NAME_LENGTH - #suffix)
-        )
-        local candidate = base .. suffix
-
-        if not FindProfileByName(candidate) then
-            return candidate
-        end
-
-        suffixNumber = suffixNumber + 1
-    end
-end
-
-
-local function MoveProfileAndAssignments(oldName, newName)
-    RPEmoteMenuDB.profiles[newName] = RPEmoteMenuDB.profiles[oldName]
-    RPEmoteMenuDB.profiles[oldName] = nil
-
-    for characterKey, activeProfileName in pairs(
-        RPEmoteMenuDB.activeProfiles
-    ) do
-        if activeProfileName == oldName then
-            RPEmoteMenuDB.activeProfiles[characterKey] = newName
-        end
-    end
-end
-
-
-local function PreserveVersionOneBundledNameCollisions()
-    local savedSchemaVersion = tonumber(RPEmoteMenuDB.schemaVersion) or 0
-    local installedBuiltInVersion = tonumber(
-        RPEmoteMenuDB.builtInProfileVersion
-    ) or 0
-
-    if savedSchemaVersion > VERSION_ONE_SCHEMA_MAX
-        or installedBuiltInVersion > 0 then
-        return
-    end
-
-    for _, definition in ipairs(builtInProfiles) do
-        local existingName = FindProfileByName(definition.name)
-
-        if existingName then
-            local preservedName = UniqueVersionOneProfileName(existingName)
-            MoveProfileAndAssignments(existingName, preservedName)
-        end
-    end
-end
-
-
-local function PreserveHighContrastNameCollision()
-    local installedBuiltInVersion = tonumber(
-        RPEmoteMenuDB.builtInProfileVersion
-    ) or 0
-
-    if installedBuiltInVersion >= HIGH_CONTRAST_BUILT_IN_VERSION then
-        return
-    end
-
-    local existingName = FindProfileByName("High Contrast")
-    if existingName then
-        local preservedName = UniqueCustomProfileName(existingName)
-        MoveProfileAndAssignments(existingName, preservedName)
     end
 end
 
@@ -678,16 +600,7 @@ function Database.GetProfileNames()
 end
 
 
-function Database.IsBuiltInProfileName(profileName)
-    return builtInProfileByName[profileName] ~= nil
-end
-
-
 function Database.GetProfileDisplayName(profileName)
-    if Database.IsBuiltInProfileName(profileName) then
-        return profileName .. " (Bundled)"
-    end
-
     return profileName
 end
 
@@ -695,11 +608,6 @@ end
 function Database.GetProfileDescription(profileName)
     if profileName == DEFAULT_PROFILE_NAME then
         return "Editable built-in fallback profile. Its name is reserved."
-    end
-
-    local definition = builtInProfileByName[profileName]
-    if definition then
-        return definition.description or "Editable bundled profile."
     end
 
     return "Custom profile."
@@ -723,7 +631,7 @@ function Database.SetActiveProfile(profileName)
 end
 
 
-function Database.CreateProfile(profileName, sourceCategories, sourceSettings)
+function Database.CreateProfile(profileName, sourceCategories, sourceSettings, sourceThemeName)
     local validName, errorMessage = ValidateNewProfileName(profileName)
     if not validName then
         return false, errorMessage
@@ -739,6 +647,9 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings)
         or Database.GetProfileSettings()
 
     RPEmoteMenuDB.profiles[validName] = {
+        theme = type(sourceThemeName) == "string"
+            and RPEmoteMenuDB.themes[sourceThemeName] and sourceThemeName
+            or Database.GetActiveProfile().theme,
         categories = type(sourceCategories) == "table"
             and CopyCategories(sourceCategories)
             or CopyDefaultCategories(),
@@ -757,7 +668,9 @@ function Database.CopyProfile(sourceProfileName, newProfileName)
         return false, "The source profile does not exist."
     end
 
-    return Database.CreateProfile(newProfileName, source.categories, source.settings)
+    return Database.CreateProfile(
+        newProfileName, source.categories, source.settings, source.theme
+    )
 end
 
 
@@ -844,7 +757,25 @@ function Database.AddImportedProfiles(importedProfiles)
 
     for _, imported in ipairs(importedProfiles or {}) do
         local profileName = ImportedProfileName(imported.name)
+        local themeName = type(imported.theme) == "string"
+            and RPEmoteMenuDB.themes[imported.theme] and imported.theme
+            or DEFAULT_THEME_NAME
+        -- Until the separate Theme exchange format arrives, a legacy visual
+        -- Profile import gets its own Theme so it cannot alter another Profile.
+        if type(imported.themeSettings) == "table" then
+            local baseName = "Imported " .. profileName
+            themeName = baseName
+            local suffix = 2
+            while RPEmoteMenuDB.themes[themeName] do
+                themeName = baseName .. " " .. suffix
+                suffix = suffix + 1
+            end
+            RPEmoteMenuDB.themes[themeName] = {
+                settings = CopyThemeSettings(imported.themeSettings)
+            }
+        end
         RPEmoteMenuDB.profiles[profileName] = {
+            theme = themeName,
             categories = CopyCategories(imported.categories),
             settings = CopyProfileSettings(imported.settings)
         }
@@ -857,79 +788,77 @@ end
 
 
 function Database.InitializeDatabase()
-    RPEmoteMenuDB = type(RPEmoteMenuDB) == "table" and RPEmoteMenuDB or {}
+    -- The former Global/Profile hybrid is intentionally not migrated.
+    if type(RPEmoteMenuDB) ~= "table"
+        or RPEmoteMenuDB.schemaVersion ~= SCHEMA_VERSION then
+        RPEmoteMenuDB = {
+            schemaVersion = SCHEMA_VERSION,
+            globalSettings = NormalizeGlobalSettings(globalDefaults),
+            profiles = {
+                [DEFAULT_PROFILE_NAME] = {
+                    theme = DEFAULT_THEME_NAME,
+                    categories = CopyDefaultCategories(),
+                    settings = CopyProfileSettings(profileDefaults)
+                }
+            },
+            themes = {
+                [DEFAULT_THEME_NAME] = {settings = CopyThemeSettings(themeDefaults)}
+            },
+            activeProfiles = {}
+        }
+        InstallBuiltInThemes()
+    end
 
+    RPEmoteMenuDB.globalSettings = NormalizeGlobalSettings(RPEmoteMenuDB.globalSettings)
     RPEmoteMenuDB.profiles = type(RPEmoteMenuDB.profiles) == "table"
-        and RPEmoteMenuDB.profiles
-        or {}
+        and RPEmoteMenuDB.profiles or {}
+    RPEmoteMenuDB.themes = type(RPEmoteMenuDB.themes) == "table"
+        and RPEmoteMenuDB.themes or {}
     RPEmoteMenuDB.activeProfiles = type(RPEmoteMenuDB.activeProfiles) == "table"
-        and RPEmoteMenuDB.activeProfiles
-        or {}
+        and RPEmoteMenuDB.activeProfiles or {}
 
-    local existingDefault = RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME]
-    local defaultCategories = existingDefault and existingDefault.categories
-        and NormalizeCategories(existingDefault.categories)
-        or CopyDefaultCategories()
-    local defaultSettings = existingDefault and existingDefault.settings
-        and NormalizeProfileSettings(existingDefault.settings)
-        or CopyProfileSettings(profileDefaults)
-
-    local invalidProfiles = {}
-    for profileName, profile in pairs(RPEmoteMenuDB.profiles) do
-        if type(profileName) ~= "string"
-            or profileName == ""
-            or type(profile) ~= "table" then
-            invalidProfiles[#invalidProfiles + 1] = profileName
-        elseif profileName ~= DEFAULT_PROFILE_NAME then
-            profile.categories = type(profile.categories) == "table"
-                and NormalizeCategories(profile.categories)
-                or CopyDefaultCategories()
-            profile.settings = type(profile.settings) == "table"
-                and NormalizeProfileSettings(profile.settings)
-                or CopyProfileSettings(profileDefaults)
+    for name, theme in pairs(RPEmoteMenuDB.themes) do
+        if type(name) ~= "string" or name == "" or type(theme) ~= "table" then
+            RPEmoteMenuDB.themes[name] = nil
+        else
+            theme.settings = CopyThemeSettings(theme.settings)
         end
     end
-
-    for _, profileName in ipairs(invalidProfiles) do
-        RPEmoteMenuDB.profiles[profileName] = nil
+    if not RPEmoteMenuDB.themes[DEFAULT_THEME_NAME] then
+        RPEmoteMenuDB.themes[DEFAULT_THEME_NAME] = {
+            settings = CopyThemeSettings(themeDefaults)
+        }
     end
 
-    -- Version 1 allowed custom profiles to use names that Version 2 reserves
-    -- for its bundled themes. Preserve those profiles under unique names
-    -- before installing the bundled set, and keep character assignments on
-    -- the preserved copies.
-    PreserveVersionOneBundledNameCollisions()
+    for name, profile in pairs(RPEmoteMenuDB.profiles) do
+        if type(name) ~= "string" or name == "" or type(profile) ~= "table" then
+            RPEmoteMenuDB.profiles[name] = nil
+        else
+            profile.categories = type(profile.categories) == "table"
+                and NormalizeCategories(profile.categories) or CopyDefaultCategories()
+            profile.settings = CopyProfileSettings(profile.settings)
+            if type(profile.theme) ~= "string"
+                or not RPEmoteMenuDB.themes[profile.theme] then
+                profile.theme = DEFAULT_THEME_NAME
+            end
+        end
+    end
+    if not RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] then
+        RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
+            theme = DEFAULT_THEME_NAME,
+            categories = CopyDefaultCategories(),
+            settings = CopyProfileSettings(profileDefaults)
+        }
+    end
 
-    -- Version 3 adds High Contrast as a bundled profile. Preserve an older
-    -- custom profile with that name before reserving and installing it.
-    PreserveHighContrastNameCollision()
-
-    RPEmoteMenuDB.defaultCategories = CopyDefaultCategories()
-    RPEmoteMenuDB.globalSettings = NormalizeGlobalSettings(
-        RPEmoteMenuDB.globalSettings
-    )
-    RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
-        categories = defaultCategories,
-        settings = defaultSettings
-    }
-    InstallBuiltInProfileUpdates()
-    RPEmoteMenuDB.emoteDataVersion = defaults.emoteDataVersion
-    RPEmoteMenuDB.schemaVersion = SCHEMA_VERSION
-
-    local invalidCharacterKeys = {}
     for characterKey, profileName in pairs(RPEmoteMenuDB.activeProfiles) do
         if type(characterKey) ~= "string" or characterKey == "" then
-            invalidCharacterKeys[#invalidCharacterKeys + 1] = characterKey
+            RPEmoteMenuDB.activeProfiles[characterKey] = nil
         elseif type(profileName) ~= "string"
-            or type(RPEmoteMenuDB.profiles[profileName]) ~= "table" then
+            or not RPEmoteMenuDB.profiles[profileName] then
             RPEmoteMenuDB.activeProfiles[characterKey] = DEFAULT_PROFILE_NAME
         end
     end
-
-    for _, characterKey in ipairs(invalidCharacterKeys) do
-        RPEmoteMenuDB.activeProfiles[characterKey] = nil
-    end
-
     local characterKey = Database.GetCharacterKey()
     if characterKey and not RPEmoteMenuDB.activeProfiles[characterKey] then
         RPEmoteMenuDB.activeProfiles[characterKey] = DEFAULT_PROFILE_NAME
@@ -937,19 +866,18 @@ function Database.InitializeDatabase()
 end
 
 
-function Database.RestoreBuiltInProfiles()
-    for _, definition in ipairs(builtInProfiles) do
-        RPEmoteMenuDB.profiles[definition.name] = CopyBuiltInProfile(definition)
+function Database.RestoreBuiltInThemes()
+    for _, definition in ipairs(builtInThemes) do
+        RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
     end
-
-    RPEmoteMenuDB.builtInProfileVersion = builtInProfileVersion
     RefreshProfileViews()
-    return #builtInProfiles
+    return #builtInThemes
 end
 
 
 function Database.RestoreDefaultProfile()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
+        theme = DEFAULT_THEME_NAME,
         categories = CopyDefaultCategories(),
         settings = CopyProfileSettings(profileDefaults)
     }

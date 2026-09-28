@@ -215,11 +215,14 @@ function addon.GetFontPath(fontName)
 end
 
 addon.DefaultGlobalSettings = {
-    locked = false,
     hideSettingsGear = false,
     hideEmoteEditGears = false,
     tooltipDelayMs = 350,
-    showAtLogin = true,
+    showAtLogin = true
+}
+
+addon.DefaultProfileSettings = {
+    locked = false,
     minimizeMode = "NONE",
     minimizedIconSize = 32,
     minimizedIconCorner = "TOPLEFT",
@@ -234,7 +237,7 @@ addon.DefaultGlobalSettings = {
     inactiveOpacity = 0.35
 }
 
-addon.DefaultProfileSettings = {
+addon.DefaultThemeSettings = {
     titleBarPosition = "TOP",
     minimizedIconColor = {r = 1.0, g = 0.82, b = 0.0},
     categoryFont = "Friz Quadrata",
@@ -255,11 +258,14 @@ addon.DefaultProfileSettings = {
 }
 
 addon.GlobalSettingKeys = {
-    "locked",
     "hideSettingsGear",
     "hideEmoteEditGears",
     "tooltipDelayMs",
-    "showAtLogin",
+    "showAtLogin"
+}
+
+addon.ProfileSettingKeys = {
+    "locked",
     "minimizeMode",
     "minimizedIconSize",
     "minimizedIconCorner",
@@ -274,7 +280,7 @@ addon.GlobalSettingKeys = {
     "inactiveOpacity"
 }
 
-addon.ProfileSettingKeys = {
+addon.ThemeSettingKeys = {
     "titleBarPosition",
     "minimizedIconColor",
     "categoryFont",
@@ -301,7 +307,9 @@ end
 for key, value in pairs(addon.DefaultProfileSettings) do
     addon.DefaultSettings[key] = value
 end
-addon.DefaultSettings.emoteDataVersion = 5
+for key, value in pairs(addon.DefaultThemeSettings) do
+    addon.DefaultSettings[key] = value
+end
 
 addon.EmoteAliases = {
     lol = "LAUGH",

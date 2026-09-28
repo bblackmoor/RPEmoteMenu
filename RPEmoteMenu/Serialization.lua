@@ -244,7 +244,7 @@ end
 local function ValidateProfileSettings(value)
     value = type(value) == "table" and not JSON.IsArray(value)
         and value ~= JSON.Null and value or {}
-    local imported = Database.CopyProfileSettings(addon.DefaultProfileSettings)
+    local imported = Database.CopyThemeSettings(addon.DefaultThemeSettings)
 
     for _, key in ipairs({"categoryFont", "emoteFont"}) do
         local setting = ValidateString(value[key], MAX_FONT_NAME_LENGTH, key)
@@ -278,7 +278,7 @@ local function ValidateProfileSettings(value)
     )
     if windowOpacity then imported.windowOpacity = windowOpacity end
 
-    return Database.CopyProfileSettings(imported)
+    return Database.CopyThemeSettings(imported)
 end
 
 
@@ -305,7 +305,7 @@ local function ValidateProfile(value, description, allowedFields)
 
     return {
         name = profileName,
-        settings = profileSettings,
+        themeSettings = profileSettings,
         categories = categories
     }
 end
@@ -362,7 +362,7 @@ local function ExportProfileData(profileName, profile)
 
     return {
         name = profileName,
-        settings = ExportProfileSettings(profile.settings),
+        settings = ExportProfileSettings(Database.GetThemeSettings(profile.theme)),
         categories = categories
     }
 end

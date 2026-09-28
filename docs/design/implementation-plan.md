@@ -23,17 +23,17 @@ Runtime Lua is intentionally unchanged in Phase 0.
 
 ## Phase 1 — Restructure definitions and saved-data schema
 
-- [ ] Split defaults into `DefaultGlobalSettings`, `DefaultProfileSettings`, and `DefaultThemeSettings`.
-- [ ] Split key ownership into Global/Profile/Theme key lists.
-- [ ] Move `selectedCategory` to Profile.
-- [ ] Move window geometry, lock, fade/minimize, and minimized-icon size/side from Global to Profile.
-- [ ] Keep only true application preferences Global.
-- [ ] Move the current visual Profile settings to Theme.
-- [ ] Convert bundled visual Profiles to bundled Themes (and rename definitions/files where appropriate).
-- [ ] Establish the new saved-variable shape and invariants.
-- [ ] Remove obsolete migration machinery rather than adapting it to the new clean-break schema.
+- [x] Split defaults into `DefaultGlobalSettings`, `DefaultProfileSettings`, and `DefaultThemeSettings`.
+- [x] Split key ownership into Global/Profile/Theme key lists.
+- [x] Move `selectedCategory` to Profile.
+- [x] Move window geometry, lock, fade/minimize, and minimized-icon size/side from Global to Profile.
+- [x] Keep only true application preferences Global.
+- [x] Move the current visual Profile settings to Theme.
+- [x] Convert bundled visual Profiles to bundled Themes (and rename definitions/files where appropriate).
+- [x] Establish the new saved-variable shape and invariants.
+- [x] Remove obsolete migration machinery rather than adapting it to the new clean-break schema.
 
-Keep this phase focused on definitions/storage semantics; do not combine it with the settings layout refactor.
+Phase 1 keeps the merged `GetSettings()` view as a temporary runtime bridge; it routes each key to its new owner. The existing Profile exchange format still carries visual settings as an interim bridge and does not yet represent Profile-to-Theme sharing. Phase 4 replaces that format. The settings layout refactor remains in Phases 6–7.
 
 ## Phase 2 — Create explicit Database Profile and Theme APIs
 

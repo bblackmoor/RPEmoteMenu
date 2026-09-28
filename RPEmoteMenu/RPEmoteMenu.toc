@@ -22,7 +22,7 @@
 ## X-Website: https://github.com/bblackmoor/rpemotemenu/
 
 Defaults.lua
-BuiltInProfiles.lua
+BuiltInThemes.lua
 JSON.lua
 Database.lua
 Serialization.lua

@@ -2043,7 +2043,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_PROFILE_INFO"] = {
-        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current appearance. Copy duplicates the selected profile. Bundled profiles may be edited or deleted; Restore Bundled Profiles recreates and resets them.",
+        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current Theme. Copy duplicates the selected profile. Bundled Themes can be restored below.",
         button1 = OKAY or "Okay",
         timeout = 0,
         whileDead = true,
@@ -2125,24 +2125,13 @@ local function CreateProfilesSettingsPanel()
         preferredIndex = 3
     }
 
-    StaticPopupDialogs["RPEMOTEMENU_DELETE_BUNDLED_PROFILE"] = {
-        text = 'Delete the bundled profile "%s"?\n\nCharacters using it will return to Default. Restore Bundled Profiles can recreate it.',
-        button1 = DELETE or "Delete",
-        button2 = CANCEL or "Cancel",
-        OnAccept = DeleteProfile,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3
-    }
-
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES"] = {
-        text = "Restore all bundled profiles to their original categories and appearance?\n\nExisting bundled profiles will be reset and missing ones will be recreated. Renamed profiles and other custom profiles will not be changed.",
+        text = "Restore all bundled Themes to their factory appearance?\n\nExisting bundled Themes will be reset and missing ones recreated. Profiles and categories will not be changed.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
         OnAccept = function()
-            local count = Database.RestoreBuiltInProfiles()
-            SetStatus("Restored " .. count .. " bundled profiles.")
+            local count = Database.RestoreBuiltInThemes()
+            SetStatus("Restored " .. count .. " bundled Themes.")
         end,
         timeout = 0,
         whileDead = true,
@@ -2238,10 +2227,7 @@ local function CreateProfilesSettingsPanel()
             return
         end
 
-        local popupName = Database.IsBuiltInProfileName(profileName)
-            and "RPEMOTEMENU_DELETE_BUNDLED_PROFILE"
-            or "RPEMOTEMENU_DELETE_PROFILE"
-        StaticPopup_Show(popupName, profileName, nil, profileName)
+        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", profileName, nil, profileName)
     end)
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -2268,7 +2254,7 @@ local function CreateProfilesSettingsPanel()
     )
     restoreBuiltInsButton:SetSize(190, 24)
     restoreBuiltInsButton:SetPoint("LEFT", restoreDefaultButton, "RIGHT", 8, 0)
-    restoreBuiltInsButton:SetText("Restore Bundled Profiles")
+    restoreBuiltInsButton:SetText("Restore Bundled Themes")
     restoreBuiltInsButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES")
     end)

@@ -1,11 +1,8 @@
 local _, addon = ...
 
--- Bundled profiles use the built-in emote categories. Settings intentionally
--- contain only each profile's visual design; Database.lua fills
--- every omitted setting from the current defaults.
-addon.BuiltInProfileVersion = 5
-
-addon.BuiltInProfiles = {
+-- Bundled Themes contain visual settings only. Database.lua fills omitted
+-- values from the Default Theme without changing their factory definitions.
+addon.BuiltInThemes = {
     {
         name = "Gilded Shadow",
         description = "Black, gold, and cyan with a narrow, highly legible typeface.",
