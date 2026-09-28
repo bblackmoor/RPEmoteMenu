@@ -13,6 +13,7 @@ local function getUpvalue(fn,name)
 end
 local iconAnchor=getUpvalue(apply,'ApplyMinimizedIconAnchor')
 local applyEmoteGearVisibility=getUpvalue(addon.MainWindow.UpdateMenu,'ApplyEmoteGearVisibility')
+local backdrop=getUpvalue(addon.MainWindow.ApplyAppearance,'ApplyMainFrameBackdrop')
 local function setUpvalue(fn,name,value)
   for i=1,40 do
     local current=debug.getupvalue(fn,i)
@@ -112,4 +113,14 @@ assert(preservePosition==false and preserveGeometry==false)
 setUpvalue(refresh,'appliedTitleBarPosition','LEFT')
 refresh()
 assert(preservePosition==true and preserveGeometry==true)
-print('PASS fixed window corner, moving content, stationary icon, and emote gear visibility')
+
+local borderlessFrame={}
+function borderlessFrame:SetBackdrop(value) self.backdrop=value end
+function borderlessFrame:SetBackdropColor(...) self.background={...} end
+function borderlessFrame:SetBackdropBorderColor() error('Menu border should not be set') end
+setUpvalue(backdrop,'MainFrame',borderlessFrame)
+setUpvalue(backdrop,'themeSettings',{emoteBackgroundColor={r=0,g=0,b=0}})
+setUpvalue(backdrop,'IsWindowBodyHidden',function() return false end)
+backdrop()
+assert(borderlessFrame.backdrop.bgFile and not borderlessFrame.backdrop.edgeFile)
+print('PASS fixed window corner, moving content, stationary icon, gear visibility, borderless backdrop')

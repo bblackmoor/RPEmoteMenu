@@ -162,7 +162,10 @@ end
 assertControlPosition('tooltipDelayMs',255,-151)
 assertControlPosition('categoryFont',95,-81)
 assertControlPosition('categoryFontSize',160,-121)
-assertControlPosition('borderColor',160,-422)
+assert(not found['Borders'] and not found['Border color'] and not found['Border style'])
+for _,w in ipairs(widgets) do
+  assert(w.settingKey~='borderColor' and w.settingKey~='borderStyle')
+end
 for _,w in ipairs(widgets) do
   if w.settingKey=='categoryFont' and w.anchor.x==95 then
     assert(w.parent.anchor and w.parent.anchor.y==-285,

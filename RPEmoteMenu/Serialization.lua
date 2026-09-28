@@ -44,14 +44,12 @@ local COLOR_SETTING_KEYS = {
     "categoryHighlightColor",
     "categoryBackgroundColor",
     "emoteBackgroundColor",
-    "borderColor",
     "minimizedIconColor"
 }
 local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     background = true, outline = true, underline = true, shadow = true,
     separator = true
 }
-local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
 local VALID_ANCHOR_POINTS = {
@@ -340,7 +338,6 @@ local function ValidateThemeSettings(value)
     end
     for _, field in ipairs({
         {"categoryHighlightEffect", VALID_CATEGORY_HIGHLIGHT_EFFECTS},
-        {"borderStyle", VALID_BORDER_STYLES},
         {"titleBarPosition", VALID_TITLE_BAR_POSITIONS}
     }) do
         local key = field[1]

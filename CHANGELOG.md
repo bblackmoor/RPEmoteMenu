@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.209
+
+- Remove border color and style from Themes and their editor.
+- Render the menu without an outer border or sidebar divider, regardless of old saved or imported border values.
+
 ## 2.0.208
 
 - Combine the title bar and emote gear visibility options into one global toggle.

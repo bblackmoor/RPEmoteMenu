@@ -351,63 +351,6 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     return RefreshHighlightControls
 end
 
--- Borders section: controls follow their visual grouping.
-local function CreateThemeBorders(editor, state, controls, rows)
-    rows:Heading("Borders", 28)
-    local colorY = rows:Next()
-    local styleY = rows:Next(39)
-
-    controls.borderColor = CreateColorSetting(
-        editor, "Border color", "borderColor", 20, colorY,
-        function() return state.GetSettings().borderColor end,
-        function(value)
-            state.GetSettings().borderColor = value
-            state.Apply()
-        end,
-        160
-    )
-
-    local borderLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    borderLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, styleY)
-    borderLabel:SetText("Border style")
-
-    local borderSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        editor,
-        "WowStyle1DropdownTemplate"
-    )
-    borderSelector:SetWidth(170)
-    borderSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, styleY + 5)
-    borderSelector:SetDefaultText("Thin")
-    borderSelector.settingKey = "borderStyle"
-    controls.borderStyle = borderSelector
-
-    local borderLabels = {
-        none = "None",
-        thin = "Thin",
-        blizzard = "Blizzard"
-    }
-
-    local function BuildBorderMenu(_, rootDescription)
-        for _, style in ipairs({"none", "thin", "blizzard"}) do
-            rootDescription:CreateRadio(
-                borderLabels[style],
-                function() return state.GetSettings().borderStyle == style end,
-                function()
-                    state.GetSettings().borderStyle = style
-                    borderSelector:OverrideText(borderLabels[style])
-                    state.Apply()
-                end
-            )
-        end
-    end
-
-    borderSelector:SetupMenu(BuildBorderMenu)
-
-    return borderSelector, borderLabels
-end
-
 -- Opacity section: controls follow their visual grouping.
 local function CreateThemeOpacity(editor, state, controls, rows)
     rows:Heading("Opacity", 28)
@@ -488,7 +431,7 @@ local function CreateThemesSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 1030)
+    panel:SetSize(700, 900)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
     local themeName = Database.GetActiveThemeName()
@@ -513,7 +456,7 @@ local function CreateThemesSettingsPanel()
     description:SetTextColor(0.8, 0.8, 0.8)
 
     local editor = CreateFrame("Frame", nil, panel)
-    editor:SetSize(700, 720)
+    editor:SetSize(700, 590)
     editor:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -285)
 
     local state = {
@@ -525,7 +468,6 @@ local function CreateThemesSettingsPanel()
     CreateThemeTypography(editor, state, controls, rows)
     local RefreshHighlightControls =
         CreateThemeSelectionEffects(editor, state, controls, rows)
-    local borderSelector, borderLabels = CreateThemeBorders(editor, state, controls, rows)
     CreateThemeOpacity(editor, state, controls, rows)
     local titleBarSelector, titleBarLabels, refreshIconColor =
         CreateThemeLayoutAndIcon(editor, state, controls, rows)
@@ -544,7 +486,6 @@ local function CreateThemesSettingsPanel()
         end
 
         RefreshHighlightControls()
-        borderSelector:OverrideText(borderLabels[themeSettings.borderStyle])
         titleBarSelector:OverrideText(
             titleBarLabels[themeSettings.titleBarPosition] or titleBarLabels.TOP
         )

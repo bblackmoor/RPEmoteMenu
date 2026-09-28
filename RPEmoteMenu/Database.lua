@@ -31,7 +31,6 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     shadow = true,
     separator = true
 }
-local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
@@ -52,7 +51,6 @@ local COLOR_SETTING_KEYS = {
     "categoryHighlightColor",
     "categoryBackgroundColor",
     "emoteBackgroundColor",
-    "borderColor",
     "minimizedIconColor"
 }
 local globalSettingLookup = {}
@@ -298,9 +296,6 @@ local function NormalizeThemeSettings(source)
 
     if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[result.categoryHighlightEffect] then
         result.categoryHighlightEffect = themeDefaults.categoryHighlightEffect
-    end
-    if not VALID_BORDER_STYLES[result.borderStyle] then
-        result.borderStyle = themeDefaults.borderStyle
     end
     if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
         result.titleBarPosition = themeDefaults.titleBarPosition

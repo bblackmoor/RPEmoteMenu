@@ -73,7 +73,6 @@ A Theme owns visual appearance only:
 - Text colors
 - Category selection appearance
 - Category/emote background colors
-- Border color/style
 - Window opacity
 
 The expected Theme settings include:
@@ -92,8 +91,6 @@ The expected Theme settings include:
 - `categoryHighlightThickness`
 - `categoryBackgroundColor`
 - `emoteBackgroundColor`
-- `borderColor`
-- `borderStyle`
 - `windowOpacity`
 
 Profiles reference Themes; Themes are not copied into Profiles. Multiple Profiles may reference the same Theme. Editing a Theme therefore changes the appearance of every Profile that references it.

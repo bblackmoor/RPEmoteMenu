@@ -250,8 +250,6 @@ addon.DefaultThemeSettings = {
     categoryHighlightThickness = 2,
     categoryBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
     emoteBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
-    borderColor = {r = 0.2, g = 0.2, b = 0.2},
-    borderStyle = "thin",
     windowOpacity = 1.0
 }
 
@@ -291,8 +289,6 @@ addon.ThemeSettingKeys = {
     "categoryHighlightThickness",
     "categoryBackgroundColor",
     "emoteBackgroundColor",
-    "borderColor",
-    "borderStyle",
     "windowOpacity"
 }
 

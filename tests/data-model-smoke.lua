@@ -17,6 +17,7 @@ assert(db.GetActiveProfileName() == 'Default')
 assert(db.GetActiveThemeName() == 'Default')
 assert(db.GetProfileSettings().inactiveOpacity == 0.5)
 assert(db.GetTheme('Teal') and not db.GetProfile('Teal'))
+assert(db.GetThemeSettings().borderColor == nil and db.GetThemeSettings().borderStyle == nil)
 local serialization = addon.Serialization
 local json = addon.JSON
 local function decodeDocument(document, expectedType)
@@ -50,13 +51,14 @@ assert(not decodeDocument(profileExport, 'profile'))
 
 themeExport.settings.categoryFontSize = 20
 themeExport.settings.windowOpacity = 4
-themeExport.settings.borderColor = {r = 1, g = -1, b = 0}
+themeExport.settings.borderColor = {r = 1, g = 0, b = 0}
+themeExport.settings.borderStyle = 'blizzard'
 themeExport.settings.titleBarPosition = 'SIDE'
 themeExport.settings.unrecognized = true
 local importedTheme = assert(decodeDocument(themeExport, 'theme'))
 assert(importedTheme.settings.categoryFontSize == 20)
 assert(importedTheme.settings.windowOpacity == addon.DefaultThemeSettings.windowOpacity)
-assert(importedTheme.settings.borderColor.g == addon.DefaultThemeSettings.borderColor.g)
+assert(importedTheme.settings.borderColor == nil and importedTheme.settings.borderStyle == nil)
 assert(importedTheme.settings.titleBarPosition == addon.DefaultThemeSettings.titleBarPosition)
 assert(importedTheme.settings.unrecognized == nil)
 everythingExport.profiles[1].settings.fadeDelay = -1
@@ -64,9 +66,14 @@ everythingExport.themes[1].settings.categoryFontSize = 18
 local importedEverything = assert(decodeDocument(everythingExport, 'everything'))
 assert(importedEverything.profiles[1].settings.fadeDelay == addon.DefaultProfileSettings.fadeDelay)
 assert(importedEverything.themes[1].settings.categoryFontSize == 18)
+local exportedThemeSettings = assert(json.Decode(assert(serialization.ExportTheme('Teal')))).settings
+assert(exportedThemeSettings.borderColor == nil and exportedThemeSettings.borderStyle == nil)
+RPEmoteMenuDB.themes.Default.settings.borderColor={r=1,g=0,b=0}
+RPEmoteMenuDB.themes.Default.settings.borderStyle='blizzard'
 RPEmoteMenuDB.profiles.Default.settings.minimizedIconCorner='TOPRIGHT'
 db.InitializeDatabase()
 assert(db.GetProfileSettings().minimizedIconCorner==nil)
+assert(db.GetThemeSettings().borderColor==nil and db.GetThemeSettings().borderStyle==nil)
 
 local ok = db.CreateProfile('Shared')
 assert(ok and db.GetActiveProfileName() == 'Shared')

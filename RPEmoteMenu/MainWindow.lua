@@ -52,7 +52,6 @@ local CategoryScrollFrame
 local CategoryScrollChild
 local CategoryEmptyLabel
 local CategoryEmptyButton
-local SidebarDivider
 local ScrollFrame
 local ScrollChild
 local EmoteEmptyButton
@@ -1002,28 +1001,15 @@ end
 
 local function ApplyMainFrameBackdrop()
     local emoteBackground = themeSettings.emoteBackgroundColor
-    local border = themeSettings.borderColor
-    local backdrop = {
+    MainFrame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground"
-    }
-
-    if themeSettings.borderStyle == "thin" then
-        backdrop.edgeFile = "Interface\\ChatFrame\\ChatFrameBackground"
-        backdrop.edgeSize = 1
-    elseif themeSettings.borderStyle == "blizzard" then
-        backdrop.edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border"
-        backdrop.edgeSize = 12
-        backdrop.insets = {left = 3, right = 3, top = 3, bottom = 3}
-    end
-
-    MainFrame:SetBackdrop(backdrop)
+    })
     -- In compact title-bar mode there are no body backgrounds. In the
     -- expanded window the four adjoining regions paint around the sidebar.
     MainFrame:SetBackdropColor(
         emoteBackground.r, emoteBackground.g, emoteBackground.b,
         IsWindowBodyHidden() and 1 or 0
     )
-    MainFrame:SetBackdropBorderColor(border.r, border.g, border.b, 1)
 end
 
 function MainWindow.ApplyAppearance()
@@ -1032,7 +1018,6 @@ function MainWindow.ApplyAppearance()
     end
 
     local categoryBackground = themeSettings.categoryBackgroundColor
-    local border = themeSettings.borderColor
 
     if not (isWindowAutoHidden and IsMinimizedToIcon()) then
         ApplyMainFrameBackdrop()
@@ -1053,13 +1038,6 @@ function MainWindow.ApplyAppearance()
         region:SetColorTexture(
             emoteBackground.r, emoteBackground.g, emoteBackground.b, 1
         )
-    end
-
-    if themeSettings.borderStyle == "none" then
-        SidebarDivider:Hide()
-    else
-        SidebarDivider:SetColorTexture(border.r, border.g, border.b, 0.9)
-        SidebarDivider:Show()
     end
 
     MainWindow.RefreshFontDisplays()
@@ -2503,11 +2481,6 @@ local function CreateCategorySidebar()
     CategorySidebar:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground"
     })
-    SidebarDivider = CategorySidebar:CreateTexture(nil, "OVERLAY")
-    SidebarDivider:SetWidth(1)
-    SidebarDivider:SetPoint("TOPRIGHT", CategorySidebar, "TOPRIGHT", 0, 0)
-    SidebarDivider:SetPoint("BOTTOMRIGHT", CategorySidebar, "BOTTOMRIGHT", 0, 0)
-
     CategoryScrollFrame = CreateFrame("ScrollFrame", nil, CategorySidebar)
     CategoryScrollFrame:SetPoint("TOPLEFT", CategorySidebar, "TOPLEFT", 3, -3)
     CategoryScrollFrame:SetPoint("BOTTOMRIGHT", CategorySidebar, "BOTTOMRIGHT", -4, 3)

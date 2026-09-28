@@ -8,7 +8,7 @@ RP Emote Menu is a customizable emote menu that keeps frequently used character 
 - **Easy organization:** Emotes can be edited from the menu, dragged into order, and duplicated along with complete categories.
 - **Flexible window:** The window remains visible by default; optional inactivity fading can dim it or minimize it to the title bar or a configurable icon.
 - **Profiles and sharing:** Each character selects an account-wide Profile with its own emotes, window state, and Theme assignment; categories and Profiles can be shared as JSON.
-- **Themes:** Shared Themes control fonts, colors, selection effects, borders, and opacity.
+- **Themes:** Shared Themes control fonts, colors, selection effects, and opacity.
 - **Commands:** `/rpem` toggles the menu, while `/rpem config` opens its settings.
 
 ## What's New In Version 2
@@ -116,7 +116,7 @@ Transfers use version 2 JSON text. A Profile export contains its settings, categ
 
 The **Themes** screen edits a Theme independently of the character's assigned Profile. Several Profiles can share one Theme; edits to it affect every Profile using it. Selecting a Theme for editing does not assign it to a Profile; make that assignment on the **Profiles** screen.
 
-Theme settings include separate category and emote fonts and sizes, text and background colors, selection effects, border style and color, visible menu opacity, title-bar placement, and minimized icon tint. Font menus include WoW's built-in fonts and available LibSharedMedia fonts. An unavailable saved font temporarily displays in Friz Quadrata; a newly selected custom font may take 10 to 30 seconds to appear.
+Theme settings include separate category and emote fonts and sizes, text and background colors, selection effects, visible menu opacity, title-bar placement, and minimized icon tint. The menu has no border. Font menus include WoW's built-in fonts and available LibSharedMedia fonts. An unavailable saved font temporarily displays in Friz Quadrata; a newly selected custom font may take 10 to 30 seconds to appear.
 
 Default Theme is editable and restorable, but cannot be renamed or deleted. The six bundled Themes are **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. Bundled Themes can be edited, renamed, or deleted; their original names can be restored or recreated from factory definitions. **Restore Bundled Themes** restores all six. Deleting a Theme used by Profiles first lists those Profiles and asks for confirmation; on confirmation, they are assigned Default Theme.
 

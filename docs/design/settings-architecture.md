@@ -60,7 +60,6 @@ SettingsThemes.lua
     typography
     colors
     selection
-    borders
     opacity
     title bar
     minimized icon
