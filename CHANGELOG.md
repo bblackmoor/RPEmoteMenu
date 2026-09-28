@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.205
+
+- Center the minimized icon on the left title bar's pin, regardless of icon size.
+- Keep the category and emote lists in place when switching title bar orientation.
+- Apply the Icon side preference only when the title bar is on top.
+
 ## 2.0.204
 
 - Reduced the gap between Theme management and the Theme editor.

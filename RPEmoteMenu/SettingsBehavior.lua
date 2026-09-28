@@ -150,7 +150,7 @@ local function CreateInactivitySection(panel, switches, rows)
     local iconCornerY = rows:Next()
     local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, iconCornerY)
-    iconCornerLabel:SetText("Icon side")
+    iconCornerLabel:SetText("Icon side (top bar)")
 
     local iconCornerSelector = CreateFrame(
         "DropdownButton",
@@ -184,17 +184,15 @@ local function CreateInactivitySection(panel, switches, rows)
     RefreshIconControls = function()
         local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
         local alpha = enabled and 1 or 0.45
+        local sideEnabled = enabled
+            and Database.GetThemeSettings().titleBarPosition ~= "LEFT"
 
-        for _, control in ipairs({
-            iconSizeBox,
-            iconCornerSelector
-        }) do
-            control:SetEnabled(enabled)
-            control:SetAlpha(alpha)
-        end
-
+        iconSizeBox:SetEnabled(enabled)
+        iconSizeBox:SetAlpha(alpha)
+        iconCornerSelector:SetEnabled(sideEnabled)
+        iconCornerSelector:SetAlpha(sideEnabled and 1 or 0.45)
         iconSizeLabel:SetAlpha(alpha)
-        iconCornerLabel:SetAlpha(alpha)
+        iconCornerLabel:SetAlpha(sideEnabled and 1 or 0.45)
     end
 
     RefreshInactiveControls = function()

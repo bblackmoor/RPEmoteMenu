@@ -26,8 +26,8 @@ end
 
 local titleBarThickness = 30
 local leftTitleBarWidth = 30
--- The first category and emote labels are both centered about 50 pixels below
--- the top of the window. Keep the minimized icon on that same centerline.
+-- The first content rows move 30 pixels down when the title bar is on top.
+-- Preserve their screen position when switching between title bar orientations.
 local topTitleFirstRowCenterOffset = 50
 local leftTitleFirstRowCenterOffset = 20
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
@@ -598,7 +598,7 @@ ApplyColumnLayout = function()
     end
 
     local leftInset = IsTitleBarOnLeft() and leftTitleBarWidth or 0
-    local categoryTop = IsTitleBarOnLeft() and -5 or -36
+    local categoryTop = IsTitleBarOnLeft() and -6 or -36
     local emoteTop = IsTitleBarOnLeft() and -10 or -40
 
     CategorySidebar:ClearAllPoints()
@@ -2111,19 +2111,28 @@ local function ApplyMinimizedIconAnchor()
         return
     end
 
+    MinimizedIconButton:ClearAllPoints()
+    if IsTitleBarOnLeft() then
+        -- Anchor centers, not edges: an icon wider than the title bar can
+        -- extend on both sides without shifting away from the pin.
+        if PinBtn then
+            MinimizedIconButton:SetPoint("CENTER", PinBtn, "CENTER")
+        else
+            MinimizedIconButton:SetPoint("CENTER", TitleBar, "TOP", 0, -12)
+        end
+        return
+    end
+
     local rightAligned = profileSettings.minimizedIconCorner == "TOPRIGHT"
     local iconPoint = rightAligned and "RIGHT" or "LEFT"
     local windowPoint = rightAligned and "TOPRIGHT" or "TOPLEFT"
 
-    MinimizedIconButton:ClearAllPoints()
     MinimizedIconButton:SetPoint(
         iconPoint,
         MainFrame,
         windowPoint,
         0,
-        -(IsTitleBarOnLeft()
-            and leftTitleFirstRowCenterOffset
-            or topTitleFirstRowCenterOffset)
+        -topTitleFirstRowCenterOffset
     )
 end
 
@@ -2242,8 +2251,10 @@ function MainWindow.ApplyTitleBarPosition(
     local x, y = profileSettings.x, profileSettings.y
     if not preserveSavedPosition and appliedTitleBarPosition
         and appliedTitleBarPosition ~= themeSettings.titleBarPosition then
-        -- Keep the first content row (and its minimized-icon counterpart) at
-        -- the same screen height while the title bar changes orientation.
+        -- Keep both content columns in place while the title bar changes sides.
+        -- The new left bar takes space to the left of the old content origin.
+        local oldInset = appliedTitleBarPosition == "LEFT" and leftTitleBarWidth or 0
+        local newInset = IsTitleBarOnLeft() and leftTitleBarWidth or 0
         local oldOffset = appliedTitleBarPosition == "LEFT"
             and leftTitleFirstRowCenterOffset
             or topTitleFirstRowCenterOffset
@@ -2253,19 +2264,21 @@ function MainWindow.ApplyTitleBarPosition(
         local top = MainFrame:GetTop()
         if top then
             local targetTop = top + newOffset - oldOffset
+            local left = MainFrame:GetLeft()
+            local targetLeft = left and left + oldInset - newInset
             if profileSettings.point == "CENTER"
                 and profileSettings.relativePoint == "CENTER" then
-                local left = MainFrame:GetLeft()
                 local width = CalculateColumnWidths()
                 local frameWidth, frameHeight = GetCurrentFrameSize(
                     width,
                     profileSettings.height
                 )
-                if left then
-                    x = left + frameWidth / 2 - UIParent:GetWidth() / 2
+                if targetLeft then
+                    x = targetLeft + frameWidth / 2 - UIParent:GetWidth() / 2
                 end
-                y = targetTop - UIParent:GetHeight() / 2 + frameHeight / 2
+                y = targetTop - frameHeight / 2 - UIParent:GetHeight() / 2
             else
+                if targetLeft then x = targetLeft end
                 y = targetTop
             end
         end
@@ -2949,7 +2962,9 @@ function MainWindow.ApplyThemeSettings()
     themeSettings = Database.GetThemeSettings()
     if not MainFrame then return end
 
-    MainWindow.ApplyTitleBarPosition(true, true)
+    local positionChanged = appliedTitleBarPosition
+        and appliedTitleBarPosition ~= themeSettings.titleBarPosition
+    MainWindow.ApplyTitleBarPosition(not positionChanged, not positionChanged)
     MainWindow.ApplyAppearance()
     MainWindow.UpdateMenu()
     MainWindow.ScheduleFontRefreshes(true)
