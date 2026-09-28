@@ -29,5 +29,16 @@ Serialization.lua
 Commands.lua
 MainWindow.lua
 Settings.lua
+SettingsControls.lua
+SettingsExchange.lua
+SettingsBehavior.lua
+SettingsThemeDialogs.lua
+SettingsThemeIcon.lua
+SettingsThemes.lua
+SettingsProfileDialogs.lua
+SettingsProfiles.lua
+SettingsEmotes.lua
+SettingsEmoteList.lua
+SettingsTransfer.lua
 MinimizedIconColor.lua
 Core.lua
