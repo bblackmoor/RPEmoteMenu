@@ -1,0 +1,146 @@
+# Profile/Theme Refactor Implementation Plan
+
+Status: approved staged plan. This document is a living checklist. Preserve the phase boundaries so data-model changes and UI/readability changes can be debugged independently.
+
+See also:
+
+- `saved-data-model.md`
+- `settings-architecture.md`
+
+## Phase 0 — Document the architecture
+
+- [x] Record Global/Profile/Theme ownership.
+- [x] Record Character -> Profile -> Theme relationship.
+- [x] Record Default Profile/Theme semantics.
+- [x] Record bundled Theme semantics.
+- [x] Record Theme deletion/fallback behavior.
+- [x] Record import/export boundaries.
+- [x] Record clean-break compatibility policy.
+- [x] Record settings readability/layout rules.
+- [x] Preserve this staged implementation plan.
+
+Runtime Lua is intentionally unchanged in Phase 0.
+
+## Phase 1 — Restructure definitions and saved-data schema
+
+- [ ] Split defaults into `DefaultGlobalSettings`, `DefaultProfileSettings`, and `DefaultThemeSettings`.
+- [ ] Split key ownership into Global/Profile/Theme key lists.
+- [ ] Move `selectedCategory` to Profile.
+- [ ] Move window geometry, lock, fade/minimize, and minimized-icon size/side from Global to Profile.
+- [ ] Keep only true application preferences Global.
+- [ ] Move the current visual Profile settings to Theme.
+- [ ] Convert bundled visual Profiles to bundled Themes (and rename definitions/files where appropriate).
+- [ ] Establish the new saved-variable shape and invariants.
+- [ ] Remove obsolete migration machinery rather than adapting it to the new clean-break schema.
+
+Keep this phase focused on definitions/storage semantics; do not combine it with the settings layout refactor.
+
+## Phase 2 — Create explicit Database Profile and Theme APIs
+
+- [ ] Provide explicit Global, Profile, and Theme getters.
+- [ ] Implement Profile create/copy/rename/delete/restore operations.
+- [ ] Implement Theme create/copy/rename/delete/restore operations.
+- [ ] Implement bundled Theme restore/recreation.
+- [ ] Preserve per-character active Profile selection.
+- [ ] Add Profile -> Theme assignment operations.
+- [ ] Add queries for Profiles referencing a Theme.
+- [ ] On confirmed deletion of an in-use Theme, reassign referencing Profiles to Default Theme.
+- [ ] Normalize invalid Profile/Theme references to their Default fallbacks.
+- [ ] Reduce reliance on the current merged writable `GetSettings()` proxy; writes should make ownership apparent.
+
+## Phase 3 — Convert runtime consumers to the three scopes
+
+- [ ] Update MainWindow to obtain Global/Profile/Theme values from the correct owner.
+- [ ] Separate application of Profile state from application of Theme appearance where useful.
+- [ ] Update minimized-icon color behavior to read Theme state.
+- [ ] Ensure Profile switching applies categories, window state, and referenced Theme.
+- [ ] Ensure Theme changes update appearance without changing Profile content/state.
+- [ ] Ensure Global preference changes remain independent.
+- [ ] Verify character-specific Profile selection and Default fallback.
+
+## Phase 4 — Redesign serialization
+
+- [ ] Bump the serialization format version.
+- [ ] Profile export: name, Profile settings, categories/emotes, Theme reference; do not embed Theme.
+- [ ] Profile import: preserve data; if referenced Theme is unavailable, assign Default Theme and report the fallback.
+- [ ] Theme export/import: appearance only.
+- [ ] Everything export/import: all Profiles, all Themes, and Profile -> Theme relationships.
+- [ ] Keep category-level import/export.
+- [ ] Do not accept obsolete Profile serialization merely for migration compatibility.
+
+## Phase 5 — Build the new Profile and Theme management UI
+
+- [ ] Make Profiles a genuine Profile-management panel.
+- [ ] Put Theme assignment on the Profile panel.
+- [ ] Support Default Profile edit/restore but not rename/delete.
+- [ ] Rename/rework Appearance into Theme management and Theme appearance editing.
+- [ ] Support Default Theme edit/restore but not rename/delete.
+- [ ] Present existing visual presets as bundled Themes.
+- [ ] Allow bundled Themes to be edited and restored/recreated.
+- [ ] When deleting an in-use Theme, warn and list referencing Profiles before confirmation.
+- [ ] Add separate Profile and Theme import/export actions.
+- [ ] Update complete-data import/export UI.
+
+This phase establishes the final UI responsibilities before structural source cleanup.
+
+## Phase 6 — Perform the structural settings readability refactor
+
+- [ ] Organize settings code by tab -> section -> control.
+- [ ] Make source order substantially match visual order.
+- [ ] Split oversized settings code into appropriately scoped modules/functions.
+- [ ] Separate construction from dependency/refresh behavior where practical.
+- [ ] Move settings-page presentation out of unrelated subsystems such as minimized-icon color rendering.
+- [ ] Move Profile/Theme dialogs and lifecycle mechanics out of top-level visual construction flow.
+- [ ] Keep Emotes layout structure separate from dynamic list/drag mechanics.
+- [ ] Preserve existing behavior and the agreed UI standards.
+
+This is a required project phase, not optional cleanup.
+
+## Phase 7 — Replace manual vertical layout with small helpers
+
+This may be implemented alongside Phase 6 but should remain a distinct review target.
+
+- [ ] Introduce a small, understandable section/row layout mechanism.
+- [ ] Use consistent row advancement instead of hand-maintained Y coordinates for ordinary rows.
+- [ ] Preserve explicit gaps where semantically useful.
+- [ ] Preserve purpose-built layouts for special cases such as two-column Theme controls.
+- [ ] Eliminate create-then-immediately-reanchor patterns where possible.
+- [ ] Keep standard row order: label, control, reset, info.
+
+Avoid building a large generic UI framework.
+
+## Phase 8 — Cleanup and verification
+
+- [ ] Remove transitional APIs and obsolete Profile/Appearance terminology.
+- [ ] Search for old `BuiltInProfiles`, old setting-key ownership, and stale Profile-appearance assumptions.
+- [ ] Update README/help/About text.
+- [ ] Verify `.toc` load order after any file split.
+- [ ] Verify Settings registration and slash-command opening.
+- [ ] Verify settings refresh entry points.
+- [ ] Review Lua function/upvalue complexity after the refactor.
+- [ ] Update version/changelog as appropriate.
+
+### Integration test matrix
+
+- [ ] Fresh install -> Default Profile -> Default Theme.
+- [ ] Different characters independently select different Profiles.
+- [ ] Two Profiles share one Theme; editing that Theme updates both.
+- [ ] Profile switch changes categories/emotes, window state, and referenced Theme.
+- [ ] Theme switch changes appearance only.
+- [ ] Deleting an in-use Theme lists referencing Profiles.
+- [ ] Cancel Theme deletion leaves everything unchanged.
+- [ ] Confirm Theme deletion reassigns referencing Profiles to Default Theme.
+- [ ] Default Profile is editable/restorable but cannot be renamed/deleted.
+- [ ] Default Theme is editable/restorable but cannot be renamed/deleted.
+- [ ] Bundled Themes are editable and restorable/re-creatable.
+- [ ] Profile import/export works with Theme references.
+- [ ] Theme import/export works independently.
+- [ ] Everything import/export preserves Profile/Theme relationships.
+- [ ] Category import/export still works.
+- [ ] Reload UI preserves state.
+- [ ] Logout/login preserves state.
+- [ ] Character switching preserves per-character Profile selection.
+
+## Commit discipline
+
+Prefer a sequence of coherent commits rather than one large change. In particular, keep data-model/behavior changes distinct from the structural settings readability refactor so regressions can be localized.
