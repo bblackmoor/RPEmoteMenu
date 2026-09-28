@@ -42,6 +42,15 @@ end
 local function CreateCategoriesSettingsPanel()
     local settings = Database.GetSettings()
     local panel = CreateFrame("Frame")
+    local rows = UI.CreateRows(panel, 16, -16, 32)
+    local headingY = rows:Next()
+    local selectorY = rows:Next(34)
+    local exchangeY = rows:Next()
+    local actionsY = rows:Next(40)
+    local noteY = rows:Next(76)
+    local nameY = rows:Next(39)
+    local listHeadingY = rows:Next(30)
+    local listTopY = rows:Next()
     local selectedCategoryIndex = settings.selectedCategory
 
     if type(selectedCategoryIndex) ~= "number"
@@ -51,7 +60,7 @@ local function CreateCategoriesSettingsPanel()
     end
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, headingY)
     heading:SetText("Emotes")
 
     local selector = CreateFrame(
@@ -61,7 +70,7 @@ local function CreateCategoriesSettingsPanel()
         "WowStyle1DropdownTemplate"
     )
     selector:SetWidth(300)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -48)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, selectorY)
 
     local function GetCategoryLabel(categoryIndex)
         local category = Database.GetCategory(categoryIndex)
@@ -125,7 +134,7 @@ local function CreateCategoriesSettingsPanel()
         "UIPanelButtonTemplate"
     )
     resetAllCategoriesButton:SetSize(240, 24)
-    resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, -114)
+    resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, actionsY)
     resetAllCategoriesButton:SetText("Restore All Built-in Categories")
     resetAllCategoriesButton:SetEnabled(Database.CanEditActiveProfile())
     resetAllCategoriesButton:SetScript("OnClick", function()
@@ -139,7 +148,7 @@ local function CreateCategoriesSettingsPanel()
         "UIPanelButtonTemplate"
     )
     duplicateCategoryButton:SetSize(160, 24)
-    duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -114)
+    duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, actionsY)
     duplicateCategoryButton:SetText("Duplicate Category")
 
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -152,7 +161,7 @@ local function CreateCategoriesSettingsPanel()
 
     local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportButton:SetSize(90, 24)
-    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -82)
+    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, exchangeY)
     exportButton:SetText("Export")
     exportButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenExport(selectedCategoryIndex)
@@ -162,7 +171,7 @@ local function CreateCategoriesSettingsPanel()
     resetButton:SetPoint("LEFT", selector, "RIGHT", FIELD_GAP, 0)
 
     local placeholderText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -154)
+    placeholderText:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, noteY)
     placeholderText:SetWidth(630)
     placeholderText:SetJustifyH("LEFT")
     placeholderText:SetText(
@@ -178,7 +187,7 @@ local function CreateCategoriesSettingsPanel()
         panel,
         "Category Name",
         16,
-        -230,
+        nameY,
         420,
         selectedCategoryIndex,
         nil,
@@ -186,7 +195,7 @@ local function CreateCategoriesSettingsPanel()
     )
     local RefreshEmoteRows = UI.CreateEmoteList(panel, function()
         return selectedCategoryIndex
-    end)
+    end, listHeadingY, listTopY)
 
     local function RefreshCategorySelector()
         selector:OverrideText(GetCategoryLabel(selectedCategoryIndex))

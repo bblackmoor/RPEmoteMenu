@@ -12,23 +12,32 @@ local FIELD_GAP = UI.FIELD_GAP
 -- Theme selection here is an editor selection; Profile assignment is made on Profiles.
 local function CreateThemeManagementControls(panel, onSelectionChanged)
     local selectedName = Database.GetActiveThemeName()
+    local rows = UI.CreateRows(panel, 20, -81, 33)
+    local labelY = rows:Next(22)
+    local selectorY = rows:Next(40)
+    local descriptionY = rows:Next(40)
+    local primaryY = rows:Next(38)
+    local secondaryY = rows:Next()
+    local restoreY = rows:Next()
+    local statusY = rows:Next()
+
     local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
     selector:SetWidth(250)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -103)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, selectorY)
     selector:SetDefaultText(selectedName)
 
     local label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -81)
+    label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, labelY)
     label:SetText("Theme to edit")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    description:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -143)
+    description:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, descriptionY)
     description:SetWidth(630)
     description:SetJustifyH("LEFT")
     description:SetTextColor(0.75, 0.75, 0.75)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -287)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, statusY)
     status:SetWidth(630)
     status:SetJustifyH("LEFT")
 
@@ -90,32 +99,32 @@ local function CreateThemeManagementControls(panel, onSelectionChanged)
         return button
     end
 
-    Button("Create", 20, -183, 95, function()
+    Button("Create", 20, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "create", initial = ""})
     end)
-    Button("Copy", 123, -183, 95, function()
+    Button("Copy", 123, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "copy", source = selectedName, initial = selectedName .. " Copy"})
     end)
-    renameButton = Button("Rename", 226, -183, 95, function()
+    renameButton = Button("Rename", 226, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "rename", source = selectedName, initial = selectedName})
     end)
-    deleteButton = Button("Delete", 329, -183, 95, function()
+    deleteButton = Button("Delete", 329, primaryY, 95, function()
         UI.ConfirmThemeDeletion(selectedName)
     end)
-    restoreButton = Button("Restore Theme", 20, -221, 125, function()
+    restoreButton = Button("Restore Theme", 20, secondaryY, 125, function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_THEME", selectedName, nil, selectedName)
     end)
-    Button("Export Theme", 153, -221, 125, function()
+    Button("Export Theme", 153, secondaryY, 125, function()
         local success, errorMessage = GetExchangeDialog():OpenThemeExport(selectedName)
         if not success then SetStatus(errorMessage, true) end
     end)
-    Button("Import Theme", 286, -221, 125, function()
+    Button("Import Theme", 286, secondaryY, 125, function()
         GetExchangeDialog():OpenThemeImport(function(name) SelectTheme(name) end)
     end)
-    Button("Restore Bundled Themes", 20, -254, 190, function()
+    Button("Restore Bundled Themes", 20, restoreY, 190, function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_BUNDLED_THEMES")
     end)
 
@@ -124,13 +133,22 @@ local function CreateThemeManagementControls(panel, onSelectionChanged)
 end
 
 -- Typography section: controls follow their visual grouping.
-local function CreateThemeTypography(editor, state, controls)
+local function CreateThemeTypography(editor, state, controls, rows)
+    local fontNoteY = rows:Next(28)
+    local paneY = rows:Next(28)
+    local fontY = rows:Next(39)
+    local fontSizeY = rows:Next(67)
+    local textY = rows:Next()
+    local selectedY = rows:Next()
+    local backgroundY = rows:Next()
+    local selectionY = rows:Next()
+
     local categoryPaneHeading = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontNormal"
     )
-    categoryPaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -120)
+    categoryPaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, paneY)
     categoryPaneHeading:SetText("Category Pane")
 
     local emotePaneHeading = editor:CreateFontString(
@@ -138,12 +156,12 @@ local function CreateThemeTypography(editor, state, controls)
         "OVERLAY",
         "GameFontNormal"
     )
-    emotePaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 330, -120)
+    emotePaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 330, paneY)
     emotePaneHeading:SetText("Emote Pane")
 
     local columnDivider = editor:CreateTexture(nil, "ARTWORK")
     columnDivider:SetColorTexture(0.35, 0.35, 0.35, 0.45)
-    columnDivider:SetPoint("TOPLEFT", editor, "TOPLEFT", 314, -118)
+    columnDivider:SetPoint("TOPLEFT", editor, "TOPLEFT", 314, paneY + 2)
     columnDivider:SetSize(1, 300)
 
     local fontLoadingNote = editor:CreateFontString(
@@ -151,7 +169,7 @@ local function CreateThemeTypography(editor, state, controls)
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    fontLoadingNote:SetPoint("TOPLEFT", editor, "TOPLEFT", 16, -92)
+    fontLoadingNote:SetPoint("TOPLEFT", editor, "TOPLEFT", 16, fontNoteY)
     fontLoadingNote:SetWidth(620)
     fontLoadingNote:SetJustifyH("LEFT")
     fontLoadingNote:SetText(
@@ -160,66 +178,65 @@ local function CreateThemeTypography(editor, state, controls)
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
     controls.categoryFont = CreateFontSetting(
-        editor, "Font", "categoryFont", 20, -148,
-        state.GetSettings, state.Apply
+        editor, "Font", "categoryFont", 20, fontY,
+        state.GetSettings, state.Apply, 95
     )
-    controls.categoryFont:ClearAllPoints()
-    controls.categoryFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 95, -143)
 
     controls.categoryFontSize = CreateNumberSetting(
-        editor, "Font size", "categoryFontSize", 20, -187, 8, 24,
+        editor, "Font size", "categoryFontSize", 20, fontSizeY, 8, 24,
         function() return state.GetSettings().categoryFontSize end,
         function(value)
             state.GetSettings().categoryFontSize = value
             state.Apply()
         end,
-        "px"
+        "px", 160
     )
     controls.categoryFontSize:SetWidth(52)
 
     controls.emoteFont = CreateFontSetting(
-        editor, "Font", "emoteFont", 330, -148,
-        state.GetSettings, state.Apply
+        editor, "Font", "emoteFont", 330, fontY,
+        state.GetSettings, state.Apply, 405
     )
-    controls.emoteFont:ClearAllPoints()
-    controls.emoteFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 405, -143)
 
     controls.emoteFontSize = CreateNumberSetting(
-        editor, "Font size", "emoteFontSize", 330, -187, 8, 24,
+        editor, "Font size", "emoteFontSize", 330, fontSizeY, 8, 24,
         function() return state.GetSettings().emoteFontSize end,
         function(value)
             state.GetSettings().emoteFontSize = value
             state.Apply()
         end,
-        "px"
+        "px", 470
     )
     controls.emoteFontSize:SetWidth(52)
 
     controls.categoryTextColor = CreateColorSetting(
-        editor, "Category text", "categoryTextColor", 20, -254,
+        editor, "Category text", "categoryTextColor", 20, textY,
         function() return state.GetSettings().categoryTextColor end,
         function(value)
             state.GetSettings().categoryTextColor = value
             state.Apply()
-        end
+        end,
+        160
     )
 
     controls.selectedCategoryTextColor = CreateColorSetting(
-        editor, "Selected text", "selectedCategoryTextColor", 20, -292,
+        editor, "Selected text", "selectedCategoryTextColor", 20, selectedY,
         function() return state.GetSettings().selectedCategoryTextColor end,
         function(value)
             state.GetSettings().selectedCategoryTextColor = value
             state.Apply()
-        end
+        end,
+        160
     )
 
     controls.emoteTextColor = CreateColorSetting(
-        editor, "Emote-label text", "emoteTextColor", 330, -254,
+        editor, "Emote-label text", "emoteTextColor", 330, textY,
         function() return state.GetSettings().emoteTextColor end,
         function(value)
             state.GetSettings().emoteTextColor = value
             state.Apply()
-        end
+        end,
+        470
     )
 
     controls.categoryHighlightColor = CreateColorSetting(
@@ -227,60 +244,48 @@ local function CreateThemeTypography(editor, state, controls)
         "Selection color",
         "categoryHighlightColor",
         20,
-        -368,
+        selectionY,
         function() return state.GetSettings().categoryHighlightColor end,
         function(value)
             state.GetSettings().categoryHighlightColor = value
             state.Apply()
-        end
+        end,
+        160
     )
 
     controls.categoryBackgroundColor = CreateColorSetting(
-        editor, "Background", "categoryBackgroundColor", 20, -330,
+        editor, "Background", "categoryBackgroundColor", 20, backgroundY,
         function() return state.GetSettings().categoryBackgroundColor end,
         function(value)
             state.GetSettings().categoryBackgroundColor = value
             state.Apply()
-        end
+        end,
+        160
     )
 
     controls.emoteBackgroundColor = CreateColorSetting(
-        editor, "Background", "emoteBackgroundColor", 330, -292,
+        editor, "Background", "emoteBackgroundColor", 330, selectedY,
         function() return state.GetSettings().emoteBackgroundColor end,
         function(value)
             state.GetSettings().emoteBackgroundColor = value
             state.Apply()
-        end
+        end,
+        470
     )
 
-    controls.categoryFontSize:ClearAllPoints()
-    controls.categoryFontSize:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -183)
-    controls.emoteFontSize:ClearAllPoints()
-    controls.emoteFontSize:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -183)
 
-    controls.categoryTextColor:ClearAllPoints()
-    controls.categoryTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -250)
-    controls.selectedCategoryTextColor:ClearAllPoints()
-    controls.selectedCategoryTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -288)
-    controls.categoryBackgroundColor:ClearAllPoints()
-    controls.categoryBackgroundColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -326)
-    controls.categoryHighlightColor:ClearAllPoints()
-    controls.categoryHighlightColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -364)
-    controls.emoteTextColor:ClearAllPoints()
-    controls.emoteTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -250)
-    controls.emoteBackgroundColor:ClearAllPoints()
-    controls.emoteBackgroundColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -288)
 
 end
 
 -- SelectionEffects section: controls follow their visual grouping.
-local function CreateThemeSelectionEffects(editor, state, controls)
+local function CreateThemeSelectionEffects(editor, state, controls, rows)
+    local effectY = rows:Next(54)
     local highlightEffectLabel = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontHighlight"
     )
-    highlightEffectLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -406)
+    highlightEffectLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, effectY)
     highlightEffectLabel:SetText("Selection effect")
 
     local highlightEffectSelector = CreateFrame(
@@ -290,13 +295,13 @@ local function CreateThemeSelectionEffects(editor, state, controls)
         "WowStyle1DropdownTemplate"
     )
     highlightEffectSelector:SetWidth(135)
-    highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -401)
+    highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, effectY + 5)
     highlightEffectSelector:SetDefaultText("Background")
     highlightEffectSelector.settingKey = "categoryHighlightEffect"
     controls.categoryHighlightEffect = highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
-        editor, "Thickness", "categoryHighlightThickness", 330, -406, 1, 6,
+        editor, "Thickness", "categoryHighlightThickness", 330, effectY, 1, 6,
         function() return state.GetSettings().categoryHighlightThickness end,
         function(value)
             state.GetSettings().categoryHighlightThickness = value
@@ -347,25 +352,23 @@ local function CreateThemeSelectionEffects(editor, state, controls)
 end
 
 -- Borders section: controls follow their visual grouping.
-local function CreateThemeBorders(editor, state, controls)
-    local windowHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    windowHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -460)
-    windowHeading:SetText("Borders")
+local function CreateThemeBorders(editor, state, controls, rows)
+    rows:Heading("Borders", 28)
+    local colorY = rows:Next()
+    local styleY = rows:Next(39)
 
     controls.borderColor = CreateColorSetting(
-        editor, "Border color", "borderColor", 20, -488,
+        editor, "Border color", "borderColor", 20, colorY,
         function() return state.GetSettings().borderColor end,
         function(value)
             state.GetSettings().borderColor = value
             state.Apply()
-        end
+        end,
+        160
     )
 
-    controls.borderColor:ClearAllPoints()
-    controls.borderColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -484)
-
     local borderLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    borderLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -526)
+    borderLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, styleY)
     borderLabel:SetText("Border style")
 
     local borderSelector = CreateFrame(
@@ -375,7 +378,7 @@ local function CreateThemeBorders(editor, state, controls)
         "WowStyle1DropdownTemplate"
     )
     borderSelector:SetWidth(170)
-    borderSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -521)
+    borderSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, styleY + 5)
     borderSelector:SetDefaultText("Thin")
     borderSelector.settingKey = "borderStyle"
     controls.borderStyle = borderSelector
@@ -406,23 +409,19 @@ local function CreateThemeBorders(editor, state, controls)
 end
 
 -- Opacity section: controls follow their visual grouping.
-local function CreateThemeOpacity(editor, state, controls)
-    local opacityHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    opacityHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -565)
-    opacityHeading:SetText("Opacity")
+local function CreateThemeOpacity(editor, state, controls, rows)
+    rows:Heading("Opacity", 28)
+    local opacityY = rows:Next(42)
 
     controls.windowOpacity = CreateNumberSetting(
-        editor, "Menu opacity", "windowOpacity", 20, -593, 10, 100,
+        editor, "Menu opacity", "windowOpacity", 20, opacityY, 10, 100,
         function() return state.GetSettings().windowOpacity * 100 end,
         function(value)
             state.GetSettings().windowOpacity = value / 100
             state.Apply()
         end,
-        "%"
+        "%", 160
     )
-
-    controls.windowOpacity:ClearAllPoints()
-    controls.windowOpacity:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -589)
 
     local opacityVisibleNote = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     opacityVisibleNote:SetPoint("LEFT", controls.windowOpacity.SuffixLabel, "RIGHT", FIELD_GAP, 0)
@@ -431,13 +430,12 @@ local function CreateThemeOpacity(editor, state, controls)
 end
 
 -- LayoutAndIcon section: controls follow their visual grouping.
-local function CreateThemeLayoutAndIcon(editor, state, controls)
-    local layoutHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -635)
-    layoutHeading:SetText("Layout")
+local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
+    rows:Heading("Layout", 28)
+    local titleY = rows:Next(42)
 
     local titleBarLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -663)
+    titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, titleY)
     titleBarLabel:SetText("Title bar")
 
     local titleBarSelector = CreateFrame(
@@ -447,7 +445,7 @@ local function CreateThemeLayoutAndIcon(editor, state, controls)
         "WowStyle1DropdownTemplate"
     )
     titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -658)
+    titleBarSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, titleY + 5)
     titleBarSelector:SetDefaultText("Top")
     titleBarSelector.settingKey = "titleBarPosition"
     controls.titleBarPosition = titleBarSelector
@@ -468,12 +466,10 @@ local function CreateThemeLayoutAndIcon(editor, state, controls)
         end
     end)
 
-    local iconHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    iconHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -705)
-    iconHeading:SetText("Minimized Icon")
+    rows:Heading("Minimized Icon", 30)
 
     local refreshIconColor = UI.CreateThemeIconColorControls(
-        editor, 20, -735, true, state.GetName
+        editor, 20, rows:Next(), true, state.GetName
     )
 
     return titleBarSelector, titleBarLabels, refreshIconColor
@@ -525,13 +521,14 @@ local function CreateAppearanceSettingsPanel()
         GetName = function() return themeName end,
         Apply = ApplyIfActive
     }
-    CreateThemeTypography(editor, state, controls)
+    local rows = UI.CreateRows(editor, 20, -92, 38)
+    CreateThemeTypography(editor, state, controls, rows)
     local RefreshHighlightControls =
-        CreateThemeSelectionEffects(editor, state, controls)
-    local borderSelector, borderLabels = CreateThemeBorders(editor, state, controls)
-    CreateThemeOpacity(editor, state, controls)
+        CreateThemeSelectionEffects(editor, state, controls, rows)
+    local borderSelector, borderLabels = CreateThemeBorders(editor, state, controls, rows)
+    CreateThemeOpacity(editor, state, controls, rows)
     local titleBarSelector, titleBarLabels, refreshIconColor =
-        CreateThemeLayoutAndIcon(editor, state, controls)
+        CreateThemeLayoutAndIcon(editor, state, controls, rows)
 
     local function RefreshFontControls()
         themeSettings = Database.GetThemeSettings(themeName)

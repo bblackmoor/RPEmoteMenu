@@ -23,9 +23,9 @@ local function GetPopulatedEmotes(categoryIndex)
 end
 
 -- Fixed visual structure for the scrollable list.
-local function CreateEmoteListLayout(panel)
+local function CreateEmoteListLayout(panel, headingY, topY)
     local listHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -269)
+    listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, headingY)
     listHeading:SetText("Emotes in this category")
 
     local countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -38,7 +38,7 @@ local function CreateEmoteListLayout(panel)
         panel,
         "UIPanelScrollFrameTemplate"
     )
-    listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -299)
+    listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, topY)
     listScrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -48, 18)
 
     local listContent = CreateFrame("Frame", nil, listScrollFrame)
@@ -58,9 +58,9 @@ local function CreateEmoteListLayout(panel)
 end
 
 -- Dynamic rows, edit actions, and drag ordering are managed separately.
-function UI.CreateEmoteList(panel, getSelectedCategoryIndex)
+function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
     local countText, listContent, addButton, emptyText =
-        CreateEmoteListLayout(panel)
+        CreateEmoteListLayout(panel, headingY, topY)
     local emoteRows = {}
     local draggedRow
 

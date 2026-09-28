@@ -18,6 +18,9 @@ function Widget:CreateFontString() return CreateFrame('FontString', nil, self) e
 function Widget:CreateTexture() return CreateFrame('Texture', nil, self) end
 function Widget:SetText(v) self.text = v end
 function Widget:GetText() return self.text or '' end
+function Widget:SetPoint(point, relative, relativePoint, x, y)
+  self.anchor={point=point,relative=relative,relativePoint=relativePoint,x=x,y=y}
+end
 function Widget:SetSize(w,h) self.width=w; self.height=h end
 function Widget:GetWidth() return self.width or 250 end
 function Widget:GetHeight() return self.height or 24 end
@@ -124,6 +127,33 @@ local found={}
 for _,w in ipairs(widgets) do if w.text then found[w.text]=true end end
 assert(found['Import Theme'] and found['Export Theme'] and found['Restore Bundled Themes'])
 assert(found['Theme assigned to this Profile'])
+local function assertControlPosition(key, x, y)
+  for _,w in ipairs(widgets) do
+    if w.settingKey==key then
+      assert(w.anchor and w.anchor.x==x and w.anchor.y==y,
+        key..' control moved from its intended row')
+      return
+    end
+  end
+  error(key..' control missing')
+end
+assertControlPosition('tooltipDelayMs',255,-151)
+assertControlPosition('categoryFont',95,-143)
+assertControlPosition('categoryFontSize',160,-183)
+assertControlPosition('borderColor',160,-484)
+local function assertTextPosition(label, x, y, panel)
+  for _,w in ipairs(widgets) do
+    if w.text==label and (not panel or w.parent==panel) then
+      assert(w.anchor and w.anchor.x==x and w.anchor.y==y,
+        label..' moved from its intended row')
+      return
+    end
+  end
+  error(label..' missing')
+end
+assertTextPosition('Selected profile',20,-85,profilesPanel)
+assertTextPosition('Theme assigned to this Profile',20,-149,profilesPanel)
+assertTextPosition('Emotes in this category',20,-269)
 local rows={}
 for _,w in ipairs(widgets) do
   if w.visiblePosition then rows[w.visiblePosition]=w end
@@ -224,4 +254,4 @@ exchange:OpenThemeImport(function(name) imported=name end)
 exchange.editBox:SetText('{"type":"theme"}')
 exchange.actionButton.scripts.OnClick()
 assert(imported=='Imported')
-print('PASS Phase 6 registration, selected Theme edit, assignment, dialogs, exchange')
+print('PASS settings registration, row positions, Theme actions, Emote drag, exchange')

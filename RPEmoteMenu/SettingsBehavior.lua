@@ -10,68 +10,57 @@ local CreateNumberSetting = UI.CreateNumberSetting
 local CreateIntegerEditBox = UI.CreateIntegerEditBox
 
 -- Startup and interaction settings.
-local function CreateStartupSection(panel, switches)
-    local behaviorHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    behaviorHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -95)
-    behaviorHeading:SetText("Startup & Interaction")
+local function CreateStartupSection(panel, switches, rows)
+    rows:Heading("Startup & Interaction")
 
-    local showAtLoginSwitch = CreateSwitch(panel, "Show the addon at login", -125,
+    local showAtLoginSwitch = CreateSwitch(panel, "Show the addon at login", rows:Next(),
         function() return settings.showAtLogin end,
-        function(value) settings.showAtLogin = value end)
-    showAtLoginSwitch:ClearAllPoints()
-    showAtLoginSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -121)
+        function(value) settings.showAtLogin = value end, 255)
     switches[#switches + 1] = showAtLoginSwitch
 
     local tooltipDelayBox = CreateNumberSetting(
-        panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 20, -155, 0, 1000,
+        panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 20, rows:Next(), 0, 1000,
         function() return settings.tooltipDelayMs end,
         function(value) settings.tooltipDelayMs = value end,
-        "ms"
+        "ms", 255
     )
 
-    tooltipDelayBox:ClearAllPoints()
-    tooltipDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -151)
-
-    local hideSettingsSwitch = CreateSwitch(panel, "Hide settings gear icon", -185,
+    local hideSettingsSwitch = CreateSwitch(panel, "Hide settings gear icon", rows:Next(),
         function() return settings.hideSettingsGear end,
         function(value)
             settings.hideSettingsGear = value
             MainWindow.ApplySettingsGearVisibility()
-        end)
-    hideSettingsSwitch:ClearAllPoints()
-    hideSettingsSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -181)
+        end, 255)
     switches[#switches + 1] = hideSettingsSwitch
 
     local hideEmoteSwitch = CreateSwitch(
         panel,
         "Hide emote edit gear icons",
-        -215,
+        rows:Next(),
         function() return settings.hideEmoteEditGears end,
         function(value)
             settings.hideEmoteEditGears = value
             MainWindow.UpdateMenu()
-        end
+        end,
+        255
     )
-    hideEmoteSwitch:ClearAllPoints()
-    hideEmoteSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -211)
     switches[#switches + 1] = hideEmoteSwitch
 
     local emoteGearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    emoteGearNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 310, -215)
+    emoteGearNote:SetPoint("LEFT", hideEmoteSwitch, "RIGHT", FIELD_GAP, 0)
     emoteGearNote:SetText("(right-click an emote to edit)")
 
     return tooltipDelayBox
 end
 
 -- Fade and minimize behavior.
-local function CreateInactivitySection(panel, switches)
-    local inactiveHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    inactiveHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -260)
-    inactiveHeading:SetText("Window Behavior")
+local function CreateInactivitySection(panel, switches, rows)
+    rows:Gap(15)
+    rows:Heading("Window Behavior")
 
     local RefreshInactiveControls
     local RefreshIconControls
-    local fadeSwitch = CreateSwitch(panel, "Fade the menu when inactive", -290,
+    local fadeSwitch = CreateSwitch(panel, "Fade the menu when inactive", rows:Next(),
         function() return settings.fadeEnabled end,
         function(value)
             settings.fadeEnabled = value
@@ -79,38 +68,32 @@ local function CreateInactivitySection(panel, switches)
             if RefreshInactiveControls then
                 RefreshInactiveControls()
             end
-        end)
-    fadeSwitch:ClearAllPoints()
-    fadeSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -286)
+        end, 255)
     switches[#switches + 1] = fadeSwitch
 
     local fadeDelayBox = CreateNumberSetting(
-        panel, "Fade after", "fadeDelay", 20, -320, 0, 60,
+        panel, "Fade after", "fadeDelay", 20, rows:Next(), 0, 60,
         function() return settings.fadeDelay end,
         function(value)
             settings.fadeDelay = value
             MainWindow.ApplyFadeSettings()
         end,
-        "seconds"
+        "seconds", 255
     )
 
     local inactiveOpacityBox = CreateNumberSetting(
-        panel, "Inactive opacity", "inactiveOpacity", 20, -350, 10, 100,
+        panel, "Inactive opacity", "inactiveOpacity", 20, rows:Next(), 10, 100,
         function() return settings.inactiveOpacity * 100 end,
         function(value)
             settings.inactiveOpacity = value / 100
             MainWindow.ApplyFadeSettings()
         end,
-        "%"
+        "%", 255
     )
 
-    fadeDelayBox:ClearAllPoints()
-    fadeDelayBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -316)
-    inactiveOpacityBox:ClearAllPoints()
-    inactiveOpacityBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -346)
-
+    local minimizeY = rows:Next()
     local minimizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    minimizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -380)
+    minimizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, minimizeY)
     minimizeLabel:SetText("Minimize to")
 
     local minimizeSelector = CreateFrame(
@@ -120,7 +103,7 @@ local function CreateInactivitySection(panel, switches)
         "WowStyle1DropdownTemplate"
     )
     minimizeSelector:SetWidth(150)
-    minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -375)
+    minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, minimizeY + 5)
     minimizeSelector:SetDefaultText("None")
 
     local minimizeLabels = {
@@ -146,12 +129,13 @@ local function CreateInactivitySection(panel, switches)
         end
     end)
 
+    local iconSizeY = rows:Next()
     local iconSizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -410)
+    iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, iconSizeY)
     iconSizeLabel:SetText("Minimized icon size")
 
     local iconSizeBox = CreateIntegerEditBox(
-        panel, 255, -406, 70,
+        panel, 255, iconSizeY + 4, 70,
         function() return settings.minimizedIconSize end,
         function(value)
             settings.minimizedIconSize = value
@@ -163,8 +147,9 @@ local function CreateInactivitySection(panel, switches)
     iconSizeRange:SetPoint("LEFT", iconSizeBox, "RIGHT", FIELD_GAP, 0)
     iconSizeRange:SetText("(16-64 px)")
 
+    local iconCornerY = rows:Next()
     local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -440)
+    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, iconCornerY)
     iconCornerLabel:SetText("Icon side")
 
     local iconCornerSelector = CreateFrame(
@@ -174,7 +159,7 @@ local function CreateInactivitySection(panel, switches)
         "WowStyle1DropdownTemplate"
     )
     iconCornerSelector:SetWidth(150)
-    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -435)
+    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, iconCornerY + 5)
     iconCornerSelector:SetDefaultText("Left")
 
     local iconCornerLabels = {
@@ -241,27 +226,30 @@ local function CreateInactivitySection(panel, switches)
 end
 
 -- Window position, size, and lock settings.
-local function CreateLayoutSection(panel, switches)
-    local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -485)
-    layoutHeading:SetText("Layout")
+local function CreateLayoutSection(panel, switches, rows)
+    rows:Gap(15)
+    rows:Heading("Layout", 25)
 
-    local lockSwitch = CreateSwitch(panel, "Lock window", -625,
-        function() return settings.locked end,
-        function(value)
-            settings.locked = value
-            MainWindow.ApplyMovementLock()
-        end)
-    lockSwitch:ClearAllPoints()
-    lockSwitch:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, -621)
-    switches[#switches + 1] = lockSwitch
+    local centerY = rows:Next(45)
+    local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    centerButton:SetSize(130, 24)
+    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, centerY)
+    centerButton:SetText("Center Window")
+    centerButton:SetScript("OnClick", MainWindow.CenterWindow)
 
+    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    resetButton:SetSize(125, 24)
+    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, centerY)
+    resetButton:SetText("Reset Window")
+    resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
+
+    local positionY = rows:Next(35)
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -555)
+    positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, positionY)
     positionLabel:SetText("Exact position (advanced)")
 
     local positionXBox = CreateIntegerEditBox(
-        panel, 255, -551, 80,
+        panel, 255, positionY + 4, 80,
         function() return settings.x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -276,7 +264,7 @@ local function CreateLayoutSection(panel, switches)
     )
 
     local positionYBox = CreateIntegerEditBox(
-        panel, 405, -551, 80,
+        panel, 405, positionY + 4, 80,
         function() return settings.y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -298,24 +286,13 @@ local function CreateLayoutSection(panel, switches)
     yLabel:SetPoint("RIGHT", positionYBox, "LEFT", -FIELD_GAP, 0)
     yLabel:SetText("Y")
 
-    local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    centerButton:SetSize(130, 24)
-    centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -510)
-    centerButton:SetText("Center Window")
-    centerButton:SetScript("OnClick", MainWindow.CenterWindow)
-
-    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    resetButton:SetSize(125, 24)
-    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -510)
-    resetButton:SetText("Reset Window")
-    resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
-
+    local heightY = rows:Next(35)
     local heightLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -590)
+    heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, heightY)
     heightLabel:SetText("Window height")
 
     local heightBox = CreateIntegerEditBox(
-        panel, 255, -586, 80,
+        panel, 255, heightY + 4, 80,
         function() return settings.height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
@@ -331,8 +308,16 @@ local function CreateLayoutSection(panel, switches)
     heightRange:SetPoint("LEFT", heightBox, "RIGHT", FIELD_GAP, 0)
     heightRange:SetText("(150-630 px)")
 
+    local lockSwitch = CreateSwitch(panel, "Lock window", rows:Next(),
+        function() return settings.locked end,
+        function(value)
+            settings.locked = value
+            MainWindow.ApplyMovementLock()
+        end, 255)
+    switches[#switches + 1] = lockSwitch
+
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -655)
+    widthNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, rows:Next())
     widthNote:SetWidth(620)
     widthNote:SetJustifyH("LEFT")
     widthNote:SetText("Window width adjusts automatically to fit all category and emote labels in the profile.")
@@ -390,13 +375,14 @@ local function CreateGeneralSettingsPanel()
         RefreshControls()
     end)
 
-    local tooltipDelayBox = CreateStartupSection(panel, switches)
+    local rows = UI.CreateRows(panel, 20, -95, 30)
+    local tooltipDelayBox = CreateStartupSection(panel, switches, rows)
     local fadeSwitch, fadeDelayBox, inactiveOpacityBox,
         minimizeSelector, iconSizeBox, iconCornerSelector,
         minimizeLabels, iconCornerLabels, RefreshInactiveControls =
-        CreateInactivitySection(panel, switches)
+        CreateInactivitySection(panel, switches, rows)
     local lockSwitch, positionXBox, positionYBox, heightBox =
-        CreateLayoutSection(panel, switches)
+        CreateLayoutSection(panel, switches, rows)
 
     AddonSettings.RefreshGeneralWindowFields = function()
         lockSwitch:RefreshValue()

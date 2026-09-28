@@ -7,6 +7,17 @@ local CreateInfoLink = UI.CreateInfoLink
 -- Profile management keeps character selection, Theme assignment, and lifecycle actions together.
 local function CreateProfilesSettingsPanel()
     local panel = CreateFrame("Frame")
+    local rows = UI.CreateRows(panel, 20, -85, 30)
+    local profileLabelY = rows:Next(27)
+    local profileSelectorY = rows:Next(37)
+    local themeLabelY = rows:Next(22)
+    local themeSelectorY = rows:Next(53)
+    local restoreY = rows:Next(43)
+    local descriptionY = rows:Next(32)
+    local noteY = rows:Next(38)
+    local actionsY = rows:Next(33)
+    local exchangeY = rows:Next(50)
+    local statusY = rows:Next()
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
@@ -23,12 +34,12 @@ local function CreateProfilesSettingsPanel()
     description:SetTextColor(0.8, 0.8, 0.8)
 
     local currentProfileLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -85)
+    currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileLabelY)
     currentProfileLabel:SetText("Selected profile")
 
     local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
     selector:SetWidth(250)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -112)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileSelectorY)
     selector:SetDefaultText(
         Database.GetProfileDisplayName(Database.GetActiveProfileName())
     )
@@ -38,13 +49,13 @@ local function CreateProfilesSettingsPanel()
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -267)
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, descriptionY)
     profileDescription:SetWidth(620)
     profileDescription:SetJustifyH("LEFT")
     profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -420)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, statusY)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -56,11 +67,11 @@ local function CreateProfilesSettingsPanel()
     local importProfileButton
     local themeSelector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
     themeSelector:SetWidth(250)
-    themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -171)
+    themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeSelectorY)
     themeSelector:SetDefaultText(Database.GetActiveThemeName())
 
     local themeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    themeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -149)
+    themeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeLabelY)
     themeLabel:SetText("Theme assigned to this Profile")
 
     local function UpdateButtonState()
@@ -124,7 +135,7 @@ local function CreateProfilesSettingsPanel()
 
     local restoreDefaultButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     restoreDefaultButton:SetSize(140, 24)
-    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -224)
+    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, restoreY)
     restoreDefaultButton:SetText("Restore Default")
     restoreDefaultButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
@@ -133,7 +144,7 @@ local function CreateProfilesSettingsPanel()
     CreateInfoLink(panel, selector, "RPEMOTEMENU_PROFILE_INFO")
 
     local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -299)
+    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, noteY)
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
     profileNote:SetText(
@@ -153,7 +164,7 @@ local function CreateProfilesSettingsPanel()
 
     createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     createButton:SetSize(95, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -337)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, actionsY)
     createButton:SetText("Create")
     createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
 
@@ -193,7 +204,7 @@ local function CreateProfilesSettingsPanel()
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -370)
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, exchangeY)
     exportProfileButton:SetText("Export Profile")
     exportProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileExport()

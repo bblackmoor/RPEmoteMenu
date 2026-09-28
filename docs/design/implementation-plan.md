@@ -112,7 +112,8 @@ dialogs, and each tab's settings live in focused files in `.toc` visual order. T
 appearance uses section constructors; the minimized icon renderer handles only the
 live icon, while Theme settings own the swatch and preview. Profile and Theme prompts
 have dedicated modules. Emote list layout, row construction, and row actions are
-separated. Explicit row positions and two-column layouts remain for Phase 7.
+separated. Phase 7 advances ordinary settings rows with a small cursor while
+retaining the Theme editor's two columns and the Emote list's scrolling layout.
 The `tests/settings-smoke.lua` WoW UI stub checks settings registration, load order,
 Theme editing and assignment, in-use deletion prompts, Emote drag ordering, and
 exchange actions; the in-game integration matrix below still needs manual verification.
@@ -121,14 +122,16 @@ exchange actions; the in-game integration matrix below still needs manual verifi
 
 This may be implemented alongside Phase 6 but should remain a distinct review target.
 
-- [ ] Introduce a small, understandable section/row layout mechanism.
-- [ ] Use consistent row advancement instead of hand-maintained Y coordinates for ordinary rows.
-- [ ] Preserve explicit gaps where semantically useful.
-- [ ] Preserve purpose-built layouts for special cases such as two-column Theme controls.
-- [ ] Eliminate create-then-immediately-reanchor patterns where possible.
-- [ ] Keep standard row order: label, control, reset, info.
+- [x] Introduce a small, understandable section/row layout mechanism.
+- [x] Use consistent row advancement instead of hand-maintained Y coordinates for ordinary rows.
+- [x] Preserve explicit gaps where semantically useful.
+- [x] Preserve purpose-built layouts for special cases such as two-column Theme controls.
+- [x] Eliminate create-then-immediately-reanchor patterns where possible.
+- [x] Keep standard row order: label, control, reset, info.
 
-Avoid building a large generic UI framework.
+The shared row cursor only advances vertical positions and creates section headings.
+Panels retain their own controls and special layouts. Smoke assertions cover key
+Behavior, Theme, Profile, and Emote anchors; the in-game matrix remains outstanding.
 
 ## Phase 8 — Cleanup and verification
 

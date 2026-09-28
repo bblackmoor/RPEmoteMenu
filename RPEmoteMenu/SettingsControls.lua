@@ -5,14 +5,43 @@ local Database = addon.Database
 local MainWindow = addon.MainWindow
 local FIELD_GAP = UI.FIELD_GAP
 
-local function CreateSwitch(parent, label, y, getValue, setValue)
+-- Ordinary rows share one cursor. Each panel chooses its own starting point
+-- and can add a deliberate gap before a new section.
+function UI.CreateRows(parent, x, startY, rowHeight)
+    local rows = {parent = parent, x = x, y = startY, rowHeight = rowHeight or 30}
+
+    function rows:Next(height)
+        local y = self.y
+        self.y = y - (height or self.rowHeight)
+        return y
+    end
+
+    function rows:Gap(height)
+        self.y = self.y - height
+    end
+
+    function rows:Heading(label, after)
+        local heading = self.parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+        heading:SetPoint("TOPLEFT", self.parent, "TOPLEFT", self.x, self:Next(after))
+        heading:SetText(label)
+        return heading
+    end
+
+    return rows
+end
+
+local function CreateSwitch(parent, label, y, getValue, setValue, controlX)
     local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     caption:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
     caption:SetText(label)
 
     local switch = CreateFrame("Button", nil, parent)
     switch:SetSize(44, 20)
-    switch:SetPoint("LEFT", caption, "RIGHT", FIELD_GAP, 0)
+    if controlX then
+        switch:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX, y + 4)
+    else
+        switch:SetPoint("LEFT", caption, "RIGHT", FIELD_GAP, 0)
+    end
     local track = switch:CreateTexture(nil, "BACKGROUND")
     track:SetAllPoints()
     local thumb = switch:CreateTexture(nil, "ARTWORK")
@@ -307,7 +336,8 @@ local function CreateNumberSetting(
     maximum,
     getValue,
     applyValue,
-    suffix
+    suffix,
+    controlX
 )
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -315,8 +345,8 @@ local function CreateNumberSetting(
 
     local editBox = CreateIntegerEditBox(
         parent,
-        x,
-        y - 26,
+        controlX or x,
+        controlX and y + 4 or y - 26,
         70,
         getValue,
         function(value)
@@ -347,7 +377,8 @@ local function CreateColorSetting(
     x,
     y,
     getValue,
-    applyValue
+    applyValue,
+    controlX
 )
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
@@ -355,7 +386,8 @@ local function CreateColorSetting(
 
     local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
     button:SetSize(52, 24)
-    button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 26)
+    button:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
+        controlX and y + 4 or y - 26)
     button:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\Buttons\\WHITE8X8",
@@ -399,7 +431,7 @@ local function CreateColorSetting(
     return button
 end
 
-local function CreateFontSetting(parent, labelText, settingKey, x, y, getSettings, onChange)
+local function CreateFontSetting(parent, labelText, settingKey, x, y, getSettings, onChange, controlX)
     getSettings = getSettings or Database.GetSettings
     onChange = onChange or function() MainWindow.ScheduleFontRefreshes() end
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -413,7 +445,8 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y, getSetting
         "WowStyle1DropdownTemplate"
     )
     selector:SetWidth(190)
-    selector:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 26)
+    selector:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
+        controlX and y + 5 or y - 26)
     selector.settingKey = settingKey
 
     local internalText = selector.Text
