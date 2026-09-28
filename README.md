@@ -2,6 +2,20 @@
 
 RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. Each account-wide Profile holds up to 10 categories with 10 emotes each; each character chooses its own Profile. Shared Themes control the menu's appearance.
 
+## Features
+
+- Organize up to 100 emotes in 10 categories per Profile.
+- Give emotes separate default and targeted commands with character-name tokens.
+- Edit, duplicate, and drag categories and emotes into order.
+- Let each character select an account-wide Profile independently.
+- Share customizable Themes across Profiles, with six bundled presets.
+- Choose fonts, colors, selection effects, opacity, and top or left title-bar placement.
+- Fade the menu when inactive or minimize it to a title bar or icon.
+- Hide gear icons while keeping right-click editing available.
+- Import and export categories, Profiles, Themes, or all Profiles and Themes together.
+
+## Screenshots
+
 ## Download and install
 
 Download an installable ZIP from [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases). Development builds are available as artifacts from [GitHub Actions](https://github.com/bblackmoor/RPEmoteMenu/actions/workflows/release.yml). Extract the `RPEmoteMenu` folder to:
