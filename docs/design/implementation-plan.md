@@ -91,21 +91,31 @@ This phase establishes the final UI responsibilities before structural source cl
 
 The Themes tab edits a selected Theme independently of the character's assignment. Theme
 assignment lives on Profiles. An in-use Theme deletion lists its referencing Profiles
-and reassigns them to Default only after confirmation. The Theme editor retains the
-temporary presentation bridge in MinimizedIconColor until the Phase 6 cleanup.
+and reassigns them to Default only after confirmation. Phase 6 moved Theme icon
+controls out of MinimizedIconColor and into the Themes settings modules.
 
 ## Phase 6 — Perform the structural settings readability refactor
 
-- [ ] Organize settings code by tab -> section -> control.
-- [ ] Make source order substantially match visual order.
-- [ ] Split oversized settings code into appropriately scoped modules/functions.
-- [ ] Separate construction from dependency/refresh behavior where practical.
-- [ ] Move settings-page presentation out of unrelated subsystems such as minimized-icon color rendering.
-- [ ] Move Profile/Theme dialogs and lifecycle mechanics out of top-level visual construction flow.
-- [ ] Keep Emotes layout structure separate from dynamic list/drag mechanics.
-- [ ] Preserve existing behavior and the agreed UI standards.
+- [x] Organize settings code by tab -> section -> control.
+- [x] Make source order substantially match visual order.
+- [x] Split oversized settings code into appropriately scoped modules/functions.
+- [x] Separate construction from dependency/refresh behavior where practical.
+- [x] Move settings-page presentation out of unrelated subsystems such as minimized-icon color rendering.
+- [x] Move Profile/Theme dialogs and lifecycle mechanics out of top-level visual construction flow.
+- [x] Keep Emotes layout structure separate from dynamic list/drag mechanics.
+- [x] Preserve existing behavior and the agreed UI standards.
 
 This is a required project phase, not optional cleanup.
+
+Settings.lua now registers the tabs and their refresh entry points. Controls, exchange
+dialogs, and each tab's settings live in focused files in `.toc` visual order. Theme
+appearance uses section constructors; the minimized icon renderer handles only the
+live icon, while Theme settings own the swatch and preview. Profile and Theme prompts
+have dedicated modules. Emote list layout, row construction, and row actions are
+separated. Explicit row positions and two-column layouts remain for Phase 7.
+The `tests/settings-smoke.lua` WoW UI stub checks settings registration, load order,
+Theme editing and assignment, in-use deletion prompts, Emote drag ordering, and
+exchange actions; the in-game integration matrix below still needs manual verification.
 
 ## Phase 7 — Replace manual vertical layout with small helpers
 
