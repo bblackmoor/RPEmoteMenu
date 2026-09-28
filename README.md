@@ -16,7 +16,7 @@ RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. E
 
 ## Screenshots
 
-## Download and install
+## Installation
 
 Download an installable ZIP from [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases). Development builds are available as artifacts from [GitHub Actions](https://github.com/bblackmoor/RPEmoteMenu/actions/workflows/release.yml). Extract the `RPEmoteMenu` folder to:
 
@@ -26,7 +26,7 @@ World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/
 
 Enable the addon at character selection if needed.
 
-## Use the menu
+## Using the Menu
 
 - `/rpem` shows or hides the menu; `/rpem config` opens settings. You can also open settings with the title-bar gear or by right-clicking the title bar.
 - Hover over a category to see its emotes. Click an emote to run its command. Drag categories or emotes to reorder them.
@@ -47,7 +47,7 @@ Default Theme can be edited and restored, but cannot be renamed or deleted. The 
 
 The **Behavior** screen holds global show-at-login, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
 
-## Import and export
+## Importing and Exporting
 
 **Emotes** exports a category or replaces the selected category with an import. **Profiles** and **Themes** transfer one of each; **Import & Export** transfers Everything (all Profiles, Themes, and their links). Transfers use version 2 JSON. Global preferences and character-to-Profile assignments are excluded.
 
@@ -63,4 +63,7 @@ Imports add Profiles and Themes without overwriting existing ones; name conflict
 
 **AI disclaimer:** AI-assisted tools were used in development. The author reviewed and approved the code and documentation and remains responsible for the project.
 
-Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>). Licensed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html). [Release history](CHANGELOG.md) · [Source](https://github.com/bblackmoor/RPEmoteMenu)
+Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
+Licensed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html)  
+[Release history](CHANGELOG.md)  
+[Source](https://github.com/bblackmoor/RPEmoteMenu)
