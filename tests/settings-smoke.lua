@@ -81,6 +81,8 @@ function DB.GetProfilesUsingTheme(name) return name=='Teal' and {'Example'} or {
 setmetatable(DB,{__index=function() return function() return true,'okay' end end})
 addon.Database=DB
 addon.MainWindow=setmetatable({}, {__index=function() return function() end end})
+local themeRefreshes=0
+addon.MainWindow.ApplyThemeSettings=function() themeRefreshes=themeRefreshes+1 end
 function hooksecurefunc() end
 addon.IsFontAvailable=function() return true end
 addon.GetAvailableFonts=function() return {{name='Friz Quadrata'}} end
@@ -161,6 +163,20 @@ assert(foundDelete and lastPopup.name=='RPEMOTEMENU_DELETE_THEME')
 assert(lastPopup.text:find('Example',1,true), 'In-use Theme prompt omitted Profiles')
 assert(DB.GetTheme('Teal'), 'Opening deletion prompt changed the Theme')
 
+local function SelectThemeFont()
+  for _,w in ipairs(widgets) do
+    if w.settingKey=='categoryFont' and isChildOf(w,themesPanel) then
+      local chosen=false
+      w.menu(w,{CreateRadio=function(_,_,_,action) action(); chosen=true end})
+      assert(chosen,'Theme font menu had no options')
+      return
+    end
+  end
+  error('Theme font selector missing')
+end
+SelectThemeFont()
+assert(themeRefreshes==0,'Editing an inactive Theme refreshed the active Theme')
+
 local edited=false
 for _,w in ipairs(widgets) do
   if w.settingKey=='categoryFontSize' and isChildOf(w,themesPanel) then
@@ -191,6 +207,8 @@ for _,w in ipairs(widgets) do
   end
 end
 assert(assigned and DB.GetActiveThemeName()=='Teal')
+SelectThemeFont()
+assert(themeRefreshes==1,'Editing the active Theme did not refresh its appearance')
 assert(StaticPopupDialogs['RPEMOTEMENU_DELETE_THEME'])
 assert(StaticPopupDialogs['RPEMOTEMENU_RESTORE_DEFAULT_PROFILE'])
 addon.Serialization.ExportEverything=function() return '{"type":"everything"}' end

@@ -161,7 +161,7 @@ local function CreateThemeTypography(editor, state, controls)
 
     controls.categoryFont = CreateFontSetting(
         editor, "Font", "categoryFont", 20, -148,
-        state.GetSettings, ApplyIfActive
+        state.GetSettings, state.Apply
     )
     controls.categoryFont:ClearAllPoints()
     controls.categoryFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 95, -143)
@@ -179,7 +179,7 @@ local function CreateThemeTypography(editor, state, controls)
 
     controls.emoteFont = CreateFontSetting(
         editor, "Font", "emoteFont", 330, -148,
-        state.GetSettings, ApplyIfActive
+        state.GetSettings, state.Apply
     )
     controls.emoteFont:ClearAllPoints()
     controls.emoteFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 405, -143)
