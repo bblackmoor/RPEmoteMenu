@@ -13,6 +13,7 @@ local db = addon.Database
 db.InitializeDatabase()
 assert(db.GetActiveProfileName() == 'Default')
 assert(db.GetActiveThemeName() == 'Default')
+assert(db.GetProfileSettings().inactiveOpacity == 0.5)
 assert(db.GetTheme('Teal') and not db.GetProfile('Teal'))
 
 local ok = db.CreateProfile('Shared')

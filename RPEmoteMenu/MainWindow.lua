@@ -25,7 +25,7 @@ local function Trim(value)
 end
 
 local titleBarThickness = 30
-local leftTitleBarWidth = 44
+local leftTitleBarWidth = 30
 -- The first category and emote labels are both centered about 50 pixels below
 -- the top of the window. Keep the minimized icon on that same centerline.
 local topTitleFirstRowCenterOffset = 50

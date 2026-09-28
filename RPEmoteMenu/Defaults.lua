@@ -234,7 +234,7 @@ addon.DefaultProfileSettings = {
     height = 250,
     fadeEnabled = false,
     fadeDelay = 5,
-    inactiveOpacity = 0.35
+    inactiveOpacity = 0.5
 }
 
 addon.DefaultThemeSettings = {

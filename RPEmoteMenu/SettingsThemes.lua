@@ -488,7 +488,7 @@ local function CreateThemesSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 1110)
+    panel:SetSize(700, 1030)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
     local themeName = Database.GetActiveThemeName()
@@ -513,15 +513,15 @@ local function CreateThemesSettingsPanel()
     description:SetTextColor(0.8, 0.8, 0.8)
 
     local editor = CreateFrame("Frame", nil, panel)
-    editor:SetSize(700, 780)
-    editor:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -335)
+    editor:SetSize(700, 720)
+    editor:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -285)
 
     local state = {
         GetSettings = function() return themeSettings end,
         GetName = function() return themeName end,
         Apply = ApplyIfActive
     }
-    local rows = UI.CreateRows(editor, 20, -92, 38)
+    local rows = UI.CreateRows(editor, 20, -30, 38)
     CreateThemeTypography(editor, state, controls, rows)
     local RefreshHighlightControls =
         CreateThemeSelectionEffects(editor, state, controls, rows)

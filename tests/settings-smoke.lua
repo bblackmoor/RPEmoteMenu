@@ -138,9 +138,15 @@ local function assertControlPosition(key, x, y)
   error(key..' control missing')
 end
 assertControlPosition('tooltipDelayMs',255,-151)
-assertControlPosition('categoryFont',95,-143)
-assertControlPosition('categoryFontSize',160,-183)
-assertControlPosition('borderColor',160,-484)
+assertControlPosition('categoryFont',95,-81)
+assertControlPosition('categoryFontSize',160,-121)
+assertControlPosition('borderColor',160,-422)
+for _,w in ipairs(widgets) do
+  if w.settingKey=='categoryFont' and w.anchor.x==95 then
+    assert(w.parent.anchor and w.parent.anchor.y==-285,
+      'Theme editor is too far below its management controls')
+  end
+end
 local function assertTextPosition(label, x, y, panel)
   for _,w in ipairs(widgets) do
     if w.text==label and (not panel or w.parent==panel) then

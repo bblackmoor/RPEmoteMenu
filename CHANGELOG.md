@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.204
+
+- Reduced the gap between Theme management and the Theme editor.
+- Matched the left title bar's width to the top title bar's thickness.
+- Set the default inactive opacity for new and restored Profiles to 50%.
+
 ## 2.0.203
 
 - Completed the Profile and Theme settings refactor, with small row layout helpers and clearer module boundaries.
