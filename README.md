@@ -64,6 +64,6 @@ Imports add Profiles and Themes without overwriting existing ones; name conflict
 **AI disclaimer:** AI-assisted tools were used in development. The author reviewed and approved the code and documentation and remains responsible for the project.
 
 Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
-Licensed under [GPL-3.0](https://www.gnu.org/licenses/gpl-3.0.en.html)  
-[Release history](CHANGELOG.md)  
-[Source](https://github.com/bblackmoor/RPEmoteMenu)
+Licensed under GPL-3.0 [https://www.gnu.org/licenses/gpl-3.0.en.html](https://www.gnu.org/licenses/gpl-3.0.en.html)  
+Release history: [CHANGELOG.md](CHANGELOG.md)  
+Source: [https://github.com/bblackmoor/RPEmoteMenu](https://github.com/bblackmoor/RPEmoteMenu)
