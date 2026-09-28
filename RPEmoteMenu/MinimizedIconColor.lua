@@ -5,6 +5,7 @@ addon.MinimizedIconColor = MinimizedIconColor
 
 local colorControl
 local previewControl
+local selectedThemeName
 
 local function CopyColor(color)
     return {
@@ -45,7 +46,9 @@ end
 
 
 local function RefreshSwatch()
-    local color = GetThemeSettings().minimizedIconColor
+    local selectedSettings = selectedThemeName
+        and addon.Database.GetThemeSettings(selectedThemeName())
+    local color = (selectedSettings or GetThemeSettings()).minimizedIconColor
     if colorControl then
         colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
     end
@@ -57,13 +60,19 @@ end
 
 
 local function SetColor(color)
-    GetThemeSettings().minimizedIconColor = CopyColor(color)
+    local themeName = selectedThemeName and selectedThemeName()
+    local selectedSettings = themeName and addon.Database.GetThemeSettings(themeName)
+    local targetSettings = selectedSettings or GetThemeSettings()
+    targetSettings.minimizedIconColor = CopyColor(color)
     RefreshSwatch()
-    MinimizedIconColor.Apply()
+    if not themeName or themeName == addon.Database.GetActiveThemeName() then
+        MinimizedIconColor.Apply()
+    end
 end
 
 
-function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
+function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline, getSelectedThemeName)
+    selectedThemeName = getSelectedThemeName
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     label:SetText("Icon color")
@@ -89,7 +98,9 @@ function MinimizedIconColor.CreateSettingsControls(parent, x, y, inline)
     colorControl = button
 
     button:SetScript("OnClick", function()
-        local original = CopyColor(GetThemeSettings().minimizedIconColor)
+        local themeName = selectedThemeName and selectedThemeName()
+        local selectedSettings = themeName and addon.Database.GetThemeSettings(themeName)
+        local original = CopyColor((selectedSettings or GetThemeSettings()).minimizedIconColor)
 
         local function ApplyPickerColor()
             local r, g, b = ColorPickerFrame:GetColorRGB()

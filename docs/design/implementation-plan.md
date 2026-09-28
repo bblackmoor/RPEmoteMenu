@@ -72,22 +72,27 @@ MainWindow and minimized-icon color now read their explicit scopes. Profile swit
 - [x] Keep category-level import/export.
 - [x] Do not accept obsolete Profile serialization merely for migration compatibility.
 
-Format 3 separates Profile settings/content from Theme appearance. Everything import adds renamed copies of colliding Profiles and Themes and remaps references to preserve sharing; character assignments stay local. Standalone Profile import reports a missing Theme and falls back to Default. The current settings dialog uses temporary `ExportAllProfiles`/`ImportAllProfiles` aliases for Everything; dedicated Theme controls and final UI organization belong to Phase 5. Obsolete version 2 Profile documents are rejected.
+Format 3 separates Profile settings/content from Theme appearance. Everything import adds renamed copies of colliding Profiles and Themes and remaps references to preserve sharing; character assignments stay local. Standalone Profile import reports a missing Theme and falls back to Default. The Phase 5 settings dialog calls the dedicated Profile, Theme, and Everything APIs; temporary `ExportAllProfiles`/`ImportAllProfiles` aliases remain until the transitional API cleanup. Obsolete version 2 Profile documents are rejected.
 
 ## Phase 5 — Build the new Profile and Theme management UI
 
-- [ ] Make Profiles a genuine Profile-management panel.
-- [ ] Put Theme assignment on the Profile panel.
-- [ ] Support Default Profile edit/restore but not rename/delete.
-- [ ] Rename/rework Appearance into Theme management and Theme appearance editing.
-- [ ] Support Default Theme edit/restore but not rename/delete.
-- [ ] Present existing visual presets as bundled Themes.
-- [ ] Allow bundled Themes to be edited and restored/recreated.
-- [ ] When deleting an in-use Theme, warn and list referencing Profiles before confirmation.
-- [ ] Add separate Profile and Theme import/export actions.
-- [ ] Update complete-data import/export UI.
+- [x] Make Profiles a genuine Profile-management panel.
+- [x] Put Theme assignment on the Profile panel.
+- [x] Support Default Profile edit/restore but not rename/delete.
+- [x] Rename/rework Appearance into Theme management and Theme appearance editing.
+- [x] Support Default Theme edit/restore but not rename/delete.
+- [x] Present existing visual presets as bundled Themes.
+- [x] Allow bundled Themes to be edited and restored/recreated.
+- [x] When deleting an in-use Theme, warn and list referencing Profiles before confirmation.
+- [x] Add separate Profile and Theme import/export actions.
+- [x] Update complete-data import/export UI.
 
 This phase establishes the final UI responsibilities before structural source cleanup.
+
+The Themes tab edits a selected Theme independently of the character's assignment. Theme
+assignment lives on Profiles. An in-use Theme deletion lists its referencing Profiles
+and reassigns them to Default only after confirmation. The Theme editor retains the
+temporary presentation bridge in MinimizedIconColor until the Phase 6 cleanup.
 
 ## Phase 6 — Perform the structural settings readability refactor
 

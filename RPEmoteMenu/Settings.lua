@@ -393,6 +393,9 @@ local function GetExchangeDialog()
         if dataType == "profile" then
             success, result, sourceProfileName, detail =
                 Serialization.ImportProfileAsNew(importText)
+        elseif dataType == "theme" then
+            success, result, sourceProfileName =
+                Serialization.ImportThemeAsNew(importText)
         elseif dataType == "category" then
             success, result = Serialization.ImportCategory(
                 categoryIndex or dialog.categoryIndex,
@@ -400,7 +403,7 @@ local function GetExchangeDialog()
             )
         else
             success, result, sourceProfileName, detail =
-                Serialization.ImportAllProfiles(importText)
+                Serialization.ImportEverything(importText)
         end
 
         if not success then
@@ -424,6 +427,11 @@ local function GetExchangeDialog()
                     .. " was unavailable; assigned Default Theme."
             end
             SetStatus(message)
+        elseif dataType == "theme" then
+            if dialog.onThemeImported then
+                dialog.onThemeImported(result)
+            end
+            SetStatus("Imported Theme " .. sourceProfileName .. " as " .. result .. ".")
         elseif dataType == "category" then
             SetStatus("Imported category " .. result .. ".")
         else
@@ -518,8 +526,9 @@ local function GetExchangeDialog()
         return true
     end
 
-    function dialog:OpenProfileExport()
-        local exported, errorMessage = Serialization.ExportProfile()
+    function dialog:OpenProfileExport(profileName)
+        profileName = profileName or Database.GetActiveProfileName()
+        local exported, errorMessage = Serialization.ExportProfile(profileName)
         if not exported then
             return false, errorMessage
         end
@@ -529,7 +538,7 @@ local function GetExchangeDialog()
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
-        title:SetText("Export Profile: " .. Database.GetActiveProfileName())
+        title:SetText("Export Profile: " .. profileName)
         instructions:SetText(
             "Copy this JSON to save the Profile's settings, categories, "
             .. "emotes, and Theme name. Export the Theme separately to share its appearance."
@@ -568,15 +577,56 @@ local function GetExchangeDialog()
         return true
     end
 
-    function dialog:OpenAllProfilesExport()
-        local exported, errorMessage = Serialization.ExportAllProfiles()
+    function dialog:OpenThemeExport(themeName)
+        local exported, errorMessage = Serialization.ExportTheme(themeName)
+        if not exported then return false, errorMessage end
+
+        self.mode = "export"
+        self.dataType = "theme"
+        self.categoryIndex = nil
+        self.onProfileImported = nil
+        self.onThemeImported = nil
+        title:SetText("Export Theme: " .. themeName)
+        instructions:SetText("Copy this JSON to save this Theme's appearance. Export its Profiles separately.")
+        actionButton:SetText("Select All")
+        SetStatus("")
+        editBox:SetText(exported)
+        editBox:SetCursorPosition(0)
+        scrollFrame:SetVerticalScroll(0)
+        self:UpdateActionState()
+        self:Show()
+        editBox:SetFocus()
+        editBox:HighlightText()
+        return true
+    end
+
+    function dialog:OpenThemeImport(onThemeImported)
+        self.mode = "import"
+        self.dataType = "theme"
+        self.categoryIndex = nil
+        self.onProfileImported = nil
+        self.onThemeImported = onThemeImported
+        title:SetText("Import Theme")
+        instructions:SetText("Paste exported Theme JSON below. Importing adds a new Theme without changing any Profile.")
+        actionButton:SetText("Import Theme")
+        SetStatus("")
+        editBox:SetText("")
+        scrollFrame:SetVerticalScroll(0)
+        self:UpdateActionState()
+        self:Show()
+        editBox:SetFocus()
+        return true
+    end
+
+    function dialog:OpenEverythingExport()
+        local exported, errorMessage = Serialization.ExportEverything()
 
         if not exported then
             return false, errorMessage
         end
 
         self.mode = "export"
-        self.dataType = "profiles"
+        self.dataType = "everything"
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
@@ -597,9 +647,9 @@ local function GetExchangeDialog()
         return true
     end
 
-    function dialog:OpenAllProfilesImport()
+    function dialog:OpenEverythingImport()
         self.mode = "import"
-        self.dataType = "profiles"
+        self.dataType = "everything"
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
@@ -915,7 +965,9 @@ local function CreateColorSetting(
     return button
 end
 
-local function CreateFontSetting(parent, labelText, settingKey, x, y)
+local function CreateFontSetting(parent, labelText, settingKey, x, y, getSettings, onChange)
+    getSettings = getSettings or Database.GetSettings
+    onChange = onChange or function() MainWindow.ScheduleFontRefreshes() end
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     label:SetText(labelText)
@@ -952,7 +1004,7 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
     selector.PreviewText:SetTextColor(1, 1, 1, 1)
 
     selector.RefreshValue = function(self)
-        local fontName = settings[settingKey] or ""
+        local fontName = getSettings()[settingKey] or ""
         local fontAvailable = addon.IsFontAvailable(fontName)
         self.MissingFontName = not fontAvailable and fontName or nil
         self:OverrideText(fontName)
@@ -1011,11 +1063,11 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
 
             rootDescription:CreateRadio(
                 fontName,
-                function() return settings[settingKey] == fontName end,
+                function() return getSettings()[settingKey] == fontName end,
                 function()
-                    settings[settingKey] = fontName
+                    getSettings()[settingKey] = fontName
                     selector:RefreshValue()
-                    MainWindow.ScheduleFontRefreshes()
+                    onChange()
                 end
             )
         end
@@ -1025,7 +1077,205 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y)
     return selector
 end
 
--- Appearance is organized by pane typography/colors, selection effects, borders, opacity, and icon styling.
+-- Theme selection here is an editor selection; Profile assignment is made on Profiles.
+local function CreateThemeManagementControls(panel, onSelectionChanged)
+    local selectedName = Database.GetActiveThemeName()
+    local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
+    selector:SetWidth(250)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -103)
+    selector:SetDefaultText(selectedName)
+
+    local label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -81)
+    label:SetText("Theme to edit")
+
+    local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    description:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -143)
+    description:SetWidth(630)
+    description:SetJustifyH("LEFT")
+    description:SetTextColor(0.75, 0.75, 0.75)
+
+    local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -287)
+    status:SetWidth(630)
+    status:SetJustifyH("LEFT")
+
+    local function SetStatus(message, isError)
+        status:SetText(message or "")
+        status:SetTextColor(isError and 1 or 0.35, isError and 0.35 or 1,
+            isError and 0.35 or 0.45, 1)
+    end
+
+    local Refresh
+    local function SelectTheme(name)
+        selectedName = name
+        Refresh()
+        onSelectionChanged(name)
+    end
+
+    local renameButton, deleteButton, restoreButton
+    Refresh = function()
+        if not Database.GetTheme(selectedName) then
+            selectedName = Database.GetActiveThemeName()
+        end
+        selector:OverrideText(selectedName)
+        description:SetText((Database.IsBuiltInThemeName(selectedName)
+                and "Bundled Theme: " or "") .. Database.GetThemeDescription(selectedName)
+            .. (selectedName == Database.GetActiveThemeName()
+                and " Used by this character." or " Editing does not assign it to this character."))
+        renameButton:SetEnabled(selectedName ~= "Default")
+        deleteButton:SetEnabled(selectedName ~= "Default")
+        restoreButton:SetEnabled(selectedName == "Default"
+            or Database.IsBuiltInThemeName(selectedName))
+    end
+
+    selector:SetupMenu(function(_, root)
+        for _, name in ipairs(Database.GetThemeNames()) do
+            root:CreateRadio(Database.IsBuiltInThemeName(name)
+                    and (name .. " (Bundled)") or name,
+                function() return selectedName == name end,
+                function() SelectTheme(name) end)
+        end
+        for _, definition in ipairs(addon.BuiltInThemes) do
+            if not Database.GetTheme(definition.name) then
+                root:CreateButton("Recreate " .. definition.name, function()
+                    Database.RestoreTheme(definition.name)
+                    SelectTheme(definition.name)
+                    SetStatus("Recreated " .. definition.name .. ".")
+                end)
+            end
+        end
+    end)
+
+    local function GetEditBox(popup)
+        return popup.GetEditBox and popup:GetEditBox() or popup.editBox
+    end
+    local function GetAcceptButton(popup)
+        return popup.GetButton1 and popup:GetButton1() or popup.button1
+    end
+
+    StaticPopupDialogs["RPEMOTEMENU_THEME_NAME"] = {
+        text = "Enter a Theme name.", button1 = "Create", button2 = CANCEL or "Cancel",
+        hasEditBox = true, maxLetters = 64, editBoxWidth = 260,
+        OnShow = function(self, data)
+            local box = GetEditBox(self)
+            box:SetText(data.initial)
+            box:SetFocus()
+            box:HighlightText()
+            GetAcceptButton(self):SetText(data.action == "rename" and "Rename"
+                or data.action == "copy" and "Copy" or "Create")
+        end,
+        OnAccept = function(self, data)
+            local name = GetEditBox(self):GetText()
+            local success, result
+            if data.action == "rename" then
+                success, result = Database.RenameTheme(data.source, name)
+            elseif data.action == "copy" then
+                success, result = Database.CopyTheme(data.source, name)
+            else
+                success, result = Database.CreateTheme(name)
+            end
+            if success then
+                SelectTheme(result)
+                SetStatus("Theme " .. result .. " is ready.")
+            else
+                SetStatus(result, true)
+            end
+        end,
+        EditBoxOnEnterPressed = function(self)
+            local button = GetAcceptButton(self:GetParent())
+            if button:IsEnabled() then button:Click() end
+        end,
+        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
+        timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
+    }
+
+    StaticPopupDialogs["RPEMOTEMENU_DELETE_THEME"] = {
+        text = "%s", button1 = DELETE or "Delete", button2 = CANCEL or "Cancel",
+        OnAccept = function(_, data)
+            local success, result = Database.DeleteTheme(data.name, data.confirmed)
+            if success then
+                SelectTheme(Database.GetActiveThemeName())
+                SetStatus("Deleted " .. data.name .. ".")
+            else
+                SetStatus(result, true)
+            end
+        end,
+        timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
+    }
+
+    StaticPopupDialogs["RPEMOTEMENU_RESTORE_THEME"] = {
+        text = "Restore %s to its factory appearance? Your edits to this Theme will be lost.",
+        button1 = "Restore", button2 = CANCEL or "Cancel",
+        OnAccept = function(_, name)
+            local success, errorMessage = Database.RestoreTheme(name)
+            SetStatus(success and ("Restored " .. name .. ".") or errorMessage,
+                not success)
+        end,
+        timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
+    }
+
+    StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUNDLED_THEMES"] = {
+        text = "Restore all bundled Themes to factory appearance? Edited presets will be reset and missing ones recreated.",
+        button1 = "Restore", button2 = CANCEL or "Cancel",
+        OnAccept = function()
+            local count = Database.RestoreBuiltInThemes()
+            SetStatus("Restored " .. count .. " bundled Themes.")
+        end,
+        timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
+    }
+
+    local function Button(caption, x, y, width, action)
+        local button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+        button:SetSize(width, 24)
+        button:SetPoint("TOPLEFT", panel, "TOPLEFT", x, y)
+        button:SetText(caption)
+        button:SetScript("OnClick", action)
+        return button
+    end
+
+    Button("Create", 20, -183, 95, function()
+        StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
+            {action = "create", initial = ""})
+    end)
+    Button("Copy", 123, -183, 95, function()
+        StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
+            {action = "copy", source = selectedName, initial = selectedName .. " Copy"})
+    end)
+    renameButton = Button("Rename", 226, -183, 95, function()
+        StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
+            {action = "rename", source = selectedName, initial = selectedName})
+    end)
+    deleteButton = Button("Delete", 329, -183, 95, function()
+        local users = Database.GetProfilesUsingTheme(selectedName)
+        local message = "Delete Theme " .. selectedName .. "?"
+        if #users > 0 then
+            message = message .. "\n\nProfiles using it: "
+                .. table.concat(users, ", ")
+                .. "\n\nThey will be assigned Default Theme."
+        end
+        StaticPopup_Show("RPEMOTEMENU_DELETE_THEME", message, nil,
+            {name = selectedName, confirmed = #users > 0})
+    end)
+    restoreButton = Button("Restore Theme", 20, -221, 125, function()
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_THEME", selectedName, nil, selectedName)
+    end)
+    Button("Export Theme", 153, -221, 125, function()
+        local success, errorMessage = GetExchangeDialog():OpenThemeExport(selectedName)
+        if not success then SetStatus(errorMessage, true) end
+    end)
+    Button("Import Theme", 286, -221, 125, function()
+        GetExchangeDialog():OpenThemeImport(function(name) SelectTheme(name) end)
+    end)
+    Button("Restore Bundled Themes", 20, -254, 190, function()
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_BUNDLED_THEMES")
+    end)
+
+    Refresh()
+    return {GetSelectedName = function() return selectedName end, Refresh = Refresh}
+end
+
+-- The appearance editor operates on the Theme selected above it.
 local function CreateAppearanceSettingsPanel()
     local container = CreateFrame("Frame")
     local scrollFrame = CreateFrame(
@@ -1038,50 +1288,61 @@ local function CreateAppearanceSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 760)
+    panel:SetSize(700, 1110)
     scrollFrame:SetScrollChild(panel)
     local controls = {}
+    local themeName = Database.GetActiveThemeName()
+    local themeSettings = Database.GetThemeSettings(themeName)
+    local function ApplyIfActive()
+        if themeName == Database.GetActiveThemeName() then
+            MainWindow.ApplyThemeSettings()
+        end
+    end
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
-    heading:SetText("Appearance")
+    heading:SetText("Themes")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Customize the current Theme. Profiles using it share these changes."
+        "Edit shared Themes here. Assign a Theme to the character's Profile on Profiles."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
-    local categoryPaneHeading = panel:CreateFontString(
+    local editor = CreateFrame("Frame", nil, panel)
+    editor:SetSize(700, 780)
+    editor:SetPoint("TOPLEFT", panel, "TOPLEFT", 0, -335)
+
+    local categoryPaneHeading = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontNormal"
     )
-    categoryPaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -120)
+    categoryPaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -120)
     categoryPaneHeading:SetText("Category Pane")
 
-    local emotePaneHeading = panel:CreateFontString(
+    local emotePaneHeading = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontNormal"
     )
-    emotePaneHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 330, -120)
+    emotePaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 330, -120)
     emotePaneHeading:SetText("Emote Pane")
 
-    local columnDivider = panel:CreateTexture(nil, "ARTWORK")
+    local columnDivider = editor:CreateTexture(nil, "ARTWORK")
     columnDivider:SetColorTexture(0.35, 0.35, 0.35, 0.45)
-    columnDivider:SetPoint("TOPLEFT", panel, "TOPLEFT", 314, -118)
+    columnDivider:SetPoint("TOPLEFT", editor, "TOPLEFT", 314, -118)
     columnDivider:SetSize(1, 300)
 
-    local fontLoadingNote = panel:CreateFontString(
+    local fontLoadingNote = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    fontLoadingNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -92)
+    fontLoadingNote:SetPoint("TOPLEFT", editor, "TOPLEFT", 16, -92)
     fontLoadingNote:SetWidth(620)
     fontLoadingNote:SetJustifyH("LEFT")
     fontLoadingNote:SetText(
@@ -1090,141 +1351,143 @@ local function CreateAppearanceSettingsPanel()
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
     controls.categoryFont = CreateFontSetting(
-        panel, "Font", "categoryFont", 20, -148
+        editor, "Font", "categoryFont", 20, -148,
+        function() return themeSettings end, ApplyIfActive
     )
     controls.categoryFont:ClearAllPoints()
-    controls.categoryFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 95, -143)
+    controls.categoryFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 95, -143)
 
     controls.categoryFontSize = CreateNumberSetting(
-        panel, "Font size", "categoryFontSize", 20, -187, 8, 24,
-        function() return settings.categoryFontSize end,
+        editor, "Font size", "categoryFontSize", 20, -187, 8, 24,
+        function() return themeSettings.categoryFontSize end,
         function(value)
-            settings.categoryFontSize = value
-            MainWindow.RefreshFontDisplays()
+            themeSettings.categoryFontSize = value
+            ApplyIfActive()
         end,
         "px"
     )
     controls.categoryFontSize:SetWidth(52)
 
     controls.emoteFont = CreateFontSetting(
-        panel, "Font", "emoteFont", 330, -148
+        editor, "Font", "emoteFont", 330, -148,
+        function() return themeSettings end, ApplyIfActive
     )
     controls.emoteFont:ClearAllPoints()
-    controls.emoteFont:SetPoint("TOPLEFT", panel, "TOPLEFT", 405, -143)
+    controls.emoteFont:SetPoint("TOPLEFT", editor, "TOPLEFT", 405, -143)
 
     controls.emoteFontSize = CreateNumberSetting(
-        panel, "Font size", "emoteFontSize", 330, -187, 8, 24,
-        function() return settings.emoteFontSize end,
+        editor, "Font size", "emoteFontSize", 330, -187, 8, 24,
+        function() return themeSettings.emoteFontSize end,
         function(value)
-            settings.emoteFontSize = value
-            MainWindow.RefreshFontDisplays()
+            themeSettings.emoteFontSize = value
+            ApplyIfActive()
         end,
         "px"
     )
     controls.emoteFontSize:SetWidth(52)
 
     controls.categoryTextColor = CreateColorSetting(
-        panel, "Category text", "categoryTextColor", 20, -254,
-        function() return settings.categoryTextColor end,
+        editor, "Category text", "categoryTextColor", 20, -254,
+        function() return themeSettings.categoryTextColor end,
         function(value)
-            settings.categoryTextColor = value
-            MainWindow.RefreshFontDisplays()
+            themeSettings.categoryTextColor = value
+            ApplyIfActive()
         end
     )
 
     controls.selectedCategoryTextColor = CreateColorSetting(
-        panel, "Selected text", "selectedCategoryTextColor", 20, -292,
-        function() return settings.selectedCategoryTextColor end,
+        editor, "Selected text", "selectedCategoryTextColor", 20, -292,
+        function() return themeSettings.selectedCategoryTextColor end,
         function(value)
-            settings.selectedCategoryTextColor = value
-            MainWindow.RefreshFontDisplays()
+            themeSettings.selectedCategoryTextColor = value
+            ApplyIfActive()
         end
     )
 
     controls.emoteTextColor = CreateColorSetting(
-        panel, "Emote-label text", "emoteTextColor", 330, -254,
-        function() return settings.emoteTextColor end,
+        editor, "Emote-label text", "emoteTextColor", 330, -254,
+        function() return themeSettings.emoteTextColor end,
         function(value)
-            settings.emoteTextColor = value
-            MainWindow.RefreshFontDisplays()
+            themeSettings.emoteTextColor = value
+            ApplyIfActive()
         end
     )
 
     controls.categoryHighlightColor = CreateColorSetting(
-        panel,
+        editor,
         "Selection color",
         "categoryHighlightColor",
         20,
         -368,
-        function() return settings.categoryHighlightColor end,
+        function() return themeSettings.categoryHighlightColor end,
         function(value)
-            settings.categoryHighlightColor = value
-            MainWindow.ApplyAppearance()
+            themeSettings.categoryHighlightColor = value
+            ApplyIfActive()
         end
     )
 
     controls.categoryBackgroundColor = CreateColorSetting(
-        panel, "Background", "categoryBackgroundColor", 20, -330,
-        function() return settings.categoryBackgroundColor end,
+        editor, "Background", "categoryBackgroundColor", 20, -330,
+        function() return themeSettings.categoryBackgroundColor end,
         function(value)
-            settings.categoryBackgroundColor = value
-            MainWindow.ApplyAppearance()
+            themeSettings.categoryBackgroundColor = value
+            ApplyIfActive()
         end
     )
 
     controls.emoteBackgroundColor = CreateColorSetting(
-        panel, "Background", "emoteBackgroundColor", 330, -292,
-        function() return settings.emoteBackgroundColor end,
+        editor, "Background", "emoteBackgroundColor", 330, -292,
+        function() return themeSettings.emoteBackgroundColor end,
         function(value)
-            settings.emoteBackgroundColor = value
-            MainWindow.ApplyAppearance()
+            themeSettings.emoteBackgroundColor = value
+            ApplyIfActive()
         end
     )
 
     controls.categoryFontSize:ClearAllPoints()
-    controls.categoryFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -183)
+    controls.categoryFontSize:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -183)
     controls.emoteFontSize:ClearAllPoints()
-    controls.emoteFontSize:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -183)
+    controls.emoteFontSize:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -183)
 
     controls.categoryTextColor:ClearAllPoints()
-    controls.categoryTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -250)
+    controls.categoryTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -250)
     controls.selectedCategoryTextColor:ClearAllPoints()
-    controls.selectedCategoryTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -288)
+    controls.selectedCategoryTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -288)
     controls.categoryBackgroundColor:ClearAllPoints()
-    controls.categoryBackgroundColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -326)
+    controls.categoryBackgroundColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -326)
     controls.categoryHighlightColor:ClearAllPoints()
-    controls.categoryHighlightColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -364)
+    controls.categoryHighlightColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -364)
     controls.emoteTextColor:ClearAllPoints()
-    controls.emoteTextColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -250)
+    controls.emoteTextColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -250)
     controls.emoteBackgroundColor:ClearAllPoints()
-    controls.emoteBackgroundColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 470, -288)
+    controls.emoteBackgroundColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 470, -288)
 
-    local highlightEffectLabel = panel:CreateFontString(
+    local highlightEffectLabel = editor:CreateFontString(
         nil,
         "OVERLAY",
         "GameFontHighlight"
     )
-    highlightEffectLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -406)
+    highlightEffectLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -406)
     highlightEffectLabel:SetText("Selection effect")
 
     local highlightEffectSelector = CreateFrame(
         "DropdownButton",
         nil,
-        panel,
+        editor,
         "WowStyle1DropdownTemplate"
     )
     highlightEffectSelector:SetWidth(135)
-    highlightEffectSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -401)
+    highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -401)
     highlightEffectSelector:SetDefaultText("Background")
     highlightEffectSelector.settingKey = "categoryHighlightEffect"
     controls.categoryHighlightEffect = highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
-        panel, "Thickness", "categoryHighlightThickness", 330, -406, 1, 6,
-        function() return settings.categoryHighlightThickness end,
+        editor, "Thickness", "categoryHighlightThickness", 330, -406, 1, 6,
+        function() return themeSettings.categoryHighlightThickness end,
         function(value)
-            settings.categoryHighlightThickness = value
-            MainWindow.ApplyAppearance()
+            themeSettings.categoryHighlightThickness = value
+            ApplyIfActive()
         end,
         "px"
     )
@@ -1238,16 +1501,16 @@ local function CreateAppearanceSettingsPanel()
     }
 
     local function RefreshHighlightControls()
-        local usesThickness = settings.categoryHighlightEffect == "outline"
-            or settings.categoryHighlightEffect == "underline"
-            or settings.categoryHighlightEffect == "separator"
+        local usesThickness = themeSettings.categoryHighlightEffect == "outline"
+            or themeSettings.categoryHighlightEffect == "underline"
+            or themeSettings.categoryHighlightEffect == "separator"
         local thicknessControl = controls.categoryHighlightThickness
 
         thicknessControl:SetShown(usesThickness)
         thicknessControl.Label:SetShown(usesThickness)
         thicknessControl.SuffixLabel:SetShown(usesThickness)
         highlightEffectSelector:OverrideText(
-            highlightEffectLabels[settings.categoryHighlightEffect]
+            highlightEffectLabels[themeSettings.categoryHighlightEffect]
         )
     end
 
@@ -1257,44 +1520,44 @@ local function CreateAppearanceSettingsPanel()
         }) do
             rootDescription:CreateRadio(
                 highlightEffectLabels[effect],
-                function() return settings.categoryHighlightEffect == effect end,
+                function() return themeSettings.categoryHighlightEffect == effect end,
                 function()
-                    settings.categoryHighlightEffect = effect
+                    themeSettings.categoryHighlightEffect = effect
                     RefreshHighlightControls()
-                    MainWindow.ApplyAppearance()
+                    ApplyIfActive()
                 end
             )
         end
     end)
 
-    local windowHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    windowHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -460)
+    local windowHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    windowHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -460)
     windowHeading:SetText("Borders")
 
     controls.borderColor = CreateColorSetting(
-        panel, "Border color", "borderColor", 20, -488,
-        function() return settings.borderColor end,
+        editor, "Border color", "borderColor", 20, -488,
+        function() return themeSettings.borderColor end,
         function(value)
-            settings.borderColor = value
-            MainWindow.ApplyAppearance()
+            themeSettings.borderColor = value
+            ApplyIfActive()
         end
     )
 
     controls.borderColor:ClearAllPoints()
-    controls.borderColor:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -484)
+    controls.borderColor:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -484)
 
-    local borderLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    borderLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -526)
+    local borderLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    borderLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -526)
     borderLabel:SetText("Border style")
 
     local borderSelector = CreateFrame(
         "DropdownButton",
         nil,
-        panel,
+        editor,
         "WowStyle1DropdownTemplate"
     )
     borderSelector:SetWidth(170)
-    borderSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -521)
+    borderSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -521)
     borderSelector:SetDefaultText("Thin")
     borderSelector.settingKey = "borderStyle"
     controls.borderStyle = borderSelector
@@ -1309,11 +1572,11 @@ local function CreateAppearanceSettingsPanel()
         for _, style in ipairs({"none", "thin", "blizzard"}) do
             rootDescription:CreateRadio(
                 borderLabels[style],
-                function() return settings.borderStyle == style end,
+                function() return themeSettings.borderStyle == style end,
                 function()
-                    settings.borderStyle = style
+                    themeSettings.borderStyle = style
                     borderSelector:OverrideText(borderLabels[style])
-                    MainWindow.ApplyAppearance()
+                    ApplyIfActive()
                 end
             )
         end
@@ -1321,43 +1584,43 @@ local function CreateAppearanceSettingsPanel()
 
     borderSelector:SetupMenu(BuildBorderMenu)
 
-    local opacityHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    opacityHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -565)
+    local opacityHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    opacityHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -565)
     opacityHeading:SetText("Opacity")
 
     controls.windowOpacity = CreateNumberSetting(
-        panel, "Menu opacity", "windowOpacity", 20, -593, 10, 100,
-        function() return settings.windowOpacity * 100 end,
+        editor, "Menu opacity", "windowOpacity", 20, -593, 10, 100,
+        function() return themeSettings.windowOpacity * 100 end,
         function(value)
-            settings.windowOpacity = value / 100
-            MainWindow.ApplyAppearance()
+            themeSettings.windowOpacity = value / 100
+            ApplyIfActive()
         end,
         "%"
     )
 
     controls.windowOpacity:ClearAllPoints()
-    controls.windowOpacity:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -589)
+    controls.windowOpacity:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -589)
 
-    local opacityVisibleNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    local opacityVisibleNote = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     opacityVisibleNote:SetPoint("LEFT", controls.windowOpacity.SuffixLabel, "RIGHT", FIELD_GAP, 0)
     opacityVisibleNote:SetText("(when visible)")
 
-    local layoutHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    layoutHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -635)
+    local layoutHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    layoutHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -635)
     layoutHeading:SetText("Layout")
 
-    local titleBarLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    titleBarLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -663)
+    local titleBarLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -663)
     titleBarLabel:SetText("Title bar")
 
     local titleBarSelector = CreateFrame(
         "DropdownButton",
         nil,
-        panel,
+        editor,
         "WowStyle1DropdownTemplate"
     )
     titleBarSelector:SetWidth(150)
-    titleBarSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, -658)
+    titleBarSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, -658)
     titleBarSelector:SetDefaultText("Top")
     titleBarSelector.settingKey = "titleBarPosition"
     controls.titleBarPosition = titleBarSelector
@@ -1368,51 +1631,25 @@ local function CreateAppearanceSettingsPanel()
         for _, position in ipairs({"TOP", "LEFT"}) do
             rootDescription:CreateRadio(
                 titleBarLabels[position],
-                function() return settings.titleBarPosition == position end,
+                function() return themeSettings.titleBarPosition == position end,
                 function()
-                    settings.titleBarPosition = position
+                    themeSettings.titleBarPosition = position
                     titleBarSelector:OverrideText(titleBarLabels[position])
-                    MainWindow.ApplyTitleBarPosition()
+                    ApplyIfActive()
                 end
             )
         end
     end)
 
-    local iconHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    iconHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -705)
+    local iconHeading = editor:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    iconHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, -705)
     iconHeading:SetText("Minimized Icon")
 
-    addon.MinimizedIconColor.CreateSettingsControls(panel, 20, -735, true)
-
-    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    resetButton:SetSize(170, 24)
-    resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
-    resetButton:SetText("Restore Defaults")
-    resetButton.settingKey = "resetAppearance"
-    controls.resetAppearance = resetButton
-
-    local appearanceKeys = {
-        "titleBarPosition",
-        "categoryFont",
-        "emoteFont",
-        "categoryFontSize",
-        "emoteFontSize",
-        "categoryTextColor",
-        "selectedCategoryTextColor",
-        "emoteTextColor",
-        "categoryHighlightColor",
-        "categoryHighlightEffect",
-        "categoryHighlightThickness",
-        "categoryBackgroundColor",
-        "emoteBackgroundColor",
-        "borderColor",
-        "borderStyle",
-        "windowOpacity",
-        "minimizedIconColor"
-    }
+    addon.MinimizedIconColor.CreateSettingsControls(editor, 20, -735, true,
+        function() return themeName end)
 
     local function RefreshFontControls()
-        settings = Database.GetSettings()
+        themeSettings = Database.GetThemeSettings(themeName)
         controls.categoryFont:RefreshValue()
         controls.emoteFont:RefreshValue()
     end
@@ -1425,35 +1662,33 @@ local function CreateAppearanceSettingsPanel()
         end
 
         RefreshHighlightControls()
-        borderSelector:OverrideText(borderLabels[settings.borderStyle])
+        borderSelector:OverrideText(borderLabels[themeSettings.borderStyle])
         titleBarSelector:OverrideText(
-            titleBarLabels[settings.titleBarPosition] or titleBarLabels.TOP
+            titleBarLabels[themeSettings.titleBarPosition] or titleBarLabels.TOP
         )
         addon.MinimizedIconColor.RefreshControl()
     end
 
-    resetButton:SetScript("OnClick", function()
-        for _, key in ipairs(appearanceKeys) do
-            local value = addon.DefaultSettings[key]
-
-            if type(value) == "table" then
-                settings[key] = CopyColor(value)
-            else
-                settings[key] = value
-            end
-        end
-
+    local management = CreateThemeManagementControls(panel, function(name)
+        themeName = name
+        themeSettings = Database.GetThemeSettings(name)
         RefreshControls()
-        MainWindow.ApplyAppearance()
-        MainWindow.ApplyTitleBarPosition()
     end)
 
-    container.RefreshControls = RefreshControls
+    container.RefreshControls = function()
+        themeSettings = Database.GetThemeSettings(themeName)
+        if not themeSettings then
+            themeName = Database.GetActiveThemeName()
+            themeSettings = Database.GetThemeSettings(themeName)
+        end
+        management.Refresh()
+        RefreshControls()
+    end
     container.RefreshFontControls = RefreshFontControls
     container.appearanceControls = controls
     AddonSettings.RefreshFontControls = RefreshFontControls
-    container:SetScript("OnShow", RefreshControls)
-    RefreshControls()
+    container:SetScript("OnShow", container.RefreshControls)
+    container.RefreshControls()
     return container
 end
 
@@ -1889,7 +2124,7 @@ local function CreateImportExportSettingsPanel()
     exportButton:SetPoint("TOPLEFT", profilesDescription, "BOTTOMLEFT", 0, -18)
     exportButton:SetText("Export Everything")
     exportButton:SetScript("OnClick", function()
-        GetExchangeDialog():OpenAllProfilesExport()
+        GetExchangeDialog():OpenEverythingExport()
     end)
 
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -1897,7 +2132,7 @@ local function CreateImportExportSettingsPanel()
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
     importButton:SetText("Import Everything")
     importButton:SetScript("OnClick", function()
-        GetExchangeDialog():OpenAllProfilesImport()
+        GetExchangeDialog():OpenEverythingImport()
     end)
 
     local importNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1915,7 +2150,7 @@ local function CreateImportExportSettingsPanel()
     return panel
 end
 
--- Profile management keeps selection, lifecycle actions, import/export, and bundled-profile restore together.
+-- Profile management keeps character selection, Theme assignment, and lifecycle actions together.
 local function CreateProfilesSettingsPanel()
     local panel = CreateFrame("Frame")
 
@@ -1928,8 +2163,8 @@ local function CreateProfilesSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Profiles are shared account-wide; each character selects one. Default " ..
-        "can be edited and restored. Bundled profiles can be edited, renamed, or deleted."
+        "Profiles are shared account-wide; each character selects one. " ..
+        "Default can be edited and restored, but not renamed or deleted."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1949,13 +2184,13 @@ local function CreateProfilesSettingsPanel()
         "OVERLAY",
         "GameFontHighlightSmall"
     )
-    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -188)
+    profileDescription:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -267)
     profileDescription:SetWidth(620)
     profileDescription:SetJustifyH("LEFT")
     profileDescription:SetTextColor(0.75, 0.75, 0.75)
 
     local status = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -330)
+    status:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -420)
     status:SetWidth(620)
     status:SetJustifyH("LEFT")
 
@@ -1965,6 +2200,14 @@ local function CreateProfilesSettingsPanel()
     local deleteButton
     local exportProfileButton
     local importProfileButton
+    local themeSelector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
+    themeSelector:SetWidth(250)
+    themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -171)
+    themeSelector:SetDefaultText(Database.GetActiveThemeName())
+
+    local themeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    themeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -149)
+    themeLabel:SetText("Theme assigned to this Profile")
 
     local function UpdateButtonState()
         local editable = Database.CanEditActiveProfile()
@@ -2054,7 +2297,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_PROFILE_INFO"] = {
-        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current Theme. Copy duplicates the selected profile. Bundled Themes can be restored below.",
+        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current Theme. Copy duplicates the selected Profile, including its Theme assignment.",
         button1 = OKAY or "Okay",
         timeout = 0,
         whileDead = true,
@@ -2136,20 +2379,6 @@ local function CreateProfilesSettingsPanel()
         preferredIndex = 3
     }
 
-    StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES"] = {
-        text = "Restore all bundled Themes to their factory appearance?\n\nExisting bundled Themes will be reset and missing ones recreated. Profiles and categories will not be changed.",
-        button1 = "Restore",
-        button2 = CANCEL or "Cancel",
-        OnAccept = function()
-            local count = Database.RestoreBuiltInThemes()
-            SetStatus("Restored " .. count .. " bundled Themes.")
-        end,
-        timeout = 0,
-        whileDead = true,
-        hideOnEscape = true,
-        preferredIndex = 3
-    }
-
     local function BuildProfileMenu(_, rootDescription)
         for _, profileName in ipairs(Database.GetProfileNames()) do
             rootDescription:CreateRadio(
@@ -2172,9 +2401,25 @@ local function CreateProfilesSettingsPanel()
 
     selector:SetupMenu(BuildProfileMenu)
 
+    themeSelector:SetupMenu(function(_, root)
+        for _, themeName in ipairs(Database.GetThemeNames()) do
+            root:CreateRadio(themeName,
+                function() return Database.GetActiveThemeName() == themeName end,
+                function()
+                    local success, errorMessage = Database.SetProfileTheme(
+                        Database.GetActiveProfileName(), themeName)
+                    if success then
+                        SetStatus("Assigned " .. themeName .. " to this Profile.")
+                    else
+                        SetStatus(errorMessage, true)
+                    end
+                end)
+        end
+    end)
+
     local restoreDefaultButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     restoreDefaultButton:SetSize(140, 24)
-    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -150)
+    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -224)
     restoreDefaultButton:SetText("Restore Default")
     restoreDefaultButton:SetScript("OnClick", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
@@ -2183,7 +2428,7 @@ local function CreateProfilesSettingsPanel()
     CreateInfoLink(panel, selector, "RPEMOTEMENU_PROFILE_INFO")
 
     local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -218)
+    profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -299)
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
     profileNote:SetText(
@@ -2203,7 +2448,7 @@ local function CreateProfilesSettingsPanel()
 
     createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     createButton:SetSize(95, 24)
-    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -248)
+    createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -337)
     createButton:SetText("Create")
     createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
 
@@ -2243,8 +2488,8 @@ local function CreateProfilesSettingsPanel()
 
     exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -280)
-    exportProfileButton:SetText("Export     ")
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, -370)
+    exportProfileButton:SetText("Export Profile")
     exportProfileButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenProfileExport()
     end)
@@ -2257,22 +2502,10 @@ local function CreateProfilesSettingsPanel()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
     end)
 
-    local restoreBuiltInsButton = CreateFrame(
-        "Button",
-        nil,
-        panel,
-        "UIPanelButtonTemplate"
-    )
-    restoreBuiltInsButton:SetSize(190, 24)
-    restoreBuiltInsButton:SetPoint("LEFT", restoreDefaultButton, "RIGHT", 8, 0)
-    restoreBuiltInsButton:SetText("Restore Bundled Themes")
-    restoreBuiltInsButton:SetScript("OnClick", function()
-        StaticPopup_Show("RPEMOTEMENU_RESTORE_BUILT_IN_PROFILES")
-    end)
-
     panel.Refresh = function()
         local profileName = Database.GetActiveProfileName()
         selector:OverrideText(Database.GetProfileDisplayName(profileName))
+        themeSelector:OverrideText(Database.GetActiveThemeName())
         profileDescription:SetText(Database.GetProfileDescription(profileName))
         UpdateButtonState()
     end
@@ -2799,7 +3032,7 @@ function AddonSettings.CreateSettingsPanel()
     appearanceSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
         settingsCategory,
         appearancePanel,
-        "Appearance"
+        "Themes"
     )
 
     profilesSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(

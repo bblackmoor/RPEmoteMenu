@@ -591,7 +591,7 @@ function Serialization.ExportEverything()
 end
 
 
--- The existing settings dialog keeps these entry points until Phase 5.
+-- Transitional aliases retained until obsolete API cleanup.
 function Serialization.ExportAllProfiles()
     return Serialization.ExportEverything()
 end
