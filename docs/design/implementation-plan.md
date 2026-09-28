@@ -64,13 +64,15 @@ MainWindow and minimized-icon color now read their explicit scopes. Profile swit
 
 ## Phase 4 — Redesign serialization
 
-- [ ] Bump the serialization format version.
-- [ ] Profile export: name, Profile settings, categories/emotes, Theme reference; do not embed Theme.
-- [ ] Profile import: preserve data; if referenced Theme is unavailable, assign Default Theme and report the fallback.
-- [ ] Theme export/import: appearance only.
-- [ ] Everything export/import: all Profiles, all Themes, and Profile -> Theme relationships.
-- [ ] Keep category-level import/export.
-- [ ] Do not accept obsolete Profile serialization merely for migration compatibility.
+- [x] Bump the serialization format version.
+- [x] Profile export: name, Profile settings, categories/emotes, Theme reference; do not embed Theme.
+- [x] Profile import: preserve data; if referenced Theme is unavailable, assign Default Theme and report the fallback.
+- [x] Theme export/import: appearance only.
+- [x] Everything export/import: all Profiles, all Themes, and Profile -> Theme relationships.
+- [x] Keep category-level import/export.
+- [x] Do not accept obsolete Profile serialization merely for migration compatibility.
+
+Format 3 separates Profile settings/content from Theme appearance. Everything import adds renamed copies of colliding Profiles and Themes and remaps references to preserve sharing; character assignments stay local. Standalone Profile import reports a missing Theme and falls back to Default. The current settings dialog uses temporary `ExportAllProfiles`/`ImportAllProfiles` aliases for Everything; dedicated Theme controls and final UI organization belong to Phase 5. Obsolete version 2 Profile documents are rejected.
 
 ## Phase 5 — Build the new Profile and Theme management UI
 

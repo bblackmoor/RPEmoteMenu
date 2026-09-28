@@ -6,9 +6,10 @@ addon.Serialization = Serialization
 local Database = addon.Database
 local JSON = addon.JSON
 local FORMAT_NAME = "RPEmoteMenu"
-local FORMAT_VERSION = 2
+local FORMAT_VERSION = 3
 local MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 local MAX_PROFILE_NAME_LENGTH = 64
+local MAX_THEME_NAME_LENGTH = 64
 local MAX_CATEGORY_NAME_LENGTH = 128
 local MAX_LABEL_LENGTH = 128
 local MAX_COMMAND_LENGTH = 4096
@@ -22,15 +23,24 @@ local PROFILE_DOCUMENT_FIELDS = {
     version = true,
     type = true,
     name = true,
+    theme = true,
     settings = true,
     categories = true
 }
-local PROFILE_FIELDS = {name = true, settings = true, categories = true}
-local PROFILES_DOCUMENT_FIELDS = {
-    format = true, version = true, type = true, profiles = true
+local PROFILE_FIELDS = {name = true, theme = true, settings = true, categories = true}
+local THEME_DOCUMENT_FIELDS = {
+    format = true, version = true, type = true, name = true, settings = true
+}
+local THEME_FIELDS = {name = true, settings = true}
+local EVERYTHING_DOCUMENT_FIELDS = {
+    format = true, version = true, type = true, profiles = true, themes = true
 }
 local CATEGORY_FIELDS = {name = true, emotes = true}
 local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true}
+local PROFILE_SETTING_FIELDS = {}
+local THEME_SETTING_FIELDS = {}
+for _, key in ipairs(addon.ProfileSettingKeys) do PROFILE_SETTING_FIELDS[key] = true end
+for _, key in ipairs(addon.ThemeSettingKeys) do THEME_SETTING_FIELDS[key] = true end
 
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
@@ -48,6 +58,13 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
+local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
+local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
+local VALID_ANCHOR_POINTS = {
+    TOPLEFT = true, TOP = true, TOPRIGHT = true,
+    LEFT = true, CENTER = true, RIGHT = true,
+    BOTTOMLEFT = true, BOTTOM = true, BOTTOMRIGHT = true
+}
 
 local function ValidateObject(value, allowedFields, description)
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
@@ -89,6 +106,32 @@ local function ValidateNumber(value, minimum, maximum, description, integer)
         return nil, description .. " must be between " .. minimum .. " and " .. maximum .. "."
     end
     return value
+end
+
+
+local function ValidateBoolean(value, description)
+    if type(value) ~= "boolean" then
+        return nil, description .. " must be true or false."
+    end
+    return value
+end
+
+
+local function ValidateEnum(value, allowed, description)
+    if type(value) ~= "string" or not allowed[value] then
+        return nil, description .. " has an unsupported value."
+    end
+    return value
+end
+
+
+local function ValidateName(value, maximumLength, description)
+    local name, errorMessage = ValidateString(value, maximumLength, description)
+    if not name then return nil, errorMessage end
+    if strtrim(name) == "" then
+        return nil, description .. " cannot be empty."
+    end
+    return name
 end
 
 
@@ -242,43 +285,93 @@ end
 
 
 local function ValidateProfileSettings(value)
-    value = type(value) == "table" and not JSON.IsArray(value)
-        and value ~= JSON.Null and value or {}
-    local imported = Database.CopyThemeSettings(addon.DefaultThemeSettings)
+    local valid, errorMessage = ValidateObject(
+        value, PROFILE_SETTING_FIELDS, "Profile settings"
+    )
+    if not valid then return nil, errorMessage end
 
+    local settings = {}
+    for _, key in ipairs({"locked", "fadeEnabled"}) do
+        settings[key], errorMessage = ValidateBoolean(value[key], key)
+        if settings[key] == nil then return nil, errorMessage end
+    end
+    for _, key in ipairs({"x", "y"}) do
+        settings[key], errorMessage = ValidateNumber(
+            value[key], -100000, 100000, key, true
+        )
+        if not settings[key] then return nil, errorMessage end
+    end
+    for _, field in ipairs({
+        {"height", 150, 630},
+        {"minimizedIconSize", addon.MIN_MINIMIZED_ICON_SIZE, addon.MAX_MINIMIZED_ICON_SIZE},
+        {"selectedCategory", 1, addon.MAX_CATEGORIES},
+        {"fadeDelay", 0, 60}
+    }) do
+        local key, minimum, maximum = field[1], field[2], field[3]
+        settings[key], errorMessage = ValidateNumber(
+            value[key], minimum, maximum, key, true
+        )
+        if not settings[key] then return nil, errorMessage end
+    end
+    settings.inactiveOpacity, errorMessage = ValidateNumber(
+        value.inactiveOpacity, 0.1, 1, "inactiveOpacity", false
+    )
+    if not settings.inactiveOpacity then return nil, errorMessage end
+
+    for _, field in ipairs({
+        {"minimizeMode", VALID_MINIMIZE_MODES},
+        {"minimizedIconCorner", VALID_MINIMIZED_ICON_CORNERS},
+        {"point", VALID_ANCHOR_POINTS},
+        {"relativePoint", VALID_ANCHOR_POINTS}
+    }) do
+        local key = field[1]
+        settings[key], errorMessage = ValidateEnum(value[key], field[2], key)
+        if not settings[key] then return nil, errorMessage end
+    end
+    return Database.CopyProfileSettings(settings)
+end
+
+
+local function ValidateThemeSettings(value)
+    local valid, errorMessage = ValidateObject(
+        value, THEME_SETTING_FIELDS, "Theme settings"
+    )
+    if not valid then return nil, errorMessage end
+
+    local settings = {}
     for _, key in ipairs({"categoryFont", "emoteFont"}) do
-        local setting = ValidateString(value[key], MAX_FONT_NAME_LENGTH, key)
-        if setting and setting ~= "" then imported[key] = setting end
+        settings[key], errorMessage = ValidateName(
+            value[key], MAX_FONT_NAME_LENGTH, key
+        )
+        if not settings[key] then return nil, errorMessage end
     end
     for _, key in ipairs({"categoryFontSize", "emoteFontSize"}) do
-        local setting = ValidateNumber(value[key], 8, 24, key, true)
-        if setting then imported[key] = setting end
+        settings[key], errorMessage = ValidateNumber(value[key], 8, 24, key, true)
+        if not settings[key] then return nil, errorMessage end
     end
-    local thickness = ValidateNumber(
-        value.categoryHighlightThickness, 1, 6, "Selection thickness", true
+    settings.categoryHighlightThickness, errorMessage = ValidateNumber(
+        value.categoryHighlightThickness, 1, 6, "categoryHighlightThickness", true
     )
-    if thickness then imported.categoryHighlightThickness = thickness end
+    if not settings.categoryHighlightThickness then return nil, errorMessage end
+    settings.windowOpacity, errorMessage = ValidateNumber(
+        value.windowOpacity, 0.1, 1, "windowOpacity", false
+    )
+    if not settings.windowOpacity then return nil, errorMessage end
 
     for _, key in ipairs(COLOR_SETTING_KEYS) do
-        local setting = ValidateColor(value[key], key)
-        if setting then imported[key] = setting end
+        settings[key], errorMessage = ValidateColor(value[key], key)
+        if not settings[key] then return nil, errorMessage end
     end
-    if VALID_CATEGORY_HIGHLIGHT_EFFECTS[value.categoryHighlightEffect] then
-        imported.categoryHighlightEffect = value.categoryHighlightEffect
+    for _, field in ipairs({
+        {"categoryHighlightEffect", VALID_CATEGORY_HIGHLIGHT_EFFECTS},
+        {"borderStyle", VALID_BORDER_STYLES},
+        {"titleBarPosition", VALID_TITLE_BAR_POSITIONS}
+    }) do
+        local key = field[1]
+        settings[key], errorMessage = ValidateEnum(value[key], field[2], key)
+        if not settings[key] then return nil, errorMessage end
     end
-    if VALID_BORDER_STYLES[value.borderStyle] then
-        imported.borderStyle = value.borderStyle
-    end
-    if VALID_TITLE_BAR_POSITIONS[value.titleBarPosition] then
-        imported.titleBarPosition = value.titleBarPosition
-    end
-
-    local windowOpacity = ValidateNumber(
-        value.windowOpacity, 0.1, 1, "Window opacity", false
-    )
-    if windowOpacity then imported.windowOpacity = windowOpacity end
-
-    return Database.CopyThemeSettings(imported)
+    return Database.CopyThemeSettings(settings)
 end
 
 
@@ -286,28 +379,40 @@ local function ValidateProfile(value, description, allowedFields)
     local valid, errorMessage = ValidateObject(value, allowedFields, description)
     if not valid then return nil, errorMessage end
 
-    local profileName
-    profileName, errorMessage = ValidateString(
+    local name
+    name, errorMessage = ValidateName(
         value.name, MAX_PROFILE_NAME_LENGTH, description .. " name"
     )
-    if not profileName then return nil, errorMessage end
-    if profileName == "" then
-        return nil, description .. " name cannot be empty."
-    end
-
+    if not name then return nil, errorMessage end
+    local theme
+    theme, errorMessage = ValidateName(
+        value.theme, MAX_THEME_NAME_LENGTH, description .. " theme"
+    )
+    if not theme then return nil, errorMessage end
+    local settings
+    settings, errorMessage = ValidateProfileSettings(value.settings)
+    if not settings then return nil, errorMessage end
     local categories
     categories, errorMessage = ValidateCategories(value.categories, description)
     if not categories then return nil, errorMessage end
 
-    local profileSettings
-    profileSettings, errorMessage = ValidateProfileSettings(value.settings)
-    if not profileSettings then return nil, errorMessage end
+    return {name = name, theme = theme, settings = settings, categories = categories}
+end
 
-    return {
-        name = profileName,
-        themeSettings = profileSettings,
-        categories = categories
-    }
+
+local function ValidateTheme(value, description, allowedFields)
+    local valid, errorMessage = ValidateObject(value, allowedFields, description)
+    if not valid then return nil, errorMessage end
+
+    local name
+    name, errorMessage = ValidateName(
+        value.name, MAX_THEME_NAME_LENGTH, description .. " name"
+    )
+    if not name then return nil, errorMessage end
+    local settings
+    settings, errorMessage = ValidateThemeSettings(value.settings)
+    if not settings then return nil, errorMessage end
+    return {name = name, settings = settings}
 end
 
 
@@ -338,18 +443,22 @@ end
 
 local function ExportProfileSettings(source)
     local exported = {}
-
-    for _, key in ipairs({
-        "categoryFont", "emoteFont", "categoryFontSize", "emoteFontSize",
-        "categoryHighlightEffect", "categoryHighlightThickness", "borderStyle",
-        "titleBarPosition", "windowOpacity"
-    }) do
+    for _, key in ipairs(addon.ProfileSettingKeys) do
         exported[key] = source[key]
     end
-    for _, key in ipairs(COLOR_SETTING_KEYS) do
-        exported[key] = CopyColor(source[key])
-    end
+    return exported
+end
 
+
+local function ExportThemeSettings(source)
+    local exported = {}
+    for _, key in ipairs(addon.ThemeSettingKeys) do
+        if type(source[key]) == "table" then
+            exported[key] = CopyColor(source[key])
+        else
+            exported[key] = source[key]
+        end
+    end
     return exported
 end
 
@@ -359,12 +468,17 @@ local function ExportProfileData(profileName, profile)
     for index = 1, addon.MAX_CATEGORIES do
         categories[index] = ExportCategoryData(profile.categories[index])
     end
-
     return {
         name = profileName,
-        settings = ExportProfileSettings(Database.GetThemeSettings(profile.theme)),
+        theme = profile.theme,
+        settings = ExportProfileSettings(profile.settings),
         categories = categories
     }
+end
+
+
+local function ExportThemeData(themeName, theme)
+    return {name = themeName, settings = ExportThemeSettings(theme.settings)}
 end
 
 
@@ -376,33 +490,47 @@ local function IsValidCategoryIndex(categoryIndex)
 end
 
 
-local function ValidateProfileArray(value, description)
-    if not JSON.IsArray(value) then
-        return nil, description .. " must be an array."
+local function ValidateProfileArray(value)
+    if not JSON.IsArray(value) or #value == 0 then
+        return nil, "Profiles must be a nonempty array."
     end
-
-    local profiles = {}
-    local profileNames = {}
-    local errorMessage
-    for index, sourceProfile in ipairs(value) do
-        local profile
-        profile, errorMessage = ValidateProfile(
-            sourceProfile,
-            "Profile " .. index,
-            PROFILE_FIELDS
+    local profiles, seen = {}, {}
+    for index, source in ipairs(value) do
+        local profile, errorMessage = ValidateProfile(
+            source, "Profile " .. index, PROFILE_FIELDS
         )
         if not profile then return nil, errorMessage end
-
         local normalizedName = string.lower(profile.name)
-        if profileNames[normalizedName] then
-            return nil, "The import contains more than one profile named " .. profile.name .. "."
+        if seen[normalizedName] then
+            return nil, "The import contains more than one profile named "
+                .. profile.name .. "."
         end
-        profileNames[normalizedName] = true
-
+        seen[normalizedName] = true
         profiles[#profiles + 1] = profile
     end
-
     return profiles
+end
+
+
+local function ValidateThemeArray(value)
+    if not JSON.IsArray(value) or #value == 0 then
+        return nil, "Themes must be a nonempty array."
+    end
+    local themes, seen = {}, {}
+    for index, source in ipairs(value) do
+        local theme, errorMessage = ValidateTheme(
+            source, "Theme " .. index, THEME_FIELDS
+        )
+        if not theme then return nil, errorMessage end
+        local normalizedName = string.lower(theme.name)
+        if seen[normalizedName] then
+            return nil, "The import contains more than one theme named "
+                .. theme.name .. "."
+        end
+        seen[normalizedName] = true
+        themes[#themes + 1] = theme
+    end
+    return themes
 end
 
 
@@ -410,7 +538,6 @@ function Serialization.ExportCategory(categoryIndex)
     if not IsValidCategoryIndex(categoryIndex) then
         return nil, "Choose a valid category to export."
     end
-
     local result = ExportCategoryData(Database.GetCategory(categoryIndex))
     result.format = FORMAT_NAME
     result.version = FORMAT_VERSION
@@ -419,10 +546,12 @@ function Serialization.ExportCategory(categoryIndex)
 end
 
 
-function Serialization.ExportProfile()
-    local profileName = Database.GetActiveProfileName()
+function Serialization.ExportProfile(profileName)
+    profileName = profileName or Database.GetActiveProfileName()
+    local profile = Database.GetProfile(profileName)
+    if not profile then return nil, "That profile does not exist." end
 
-    local result = ExportProfileData(profileName, Database.GetProfile(profileName))
+    local result = ExportProfileData(profileName, profile)
     result.format = FORMAT_NAME
     result.version = FORMAT_VERSION
     result.type = "profile"
@@ -430,21 +559,41 @@ function Serialization.ExportProfile()
 end
 
 
-function Serialization.ExportAllProfiles()
-    local profiles = JSON.Array()
+function Serialization.ExportTheme(themeName)
+    themeName = themeName or Database.GetActiveThemeName()
+    local theme = Database.GetTheme(themeName)
+    if not theme then return nil, "That theme does not exist." end
+
+    local result = ExportThemeData(themeName, theme)
+    result.format = FORMAT_NAME
+    result.version = FORMAT_VERSION
+    result.type = "theme"
+    return JSON.Encode(result, true)
+end
+
+
+function Serialization.ExportEverything()
+    local profiles, themes = JSON.Array(), JSON.Array()
     for _, profileName in ipairs(Database.GetProfileNames()) do
         profiles[#profiles + 1] = ExportProfileData(
-            profileName,
-            Database.GetProfile(profileName)
+            profileName, Database.GetProfile(profileName)
         )
     end
-
+    for _, themeName in ipairs(Database.GetThemeNames()) do
+        themes[#themes + 1] = ExportThemeData(
+            themeName, Database.GetTheme(themeName)
+        )
+    end
     return JSON.Encode({
-        format = FORMAT_NAME,
-        version = FORMAT_VERSION,
-        type = "profiles",
-        profiles = profiles
+        format = FORMAT_NAME, version = FORMAT_VERSION, type = "everything",
+        profiles = profiles, themes = themes
     }, true)
+end
+
+
+-- The existing settings dialog keeps these entry points until Phase 5.
+function Serialization.ExportAllProfiles()
+    return Serialization.ExportEverything()
 end
 
 
@@ -457,9 +606,7 @@ function Serialization.Decode(text, expectedType)
     end
 
     local value, errorMessage = JSON.Decode(text)
-    if not value then
-        return nil, "Invalid JSON: " .. errorMessage
-    end
+    if not value then return nil, "Invalid JSON: " .. errorMessage end
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
         return nil, "Import data must be an object."
     end
@@ -471,7 +618,8 @@ function Serialization.Decode(text, expectedType)
     end
 
     local actualType = value.type
-    if actualType ~= "category" and actualType ~= "profile" and actualType ~= "profiles" then
+    if actualType ~= "category" and actualType ~= "profile"
+        and actualType ~= "theme" and actualType ~= "everything" then
         return nil, "The import data has an unsupported type."
     end
     if expectedType and actualType ~= expectedType then
@@ -480,11 +628,14 @@ function Serialization.Decode(text, expectedType)
 
     if actualType == "category" then
         local valid
-        valid, errorMessage = ValidateObject(value, CATEGORY_DOCUMENT_FIELDS, "Import data")
+        valid, errorMessage = ValidateObject(
+            value, CATEGORY_DOCUMENT_FIELDS, "Import data"
+        )
         if not valid then return nil, errorMessage end
-
         local category
-        category, errorMessage = ValidateCategory(value, "Category", CATEGORY_DOCUMENT_FIELDS)
+        category, errorMessage = ValidateCategory(
+            value, "Category", CATEGORY_DOCUMENT_FIELDS
+        )
         if not category then return nil, errorMessage end
         return {type = "category", name = category.name, category = category}
     end
@@ -492,23 +643,47 @@ function Serialization.Decode(text, expectedType)
     if actualType == "profile" then
         local profile
         profile, errorMessage = ValidateProfile(
-            value,
-            "Profile",
-            PROFILE_DOCUMENT_FIELDS
+            value, "Profile", PROFILE_DOCUMENT_FIELDS
         )
         if not profile then return nil, errorMessage end
         profile.type = "profile"
         return profile
     end
 
-    local valid
-    valid, errorMessage = ValidateObject(value, PROFILES_DOCUMENT_FIELDS, "Import data")
-    if not valid then return nil, errorMessage end
+    if actualType == "theme" then
+        local theme
+        theme, errorMessage = ValidateTheme(
+            value, "Theme", THEME_DOCUMENT_FIELDS
+        )
+        if not theme then return nil, errorMessage end
+        theme.type = "theme"
+        return theme
+    end
 
-    local profiles
-    profiles, errorMessage = ValidateProfileArray(value.profiles, "Profiles")
-    if not profiles then return nil, errorMessage end
-    return {type = "profiles", profiles = profiles, profileCount = #profiles}
+    local valid
+    valid, errorMessage = ValidateObject(
+        value, EVERYTHING_DOCUMENT_FIELDS, "Import data"
+    )
+    if not valid then return nil, errorMessage end
+    local themes, themeError = ValidateThemeArray(value.themes)
+    if not themes then return nil, themeError end
+    local profiles, profileError = ValidateProfileArray(value.profiles)
+    if not profiles then return nil, profileError end
+    local exactThemeNames = {}
+    for _, theme in ipairs(themes) do exactThemeNames[theme.name] = true end
+    local hasDefaultProfile = false
+    for _, profile in ipairs(profiles) do
+        if profile.name == "Default" then hasDefaultProfile = true end
+        if not exactThemeNames[profile.theme] then
+            return nil, "Profile " .. profile.name
+                .. " references a Theme missing from this export: "
+                .. profile.theme .. "."
+        end
+    end
+    if not exactThemeNames.Default or not hasDefaultProfile then
+        return nil, "Everything must include Default Profile and Default Theme."
+    end
+    return {type = "everything", profiles = profiles, themes = themes}
 end
 
 
@@ -516,7 +691,6 @@ function Serialization.ImportCategory(categoryIndex, text)
     if not IsValidCategoryIndex(categoryIndex) then
         return false, "Choose a valid category to import."
     end
-
     local imported, errorMessage = Serialization.Decode(text, "category")
     if not imported then return false, errorMessage end
 
@@ -535,15 +709,32 @@ function Serialization.ImportProfileAsNew(text)
     local imported, errorMessage = Serialization.Decode(text, "profile")
     if not imported then return false, errorMessage end
 
-    local names = Database.AddImportedProfiles({imported})
+    local names, missingThemes = Database.AddImportedProfiles({imported})
+    local missingTheme = missingThemes[1] and missingThemes[1].theme or nil
+    return true, names[1], imported.name, missingTheme
+end
+
+
+function Serialization.ImportThemeAsNew(text)
+    local imported, errorMessage = Serialization.Decode(text, "theme")
+    if not imported then return false, errorMessage end
+
+    local names = Database.AddImportedThemes({imported})
     return true, names[1], imported.name
 end
 
 
-function Serialization.ImportAllProfiles(text)
-    local imported, errorMessage = Serialization.Decode(text, "profiles")
+function Serialization.ImportEverything(text)
+    local imported, errorMessage = Serialization.Decode(text, "everything")
     if not imported then return false, errorMessage end
 
-    local names = Database.AddImportedProfiles(imported.profiles)
-    return true, #names, names
+    local profileNames, themeNames = Database.AddImportedEverything(
+        imported.profiles, imported.themes
+    )
+    return true, #profileNames, profileNames, #themeNames, themeNames
+end
+
+
+function Serialization.ImportAllProfiles(text)
+    return Serialization.ImportEverything(text)
 end

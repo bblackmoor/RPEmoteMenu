@@ -388,16 +388,19 @@ local function GetExchangeDialog()
         local success
         local result
         local sourceProfileName
+        local detail
 
         if dataType == "profile" then
-            success, result, sourceProfileName = Serialization.ImportProfileAsNew(importText)
+            success, result, sourceProfileName, detail =
+                Serialization.ImportProfileAsNew(importText)
         elseif dataType == "category" then
             success, result = Serialization.ImportCategory(
                 categoryIndex or dialog.categoryIndex,
                 importText
             )
         else
-            success, result = Serialization.ImportAllProfiles(importText)
+            success, result, sourceProfileName, detail =
+                Serialization.ImportAllProfiles(importText)
         end
 
         if not success then
@@ -414,12 +417,18 @@ local function GetExchangeDialog()
                 dialog.onProfileImported()
             end
 
-            SetStatus("Imported profile " .. sourceProfileName .. " as " .. result .. ".")
+            local message = "Imported profile " .. sourceProfileName
+                .. " as " .. result .. "."
+            if detail then
+                message = message .. " Theme " .. detail
+                    .. " was unavailable; assigned Default Theme."
+            end
+            SetStatus(message)
         elseif dataType == "category" then
             SetStatus("Imported category " .. result .. ".")
         else
-            local profileLabel = result == 1 and "profile" or "profiles"
-            SetStatus("Added " .. result .. " " .. profileLabel .. ".")
+            SetStatus("Added " .. result .. " Profiles and "
+                .. detail .. " Themes.")
         end
     end
 
@@ -522,8 +531,8 @@ local function GetExchangeDialog()
         self.onProfileImported = nil
         title:SetText("Export Profile: " .. Database.GetActiveProfileName())
         instructions:SetText(
-            "Copy this JSON to share or save this profile's appearance, "
-            .. "categories, and emotes."
+            "Copy this JSON to save the Profile's settings, categories, "
+            .. "emotes, and Theme name. Export the Theme separately to share its appearance."
         )
         actionButton:SetText("Select All")
         SetStatus("")
@@ -546,7 +555,8 @@ local function GetExchangeDialog()
         title:SetText("Import Profile")
         instructions:SetText(
             "Paste exported profile JSON below. Importing adds a new profile without "
-            .. "changing the current profile or any character assignments."
+            .. "changing the current profile or character assignments. A missing "
+            .. "Theme is reported and replaced with Default Theme."
         )
         actionButton:SetText("Import Profile")
         SetStatus("")
@@ -570,9 +580,10 @@ local function GetExchangeDialog()
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
-        title:SetText("Export All Profiles")
+        title:SetText("Export Everything")
         instructions:SetText(
-            "Copy this JSON to save every profile. Character assignments are not included."
+            "Copy this JSON to save all Profiles, Themes, and their relationships. "
+            .. "Character assignments are not included."
         )
         actionButton:SetText("Select All")
         SetStatus("")
@@ -592,13 +603,13 @@ local function GetExchangeDialog()
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
-        title:SetText("Import Profiles")
+        title:SetText("Import Everything")
         instructions:SetText(
-            "Paste an all-profiles export below. Importing only adds profiles; it "
-            .. "does not replace, activate, or assign them to characters. Imported "
-            .. "Default profiles receive a unique name."
+            "Paste an Everything export below. Importing adds Profiles and Themes "
+            .. "with unique names, preserving their links. It does not replace or "
+            .. "activate existing data or change character assignments."
         )
-        actionButton:SetText("Import Profiles")
+        actionButton:SetText("Import Everything")
         SetStatus("")
         editBox:SetText("")
         scrollFrame:SetVerticalScroll(0)
@@ -650,8 +661,8 @@ local function CreateAboutPanel()
     description:SetJustifyH("LEFT")
     description:SetText(
         "A customizable roleplaying emote menu with profiles, targeted " ..
-        "commands, category and custom-profile sharing, and " ..
-        "per-profile fonts, colors, and appearance."
+        "commands, category and Profile sharing, and shared Themes " ..
+        "for fonts, colors, and appearance."
     )
 
     local details = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -1040,7 +1051,7 @@ local function CreateAppearanceSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Customize the main menu for the current profile. Changes appear immediately."
+        "Customize the current Theme. Profiles using it share these changes."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1854,7 +1865,7 @@ local function CreateImportExportSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Save or transfer profiles, including the editable Default profile."
+        "Save or transfer all Profiles and Themes together."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -1867,16 +1878,16 @@ local function CreateImportExportSettingsPanel()
     profilesDescription:SetWidth(620)
     profilesDescription:SetJustifyH("LEFT")
     profilesDescription:SetText(
-        "Each profile includes appearance, categories, and emotes. Global "
-        .. "behavior, preferences, window layout, character names, realms, and "
-        .. "character assignments are not exported."
+        "Everything includes all Profiles, Themes, their settings, categories, "
+        .. "emotes, and Theme references. Global preferences and character "
+        .. "assignments are not exported."
     )
     profilesDescription:SetTextColor(0.8, 0.8, 0.8)
 
     local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     exportButton:SetSize(160, 24)
     exportButton:SetPoint("TOPLEFT", profilesDescription, "BOTTOMLEFT", 0, -18)
-    exportButton:SetText("Export All Profiles")
+    exportButton:SetText("Export Everything")
     exportButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenAllProfilesExport()
     end)
@@ -1884,7 +1895,7 @@ local function CreateImportExportSettingsPanel()
     local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     importButton:SetSize(160, 24)
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
-    importButton:SetText("Import Profiles")
+    importButton:SetText("Import Everything")
     importButton:SetScript("OnClick", function()
         GetExchangeDialog():OpenAllProfilesImport()
     end)
@@ -1894,10 +1905,10 @@ local function CreateImportExportSettingsPanel()
     importNote:SetWidth(620)
     importNote:SetJustifyH("LEFT")
     importNote:SetText(
-        "Importing only adds profiles. It does not replace existing profiles, "
-        .. "change the current profile, or assign profiles to characters. Imported "
-        .. "Default entries and other name conflicts are renamed automatically. "
-        .. "Review profile names and custom emote text before sharing."
+        "Importing adds new Profiles and Themes and preserves their links. "
+        .. "It does not replace or activate existing data or change character "
+        .. "assignments. Conflicting names are renamed automatically. Review "
+        .. "custom emote text before sharing."
     )
     importNote:SetTextColor(0.7, 0.7, 0.7)
 
@@ -2029,7 +2040,7 @@ local function CreateProfilesSettingsPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_DEFAULT_PROFILE"] = {
-        text = "Restore Default's original appearance, categories, and emotes?\n\nChanges to Default will be lost. Other profiles will not be changed.",
+        text = "Restore Default Profile's original categories, emotes, window settings, and Default Theme assignment?\n\nChanges to Default Profile will be lost. Default Theme appearance will not change.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
         OnAccept = function()
@@ -2176,8 +2187,8 @@ local function CreateProfilesSettingsPanel()
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
     profileNote:SetText(
-        "Create starts with built-in emotes and the current appearance; Copy duplicates " ..
-        "the selected profile."
+        "Create starts with built-in emotes and the current Theme; Copy duplicates " ..
+        "the selected Profile and its Theme reference."
     )
     profileNote:SetTextColor(0.8, 0.8, 0.8)
 

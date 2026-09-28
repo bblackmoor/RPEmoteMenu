@@ -1015,27 +1015,54 @@ local function ImportedProfileName(sourceName)
 end
 
 
-function Database.AddImportedProfiles(importedProfiles)
-    local createdNames = {}
+local function ImportedThemeName(sourceName)
+    local baseName = strtrim(sourceName or "")
+    if baseName == "" then baseName = "Imported Theme" end
+    if string.lower(baseName) ~= string.lower(DEFAULT_THEME_NAME)
+        and not FindThemeByName(baseName) then
+        return baseName
+    end
 
+    local number = 1
+    while true do
+        local suffix = number == 1
+            and " (Imported)" or " (Imported " .. number .. ")"
+        local shortenedBase = strtrim(baseName:sub(1, MAX_THEME_NAME_LENGTH - #suffix))
+        local candidate = shortenedBase .. suffix
+        if not FindThemeByName(candidate) then return candidate end
+        number = number + 1
+    end
+end
+
+
+function Database.AddImportedThemes(importedThemes, deferRefresh)
+    local createdNames, nameMap = {}, {}
+    for _, imported in ipairs(importedThemes or {}) do
+        local themeName = ImportedThemeName(imported.name)
+        RPEmoteMenuDB.themes[themeName] = {
+            settings = CopyThemeSettings(imported.settings)
+        }
+        nameMap[imported.name] = themeName
+        createdNames[#createdNames + 1] = themeName
+    end
+    if not deferRefresh then RefreshSettingsViews() end
+    return createdNames, nameMap
+end
+
+
+function Database.AddImportedProfiles(importedProfiles, themeNameMap, deferRefresh)
+    local createdNames, missingThemes = {}, {}
     for _, imported in ipairs(importedProfiles or {}) do
         local profileName = ImportedProfileName(imported.name)
-        local themeName = type(imported.theme) == "string"
-            and RPEmoteMenuDB.themes[imported.theme] and imported.theme
-            or DEFAULT_THEME_NAME
-        -- Until the separate Theme exchange format arrives, a legacy visual
-        -- Profile import gets its own Theme so it cannot alter another Profile.
-        if type(imported.themeSettings) == "table" then
-            local baseName = "Imported " .. profileName
-            themeName = baseName
-            local suffix = 2
-            while RPEmoteMenuDB.themes[themeName] do
-                themeName = baseName .. " " .. suffix
-                suffix = suffix + 1
-            end
-            RPEmoteMenuDB.themes[themeName] = {
-                settings = CopyThemeSettings(imported.themeSettings)
+        local themeName = imported.theme
+        if themeNameMap then
+            themeName = themeNameMap[imported.theme]
+        end
+        if not Database.GetTheme(themeName) then
+            missingThemes[#missingThemes + 1] = {
+                profile = profileName, theme = imported.theme
             }
+            themeName = DEFAULT_THEME_NAME
         end
         RPEmoteMenuDB.profiles[profileName] = {
             theme = themeName,
@@ -1044,9 +1071,18 @@ function Database.AddImportedProfiles(importedProfiles)
         }
         createdNames[#createdNames + 1] = profileName
     end
+    if not deferRefresh then RefreshSettingsViews() end
+    return createdNames, missingThemes
+end
 
-    RefreshProfileViews()
-    return createdNames
+
+function Database.AddImportedEverything(importedProfiles, importedThemes)
+    local themeNames, themeNameMap = Database.AddImportedThemes(importedThemes, true)
+    local profileNames, missingThemes = Database.AddImportedProfiles(
+        importedProfiles, themeNameMap, true
+    )
+    RefreshSettingsViews()
+    return profileNames, themeNames, missingThemes
 end
 
 
