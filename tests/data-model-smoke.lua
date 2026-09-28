@@ -8,13 +8,23 @@ local character = 'First'
 function UnitName() return character, 'Example' end
 loadModule('RPEmoteMenu/Defaults.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
+loadModule('RPEmoteMenu/JSON.lua')
 loadModule('RPEmoteMenu/Database.lua')
+loadModule('RPEmoteMenu/Serialization.lua')
 local db = addon.Database
 db.InitializeDatabase()
 assert(db.GetActiveProfileName() == 'Default')
 assert(db.GetActiveThemeName() == 'Default')
 assert(db.GetProfileSettings().inactiveOpacity == 0.5)
 assert(db.GetTheme('Teal') and not db.GetProfile('Teal'))
+local oldExport=assert(addon.JSON.Decode(assert(addon.Serialization.ExportProfile())))
+oldExport.settings.minimizedIconCorner='TOPRIGHT'
+local imported=assert(addon.Serialization.Decode(
+  addon.JSON.Encode(oldExport,true),'profile'))
+assert(imported.settings.minimizedIconCorner==nil)
+RPEmoteMenuDB.profiles.Default.settings.minimizedIconCorner='TOPRIGHT'
+db.InitializeDatabase()
+assert(db.GetProfileSettings().minimizedIconCorner==nil)
 
 local ok = db.CreateProfile('Shared')
 assert(ok and db.GetActiveProfileName() == 'Shared')

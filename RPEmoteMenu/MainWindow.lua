@@ -24,12 +24,8 @@ local function Trim(value)
     return strtrim(value or "")
 end
 
-local titleBarThickness = 30
-local leftTitleBarWidth = 30
--- The first content rows move 30 pixels down when the title bar is on top.
--- Preserve their screen position when switching between title bar orientations.
-local topTitleFirstRowCenterOffset = 50
-local leftTitleFirstRowCenterOffset = 20
+local titleBarThickness = 32
+local leftTitleBarWidth = 32
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumUsableWidth = 220
 local minimumHeight = 150
@@ -546,8 +542,9 @@ ApplyTitleBarLayout = function()
         TitleBar:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
         TitleBar:SetWidth(leftTitleBarWidth)
 
+        -- The 20px pin with a 6px inset shares the icon's 16px center.
         -- Keep both controls inside the bar, stacked above the title.
-        PinBtn:SetPoint("TOP", TitleBar, "TOP", 0, -2)
+        PinBtn:SetPoint("TOP", TitleBar, "TOP", 0, -6)
         SettingsBtn:SetPoint("TOP", PinBtn, "BOTTOM", 0, -4)
 
         -- Reserve the top 60 pixels for controls and a gap before the text.
@@ -2111,29 +2108,10 @@ local function ApplyMinimizedIconAnchor()
         return
     end
 
+    -- Both bars meet at the frame's upper-left corner. Centering the icon
+    -- there keeps it fixed through an orientation change at any icon size.
     MinimizedIconButton:ClearAllPoints()
-    if IsTitleBarOnLeft() then
-        -- Anchor centers, not edges: an icon wider than the title bar can
-        -- extend on both sides without shifting away from the pin.
-        if PinBtn then
-            MinimizedIconButton:SetPoint("CENTER", PinBtn, "CENTER")
-        else
-            MinimizedIconButton:SetPoint("CENTER", TitleBar, "TOP", 0, -12)
-        end
-        return
-    end
-
-    local rightAligned = profileSettings.minimizedIconCorner == "TOPRIGHT"
-    local iconPoint = rightAligned and "RIGHT" or "LEFT"
-    local windowPoint = rightAligned and "TOPRIGHT" or "TOPLEFT"
-
-    MinimizedIconButton:SetPoint(
-        iconPoint,
-        MainFrame,
-        windowPoint,
-        0,
-        -topTitleFirstRowCenterOffset
-    )
+    MinimizedIconButton:SetPoint("CENTER", MainFrame, "TOPLEFT", 16, -16)
 end
 
 local function UpdateWindowBodyVisibility()
@@ -2228,9 +2206,6 @@ function MainWindow.ApplyMinimizeToIconSettings()
                 or profileDefaults.minimizedIconSize)
         )
     )
-    profileSettings.minimizedIconCorner = profileSettings.minimizedIconCorner == "TOPRIGHT"
-        and "TOPRIGHT"
-        or "TOPLEFT"
     CancelWindowAutoHide()
     if not UsesMinimizedDisplay() then
         SetWindowAutoHidden(false)
@@ -2251,21 +2226,11 @@ function MainWindow.ApplyTitleBarPosition(
     local x, y = profileSettings.x, profileSettings.y
     if not preserveSavedPosition and appliedTitleBarPosition
         and appliedTitleBarPosition ~= themeSettings.titleBarPosition then
-        -- Keep both content columns in place while the title bar changes sides.
-        -- The new left bar takes space to the left of the old content origin.
-        local oldInset = appliedTitleBarPosition == "LEFT" and leftTitleBarWidth or 0
-        local newInset = IsTitleBarOnLeft() and leftTitleBarWidth or 0
-        local oldOffset = appliedTitleBarPosition == "LEFT"
-            and leftTitleFirstRowCenterOffset
-            or topTitleFirstRowCenterOffset
-        local newOffset = IsTitleBarOnLeft()
-            and leftTitleFirstRowCenterOffset
-            or topTitleFirstRowCenterOffset
+        -- Keep the frame's upper-left corner fixed. Its content moves when
+        -- the title bar changes sides, but the icon anchor stays in place.
         local top = MainFrame:GetTop()
         if top then
-            local targetTop = top + newOffset - oldOffset
             local left = MainFrame:GetLeft()
-            local targetLeft = left and left + oldInset - newInset
             if profileSettings.point == "CENTER"
                 and profileSettings.relativePoint == "CENTER" then
                 local width = CalculateColumnWidths()
@@ -2273,13 +2238,13 @@ function MainWindow.ApplyTitleBarPosition(
                     width,
                     profileSettings.height
                 )
-                if targetLeft then
-                    x = targetLeft + frameWidth / 2 - UIParent:GetWidth() / 2
+                if left then
+                    x = left + frameWidth / 2 - UIParent:GetWidth() / 2
                 end
-                y = targetTop - frameHeight / 2 - UIParent:GetHeight() / 2
+                y = top - frameHeight / 2 - UIParent:GetHeight() / 2
             else
-                if targetLeft then x = targetLeft end
-                y = targetTop
+                if left then x = left end
+                y = top
             end
         end
     end

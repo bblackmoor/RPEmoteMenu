@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.206
+
+- Anchor the minimized icon to the upper-left corner for both title-bar orientations.
+- Let the category and emote lists move with the title bar while keeping the window corner fixed.
+- Make both title bars 32 pixels thick and remove the obsolete Icon side setting.
+- Continue accepting older version 3 Profile exports containing Icon side.
+
 ## 2.0.205
 
 - Center the minimized icon on the left title bar's pin, regardless of icon size.

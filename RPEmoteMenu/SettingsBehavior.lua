@@ -147,52 +147,13 @@ local function CreateInactivitySection(panel, switches, rows)
     iconSizeRange:SetPoint("LEFT", iconSizeBox, "RIGHT", FIELD_GAP, 0)
     iconSizeRange:SetText("(16-64 px)")
 
-    local iconCornerY = rows:Next()
-    local iconCornerLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    iconCornerLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, iconCornerY)
-    iconCornerLabel:SetText("Icon side (top bar)")
-
-    local iconCornerSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        panel,
-        "WowStyle1DropdownTemplate"
-    )
-    iconCornerSelector:SetWidth(150)
-    iconCornerSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, iconCornerY + 5)
-    iconCornerSelector:SetDefaultText("Left")
-
-    local iconCornerLabels = {
-        TOPLEFT = "Left",
-        TOPRIGHT = "Right"
-    }
-
-    iconCornerSelector:SetupMenu(function(_, rootDescription)
-        for _, corner in ipairs({"TOPLEFT", "TOPRIGHT"}) do
-            rootDescription:CreateRadio(
-                iconCornerLabels[corner],
-                function() return settings.minimizedIconCorner == corner end,
-                function()
-                    settings.minimizedIconCorner = corner
-                    iconCornerSelector:OverrideText(iconCornerLabels[corner])
-                    MainWindow.ApplyMinimizeToIconSettings()
-                end
-            )
-        end
-    end)
-
     RefreshIconControls = function()
         local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
         local alpha = enabled and 1 or 0.45
-        local sideEnabled = enabled
-            and Database.GetThemeSettings().titleBarPosition ~= "LEFT"
 
         iconSizeBox:SetEnabled(enabled)
         iconSizeBox:SetAlpha(alpha)
-        iconCornerSelector:SetEnabled(sideEnabled)
-        iconCornerSelector:SetAlpha(sideEnabled and 1 or 0.45)
         iconSizeLabel:SetAlpha(alpha)
-        iconCornerLabel:SetAlpha(sideEnabled and 1 or 0.45)
     end
 
     RefreshInactiveControls = function()
@@ -219,8 +180,7 @@ local function CreateInactivitySection(panel, switches, rows)
     end
 
     return fadeSwitch, fadeDelayBox, inactiveOpacityBox,
-        minimizeSelector, iconSizeBox, iconCornerSelector,
-        minimizeLabels, iconCornerLabels, RefreshInactiveControls
+        minimizeSelector, iconSizeBox, minimizeLabels, RefreshInactiveControls
 end
 
 -- Window position, size, and lock settings.
@@ -346,7 +306,7 @@ local function CreateGeneralSettingsPanel()
     end)
 
     local panel = CreateFrame("Frame", nil, scrollFrame)
-    panel:SetSize(700, 700)
+    panel:SetSize(700, 670)
     scrollFrame:SetScrollChild(panel)
     local switches = {}
     local RefreshControls
@@ -358,7 +318,7 @@ local function CreateGeneralSettingsPanel()
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetText(
-        "These settings apply globally, regardless of the active profile."
+        "Startup preferences are global; window behavior and layout belong to the selected Profile."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -376,8 +336,7 @@ local function CreateGeneralSettingsPanel()
     local rows = UI.CreateRows(panel, 20, -95, 30)
     local tooltipDelayBox = CreateStartupSection(panel, switches, rows)
     local fadeSwitch, fadeDelayBox, inactiveOpacityBox,
-        minimizeSelector, iconSizeBox, iconCornerSelector,
-        minimizeLabels, iconCornerLabels, RefreshInactiveControls =
+        minimizeSelector, iconSizeBox, minimizeLabels, RefreshInactiveControls =
         CreateInactivitySection(panel, switches, rows)
     local lockSwitch, positionXBox, positionYBox, heightBox =
         CreateLayoutSection(panel, switches, rows)
@@ -395,10 +354,6 @@ local function CreateGeneralSettingsPanel()
             minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE
         )
         iconSizeBox:RefreshValue()
-        iconCornerSelector:OverrideText(
-            iconCornerLabels[settings.minimizedIconCorner]
-                or iconCornerLabels.TOPLEFT
-        )
         RefreshInactiveControls()
     end
 

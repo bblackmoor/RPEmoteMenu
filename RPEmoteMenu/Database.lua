@@ -32,7 +32,6 @@ local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
     separator = true
 }
 local VALID_BORDER_STYLES = {none = true, thin = true, blizzard = true}
-local VALID_MINIMIZED_ICON_CORNERS = {TOPLEFT = true, TOPRIGHT = true}
 local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
 local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
 local VALID_ANCHOR_POINTS = {
@@ -235,9 +234,6 @@ local function NormalizeProfileSettings(source)
         addon.MAX_MINIMIZED_ICON_SIZE,
         profileDefaults.minimizedIconSize
     ))
-    if not VALID_MINIMIZED_ICON_CORNERS[result.minimizedIconCorner] then
-        result.minimizedIconCorner = profileDefaults.minimizedIconCorner
-    end
     result.x = math.floor(ClampNumber(source.x, -100000, 100000, profileDefaults.x))
     result.y = math.floor(ClampNumber(source.y, -100000, 100000, profileDefaults.y))
 

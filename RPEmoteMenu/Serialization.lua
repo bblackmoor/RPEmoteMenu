@@ -41,6 +41,9 @@ local PROFILE_SETTING_FIELDS = {}
 local THEME_SETTING_FIELDS = {}
 for _, key in ipairs(addon.ProfileSettingKeys) do PROFILE_SETTING_FIELDS[key] = true end
 for _, key in ipairs(addon.ThemeSettingKeys) do THEME_SETTING_FIELDS[key] = true end
+-- Earlier version 3 Profile exports included this retired setting. Accept it
+-- when importing those exports, but leave it out of new Profile data.
+PROFILE_SETTING_FIELDS.minimizedIconCorner = true
 
 local COLOR_SETTING_KEYS = {
     "categoryTextColor",
@@ -318,9 +321,17 @@ local function ValidateProfileSettings(value)
     )
     if not settings.inactiveOpacity then return nil, errorMessage end
 
+    if value.minimizedIconCorner ~= nil then
+        local unusedCorner
+        unusedCorner, errorMessage = ValidateEnum(
+            value.minimizedIconCorner, VALID_MINIMIZED_ICON_CORNERS,
+            "minimizedIconCorner"
+        )
+        if not unusedCorner then return nil, errorMessage end
+    end
+
     for _, field in ipairs({
         {"minimizeMode", VALID_MINIMIZE_MODES},
-        {"minimizedIconCorner", VALID_MINIMIZED_ICON_CORNERS},
         {"point", VALID_ANCHOR_POINTS},
         {"relativePoint", VALID_ANCHOR_POINTS}
     }) do

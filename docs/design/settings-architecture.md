@@ -89,7 +89,6 @@ Fade after               [5] seconds
 Inactive opacity         [50] %
 Minimize to              [Icon]
 Minimized icon size      [32]
-Icon side                [Left]
 ```
 
 should be constructed in approximately that order.

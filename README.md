@@ -126,7 +126,7 @@ The **Behavior** screen contains global startup preferences (including show at l
 
 The window can be dragged or centered and resized vertically while unlocked. Its width fits category and emote labels automatically. **Reset Window** resets the active Profile's position and height; **Restore Global Defaults** resets only global startup and interaction preferences.
 
-With the title bar on the left, the minimized icon is centered on the pin position, even if the icon is wider than the bar. The **Icon side** setting applies when the title bar is on top.
+The minimized icon is centered on the window's upper-left corner: the left edge of a top title bar or the upper edge of a left title bar. Switching the title bar orientation moves the category and emote lists with the window layout while leaving the minimized icon in place.
 
 ## Slash Commands
 

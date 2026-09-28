@@ -33,14 +33,12 @@ A Profile owns content and non-visual configuration:
 - Lock window
 - Fade/minimize behavior
 - Minimized icon size
-- Minimized icon side/corner
 
 The expected Profile settings include:
 
 - `locked`
 - `minimizeMode`
 - `minimizedIconSize`
-- `minimizedIconCorner`
 - `selectedCategory`
 - `point`
 - `relativePoint`

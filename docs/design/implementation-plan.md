@@ -60,7 +60,7 @@ Phase 2 provides explicit access and lifecycle operations for Profiles and Theme
 - [x] Ensure Global preference changes remain independent.
 - [x] Verify character-specific Profile selection and Default fallback.
 
-MainWindow and minimized-icon color now read their explicit scopes. Profile switching rebinds all three scopes and cancels pending fades; Theme changes refresh appearance without running the full Profile switch or writing saved Profile geometry. Settings controls still use the temporary merged proxy until the UI phases. WoW frame geometry requires an in-game smoke test.
+MainWindow and minimized-icon color now read their explicit scopes. Profile switching rebinds all three scopes and cancels pending fades; Theme changes refresh appearance without running the full Profile switch. A title-bar orientation change adjusts the active Profile's saved anchor only to keep the window's upper-left corner (and its minimized icon) stationary. Settings controls still use the temporary merged proxy until the UI phases. WoW frame geometry requires an in-game smoke test.
 
 ## Phase 4 — Redesign serialization
 
