@@ -16,6 +16,10 @@ RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. E
 
 ## Demonstration Video
 
+[![Watch the video]([https://youtube.com](https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr))](https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr)
+
+
+
 https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
