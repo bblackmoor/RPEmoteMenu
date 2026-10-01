@@ -29,7 +29,7 @@ RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. E
 
 ## Installation
 
-Download an installable ZIP from [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases). Development builds are available as artifacts from [GitHub Actions](https://github.com/bblackmoor/RPEmoteMenu/actions/workflows/release.yml). Extract the `RPEmoteMenu` folder to:
+Download an installable ZIP from [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases). Extract the `RPEmoteMenu` folder to:
 
 ```text
 World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/
@@ -82,7 +82,7 @@ Imports add Profiles and Themes without overwriting existing ones; name conflict
 - More flexible presentation: Place the title bar above or beside the menu, with controls above the text on the left title bar. The minimized icon stays at the window's upper-left corner when orientation changes. Visible-menu opacity applies uniformly, and the menu always renders without borders.
 - Improved sharing: Export and import categories, individual Profiles, individual Themes, or all Profiles and Themes with their relationships. Imports preserve existing entries, rename conflicts, and use Default Theme when a standalone Profile references an unavailable Theme.
 - More predictable controls: Configure tooltip delay from 0 to 1,000 milliseconds, use clearer window locking and centering controls, and receive confirmations before destructive category and emote actions.
-- More maintainable code and packaging: Database, serialization, window, and settings responsibilities are separated into smaller modules, with smoke checks for the data model, settings registration, and window geometry. Tagged releases provide installable ZIPs; main-branch development builds remain available for 90 days.
+- More maintainable code and packaging: Database, serialization, window, and settings responsibilities are separated into smaller modules, with smoke checks for the data model, settings registration, and window geometry. Tagged releases provide installable ZIPs.
 
 **Upgrade compatibility**
 
