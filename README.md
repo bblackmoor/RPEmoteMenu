@@ -14,17 +14,9 @@ RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. E
 - Hide gear icons while keeping right-click editing available.
 - Import and export categories, Profiles, Themes, or all Profiles and Themes together.
 
-## Demonstration Video
+## Screenshots
 
 [![Watch the video]([https://youtube.com](https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr))](https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr)
-
-
-
-https://youtu.be/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr
-
-<iframe width="560" height="315" src="https://www.youtube.com/embed/Ouv6zsLms58?si=ChO1rj_9D4x2NkAr" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-
-## Screenshots
 
 <img width="268" height="225" alt="profile-default" src="https://github.com/user-attachments/assets/260f5f13-25a7-406b-89a7-cbe5badd6b20" />
 <img width="512" height="250" alt="profile-crimson-night" src="https://github.com/user-attachments/assets/5ee10f14-0dc5-403c-b8bb-674fdc1f31ff" />
