@@ -2,6 +2,7 @@
 
 ## 2.0.209
 
+- Publish the current state as release 2.0.209; see [Changes from v1 to v2](docs/releases/2.0.209.md) for the major-version summary and upgrade compatibility.
 - Remove border color and style from Themes and their editor.
 - Render the menu without an outer border or sidebar divider, regardless of old saved or imported border values.
 
