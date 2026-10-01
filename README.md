@@ -20,8 +20,8 @@ RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. E
 
 <img width="268" height="225" alt="profile-default" src="https://github.com/user-attachments/assets/260f5f13-25a7-406b-89a7-cbe5badd6b20" /> 
 <img width="512" height="250" alt="profile-crimson-night" src="https://github.com/user-attachments/assets/5ee10f14-0dc5-403c-b8bb-674fdc1f31ff" /> 
-<img width="510" height="276" alt="profile-gilded-shadow" src="https://github.com/user-attachments/assets/1850751f-3cdc-4eac-ace0-3c2e02639cdd" /> 
 <img width="346" height="306" alt="profile-high-contrast" src="https://github.com/user-attachments/assets/cc218880-1687-40bf-9e43-d7b6584673b5" /> 
+<img width="510" height="276" alt="profile-gilded-shadow" src="https://github.com/user-attachments/assets/1850751f-3cdc-4eac-ace0-3c2e02639cdd" /> 
 <img width="339" height="246" alt="profile-moonlight" src="https://github.com/user-attachments/assets/c6fb2f8a-eab9-454c-96cf-9317634a7937" /> 
 <img width="534" height="246" alt="profile-teal" src="https://github.com/user-attachments/assets/9e6700a5-99ff-4209-a76f-9a3e1bd60bee" /> 
 
