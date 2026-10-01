@@ -130,16 +130,16 @@ function AddonSettings.CreateSettingsPanel()
         "Behavior"
     )
 
-    Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        themesPanel,
-        "Themes"
-    )
-
     profilesSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
         settingsCategory,
         profilesPanel,
         "Profiles"
+    )
+
+    Settings.RegisterCanvasLayoutSubcategory(
+        settingsCategory,
+        themesPanel,
+        "Themes"
     )
 
     AddonSettings.RefreshProfiles = profilesPanel.Refresh

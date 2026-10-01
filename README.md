@@ -43,7 +43,7 @@ Profiles contain categories, emotes, the selected category, window position and 
 
 Themes contain fonts, colors, selection effects, menu opacity, title-bar position, and minimized icon tint. The menu has no border. Multiple Profiles can share one Theme, and edits to a Theme affect all of them. Selecting a Theme in the **Themes** editor does not assign it; assign it on **Profiles**.
 
-Default Theme can be edited and restored, but cannot be renamed or deleted. The six editable bundled Themes are **Gilded Shadow**, **Crimson Night**, **Teal**, **High Contrast**, **Joker**, and **Moonlight**. Restore individual bundled Themes or all six from their factory definitions. Deleting a Theme used by Profiles requires confirmation and assigns those Profiles Default Theme.
+Default Theme can be edited and restored, but cannot be renamed or deleted. The six editable bundled Themes are **Crimson Night**, **Gilded Shadow**, **High Contrast**, **Moonlight**, and **Teal**. Restore individual bundled Themes or all six from their factory definitions. Deleting a Theme used by Profiles requires confirmation and assigns those Profiles Default Theme.
 
 The **Behavior** screen holds global show-at-login, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
 

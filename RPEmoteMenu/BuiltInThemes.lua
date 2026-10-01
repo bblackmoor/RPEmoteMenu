@@ -13,11 +13,11 @@ addon.BuiltInThemes = {
             categoryHighlightColor = {r = 0.2, g = 0.2, b = 0.2},
             categoryHighlightEffect = "separator",
             categoryHighlightThickness = 5,
-            categoryTextColor = {r = 0.8, g = 0.8, b = 0.8},
+            categoryTextColor = {r = 1.8, g = 1.0, b = 0},
             emoteBackgroundColor = {r = 0, g = 0, b = 0},
             emoteFont = "Arial Narrow",
             emoteFontSize = 18,
-            emoteTextColor = {r = 0.6, g = 0.9333334, b = 0.9333334},
+            emoteTextColor = {r = 1.8, g = 1.0, b = 0},
             selectedCategoryTextColor = {r = 0, g = 1, b = 1},
             windowOpacity = 0.9
         }
@@ -78,25 +78,6 @@ addon.BuiltInThemes = {
             emoteTextColor = {r = 0.95, g = 0.95, b = 0.95},
             selectedCategoryTextColor = {r = 0.03, g = 0.03, b = 0.03},
             windowOpacity = 1
-        }
-    },
-    {
-        name = "Joker",
-        description = "An intentionally loud green-and-magenta fantasy theme.",
-        settings = {
-            categoryBackgroundColor = {r = 0.2, g = 1, b = 0.2},
-            categoryFont = "Morpheus",
-            categoryFontSize = 24,
-            categoryHighlightColor = {r = 0.8, g = 0, b = 1},
-            categoryHighlightEffect = "outline",
-            categoryHighlightThickness = 1,
-            categoryTextColor = {r = 0, g = 0, b = 0},
-            emoteBackgroundColor = {r = 0, g = 1, b = 0},
-            emoteFont = "Arial Narrow",
-            emoteFontSize = 24,
-            emoteTextColor = {r = 1, g = 1, b = 1},
-            selectedCategoryTextColor = {r = 1, g = 1, b = 1},
-            windowOpacity = 0.9
         }
     },
     {

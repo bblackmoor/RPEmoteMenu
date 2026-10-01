@@ -114,7 +114,6 @@ The existing visual presets become bundled Themes:
 - Crimson Night
 - Teal
 - High Contrast
-- Joker
 - Moonlight
 
 Bundled Themes are editable. They can be restored/recreated from their factory definitions.
