@@ -72,6 +72,26 @@ Imports add Profiles and Themes without overwriting existing ones; name conflict
 | `/rpem about` | Open the About page |
 | `/rpem config`, `/rpem options`, `/rpem settings` | Open settings |
 
+## Changes from v1 to v2
+
+- Separate Profiles and Themes: Profiles hold categories, emotes, window position and height, selected category, locking, and fade/minimize behavior. Shared Themes hold appearance, so one Theme can style several Profiles.
+- Editable defaults and visual presets: Default Profile now allows category and emote editing and can be restored. Default Theme and five additional bundled Themes are editable and restorable; visual presets no longer create separate content Profiles.
+- Clearer settings ownership: Show-at-login, tooltip delay, and gear visibility are global preferences. Each character still chooses its own account-wide Profile; new characters start with Default Profile and Default Theme.
+- Easier editing: Right-click categories and emotes to edit them, drag categories into order, and duplicate categories or emotes. One switch hides all settings gears, including emote gears on hover, while preserving right-click editing.
+- Cleaner settings screens: Dedicated Behavior, Profiles, Themes, Emotes, and Import & Export screens use sliding on/off switches, circled information links, consistent spacing, and clearer restore and deletion confirmations. The About page is also available through /rpem about.
+- More flexible presentation: Place the title bar above or beside the menu, with controls above the text on the left title bar. The minimized icon stays at the window's upper-left corner when orientation changes. Visible-menu opacity applies uniformly, and the menu always renders without borders.
+- Improved sharing: Export and import categories, individual Profiles, individual Themes, or all Profiles and Themes with their relationships. Imports preserve existing entries, rename conflicts, and use Default Theme when a standalone Profile references an unavailable Theme.
+- More predictable controls: Configure tooltip delay from 0 to 1,000 milliseconds, use clearer window locking and centering controls, and receive confirmations before destructive category and emote actions.
+- More maintainable code and packaging: Database, serialization, window, and settings responsibilities are separated into smaller modules, with smoke checks for the data model, settings registration, and window geometry. Tagged releases provide installable ZIPs; main-branch development builds remain available for 90 days.
+
+**Upgrade compatibility**
+
+The current saved-data model intentionally does not migrate v1 or earlier v2 layouts. Obsolete saved-data schemas initialize with fresh defaults. Transfers accept only version 2 JSON; other format versions and malformed categories or emotes are rejected. Unknown or invalid Profile and Theme settings are silently ignored and replaced with defaults. Global preferences and character-to-Profile selections are not exported.
+
+The existing 10-category, 100-emote limit, default and targeted commands, character-name tokens, emote dragging, and per-character Profile selection remain available.
+
+-----
+
 **AI disclaimer:** AI-assisted tools were used in development. The author reviewed and approved the code and documentation and remains responsible for the project.
 
 Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)  
