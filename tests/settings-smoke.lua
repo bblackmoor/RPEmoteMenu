@@ -17,6 +17,7 @@ end
 function Widget:CreateFontString() return CreateFrame('FontString', nil, self) end
 function Widget:CreateTexture() return CreateFrame('Texture', nil, self) end
 function Widget:SetText(v) self.text = v end
+function Widget:OverrideText(v) self.text = v end
 function Widget:GetText() return self.text or '' end
 function Widget:SetPoint(point, relative, relativePoint, x, y)
   self.anchor={point=point,relative=relative,relativePoint=relativePoint,x=x,y=y}
@@ -211,7 +212,7 @@ for _,w in ipairs(widgets) do
   end
 end
 assert(selectedTheme,'Bundled Theme missing from menu')
-assert(DB.GetActiveThemeName()=='Default','Editor selection changed character assignment')
+assert(DB.GetActiveThemeName()=='Teal','Editor selection did not change character assignment')
 local foundDelete=false
 for _,w in ipairs(widgets) do
   if w.text=='Delete' and isChildOf(w,themesPanel) then
@@ -236,7 +237,7 @@ local function SelectThemeFont()
   error('Theme font selector missing')
 end
 SelectThemeFont()
-assert(themeRefreshes==0,'Editing an inactive Theme refreshed the active Theme')
+assert(themeRefreshes==1,'Editing the selected Theme did not refresh its appearance')
 
 local edited=false
 for _,w in ipairs(widgets) do
@@ -259,15 +260,40 @@ end
 assert(resetIcon,'Theme icon color reset missing')
 local assigned=false
 for _,w in ipairs(widgets) do
-  if w.menu and isChildOf(w,profilesPanel) then
+  if w.menu and isChildOf(w,profilesPanel)
+    and type(w.anchor)=='table' and w.anchor.y==-171 then
     local root={CreateRadio=function(_,label,_,action)
-      if label=='Teal' then action(); assigned=true end
+      if label=='Default' then action(); assigned=true end
     end}
     w.menu(w,root)
     if assigned then break end
   end
 end
-assert(assigned and DB.GetActiveThemeName()=='Teal')
+assert(assigned and DB.GetActiveThemeName()=='Default')
+local editorSelection
+for _,w in ipairs(widgets) do
+  if w.menu and isChildOf(w,themesPanel)
+    and type(w.anchor)=='table' and w.anchor.y==-103 then
+    w.menu(w,{CreateRadio=function(_,label,isSelected)
+      if isSelected() then editorSelection=label end
+    end, CreateButton=function() end})
+    if editorSelection then
+      assert(w.text=='Default','Theme editor dropdown did not refresh its text: '..tostring(w.text))
+      break
+    end
+  end
+end
+assert(editorSelection=='Default','Theme editor did not follow Profile assignment')
+local editedDefault=false
+for _,w in ipairs(widgets) do
+  if w.settingKey=='categoryFontSize' and isChildOf(w,themesPanel) then
+    w.scripts.OnMouseWheel(w,1); editedDefault=true; break
+  end
+end
+assert(editedDefault and addon.DefaultThemeSettings.categoryFontSize==13,
+  'Theme editor controls did not follow Profile assignment')
+assert(tealSettings.categoryFontSize==13,'Editing Default changed Teal')
+themeRefreshes=0
 SelectThemeFont()
 assert(themeRefreshes==1,'Editing the active Theme did not refresh its appearance')
 assert(StaticPopupDialogs['RPEMOTEMENU_DELETE_THEME'])

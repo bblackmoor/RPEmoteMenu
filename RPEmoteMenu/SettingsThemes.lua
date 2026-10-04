@@ -9,8 +9,8 @@ local CreateColorSetting = UI.CreateColorSetting
 local CreateFontSetting = UI.CreateFontSetting
 local FIELD_GAP = UI.FIELD_GAP
 
--- Theme selection here is an editor selection; Profile assignment is made on Profiles.
-local function CreateThemeManagementControls(panel, onSelectionChanged)
+-- The editor always follows the Theme assigned to the active Profile.
+local function CreateThemeManagementControls(panel)
     local selectedName = Database.GetActiveThemeName()
     local rows = UI.CreateRows(panel, 20, -81, 33)
     local labelY = rows:Next(22)
@@ -49,21 +49,18 @@ local function CreateThemeManagementControls(panel, onSelectionChanged)
 
     local Refresh
     local function SelectTheme(name)
-        selectedName = name
-        Refresh()
-        onSelectionChanged(name)
+        local success, errorMessage = Database.SetProfileTheme(
+            Database.GetActiveProfileName(), name)
+        if not success then SetStatus(errorMessage, true) end
     end
 
     local renameButton, deleteButton, restoreButton
     Refresh = function()
-        if not Database.GetTheme(selectedName) then
-            selectedName = Database.GetActiveThemeName()
-        end
+        selectedName = Database.GetActiveThemeName()
         selector:OverrideText(selectedName)
         description:SetText((Database.IsBuiltInThemeName(selectedName)
                 and "Bundled Theme: " or "") .. Database.GetThemeDescription(selectedName)
-            .. (selectedName == Database.GetActiveThemeName()
-                and " Used by this character." or " Editing does not assign it to this character."))
+            .. " Used by this character.")
         renameButton:SetEnabled(selectedName ~= "Default")
         deleteButton:SetEnabled(selectedName ~= "Default")
         restoreButton:SetEnabled(selectedName == "Default"
@@ -129,7 +126,7 @@ local function CreateThemeManagementControls(panel, onSelectionChanged)
     end)
 
     Refresh()
-    return {GetSelectedName = function() return selectedName end, Refresh = Refresh}
+    return {Refresh = Refresh}
 end
 
 -- Typography section: controls follow their visual grouping.
@@ -451,7 +448,7 @@ local function CreateThemesSettingsPanel()
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Edit shared Themes here. Assign a Theme to the character's Profile on Profiles."
+        "Edit shared Themes here. Selecting a Theme assigns it to the active Profile."
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
@@ -492,18 +489,11 @@ local function CreateThemesSettingsPanel()
         refreshIconColor()
     end
 
-    local management = CreateThemeManagementControls(panel, function(name)
-        themeName = name
-        themeSettings = Database.GetThemeSettings(name)
-        RefreshControls()
-    end)
+    local management = CreateThemeManagementControls(panel)
 
     container.RefreshControls = function()
+        themeName = Database.GetActiveThemeName()
         themeSettings = Database.GetThemeSettings(themeName)
-        if not themeSettings then
-            themeName = Database.GetActiveThemeName()
-            themeSettings = Database.GetThemeSettings(themeName)
-        end
         management.Refresh()
         RefreshControls()
     end
