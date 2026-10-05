@@ -102,6 +102,10 @@ function WindowFade.Create(context)
     end
 
     local function ApplySettings()
+        -- Restoring opacity stops the animation and retires its completion
+        -- callback. Release an interrupted collapse so it can be scheduled
+        -- again; an unstarted timer keeps its existing deadline.
+        if autoHideFading then CancelWindowAutoHide() end
         RestoreActiveOpacity()
 
         if not context.GetProfile().fadeEnabled then
@@ -192,3 +196,4 @@ function WindowFade.Create(context)
         IsAutoHidePending = function() return autoHideScheduled or autoHideFading end,
     }
 end
+

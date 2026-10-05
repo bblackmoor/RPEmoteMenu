@@ -86,4 +86,30 @@ local oldFinished=0
 fade.SetOpacity(0.5,1,function() oldFinished=oldFinished+1 end)
 fade.SetOpacity(0.4)
 assert(frame.alpha==0.4 and oldFinished==0 and not group.playing)
+-- Appearance refresh during a collapse must retire its pending state and
+-- schedule a replacement without requiring the pointer to enter the menu.
+for _, mode in ipairs({'ICON','TITLE_BAR'}) do
+    for _, hover in ipairs({false,true}) do
+        frame.hover=false; profile.fadeEnabled=true; profile.minimizeMode=mode; hidden=false
+        fade.CancelAutoHide(); fade.RestoreActiveOpacity(); timers={}
+        fade.ScheduleAutoHide(); timers[1].callback()
+        assert(group.playing and fade.IsAutoHidePending())
+        frame.hover=hover
+        fade.ApplySettings()
+        assert(not group.playing and not hidden)
+        if hover then
+            assert(not fade.IsAutoHidePending() and #timers==1)
+            frame.hover=false; fade.ScheduleAutoHide()
+        end
+        assert(#timers==2 and fade.IsAutoHidePending(), 'interrupted collapse blocked replacement')
+        timers[2].callback(); group:Finish()
+        assert(hidden and not fade.IsAutoHidePending())
+    end
+end
+-- An appearance refresh before the timer fires preserves the first deadline.
+frame.hover=false; hidden=false; fade.CancelAutoHide(); fade.RestoreActiveOpacity(); timers={}
+fade.ScheduleAutoHide(); fade.ApplySettings()
+assert(#timers==1 and fade.IsAutoHidePending())
+timers[1].callback(); group:Finish(); assert(hidden and not fade.IsAutoHidePending())
 print('PASS explicit geometry and fade component contracts, mode combinations, cancellation, animation, hover and current settings')
+

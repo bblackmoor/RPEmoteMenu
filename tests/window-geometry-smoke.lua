@@ -84,6 +84,49 @@ frame.mouseover=true
 global.active=true; main.ApplyActivation()
 assert(frame:IsShown() and frame.mouseEnabled and not icon:IsShown())
 assert(frame:GetAlpha()==theme.windowOpacity)
+-- Show dispatch must enforce Active and restore a hidden minimized icon.
+local showEvents, sizeEvents=0,0
+frame:HookScript('OnShow',function() showEvents=showEvents+1 end)
+frame:HookScript('OnSizeChanged',function() sizeEvents=sizeEvents+1 end)
+global.active=false; main.ApplyActivation()
+frame:Show(); assert(not frame:IsShown() and not icon:IsShown() and showEvents==1)
+global.active=true; main.ApplyActivation()
+assert(frame:IsShown() and showEvents==2)
+main.ApplyProfileSettings() -- Starts collapsed in Icon mode.
+frame:Hide(); assert(not icon:IsShown())
+frame:Show(); assert(icon:IsShown() and showEvents==3)
+-- Internal collapse/expand sizes must not overwrite the saved expanded height.
+profile.height=310
+for _, mode in ipairs({'ICON','TITLE_BAR'}) do
+    profile.minimizeMode=mode
+    for _, position in ipairs({'TOP','LEFT'}) do
+        theme.titleBarPosition=position
+        main.ApplyProfileSettings()
+        assert(profile.height==310)
+        main.ApplyActivation()
+        assert(frame:GetHeight()==310 and profile.height==310)
+    end
+end
+-- Native resize events persist user height, correct width, and respect Lock.
+profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
+main.ApplyProfileSettings()
+local grip
+for _, object in ipairs(native.objects) do
+    if object:GetParent()==frame and object:GetScript('OnMouseDown')
+        and object:GetScript('OnMouseUp') and object:GetWidth()==18 then grip=object end
+end
+assert(grip)
+local width=frame:GetWidth()
+local beforeSizeEvents=sizeEvents
+grip:GetScript('OnMouseDown')(grip,'LeftButton'); assert(frame.sizing=='BOTTOM')
+frame:SetSize(width+50,345)
+assert(sizeEvents>beforeSizeEvents and profile.height==345 and frame:GetWidth()==width)
+grip:GetScript('OnMouseUp')(grip); assert(not frame.sizing and profile.height==345)
+profile.locked=true; main.ApplyMovementLock()
+grip:GetScript('OnMouseDown')(grip,'LeftButton'); assert(not frame.sizing)
+frame:SetHeight(370); assert(profile.height==345, 'locked/programmatic resize persisted height')
+main.ApplyProfileSettings(); assert(frame:GetHeight()==345)
+assert(sizeEvents>0)
 -- Delayed animation/cancellation and hover policy use explicit WindowFade context
 -- in window-components-smoke.lua; the integration here checks real presentation.
 print('PASS real window fixed corner, moving content, stationary icon, gear visibility, borderless backdrop and activation')

@@ -213,3 +213,22 @@ are complete; in-game acceptance remains open for editor, transfer, geometry,
 fade/minimized modes, drag/scroll behavior, and standalone/shared-library loading.
 No saved-data migration, transfer-schema change, library change or UI redesign
 is included.
+
+
+## Post-review fixes (2.1.235)
+
+Appearance refresh now cancels pending collapse state when retiring an active
+collapse animation, allowing a fresh auto-hide timer without requiring hover.
+A timer that has not yet started its animation keeps its original deadline.
+Component checks cover both minimized modes, hovered/nonhovered refreshes and
+successful replacement collapse; the regression fails against the unfixed code.
+
+The shared native window fixture dispatches main-window OnSizeChanged and
+OnShow events on actual size/visibility transitions. Event dispatch is scoped
+to the addon window so it does not impose synchronous callbacks on embedded
+framework construction. Window integration checks cover user resize persistence,
+automatic width correction, locked/programmatic resizing, saved expanded height
+through both minimized modes and title-bar orientations, Active rejection during
+Show and minimized icon restoration. These checks fail when the corresponding
+native event dispatch is suppressed. All fourteen smoke suites pass; native
+client drawing/event timing and in-game acceptance remain pending.
