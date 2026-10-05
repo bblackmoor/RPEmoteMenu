@@ -421,5 +421,21 @@ function edit:SetHeight(height)
 end
 edit:SetText(string.rep('W',1000))
 assert(edit:GetHeight()>400 and edit:GetText()==string.rep('W',1000))
+-- Height-only viewport changes must recheck a stationary caret.
+Size(exchange.scrollFrame,120,400)
+cursor(edit,0,-1000,1,18)
+assert(exchange.scrollFrame:GetVerticalScroll()==622)
+Size(exchange.scrollFrame,120,80)
+assert(exchange.scrollFrame:GetVerticalScroll()==942,
+    'shrinking viewport must keep the stationary caret visible')
+Size(exchange.scrollFrame,120,400)
+assert(exchange.scrollFrame:GetVerticalScroll()==942,
+    'growing viewport must preserve a still-visible caret')
+-- Width changes invalidate coordinates from the old wrapping.
+Size(exchange.scrollFrame,240,400)
+assert(edit:GetHeight()==962, 'old caret bounds must not inflate rewrapped content')
+-- New text/reopening must never reuse caret bounds from the prior draft.
+edit:SetText(''); Size(exchange.scrollFrame,120,80)
+assert(edit:GetHeight()==80 and exchange.scrollFrame:GetVerticalScroll()==0)
 exchange:Hide()
 print('PASS transfer wrapped-text measurement, Unicode, resize, caret visibility, clamping and reentrant layout')

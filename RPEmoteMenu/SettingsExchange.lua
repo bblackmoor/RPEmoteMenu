@@ -133,24 +133,47 @@ local function InstallExchangeActions(dialog)
     measurement:SetNonSpaceWrap(true)
     measurement:Hide()
     local updatingLayout = false
-    local function RefreshTextLayout(minimumHeight)
+    local caretTop, caretBottom, caretWidth
+    local followCaret = false
+    local function KeepCaretVisible()
+        if not caretTop then return end
+        local offset = scrollFrame:GetVerticalScroll()
+        local viewportHeight = scrollFrame:GetHeight()
+        if caretTop < offset + 4 then
+            offset = caretTop - 4
+        elseif caretBottom > offset + viewportHeight - 4 then
+            offset = caretBottom - viewportHeight + 4
+        end
+        scrollFrame:SetVerticalScroll(math.max(0,
+            math.min(offset, scrollFrame:GetVerticalScrollRange())))
+    end
+    local function RefreshTextLayout(keepCaret)
+        if keepCaret then followCaret = true end
         if updatingLayout then return end
         updatingLayout = true
         local width = math.max(1, scrollFrame:GetWidth())
+        -- Old y coordinates are invalid after rewrapping. Native cursor events
+        -- supply fresh bounds when the editor's width changes.
+        if caretWidth ~= width then caretTop, caretBottom, caretWidth = nil, nil, nil end
         editBox:SetWidth(width)
         dialog.scrollContent:SetWidth(width)
         measurement:SetFont(editBox:GetFont())
         measurement:SetWidth(math.max(1, width - 8))
         measurement:SetText((editBox:GetText() or "") .. " ")
         local height = math.max(scrollFrame:GetHeight(),
-            measurement:GetStringHeight() + 8, minimumHeight or 0)
+            measurement:GetStringHeight() + 8, followCaret and caretBottom and caretBottom + 4 or 0)
         editBox:SetHeight(height)
         dialog.scrollContent:SetHeight(height)
         scrollFrame:RefreshViewport()
         updatingLayout = false
+        if followCaret then
+            followCaret = false
+            KeepCaretVisible()
+        end
     end
 
     editBox:SetScript("OnTextChanged", function(_, userInput)
+        caretTop, caretBottom, caretWidth = nil, nil, nil
         RefreshTextLayout()
         if userInput then SetStatus("") end
         dialog:UpdateActionState()
@@ -158,21 +181,13 @@ local function InstallExchangeActions(dialog)
     editBox:SetScript("OnCursorChanged", function(_, _, y, _, height)
         -- Cursor y is negative downward from the top of the EditBox. Its
         -- immediate parent is the canvas child, so use our viewport explicitly.
-        local top = math.max(0, -y)
-        local bottom = top + height
-        RefreshTextLayout(bottom + 4)
-        local offset = scrollFrame:GetVerticalScroll()
-        local viewportHeight = scrollFrame:GetHeight()
-        if top < offset + 4 then
-            offset = top - 4
-        elseif bottom > offset + viewportHeight - 4 then
-            offset = bottom - viewportHeight + 4
-        end
-        scrollFrame:SetVerticalScroll(math.max(0,
-            math.min(offset, scrollFrame:GetVerticalScrollRange())))
+        caretTop = math.max(0, -y)
+        caretBottom = caretTop + height
+        caretWidth = editBox:GetWidth()
+        RefreshTextLayout(true)
     end)
-    scrollFrame:HookScript("OnSizeChanged", function() RefreshTextLayout() end)
-    editBox:HookScript("OnSizeChanged", function() RefreshTextLayout() end)
+    scrollFrame:HookScript("OnSizeChanged", function() RefreshTextLayout(true) end)
+    editBox:HookScript("OnSizeChanged", function() RefreshTextLayout(true) end)
     dialog:HookScript("OnShow", function() RefreshTextLayout() end)
 
     editBox:SetScript("OnEscapePressed", function(self)
@@ -294,6 +309,7 @@ local function InstallExchangeActions(dialog)
     end)
 
     dialog:SetScript("OnHide", function()
+        caretTop, caretBottom, caretWidth = nil, nil, nil
         dialog.categoryTarget = nil
         editBox:ClearFocus()
     end)

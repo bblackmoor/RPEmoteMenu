@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.228
+
+- Retain transfer-editor caret bounds and recheck visibility after viewport/editor size changes, including height-only resizing without a new cursor event.
+- Invalidate cached bounds on text replacement, dialog hiding and width changes so prior drafts and wrapping cannot redirect scrolling.
+- Add stationary-caret resize and stale-bound regression checks. All eleven smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.227
 
 - Measure transfer-editor content with font-rendered word and non-space wrapping instead of byte-count estimates; remeasure on text, viewport, editor-size and show changes.
