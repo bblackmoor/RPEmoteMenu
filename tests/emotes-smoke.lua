@@ -311,4 +311,29 @@ EmptyCategory(3)
 ok, duplicateIndex = db.DuplicateCategory(1)
 assert(ok and db.GetCategory(duplicateIndex).name == string.rep('é', 61) .. ' Copy')
 assert(addon.Serialization.Decode(assert(addon.Serialization.ExportCategory(duplicateIndex)), 'category'))
+
+-- Emotes keeps the native scrollbar step and clamps after content shrinks.
+local listContent = rows[1]:GetParent()
+local listScroll = listContent:GetParent()
+assert(listScroll:GetScrollChild() == listContent and listContent:GetWidth() == 590)
+assert(listScroll.options.reskin_slider == false and not listScroll:GetUseDragScroll())
+assert(not listScroll:GetSmoothScrolling() and not listScroll:GetUseMomentum())
+local bar = CreateFrame('Slider', nil, listScroll); bar:SetHeight(80); listScroll.ScrollBar = bar
+function listScroll:GetVerticalScrollRange() return math.max(0, listContent:GetHeight() - 100) end
+Select(1)
+for index = 1, 10 do db.GetCategory(1).emotes[index] = {label='Row '..index, defaultCommand='/wave', targetedCommand=''} end
+panel.RefreshEditors()
+listScroll:GetScript('OnMouseWheel')(listScroll, -1); assert(listScroll:GetVerticalScroll() == 40)
+listScroll:GetScript('OnMouseWheel')(listScroll, -5); assert(listScroll:GetVerticalScroll() == 80)
+listScroll:GetScript('OnMouseWheel')(listScroll, 0); assert(listScroll:GetVerticalScroll() == 80)
+bar.scrollStep = 15
+listScroll:GetScript('OnMouseWheel')(listScroll, -1); assert(listScroll:GetVerticalScroll() == 95)
+listScroll:GetScript('OnMouseDown')(listScroll, 'LeftButton'); assert(not listScroll.isDragging)
+rows[1].scripts.OnDragStart(rows[1]); rows[2].mouseover=true
+rows[1].scripts.OnDragStop(rows[1]); rows[2].mouseover=false
+assert(db.GetCategory(1).emotes[2].label == 'Row 1')
+EmptyCategory(1); panel.RefreshEditors()
+listContent:GetScript('OnSizeChanged')(listContent)
+assert(listScroll:GetVerticalScroll() == 0 and listContent:GetHeight() == 68)
+
 print('PASS real Emotes widgets and captured native editor/delete/restore/import targets across Profile changes, reorder, replacement and dialog retirement')

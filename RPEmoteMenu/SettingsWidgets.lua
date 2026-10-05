@@ -37,7 +37,7 @@ local dropdownTemplate = {
     dropiconsize = {16, 16},
 }
 local requiredMethods = {"CreateSwitch", "CreateDropDown",
-    "CreateButton", "CreateColorPickButton", "CreateTextEntry"}
+    "CreateButton", "CreateColorPickButton", "CreateTextEntry", "CreateCanvasScrollBox"}
 
 -- Resolve at construction time: another embedder can upgrade the same LibStub
 -- table after this file loads. Converted pages require a compatible library.
@@ -97,6 +97,50 @@ local function Notify(handle, ...)
     if handle.enabled and handle.refreshDepth == 0 and handle.onChanged then
         handle.onChanged(...)
     end
+end
+
+-- Use the library canvas while preserving Blizzard scrollbars and page geometry.
+-- An explicit step preserves Behavior's delta-scaled wheel; otherwise follow
+-- UIPanelScrollFrameTemplate's dynamic scrollbar step (one step per event).
+function Widgets.CreateCanvasScrollBox(parent, options)
+    options = options or {}
+    local scroll = Framework():CreateCanvasScrollBox(Widgets.GetFrame(parent), nil, nil, {
+        reskin_slider = false, smooth_scrolling = false,
+        smooth_scrolling_acceleration = false, use_momentum = false,
+        use_drag_scroll = false,
+    })
+    local child = scroll:GetScrollChild()
+    local function ClampOffset()
+        local range = math.max(0, scroll:GetVerticalScrollRange() or 0)
+        local offset = math.max(0, math.min(scroll:GetVerticalScroll() or 0, range))
+        if offset ~= scroll:GetVerticalScroll() then scroll:SetVerticalScroll(offset) end
+    end
+    local refreshing = false
+    function scroll:RefreshViewport()
+        if refreshing then return end
+        refreshing = true
+        self:UpdateScrollChildRect()
+        ClampOffset()
+        refreshing = false
+    end
+    local nativeWheel = scroll:GetScript("OnMouseWheel")
+    scroll:SetScript("OnMouseWheel", function(self, delta)
+        if delta == 0 then return end
+        local step
+        if options.step then
+            step = options.step * math.abs(delta)
+        else
+            local bar = self.ScrollBar
+            step = bar and (bar.scrollStep or bar:GetHeight() / 2) or self:GetScrollSpeed()
+        end
+        self:SetScrollSpeed(step)
+        nativeWheel(self, delta)
+    end)
+    scroll:HookScript("OnScrollRangeChanged", ClampOffset)
+    scroll:HookScript("OnSizeChanged", function() scroll:RefreshViewport() end)
+    child:HookScript("OnSizeChanged", function() scroll:RefreshViewport() end)
+    scroll:HookScript("OnShow", function() scroll:RefreshViewport() end)
+    return scroll, child
 end
 
 function Widgets.CreateSwitch(parent, onChanged)

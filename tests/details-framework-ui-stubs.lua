@@ -164,6 +164,14 @@ function methods:SetParent(parent) self.parent = parent end
 function methods:EnableMouseWheel(enabled) self.mouseWheel = enabled end
 function methods:SetVerticalScroll(value) self.verticalScroll = value end
 function methods:GetVerticalScroll() return self.verticalScroll or 0 end
+function methods:GetVerticalScrollRange()
+    return math.max(0, (self.scrollChild and self.scrollChild:GetHeight() or 0) - self:GetHeight())
+end
+function methods:UpdateScrollChildRect()
+    if self.scripts.OnScrollRangeChanged then
+        self.scripts.OnScrollRangeChanged(self, 0, self:GetVerticalScrollRange())
+    end
+end
 function methods:GetRegions()
     local regions = {}
     for _, region in ipairs(objects) do

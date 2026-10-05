@@ -200,4 +200,16 @@ function scroll:GetVerticalScrollRange() return 200 end
 scroll:GetScript('OnMouseWheel')(scroll, -1); assert(scroll:GetVerticalScroll() == 40)
 scroll:GetScript('OnMouseWheel')(scroll, -10); assert(scroll:GetVerticalScroll() == 200)
 scroll:GetScript('OnMouseWheel')(scroll, 10); assert(scroll:GetVerticalScroll() == 0)
+
+assert(scroll.options.reskin_slider == false and not scroll:GetUseDragScroll())
+assert(not scroll:GetSmoothScrolling() and not scroll:GetUseMomentum())
+scroll:GetScript('OnMouseWheel')(scroll, -2); assert(scroll:GetVerticalScroll() == 80)
+scroll:GetScript('OnMouseWheel')(scroll, 0); assert(scroll:GetVerticalScroll() == 80)
+function scroll:GetVerticalScrollRange() return 30 end
+scroll:GetScript('OnSizeChanged')(scroll)
+assert(scroll:GetVerticalScroll() == 30)
+function scroll:GetVerticalScrollRange() return 0 end
+scroll:GetScript('OnScrollRangeChanged')(scroll, 0, 0)
+assert(scroll:GetVerticalScroll() == 0)
+
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')

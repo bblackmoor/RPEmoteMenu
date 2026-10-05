@@ -261,4 +261,28 @@ local rejectedRow = rejected.widget.menus[2]
 rejectedRow:GetScript('OnMouseDown')(rejectedRow, 'LeftButton')
 assert(rejected:GetValue() == 'ONE' and rejected.widget.myvalue == 'ONE')
 assert(rejected.widget.label:GetText() == 'Canonical One' and rejected.widget.myvaluelabel == 'Canonical One')
+
+-- Canvas construction and wheel movement use the actual bundled DF implementation.
+local canvas, child = widgets.CreateCanvasScrollBox(UIParent, {step = 40})
+assert(canvas:GetScrollChild() == child and child:GetParent() == canvas)
+assert(canvas.options.reskin_slider == false and not canvas:GetSmoothScrolling())
+assert(not canvas:GetUseMomentum() and not canvas:GetUseDragScroll())
+assert(canvas:GetScript('OnUpdate') == nil)
+local range = 300
+function canvas:GetVerticalScrollRange() return range end
+local rectUpdates = 0
+function canvas:UpdateScrollChildRect() rectUpdates = rectUpdates + 1 end
+canvas:GetScript('OnMouseWheel')(canvas, -2); assert(canvas:GetVerticalScroll() == 80)
+canvas:GetScript('OnMouseWheel')(canvas, 0); assert(canvas:GetVerticalScroll() == 80)
+range = 25; child:GetScript('OnSizeChanged')(child)
+assert(canvas:GetVerticalScroll() == 25 and rectUpdates == 1)
+range = 0; canvas:GetScript('OnSizeChanged')(canvas)
+assert(canvas:GetVerticalScroll() == 0 and rectUpdates == 2)
+canvas:GetScript('OnMouseDown')(canvas, 'LeftButton')
+assert(not canvas.isDragging)
+local currentMethod = df.CreateCanvasScrollBox
+df.CreateCanvasScrollBox = nil
+assert(not widgets.GetFramework())
+df.CreateCanvasScrollBox = currentMethod
+
 print('PASS Details Framework adapters and native dropdown clicks, disable, retirement, row reuse and callback rejection')

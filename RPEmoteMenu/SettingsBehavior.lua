@@ -298,26 +298,10 @@ end
 local function CreateGeneralSettingsPanel()
     settings = Database.GetSettings()
     local container = CreateFrame("Frame")
-    local scrollFrame = CreateFrame(
-        "ScrollFrame",
-        nil,
-        container,
-        "UIPanelScrollFrameTemplate"
-    )
+    local scrollFrame, panel = Widgets.CreateCanvasScrollBox(container, {step = 40})
     scrollFrame:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
-    scrollFrame:EnableMouseWheel(true)
-    scrollFrame:SetScript("OnMouseWheel", function(self, delta)
-        local nextOffset = (self:GetVerticalScroll() or 0) - (delta * 40)
-        self:SetVerticalScroll(math.max(
-            0,
-            math.min(self:GetVerticalScrollRange() or 0, nextOffset)
-        ))
-    end)
-
-    local panel = CreateFrame("Frame", nil, scrollFrame)
     panel:SetSize(700, 670)
-    scrollFrame:SetScrollChild(panel)
     local switches = {}
     local RefreshControls
 

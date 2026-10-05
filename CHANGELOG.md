@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.224
+
+- Complete library-offloading Phase 1: use Details Framework canvas scroll containers for Behavior and the Emotes list, preserving anchors, content sizing and native scrollbar appearance.
+- Preserve Behavior's 40-unit delta-scaled wheel and Emotes' native scrollbar step; disable canvas drag scrolling, momentum and smoothing so emote drag ordering remains independent.
+- Clamp offsets after viewport/content changes and add real-framework tests for wheel limits, zero delta, resizing, shrinking/empty lists, API availability and row reordering.
+- Record the three-phase plan with the optional CallbackHandler refactor excluded. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.223
 
 - Include Default Theme in Restore Bundled Themes, along with all five bundled presets; preserve custom Themes and Profile assignments.

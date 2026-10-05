@@ -33,18 +33,10 @@ local function CreateEmoteListLayout(panel, headingY, topY)
     countText:SetPoint("LEFT", listHeading, "RIGHT", 10, 0)
     countText:SetTextColor(0.7, 0.7, 0.7, 1)
 
-    local listScrollFrame = CreateFrame(
-        "ScrollFrame",
-        nil,
-        panel,
-        "UIPanelScrollFrameTemplate"
-    )
+    local listScrollFrame, listContent = Widgets.CreateCanvasScrollBox(panel)
     listScrollFrame:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, topY)
     listScrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -48, 18)
-
-    local listContent = CreateFrame("Frame", nil, listScrollFrame)
     listContent:SetSize(590, 1)
-    listScrollFrame:SetScrollChild(listContent)
 
     local addButton = Widgets.CreateButton(listContent, "Add Emote", nil, 110, 24)
 

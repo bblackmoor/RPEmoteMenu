@@ -1,0 +1,46 @@
+# Library offloading
+
+This follow-up reduces custom presentation and scheduling work using the
+libraries already embedded in RP Emote Menu. Preserve data ownership, validation,
+dialog target guards, picker sessions and existing user behavior.
+
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 | Behavior and Emotes scroll containers use Details Framework canvases | Implemented in 2.0.224; client acceptance pending |
+| 2 | Remaining emote-editor and import/export dialog presentation uses Details Framework | Pending |
+| 3 | Suitable refresh/timer bookkeeping uses Details Framework scheduling | Pending |
+
+The optional CallbackHandler notification refactor is excluded by user decision.
+No new library is planned. Profile/Theme normalization, JSON/transfer validation,
+missing-font policy and specialized main-window geometry remain addon-owned.
+
+## Phase 1 implementation
+
+SettingsWidgets.CreateCanvasScrollBox centralizes DF canvas construction.
+Behavior keeps its anchors and 700-by-670 content; the Emotes list keeps its
+anchors, 590-unit content width and dynamic row/Add Emote sizing.
+
+The adapter disables DF scrollbar reskinning, smoothing, acceleration, momentum
+and canvas drag scrolling. It retains Blizzard scrollbar assets and native
+template handlers. Behavior uses 40 units multiplied by wheel delta magnitude.
+Emotes uses the native scrollbar's scrollStep or half its current height, one
+step per nonzero wheel event. The inherited policy was checked against Blizzard's
+SecureScrollTemplates.lua. The actual wheel movement uses DF's canvas handler.
+
+Content/viewport size changes update the native scroll-child rectangle and clamp
+the current offset. Range changes and showing the canvas also keep offsets valid.
+The required-method check includes CreateCanvasScrollBox; the pinned shared
+framework remains unchanged.
+
+## Verification
+
+All ten smoke suites pass. Real-framework adapter, Behavior and Emotes tests
+cover API availability, disabled canvas animation/drag features, wheel magnitude
+and zero delta, bounds, viewport resizing, shrinking/empty lists and emote row
+reordering. Native scrollbar graphics and real frame-event/layout timing remain
+client checks.
+
+In-game acceptance: open both pages, resize settings, wheel/drag the scrollbar,
+switch between empty/full categories and reorder emotes. Check that offsets
+remain valid, Add Emote stays reachable, and wheel editing of numeric fields is
+unchanged. Test standalone and alongside another Details Framework embedder.
