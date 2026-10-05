@@ -325,7 +325,9 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
     toc[#toc+1]=line
   end
 end
-assert(toc[1]=='Defaults.lua' and toc[#toc]=='Core.lua')
+assert(toc[1]=='Libs/LibStub/LibStub.lua' and toc[2]=='Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua'
+ and toc[3]=='Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua' and toc[4]=='Defaults.lua'
+ and toc[5]=='FontMedia.lua' and toc[#toc]=='Core.lua')
 local openedSettings,openedAbout=0,0
 local originalOpen,originalAbout=addon.Settings.Open,addon.Settings.OpenAbout
 addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() end
@@ -355,3 +357,4 @@ assert(mainFrame:IsShown(),'Slash toggle did not show the menu')
 SlashCmdList.ELLEMOTE('')
 assert(not mainFrame:IsShown(),'Slash toggle did not hide the menu')
 print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')
+

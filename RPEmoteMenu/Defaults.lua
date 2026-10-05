@@ -147,73 +147,6 @@ addon.BuiltInFonts = {
     {name = "Skurri", path = "Fonts\\skurri.ttf"}
 }
 
-function addon.GetAvailableFonts()
-    local fonts = {}
-    local includedFonts = {}
-
-    for _, font in ipairs(addon.BuiltInFonts) do
-        fonts[#fonts + 1] = font
-        includedFonts[font.name] = true
-    end
-
-    local sharedMedia = LibStub and LibStub("LibSharedMedia-3.0", true)
-
-    if sharedMedia then
-        local sharedFonts = {}
-
-        for _, fontName in ipairs(sharedMedia:List("font")) do
-            local fontPath = sharedMedia:Fetch("font", fontName, true)
-
-            if not includedFonts[fontName]
-                and type(fontPath) == "string"
-                and fontPath ~= "" then
-                sharedFonts[#sharedFonts + 1] = {
-                    name = fontName,
-                    path = fontPath
-                }
-                includedFonts[fontName] = true
-            end
-        end
-
-        table.sort(sharedFonts, function(first, second)
-            return string.lower(first.name) < string.lower(second.name)
-        end)
-
-        for _, font in ipairs(sharedFonts) do
-            fonts[#fonts + 1] = font
-        end
-    end
-
-    return fonts
-end
-
-function addon.IsFontAvailable(fontName)
-    for _, font in ipairs(addon.GetAvailableFonts()) do
-        if font.name == fontName then
-            return true
-        end
-    end
-
-    return false
-end
-
-function addon.GetFontPath(fontName)
-    for _, font in ipairs(addon.BuiltInFonts) do
-        if font.name == fontName then
-            return font.path
-        end
-    end
-
-    local sharedMedia = LibStub and LibStub("LibSharedMedia-3.0", true)
-    local fontPath = sharedMedia and sharedMedia:Fetch("font", fontName, true)
-
-    if type(fontPath) == "string" and fontPath ~= "" then
-        return fontPath
-    end
-
-    return STANDARD_TEXT_FONT or addon.BuiltInFonts[1].path
-end
-
 addon.DefaultGlobalSettings = {
     hideSettingsGear = false,
     tooltipDelayMs = 350,
@@ -317,3 +250,4 @@ addon.MAX_EMOTE_COLUMN_WIDTH = 345
 addon.COLUMN_CHROME_WIDTH = 35
 addon.MIN_MINIMIZED_ICON_SIZE = 16
 addon.MAX_MINIMIZED_ICON_SIZE = 64
+

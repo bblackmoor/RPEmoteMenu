@@ -1,0 +1,13 @@
+{
+  "source_repository": "https://github.com/bblackmoor/SimpleNameplates",
+  "source_commit": "044722657498da26ecbc74c05bfe7cd70ab5b8bc",
+  "source_path_prefix": "SimpleNameplates/Libs/",
+  "description": "Unmodified shared-media dependencies already embedded in Simple Nameplates; LibStub public domain, CallbackHandler BSD, LibSharedMedia LGPL 2.1. Source headers and bundled licenses retained.",
+  "source_blobs": {
+    "LibStub/LibStub.lua": "cf5c8429169935400bbad12484ad64f51fc01b59",
+    "CallbackHandler-1.0/CallbackHandler-1.0.lua": "e438123099838957a516a64f8b22ef0a5daab3da",
+    "CallbackHandler-1.0/LICENSE": "790e43093f526062e6dc8dc754f784827ab610b5",
+    "LibSharedMedia-3.0/LibSharedMedia-3.0.lua": "722962c74661f8b96df757ed25aa54b8ea2f0ff2",
+    "LibSharedMedia-3.0/LICENSE": "4362b49151d7b34ef83b3067a8f9c9f877d72a0e"
+  }
+}

@@ -492,11 +492,11 @@ local function CreateFontSetting(parent, labelText, settingKey, x, y, getSetting
     end)
 
     selector:SetupMenu(function(_, rootDescription)
-        for _, font in ipairs(addon.GetAvailableFonts()) do
+        for _, font in ipairs(addon.GetAvailableFonts(getSettings()[settingKey])) do
             local fontName = font.name
 
             rootDescription:CreateRadio(
-                fontName,
+                font.unavailable and fontName .. " (unavailable)" or fontName,
                 function() return getSettings()[settingKey] == fontName end,
                 function()
                     getSettings()[settingKey] = fontName

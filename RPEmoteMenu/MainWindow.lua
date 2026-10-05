@@ -980,22 +980,22 @@ function MainWindow.RefreshFont()
     return MainWindow.RefreshFontDisplays()
 end
 
+-- Registration handles late providers. Retry only when actual text rendering
+-- fails, and stop on success or when a newer Theme/font request supersedes it.
 function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
     fontRefreshGeneration = fontRefreshGeneration + 1
     local requestedGeneration = fontRefreshGeneration
-
-    if not skipImmediateRefresh then
-        MainWindow.RefreshFontDisplays()
+    local retryDelays = {0.25, 0.75, 2, 5, 10, 12} -- At most thirty seconds.
+    local function Attempt(retry)
+        if requestedGeneration ~= fontRefreshGeneration then return end
+        if MainWindow.RefreshFontDisplays(false) then return end
+        local delay = retryDelays[retry]
+        if delay then C_Timer.After(delay, function() Attempt(retry + 1) end) end
     end
-
-    for _, delay in ipairs({
-        0, 0.25, 0.75, 1.5, 3, 5, 8, 12, 18, 24, 30
-    }) do
-        C_Timer.After(delay, function()
-            if requestedGeneration == fontRefreshGeneration then
-                MainWindow.RefreshFontDisplays(false)
-            end
-        end)
+    if skipImmediateRefresh then
+        C_Timer.After(0, function() Attempt(1) end)
+    else
+        Attempt(1)
     end
 end
 
@@ -2960,3 +2960,4 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
+

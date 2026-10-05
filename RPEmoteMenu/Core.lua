@@ -46,6 +46,7 @@ eventFrame:SetScript("OnEvent", function(_, _, loadedAddonName)
     addon.Database.InitializeDatabase()
     addon.MainWindow.CreateMainWindow()
     addon.Settings.CreateSettingsPanel()
+    if addon.InitializeFontMedia then addon.InitializeFontMedia() end
 
     SLASH_ELLEMOTE1 = "/rpem"
     SlashCmdList["ELLEMOTE"] = HandleSlashCommand
@@ -69,3 +70,4 @@ local function DestroyHumanity()
         print("I have no mouth, and I must /emote.")
     end
 end
+

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.211
+
+- Bundle shared-font dependencies and isolate font lookup without changing saved Theme names or JSON format.
+- Refresh font choices and selected text when providers register fonts or change shared-font overrides; preserve missing selections and fallback rendering.
+- Replace unconditional thirty-second font refreshes with bounded retries after rendering failures, and keep automatic widths in sync.
+
 ## 2.0.210
 
 - Bind all Theme color pickers, including the minimized icon, to their opening Theme and retire stale callbacks.

@@ -52,11 +52,13 @@ For example, an emote labeled “Watches quietly” could use `/e watches quietl
 
 Profiles contain categories, emotes, the selected category, window position and height, lock state, fade and minimize settings, and a Theme reference. Each character selects a Profile independently. A new character uses **Default Profile**, which starts with **Default Theme**. Default Profile can be edited and restored, but cannot be renamed or deleted. Create and Copy select the resulting Profile for the current character; imported Profiles are added without selecting them.
 
-Themes contain fonts, colors, selection effects, menu opacity, title-bar position, and minimized icon tint. The menu has no border. Multiple Profiles can share one Theme, and edits to a Theme affect all of them. Selecting a Theme in the **Themes** editor does not assign it; assign it on **Profiles**.
+Themes contain fonts, colors, selection effects, menu opacity, title-bar position, and minimized icon tint. The menu has no border. Multiple Profiles can share one Theme, and edits to a Theme affect all of them. Selecting a Theme in the **Themes** editor also assigns it to the current Profile; the two selections stay synchronized.
 
 Default Theme can be edited and restored, but cannot be renamed or deleted. The six editable bundled Themes are **Crimson Night**, **Gilded Shadow**, **High Contrast**, **Moonlight**, and **Teal**. Restore individual bundled Themes or all six from their factory definitions. Deleting a Theme used by Profiles requires confirmation and assigns those Profiles Default Theme.
 
 The **Behavior** screen holds global show-at-login, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
+
+Shared font support is included; extra fonts come from SharedMedia or other font-providing addons. The font selectors update when providers register fonts. If a saved font is unavailable, the menu uses Friz Quadrata while preserving the selection, including in imports and exports. It resumes using that font when its provider loads. Rendering retries are limited to failed attempts, and menu widths update with the font.
 
 ## Importing and Exporting
 

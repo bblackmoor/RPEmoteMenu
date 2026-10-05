@@ -170,7 +170,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     fontLoadingNote:SetWidth(620)
     fontLoadingNote:SetJustifyH("LEFT")
     fontLoadingNote:SetText(
-        "Custom fonts may take |cffffff0010 to 30 seconds|r to appear the first time they are selected."
+        "Shared fonts update when their provider loads; unavailable fonts use Friz Quadrata."
     )
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
@@ -507,3 +507,4 @@ end
 
 
 UI.CreateThemesSettingsPanel = CreateThemesSettingsPanel
+
