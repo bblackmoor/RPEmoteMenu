@@ -37,7 +37,8 @@ local dropdownTemplate = {
     dropiconsize = {16, 16},
 }
 local requiredMethods = {"CreateSwitch", "CreateDropDown",
-    "CreateButton", "CreateColorPickButton", "CreateTextEntry", "CreateCanvasScrollBox"}
+    "CreateButton", "CreateColorPickButton", "CreateTextEntry", "CreateCanvasScrollBox",
+    "CreateSimplePanel", "CreateLabel"}
 
 -- Resolve at construction time: another embedder can upgrade the same LibStub
 -- table after this file loads. Converted pages require a compatible library.
@@ -384,6 +385,50 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
     frame:HookScript("OnHide", function() handle:CancelEdit() end)
     handle:RefreshValue()
     return handle
+end
+
+-- Dialog fields are drafts: focus changes never commit or restore their text.
+-- Return native frames so dialog actions remain the sole owners of saving.
+function Widgets.CreateDialogTextEntry(parent, width, height)
+    local widget = Framework():CreateTextEntry(Widgets.GetFrame(parent), function() end,
+        width, height, nil, nil, nil, textTemplate)
+    local frame = Widgets.GetFrame(widget)
+    for _, event in ipairs({"OnEnterPressed", "OnEscapePressed", "OnEditFocusLost", "OnTabPressed"}) do
+        frame:SetScript(event, nil)
+    end
+    frame:SetAutoFocus(false)
+    frame:SetFont(STANDARD_TEXT_FONT, 12, "")
+    frame:SetTextColor(1, 1, 1, 1)
+    frame:SetMaxLetters(0)
+    frame:SetMaxBytes(0)
+    return frame
+end
+
+function Widgets.CreateDialogLabel(parent, text, size)
+    return Widgets.GetFrame(Framework():CreateLabel(Widgets.GetFrame(parent), text or "",
+        size or 12, "white"))
+end
+
+-- Keep native OnClick dispatch for existing dialog actions; DF supplies styling.
+function Widgets.CreateDialogButton(parent, text, width, height)
+    local widget = Framework():CreateButton(Widgets.GetFrame(parent), function() end,
+        width, height, text, nil, nil, nil, nil, nil, nil, buttonTemplate)
+    return Widgets.GetFrame(widget)
+end
+
+function Widgets.CreateDialog(name, width, height)
+    local dialog = Framework():CreateSimplePanel(UIParent, width, height, "", name,
+        {NoScripts = true, NoTitleBar = true, NoCloseButton = true})
+    dialog:SetFrameStrata("DIALOG")
+    dialog:SetClampedToScreen(true)
+    dialog:RegisterForDrag("LeftButton")
+    dialog:SetScript("OnDragStart", dialog.StartMoving)
+    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
+    dialog:Hide()
+    local close = Widgets.CreateDialogButton(dialog, "X", 24, 24)
+    close:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -4, -4)
+    close:SetScript("OnClick", function() dialog:Hide() end)
+    return dialog
 end
 
 function Widgets.CreateIntegerEntry(parent, getValue, applyValue, options)

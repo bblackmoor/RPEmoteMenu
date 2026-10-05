@@ -7,7 +7,7 @@ dialog target guards, picker sessions and existing user behavior.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Behavior and Emotes scroll containers use Details Framework canvases | Implemented in 2.0.224; client acceptance pending |
-| 2 | Remaining emote-editor and import/export dialog presentation uses Details Framework | Pending |
+| 2 | Remaining emote-editor and import/export dialog presentation uses Details Framework | Implemented in 2.0.225; client acceptance pending |
 | 3 | Suitable refresh/timer bookkeeping uses Details Framework scheduling | Pending |
 
 The optional CallbackHandler notification refactor is excluded by user decision.
@@ -44,3 +44,25 @@ In-game acceptance: open both pages, resize settings, wheel/drag the scrollbar,
 switch between empty/full categories and reorder emotes. Check that offsets
 remain valid, Add Emote stays reachable, and wheel editing of numeric fields is
 unchanged. Test standalone and alongside another Details Framework embedder.
+
+## Phase 2 implementation
+
+SettingsWidgets centralizes DF dialog panels, labels, buttons and draft text
+entries. The emote editor and transfer dialog retain their dimensions and
+addon-owned Save/Import callbacks, validation and captured-target/session guards.
+DF supplies presentation; native OnClick remains the sole button action dispatch.
+
+The panel disables DF's default mouse scripts and hidden title bar, uses the
+existing left-button drag policy, DIALOG strata, screen clamping and a single
+Escape registration. Draft fields bypass DF trimming and focus-loss/Enter commits.
+Emote fields continue to validate 128-byte names and 4096-byte commands on Save,
+without silently truncating rejected input. Transfer fields have no byte/letter
+limit, use a multiline DF text entry and the Phase 1 canvas, and retain existing
+content-height estimation and mode-specific actions.
+
+All ten smoke suites pass, including exact whitespace/empty drafts, focus changes,
+large transfer text, single action dispatch, stale targets and scroll clamping.
+In-game acceptance: check both dialogs' labels, buttons and close control; drag
+and press Escape; save with Enter; reject oversized commands without losing input;
+paste/export large JSON, select/copy it and scroll to its end. Test standalone
+and alongside another DF embedder. Phase 3 remains pending.

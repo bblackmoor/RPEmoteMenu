@@ -1050,44 +1050,15 @@ local function GetEmoteEditorDialog()
         return emoteEditorDialog
     end
 
-    local dialog = CreateFrame(
-        "Frame",
-        "RPEmoteMenuEmoteEditorDialog",
-        UIParent,
-        "BackdropTemplate"
-    )
-    dialog:SetSize(610, 330)
-    dialog:SetPoint("CENTER", UIParent, "CENTER")
-    dialog:SetFrameStrata("DIALOG")
-    dialog:SetClampedToScreen(true)
-    dialog:SetMovable(true)
-    dialog:EnableMouse(true)
-    dialog:RegisterForDrag("LeftButton")
-    dialog:SetScript("OnDragStart", dialog.StartMoving)
-    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
-    dialog:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1
-    })
-    dialog:SetBackdropColor(0.08, 0.08, 0.08, 0.98)
-    dialog:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
-    dialog:Hide()
+    local Widgets = addon.SettingsWidgets
+    local dialog = Widgets.CreateDialog("RPEmoteMenuEmoteEditorDialog", 610, 330)
 
-    if UISpecialFrames then
-        table.insert(UISpecialFrames, "RPEmoteMenuEmoteEditorDialog")
-    end
-
-    local title = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local title = Widgets.CreateDialogLabel(dialog, "", 16)
     title:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -16)
     title:SetText("Edit Emote")
     dialog.Title = title
 
-    local closeIcon = CreateFrame("Button", nil, dialog, "UIPanelCloseButton")
-    closeIcon:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -4, -4)
-    closeIcon:SetScript("OnClick", function() dialog:Hide() end)
-
-    local helpText = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    local helpText = Widgets.CreateDialogLabel(dialog, "", 12)
     helpText:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     helpText:SetWidth(570)
     helpText:SetJustifyH("LEFT")
@@ -1100,13 +1071,13 @@ local function GetEmoteEditorDialog()
     helpText:SetTextColor(0.8, 0.8, 0.8, 1)
 
     local function CreateEditor(labelText, y)
-        local label = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        local label = Widgets.CreateDialogLabel(dialog, "", 12)
         label:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, y)
         label:SetWidth(170)
         label:SetJustifyH("LEFT")
         label:SetText(labelText)
 
-        local editBox = CreateFrame("EditBox", nil, dialog, "InputBoxTemplate")
+        local editBox = Widgets.CreateDialogTextEntry(dialog, 390, 24)
         editBox:SetSize(390, 24)
         editBox:SetPoint("TOPLEFT", dialog, "TOPLEFT", 188, y + 5)
         editBox:SetAutoFocus(false)
@@ -1120,20 +1091,20 @@ local function GetEmoteEditorDialog()
     dialog.DefaultBox = CreateEditor("Default Emote", -152)
     dialog.TargetedBox = CreateEditor("Targeted Emote (optional)", -192)
 
-    local status = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    local status = Widgets.CreateDialogLabel(dialog, "", 12)
     status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 51)
     status:SetWidth(420)
     status:SetJustifyH("LEFT")
     status:SetTextColor(0.8, 0.8, 0.8, 1)
     dialog.Status = status
 
-    local saveButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    local saveButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
     saveButton:SetSize(110, 24)
     saveButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -138, 16)
     saveButton:SetText("Save")
     dialog.SaveButton = saveButton
 
-    local cancelButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    local cancelButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
     cancelButton:SetSize(110, 24)
     cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 16)
     cancelButton:SetText(CANCEL or "Cancel")

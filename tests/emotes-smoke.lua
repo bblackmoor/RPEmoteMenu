@@ -114,7 +114,7 @@ Click(buttons['Add Emote'])
 local dialog
 for _, object in ipairs(native.objects) do if object.NameBox then dialog=object end end
 assert(dialog and dialog.categoryIndex==1 and dialog.emoteIndex==1)
-assert(dialog.NameBox.kind=='EditBox' and dialog.SaveButton.kind=='Button')
+assert(dialog.NameBox.kind:lower()=='editbox' and dialog.SaveButton.kind:lower()=='button')
 dialog.NameBox:SetText('  Name  '); dialog.DefaultBox:SetText('  /e {player}  '); dialog.TargetedBox:SetText(' /e {target} ')
 dialog.SaveButton.scripts.OnClick()
 assert(category.emotes[1].label=='  Name  ' and category.emotes[1].defaultCommand=='  /e {player}  ')
@@ -154,7 +154,7 @@ Click(buttons['Restore All Built-in Categories']); Accept(popup)
 assert(db.GetCategory(3).name==addon.DefaultSections[3].name and db.GetProfileSettings().selectedCategory==1)
 Select(2); Click(buttons.Export)
 local exchange=addon.SettingsUI.GetExchangeDialog()
-assert(exchange.categoryIndex==2 and exchange.editBox.kind=='EditBox')
+assert(exchange.categoryIndex==2 and exchange.editBox.kind:lower()=='editbox')
 Click(buttons.Import); assert(exchange.categoryIndex==2)
 -- A Profile change rejects a pending restore instead of retargeting it.
 Select(1); Click(buttons['Restore Built-in Category']); local acrossProfile=popup
@@ -337,3 +337,19 @@ listContent:GetScript('OnSizeChanged')(listContent)
 assert(listScroll:GetVerticalScroll() == 0 and listContent:GetHeight() == 68)
 
 print('PASS real Emotes widgets and captured native editor/delete/restore/import targets across Profile changes, reorder, replacement and dialog retirement')
+
+-- Long transfer drafts remain exact, scroll to their end and clamp on replacement.
+exchange:OpenImport(1)
+local longText = "  " .. string.rep("é", 65000) .. "\n" .. string.rep("x", 300000) .. "  "
+exchange.editBox:SetText(longText)
+assert(exchange.editBox:GetText() == longText)
+assert(exchange.editBox.maxBytes == 0 and exchange.editBox.maxLetters == 0)
+exchange.editBox:SetFocus(); exchange.editBox:ClearFocus()
+assert(exchange.editBox:GetText() == longText)
+assert(exchange.scrollContent:GetHeight() == exchange.editBox:GetHeight())
+exchange.scrollFrame:SetVerticalScroll(1000)
+exchange.editBox:SetText("")
+assert(exchange.scrollFrame:GetVerticalScroll() == 0)
+assert(not exchange.actionButton:IsEnabled())
+exchange.editBox:GetScript("OnEscapePressed")(exchange.editBox)
+assert(not exchange:IsShown())

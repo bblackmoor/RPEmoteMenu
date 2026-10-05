@@ -32,45 +32,14 @@ end
 
 -- Frame construction, import actions, and mode-specific copy are kept separate.
 local function CreateExchangeDialogFrame()
-    local dialog = CreateFrame(
-        "Frame",
-        "RPEmoteMenuExchangeDialog",
-        UIParent,
-        "BackdropTemplate"
-    )
-    dialog:SetSize(620, 470)
-    dialog:SetPoint("CENTER", UIParent, "CENTER")
-    dialog:SetFrameStrata("DIALOG")
-    dialog:SetClampedToScreen(true)
-    dialog:SetMovable(true)
-    dialog:EnableMouse(true)
-    dialog:RegisterForDrag("LeftButton")
-    dialog:SetScript("OnDragStart", dialog.StartMoving)
-    dialog:SetScript("OnDragStop", dialog.StopMovingOrSizing)
-    dialog:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1
-    })
-    dialog:SetBackdropColor(0.08, 0.08, 0.08, 0.98)
-    dialog:SetBackdropBorderColor(0.4, 0.4, 0.4, 1)
-    dialog:Hide()
+    local Widgets = addon.SettingsWidgets
+    local dialog = Widgets.CreateDialog("RPEmoteMenuExchangeDialog", 620, 470)
 
-    if UISpecialFrames then
-        table.insert(UISpecialFrames, "RPEmoteMenuExchangeDialog")
-    end
-
-    local title = dialog:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    local title = Widgets.CreateDialogLabel(dialog, "", 16)
     title:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -16)
     dialog.title = title
 
-    local closeIcon = CreateFrame("Button", nil, dialog, "UIPanelCloseButton")
-    closeIcon:SetPoint("TOPRIGHT", dialog, "TOPRIGHT", -4, -4)
-    closeIcon:SetScript("OnClick", function()
-        dialog:Hide()
-    end)
-
-    local instructions = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    local instructions = Widgets.CreateDialogLabel(dialog, "", 12)
     instructions:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
     instructions:SetWidth(570)
     instructions:SetJustifyH("LEFT")
@@ -88,11 +57,11 @@ local function CreateExchangeDialogFrame()
     textBackground:SetBackdropColor(0.04, 0.04, 0.04, 1)
     textBackground:SetBackdropBorderColor(0.25, 0.25, 0.25, 1)
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, textBackground, "UIPanelScrollFrameTemplate")
+    local scrollFrame, scrollContent = Widgets.CreateCanvasScrollBox(textBackground)
     scrollFrame:SetPoint("TOPLEFT", textBackground, "TOPLEFT", 5, -5)
     scrollFrame:SetPoint("BOTTOMRIGHT", textBackground, "BOTTOMRIGHT", -5, 5)
 
-    local editBox = CreateFrame("EditBox", nil, scrollFrame)
+    local editBox = Widgets.CreateDialogTextEntry(scrollContent, 540, 300)
     editBox:SetMultiLine(true)
     editBox:SetAutoFocus(false)
     editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
@@ -100,21 +69,22 @@ local function CreateExchangeDialogFrame()
     editBox:SetWidth(540)
     editBox:SetHeight(300)
     editBox:SetTextInsets(4, 4, 4, 4)
-    scrollFrame:SetScrollChild(editBox)
+    editBox:SetPoint("TOPLEFT", scrollContent, "TOPLEFT", 0, 0)
+    scrollContent:SetSize(540, 300)
     dialog.editBox = editBox
 
-    local status = dialog:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    local status = Widgets.CreateDialogLabel(dialog, "", 12)
     status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 49)
     status:SetWidth(570)
     status:SetJustifyH("LEFT")
     dialog.status = status
 
-    local actionButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    local actionButton = Widgets.CreateDialogButton(dialog, "", 120, 24)
     actionButton:SetSize(120, 24)
     actionButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -144, 14)
     dialog.actionButton = actionButton
 
-    local closeButton = CreateFrame("Button", nil, dialog, "UIPanelButtonTemplate")
+    local closeButton = Widgets.CreateDialogButton(dialog, "", 120, 24)
     closeButton:SetSize(110, 24)
     closeButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 14)
     closeButton:SetText("Close")
@@ -122,6 +92,7 @@ local function CreateExchangeDialogFrame()
         dialog:Hide()
     end)
 
+    dialog.scrollContent = scrollContent
     dialog.scrollFrame = scrollFrame
     return dialog
 end
@@ -165,6 +136,8 @@ local function InstallExchangeActions(dialog)
         end
 
         self:SetHeight(math.max(scrollFrame:GetHeight() or 0, (lineCount * 16) + 12))
+        dialog.scrollContent:SetHeight(self:GetHeight())
+        scrollFrame:RefreshViewport()
 
         if userInput then
             SetStatus("")

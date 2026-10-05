@@ -286,3 +286,25 @@ assert(not widgets.GetFramework())
 df.CreateCanvasScrollBox = currentMethod
 
 print('PASS Details Framework adapters and native dropdown clicks, disable, retirement, row reuse and callback rejection')
+
+-- Dialog drafts use real DF controls without page-style focus commits.
+local draft = widgets.CreateDialogTextEntry(UIParent, 390, 24)
+assert(draft.MyObject.type == "textentry")
+assert(draft.maxBytes == 0 and draft.maxLetters == 0)
+assert(not draft:GetScript("OnEditFocusLost") and not draft:GetScript("OnEnterPressed"))
+for _, value in ipairs({"", "   ", "  exact text  ", string.rep("é", 65000)}) do
+    draft:SetText(value); draft:SetFocus(); draft:ClearFocus()
+    assert(draft:GetText() == value)
+end
+local shell = widgets.CreateDialog("RPEmoteMenuTestDialog", 610, 330)
+assert(shell:GetWidth() == 610 and shell:GetHeight() == 330)
+assert(shell.TitleBar and not shell.TitleBar:IsShown())
+assert(not shell:GetScript("OnMouseDown"), "DF click-to-move/right-click-close policy is disabled")
+local registrations = 0
+for _, name in ipairs(UISpecialFrames) do if name == "RPEmoteMenuTestDialog" then registrations = registrations + 1 end end
+assert(registrations == 1, "Escape registration occurs once")
+local action = widgets.CreateDialogButton(shell, "Save", 110, 24)
+local clicks = 0
+ action:SetScript("OnClick", function() clicks = clicks + 1 end)
+Click(action); assert(clicks == 0, "DF mouse-up callback cannot also save")
+action:GetScript("OnClick")(action); assert(clicks == 1)

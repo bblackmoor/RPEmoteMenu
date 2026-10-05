@@ -196,4 +196,8 @@ function ColorPickerFrame:Hide()
 end
 PixelUtil={SetSize=function(o,...)o:SetSize(...)end,SetPoint=function(o,...)o:SetPoint(...)end,SetWidth=function(o,...)o:SetWidth(...)end,SetHeight=function(o,...)o:SetHeight(...)end,GetPixelToUIUnitFactor=function()return 1 end}
 
+function methods:SetMaxLetters(n) self.maxLetters=n end
+function methods:Raise() end
+function methods:SetMaxBytes(n) self.maxBytes=n end
+
 return {objects = objects}

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.225
+
+- Complete library-offloading Phase 2: use Details Framework panels, labels, buttons and draft text entries for the emote editor and import/export dialogs.
+- Use the canvas adapter for transfer scrolling; preserve exact text, unlimited transfer input, existing Save/Import actions, validation and captured-target guards.
+- Keep dialog dimensions, dragging and Escape behavior; disable DF default text commits and panel click-to-move/right-click-close behavior.
+- Add real-framework tests for draft focus, empty/whitespace text, large transfer input, action dispatch and scroll clamping. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.224
 
 - Complete library-offloading Phase 1: use Details Framework canvas scroll containers for Behavior and the Emotes list, preserving anchors, content sizing and native scrollbar appearance.
