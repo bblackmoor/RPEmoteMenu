@@ -300,4 +300,37 @@ for _, position in ipairs({'TOP','LEFT'}) do
         end
     end
 end
-print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
+-- Leaving while dragging/resizing cannot fade or collapse the window; activity
+-- cancels preexisting timers, and inactivity resumes after the gesture finishes.
+local originalAfter=C_Timer.After
+for _, position in ipairs({'TOP','LEFT'}) do
+    theme.titleBarPosition=position
+    for _, mode in ipairs({'NONE','TITLE_BAR','ICON'}) do
+        for _, gesture in ipairs({'drag','resize'}) do
+            C_Timer.After=originalAfter
+            profile.fadeEnabled=true; profile.minimizeMode=mode; profile.locked=false
+            profile.height=300; frame.mouseover=true
+            main.ApplyProfileSettings(); main.ApplyActivation()
+            local width,height=frame:GetWidth(),frame:GetHeight()
+            local timers={}
+            C_Timer.After=function(delay,fn) timers[#timers+1]={delay=delay,fn=fn} end
+            frame.mouseover=false; frame:GetScript('OnLeave')(frame)
+            local pending=#timers
+            assert(pending==1)
+            frame.mouseover=true
+            if gesture=='drag' then frame:GetScript('OnDragStart')(frame)
+            else grip:GetScript('OnMouseDown')(grip,'LeftButton') end
+            frame.mouseover=false
+            frame:GetScript('OnLeave')(frame); frame:GetScript('OnUpdate')(frame,0.2)
+            assert(#timers==pending, 'active '..gesture..' queued inactivity work')
+            timers[1].fn()
+            assert(frame:GetWidth()==width and frame:GetHeight()==height and grip:IsShown()
+                and frame:GetAlpha()==theme.windowOpacity, 'pending timer changed active gesture presentation')
+            if gesture=='drag' then frame:GetScript('OnDragStop')(frame)
+            else grip:GetScript('OnMouseUp')(grip) end
+            assert(#timers>pending, 'inactivity did not resume after '..gesture)
+        end
+    end
+end
+C_Timer.After=originalAfter
+print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, inactivity guards, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')

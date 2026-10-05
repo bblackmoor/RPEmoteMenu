@@ -11,6 +11,9 @@ function WindowFade.Create(context)
     local opacityAnimationOnFinished
     local fadeOutDuration, fadeInDuration = 1.0, 0.2
     local ScheduleWindowAutoHide
+    local function IsInteracting()
+        return context.IsInteracting and context.IsInteracting()
+    end
     local function SetWindowOpacity(targetOpacity, duration, onFinished)
         if not context.GetFrame() then
             return
@@ -77,12 +80,14 @@ function WindowFade.Create(context)
 
         -- Minimized modes use ScheduleWindowAutoHide for both their fade and
         -- collapse. None leaves the complete window visible at inactive opacity.
-        if not context.GetProfile().fadeEnabled or context.UsesMinimizedDisplay() or not context.GetFrame() then
+        if IsInteracting() or not context.GetProfile().fadeEnabled
+            or context.UsesMinimizedDisplay() or not context.GetFrame() then
             return
         end
 
         C_Timer.After(context.GetProfile().fadeDelay, function()
             if requestedGeneration ~= fadeGeneration
+                or IsInteracting()
                 or not context.GetProfile().fadeEnabled
                 or context.UsesMinimizedDisplay()
                 or context.GetFrame():IsMouseOver() then
@@ -134,7 +139,7 @@ function WindowFade.Create(context)
     end
 
     ScheduleWindowAutoHide = function()
-        if not context.GetProfile().fadeEnabled or not context.UsesMinimizedDisplay()
+        if IsInteracting() or not context.GetProfile().fadeEnabled or not context.UsesMinimizedDisplay()
             or context.IsHidden()
             or autoHideScheduled or autoHideFading then
             return
@@ -152,6 +157,7 @@ function WindowFade.Create(context)
             autoHideScheduled = false
 
             if not context.GetProfile().fadeEnabled or not context.UsesMinimizedDisplay()
+                or IsInteracting()
                 or context.IsHidden()
                 or not context.GetFrame() or context.GetFrame():IsMouseOver() then
                 return
@@ -169,6 +175,7 @@ function WindowFade.Create(context)
                 autoHideFading = false
 
                 if not context.GetProfile().fadeEnabled or not context.UsesMinimizedDisplay()
+                    or IsInteracting()
                     or context.GetFrame():IsMouseOver() then
                     RestoreActiveOpacity(true)
                     return

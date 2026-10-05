@@ -51,9 +51,11 @@ function frame:CreateAnimationGroup()
     return group
 end
 local icon={}; function icon:SetAlpha(alpha) self.alpha=alpha end
+local interacting=false
 local fade=addon.WindowFade.Create({GetFrame=function() return frame end,
     GetIcon=function() return icon end,GetProfile=function() return profile end,
     GetTheme=function() return theme end,IsHidden=function() return hidden end,
+    IsInteracting=function() return interacting end,
     SetHidden=function(value) hidden=value end,
     UsesMinimizedDisplay=function() return profile.minimizeMode~='NONE' end,
     IsMinimizedToIcon=function() return profile.minimizeMode=='ICON' end})
@@ -111,5 +113,27 @@ frame.hover=false; hidden=false; fade.CancelAutoHide(); fade.RestoreActiveOpacit
 fade.ScheduleAutoHide(); fade.ApplySettings()
 assert(#timers==1 and fade.IsAutoHidePending())
 timers[1].callback(); group:Finish(); assert(hidden and not fade.IsAutoHidePending())
-print('PASS explicit geometry and fade component contracts, mode combinations, cancellation, animation, hover and current settings')
+-- Busy gestures reject new requests, pending timers and final collapse callbacks.
+for _, mode in ipairs({'NONE','TITLE_BAR','ICON'}) do
+    profile.minimizeMode=mode; profile.fadeEnabled=true; frame.hover=false; hidden=false
+    fade.CancelAutoHide(); fade.RestoreActiveOpacity(); timers={}
+    interacting=true
+    fade.ScheduleInactiveFade(); fade.ScheduleAutoHide()
+    assert(#timers==0 and not fade.IsAutoHidePending(), 'gesture scheduled inactivity work')
+    interacting=false
+    if mode=='NONE' then fade.ScheduleInactiveFade() else fade.ScheduleAutoHide() end
+    assert(#timers==1)
+    interacting=true; timers[1].callback()
+    assert(not group.playing and not hidden and not fade.IsAutoHidePending(),
+        'pending inactivity timer ran during a gesture')
+    interacting=false; timers={}
+    if mode~='NONE' then
+        fade.ScheduleAutoHide(); timers[1].callback(); assert(group.playing)
+        interacting=true; group:Finish()
+        assert(not hidden and not fade.IsAutoHidePending(), 'animation collapsed during a gesture')
+        group:Finish(); assert(frame.alpha==theme.windowOpacity)
+    end
+    interacting=false
+end
+print('PASS explicit geometry and fade component contracts, gesture guards, mode combinations, cancellation, animation, hover and current settings')
 

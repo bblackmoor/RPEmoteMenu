@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.250
+
+- Treat native dragging and resizing as activity; block new inactivity requests, pending timers and automatic collapse completion while a gesture is active.
+- Cancel inactivity on resize start, retire gestures before manual minimize changes or collapse, and restart normal inactivity after release when the pointer is already outside.
+- Cover both gestures in both title-bar orientations and all three minimize modes, plus timer and animation completion guards. All seventeen smoke suites and Lua syntax checks pass; in-game acceptance remains pending.
+
 ## 2.1.249
 
 - Finish active drag/resize gestures before Center Window, Reset Window and exact geometry changes, allowing the requested layout to supersede the gesture.

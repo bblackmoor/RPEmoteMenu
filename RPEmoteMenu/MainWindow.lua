@@ -147,6 +147,7 @@ local function GetWindowFade()
             GetProfile = function() return profileSettings end,
             GetTheme = function() return themeSettings end,
             IsHidden = function() return isWindowAutoHidden end,
+            IsInteracting = function() return isWindowMoving or isUserResizing end,
             UsesMinimizedDisplay = UsesMinimizedDisplay,
             IsMinimizedToIcon = IsMinimizedToIcon,
             SetHidden = function(hidden) SetWindowAutoHidden(hidden) end,
@@ -447,6 +448,13 @@ FinishWindowInteraction = function()
     else
         SaveWindowPosition()
         RestoreWindowPosition()
+    end
+
+    -- The pointer may already be outside when the gesture ends, so no new
+    -- OnLeave event will arrive to restart the normal inactivity deadline.
+    if MainFrame:IsShown() and not MainFrame:IsMouseOver() then
+        GetWindowFade().ScheduleInactiveFade()
+        GetWindowFade().ScheduleAutoHide()
     end
 end
 
@@ -1863,6 +1871,7 @@ local function UpdateWindowBodyVisibility()
 end
 
 function MainWindow.ApplyMinimizeToIconSettings()
+    FinishWindowInteraction()
     if not definitions.enums.minimizeMode.allowed[profileSettings.minimizeMode] then
         profileSettings.minimizeMode = "NONE"
     end
@@ -1929,6 +1938,7 @@ SetWindowAutoHidden = function(hidden)
         return
     end
 
+    FinishWindowInteraction()
     isWindowAutoHidden = hidden
     UpdateWindowBodyVisibility()
 end
@@ -2396,6 +2406,7 @@ local function CreateResizeGrip()
         if button == "LeftButton" and not profileSettings.locked
             and not IsWindowBodyHidden() then
             isUserResizing = true
+            MainWindow.NotifyActivity()
             MainFrame:StartSizing("BOTTOM")
         end
     end)
@@ -2430,7 +2441,7 @@ local function InstallWindowScripts()
     end)
     local mouseCheckElapsed = 0
     MainFrame:SetScript("OnUpdate", function(self, elapsed)
-        if isWindowMoving then
+        if isWindowMoving or isUserResizing then
             return
         end
 
