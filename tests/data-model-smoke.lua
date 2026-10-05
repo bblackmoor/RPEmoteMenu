@@ -198,3 +198,37 @@ for _, value in ipairs({0, addon.MAX_CATEGORIES + 1, 1.5}) do
     document.settings.selectedCategory = value
     assert(assert(decodeDocument(document, 'profile')).settings.selectedCategory == addon.DefaultProfileSettings.selectedCategory)
 end
+
+-- Collision suffixes must preserve complete UTF-8 characters within 64 bytes.
+for caseIndex, case in ipairs({{'é',51}, {'界',51}, {'🙂',51}, {'界',50}, {'界',54}}) do
+    local character, prefixLength = case[1], case[2]
+    local prefix = string.rep(string.char(64+caseIndex),prefixLength)
+    local name = prefix .. string.rep(character,math.floor((64-prefixLength)/#character))
+    assert(db.CreateTheme(name)); assert(db.CreateProfile(name))
+    assert(db.SetProfileTheme(name,name))
+    local themeText = assert(serialization.ExportTheme(name))
+    local profileText = assert(serialization.ExportProfile(name))
+    for number = 1,10 do
+        local suffix = number == 1 and ' (Imported)' or ' (Imported '..number..')'
+        local budget = 64-#suffix
+        local expected = prefix:sub(1,budget)
+            .. string.rep(character,math.max(0,math.floor((budget-prefixLength)/#character))) .. suffix
+        local ok,themeName = serialization.ImportThemeAsNew(themeText)
+        assert(ok and themeName == expected and #themeName <= 64)
+        local ok,profileName = serialization.ImportProfileAsNew(profileText)
+        assert(ok and profileName == expected and #profileName <= 64)
+        assert(assert(json.Decode(assert(serialization.ExportTheme(themeName)))).name == expected)
+        assert(assert(json.Decode(assert(serialization.ExportProfile(profileName)))).name == expected)
+        assert(db.GetProfile(profileName).theme == name)
+    end
+end
+
+-- Name errors describe the byte limit, including short multibyte names.
+local oversizedName = string.rep('界',22)
+local valid,message = db.ValidateNewProfileName(oversizedName)
+assert(not valid and message == 'Profile names cannot exceed 64 bytes.')
+valid,message = db.ValidateNewThemeName(oversizedName)
+assert(not valid and message == 'Theme names cannot exceed 64 bytes.')
+assert(db.ValidateNewProfileName(string.rep('B',64)))
+assert(db.ValidateNewThemeName(string.rep('B',64)))
+print('PASS UTF-8 import collision names, numbered suffixes, exports and byte-limit messages')

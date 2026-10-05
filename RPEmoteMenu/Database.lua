@@ -49,6 +49,16 @@ local function NormalizeString(value)
     return type(value) == "string" and value or ""
 end
 
+-- Generated names have byte limits, but must end on a UTF-8 boundary.
+local function TruncateUTF8(value, maximumBytes)
+    local cut = math.min(#value, maximumBytes)
+    while cut > 0 and value:byte(cut + 1)
+        and value:byte(cut + 1) >= 128 and value:byte(cut + 1) < 192 do
+        cut = cut - 1
+    end
+    return value:sub(1, cut)
+end
+
 local function CopyDefaultCategories()
     local categories = {}
 
@@ -600,7 +610,7 @@ local function ValidateNewProfileName(profileName, existingProfileName)
         return nil, "Enter a profile name."
     end
     if #profileName > MAX_PROFILE_NAME_LENGTH then
-        return nil, "Profile names cannot exceed 64 characters."
+        return nil, "Profile names cannot exceed 64 bytes."
     end
     if string.lower(profileName) == string.lower(DEFAULT_PROFILE_NAME) then
         return nil, "Default is reserved and cannot be changed."
@@ -645,7 +655,7 @@ local function ValidateNewThemeName(themeName, existingThemeName)
         return nil, "Enter a theme name."
     end
     if #themeName > MAX_THEME_NAME_LENGTH then
-        return nil, "Theme names cannot exceed 64 characters."
+        return nil, "Theme names cannot exceed 64 bytes."
     end
     if string.lower(themeName) == string.lower(DEFAULT_THEME_NAME) then
         return nil, "Default is reserved and cannot be changed."
@@ -1074,7 +1084,7 @@ local function ImportedProfileName(sourceName)
         local suffix = number == 1
             and " (Imported)"
             or " (Imported " .. number .. ")"
-        local shortenedBase = strtrim(baseName:sub(1, MAX_PROFILE_NAME_LENGTH - #suffix))
+        local shortenedBase = strtrim(TruncateUTF8(baseName, MAX_PROFILE_NAME_LENGTH - #suffix))
         local candidate = shortenedBase .. suffix
 
         if not FindProfileByName(candidate) then
@@ -1098,7 +1108,7 @@ local function ImportedThemeName(sourceName)
     while true do
         local suffix = number == 1
             and " (Imported)" or " (Imported " .. number .. ")"
-        local shortenedBase = strtrim(baseName:sub(1, MAX_THEME_NAME_LENGTH - #suffix))
+        local shortenedBase = strtrim(TruncateUTF8(baseName, MAX_THEME_NAME_LENGTH - #suffix))
         local candidate = shortenedBase .. suffix
         if not FindThemeByName(candidate) then return candidate end
         number = number + 1
@@ -1387,13 +1397,7 @@ function Database.DuplicateCategory(categoryIndex)
     end
     local function CopyName(number)
         local suffix = number == 1 and " Copy" or " Copy " .. number
-        local cut = math.min(#baseName, addon.ContentTextLimits.categoryName - #suffix)
-        -- Do not split a UTF-8 character when shortening the generated copy name.
-        while cut > 0 and baseName:byte(cut + 1)
-            and baseName:byte(cut + 1) >= 128 and baseName:byte(cut + 1) < 192 do
-            cut = cut - 1
-        end
-        return baseName:sub(1, cut) .. suffix
+        return TruncateUTF8(baseName, addon.ContentTextLimits.categoryName - #suffix) .. suffix
     end
     local copyName = CopyName(1)
     local suffix = 2
