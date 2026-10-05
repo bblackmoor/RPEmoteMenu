@@ -8,6 +8,7 @@ local function loadModule(path)
 end
 loadModule('RPEmoteMenu/Scheduling.lua')
 loadModule('RPEmoteMenu/Defaults.lua')
+loadModule('RPEmoteMenu/SettingDefinitions.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
 -- All ordinary settings widgets use real DF; specialized native frames remain.
 local native = dofile('tests/details-framework-ui-stubs.lua')
@@ -308,7 +309,7 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
 end
 assert(toc[1]=='Libs/LibStub/LibStub.lua' and toc[2]=='Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua'
  and toc[3]=='Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua' and toc[4]=='Defaults.lua'
- and toc[5]=='Scheduling.lua' and toc[6]=='FontMedia.lua' and toc[#toc]=='Core.lua')
+ and toc[5]=='SettingDefinitions.lua' and toc[6]=='Scheduling.lua' and toc[7]=='FontMedia.lua' and toc[#toc]=='Core.lua')
 local openedSettings,openedAbout=0,0
 local originalOpen,originalAbout=addon.Settings.Open,addon.Settings.OpenAbout
 addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() end
@@ -344,4 +345,3 @@ assert(activationSettings.active and mainFrame:IsShown(),'Slash toggle did not s
 SlashCmdList.ELLEMOTE('')
 assert(not activationSettings.active and not mainFrame:IsShown(),'Slash toggle did not hide the menu')
 print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')
-

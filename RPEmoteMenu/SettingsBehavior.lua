@@ -1,4 +1,6 @@
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 local UI = addon.SettingsUI
 local AddonSettings = addon.Settings
 local Database = addon.Database
@@ -68,7 +70,10 @@ local function CreateStartupSection(panel, switches, rows)
     switches[#switches + 1] = activeSwitch
 
     local tooltipDelayBox = CreateNumberSetting(
-        panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 20, rows:Next(), 0, 1000,
+        panel, string.format("Tooltip delay (%d-%d)",
+            limits.tooltipDelayMs.min, limits.tooltipDelayMs.max),
+        "tooltipDelayMs", 20, rows:Next(),
+        limits.tooltipDelayMs.min, limits.tooltipDelayMs.max,
         function() return settings.tooltipDelayMs end,
         function(value) settings.tooltipDelayMs = value end,
         "ms", 255, Database.GetGlobalSettings
@@ -109,7 +114,7 @@ local function CreateInactivitySection(panel, switches, rows)
     switches[#switches + 1] = fadeSwitch
 
     local fadeDelayBox = CreateNumberSetting(
-        panel, "Fade after", "fadeDelay", 20, rows:Next(), 0, 60,
+        panel, "Fade after", "fadeDelay", 20, rows:Next(), limits.fadeDelay.min, limits.fadeDelay.max,
         function() return settings.fadeDelay end,
         function(value)
             settings.fadeDelay = value
@@ -119,7 +124,7 @@ local function CreateInactivitySection(panel, switches, rows)
     )
 
     local inactiveOpacityBox = CreateNumberSetting(
-        panel, "Inactive opacity", "inactiveOpacity", 20, rows:Next(), 10, 100,
+        panel, "Inactive opacity", "inactiveOpacity", 20, rows:Next(), limits.opacity.min * 100, limits.opacity.max * 100,
         function() return settings.inactiveOpacity * 100 end,
         function(value)
             settings.inactiveOpacity = value / 100
@@ -136,7 +141,7 @@ local function CreateInactivitySection(panel, switches, rows)
     local minimizeLabels = {NONE = "None", TITLE_BAR = "Title Bar", ICON = "Icon"}
     local minimizeSelector = Widgets.CreateDropdown(panel, function()
         local options = {}
-        for _, mode in ipairs({"NONE", "TITLE_BAR", "ICON"}) do
+        for _, mode in ipairs(definitions.enums.minimizeMode.values) do
             options[#options + 1] = {label = minimizeLabels[mode], value = mode}
         end
         return options
@@ -160,12 +165,12 @@ local function CreateInactivitySection(panel, switches, rows)
             settings.minimizedIconSize = value
             MainWindow.ApplyMinimizeToIconSettings()
         end,
-        false, addon.MIN_MINIMIZED_ICON_SIZE, addon.MAX_MINIMIZED_ICON_SIZE
+        false, limits.minimizedIconSize.min, limits.minimizedIconSize.max
     )
 
     local iconSizeRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     iconSizeRange:SetPoint("LEFT", iconSizeBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
-    iconSizeRange:SetText("(16-64 px)")
+    iconSizeRange:SetText(string.format("(%d-%d px)", limits.minimizedIconSize.min, limits.minimizedIconSize.max))
 
     RefreshIconControls = function()
         local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
@@ -269,12 +274,12 @@ local function CreateLayoutSection(panel, switches, rows)
                 value
             )
         end,
-        false, 150, 630
+        false, limits.height.min, limits.height.max
     )
 
     local heightRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     heightRange:SetPoint("LEFT", heightBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
-    heightRange:SetText("(150-630 px)")
+    heightRange:SetText(string.format("(%d-%d px)", limits.height.min, limits.height.max))
 
     local lockSwitch = CreateSwitch(panel, "Lock window", rows:Next(),
         function() return settings.locked end,

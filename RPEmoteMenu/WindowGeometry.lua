@@ -1,5 +1,7 @@
 -- Window size/position calculations; callers own persistence and frame changes.
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 local Geometry = {}
 addon.WindowGeometry = Geometry
 
@@ -22,8 +24,8 @@ function Geometry.Clamp(x, y, width, height, allowOffscreen, options)
     -- position fields supply signed offsets for the saved anchor instead; the
     -- reset and center buttons provide recovery if an extreme value is used.
     if allowOffscreen then
-        x = math.max(-100000, math.min(100000, x))
-        y = math.max(-100000, math.min(100000, y))
+        x = math.max(limits.position.min, math.min(limits.position.max, x))
+        y = math.max(limits.position.min, math.min(limits.position.max, y))
     else
         x = math.max(0, math.min(screenWidth - width, x))
         y = math.max(height, math.min(screenHeight, y))

@@ -1,4 +1,6 @@
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 local UI = addon.SettingsUI
 local AddonSettings = addon.Settings
 local Database = addon.Database
@@ -266,7 +268,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.categoryFontSize = CreateNumberSetting(
-        editor, "Font size", "categoryFontSize", 20, fontSizeY, 8, 24,
+        editor, "Font size", "categoryFontSize", 20, fontSizeY, limits.fontSize.min, limits.fontSize.max,
         function() return state.GetSettings().categoryFontSize end,
         function(value)
             state.GetSettings().categoryFontSize = value
@@ -282,7 +284,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.emoteFontSize = CreateNumberSetting(
-        editor, "Font size", "emoteFontSize", 330, fontSizeY, 8, 24,
+        editor, "Font size", "emoteFontSize", 330, fontSizeY, limits.fontSize.min, limits.fontSize.max,
         function() return state.GetSettings().emoteFontSize end,
         function(value)
             state.GetSettings().emoteFontSize = value
@@ -374,7 +376,7 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     local highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
-        editor, "Thickness", "categoryHighlightThickness", 330, effectY, 1, 6,
+        editor, "Thickness", "categoryHighlightThickness", 330, effectY, limits.highlightThickness.min, limits.highlightThickness.max,
         function() return state.GetSettings().categoryHighlightThickness end,
         function(value)
             state.GetSettings().categoryHighlightThickness = value
@@ -406,7 +408,7 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
 
     highlightEffectSelector = Widgets.CreateDropdown(editor, function()
         local options = {}
-        for _, effect in ipairs({"background", "outline", "separator", "underline", "shadow"}) do
+        for _, effect in ipairs(definitions.enums.categoryHighlightEffect.values) do
             options[#options + 1] = {label = highlightEffectLabels[effect], value = effect}
         end
         return options
@@ -429,7 +431,7 @@ local function CreateThemeOpacity(editor, state, controls, rows)
     local opacityY = rows:Next(42)
 
     controls.windowOpacity = CreateNumberSetting(
-        editor, "Menu opacity", "windowOpacity", 20, opacityY, 10, 100,
+        editor, "Menu opacity", "windowOpacity", 20, opacityY, limits.opacity.min * 100, limits.opacity.max * 100,
         function() return state.GetSettings().windowOpacity * 100 end,
         function(value)
             state.GetSettings().windowOpacity = value / 100
@@ -455,7 +457,11 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
 
     local titleBarLabels = {TOP = "Top", LEFT = "Left"}
     local titleBarSelector = Widgets.CreateDropdown(editor, function()
-        return {{label = "Top", value = "TOP"}, {label = "Left", value = "LEFT"}}
+        local options = {}
+        for _, position in ipairs(definitions.enums.titleBarPosition.values) do
+            options[#options + 1] = {label = titleBarLabels[position], value = position}
+        end
+        return options
     end, function(position)
         state.GetSettings().titleBarPosition = position
         state.Apply()

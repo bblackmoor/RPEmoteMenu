@@ -28,7 +28,7 @@ function UI.RegisterProfileDialogs(SetStatus)
         button1 = "Create",
         button2 = CANCEL or "Cancel",
         hasEditBox = true,
-        maxLetters = 64,
+        maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
         OnShow = function(self, data)
             local editBox = GetPopupEditBox(self)
@@ -99,7 +99,7 @@ function UI.RegisterProfileDialogs(SetStatus)
         button1 = "Rename",
         button2 = CANCEL or "Cancel",
         hasEditBox = true,
-        maxLetters = 64,
+        maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
         OnShow = function(self, target)
             local editBox = GetPopupEditBox(self)

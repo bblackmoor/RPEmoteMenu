@@ -13,7 +13,7 @@ This version change does not imply a database or JSON schema change.
 | 1 | Separate MainWindow responsibilities: emote-editor presentation/actions/session lifecycle, independent geometry calculations, and fade/auto-hide/animation state | Implemented in 2.1.229; in-game acceptance pending |
 | 2 | Separate transfer-dialog text layout/caret handling, import actions and dialog lifecycle into named components | Implemented in 2.1.230; in-game acceptance pending |
 | 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Implemented in 2.1.231; in-game acceptance pending |
-| 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Planned |
+| 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Implemented in 2.1.232; in-game acceptance pending |
 | 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Planned |
 | 6 | Reduce tests' dependence on private local names/upvalue replacement through explicit component contracts and integration boundaries | Planned |
 
@@ -125,4 +125,29 @@ All thirteen smoke suites pass. Integration tests exercise all 64 ordered mode
 transitions, callback/target cleanup, fresh category targets, focus/selection,
 button state and all four export failure paths preserving an active session.
 Existing stale-confirmation and import-result tests remain intact. In-game focus,
-selection/copy and native rendering checks remain pending. Phases 4–6 are planned.
+selection/copy and native rendering checks remain pending. Phases 5–6 are planned.
+
+
+## Phase 4 implementation
+
+SettingDefinitions loads after Defaults and supplies named numeric ranges, name
+lengths, color-field keys and enums with ordered values and membership tables.
+Database normalization, transfer field validation, settings controls, runtime
+height/tooltip/icon clamps and offscreen geometry use the shared metadata.
+Dropdown labels remain local; order and range captions are preserved. Existing
+minimized-icon constants remain available for compatibility.
+
+Recovery and validation stay separate: saved numbers clamp/floor or default;
+invalid individual transfer settings are discarded and defaulted by the existing
+copy functions. Invalid document structure still fails its existing checks.
+Opacity percentage conversion, tooltip milliseconds-to-seconds conversion and
+native character versus database/transfer byte limits remain in their callers.
+Transfer-only resource limits and unrelated UI layout measurements are unchanged.
+No library, saved-data migration or transfer-schema change is included.
+
+All thirteen smoke suites pass. Data-model tests now cover shared numeric
+endpoints, out-of-range and fractional fields, nonfinite saved numbers, every
+allowed enum, invalid-enum fallback and stable dropdown order. Existing widget,
+geometry, transfer, dialog-ownership and component tests remain intact. Native
+control and geometry acceptance remains pending in-game. Phases 5 and 6 remain
+separate work.

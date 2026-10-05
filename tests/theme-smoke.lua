@@ -27,7 +27,7 @@ local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 local addon = {Settings = {}, SettingsUI = {FIELD_GAP = 12}, MainWindow = {}}
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
-for _, name in ipairs({'Scheduling.lua','Defaults.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'Database.lua', 'Serialization.lua'}) do Load(name) end
+for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'Database.lua', 'Serialization.lua'}) do Load(name) end
 local db, media = addon.Database, LibStub('LibSharedMedia-3.0')
 db.InitializeDatabase()
 local applies, fontUpdates, iconUpdates = 0, 0, 0

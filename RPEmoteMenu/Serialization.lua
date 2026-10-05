@@ -1,4 +1,6 @@
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 
 local Serialization = {}
 addon.Serialization = Serialization
@@ -8,12 +10,12 @@ local JSON = addon.JSON
 local FORMAT_NAME = "RPEmoteMenu"
 local FORMAT_VERSION = 2
 local MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
-local MAX_PROFILE_NAME_LENGTH = 64
-local MAX_THEME_NAME_LENGTH = 64
+local MAX_PROFILE_NAME_LENGTH = definitions.nameLengths.profile
+local MAX_THEME_NAME_LENGTH = definitions.nameLengths.theme
 local MAX_CATEGORY_NAME_LENGTH = addon.ContentTextLimits.categoryName
 local MAX_LABEL_LENGTH = addon.ContentTextLimits.emoteLabel
 local MAX_COMMAND_LENGTH = addon.ContentTextLimits.command
-local MAX_FONT_NAME_LENGTH = 128
+local MAX_FONT_NAME_LENGTH = definitions.nameLengths.font
 
 local CATEGORY_DOCUMENT_FIELDS = {
     format = true, version = true, type = true, name = true, emotes = true
@@ -37,26 +39,11 @@ local EVERYTHING_DOCUMENT_FIELDS = {
 }
 local CATEGORY_FIELDS = {name = true, emotes = true}
 local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true}
-local COLOR_SETTING_KEYS = {
-    "categoryTextColor",
-    "selectedCategoryTextColor",
-    "emoteTextColor",
-    "categoryHighlightColor",
-    "categoryBackgroundColor",
-    "emoteBackgroundColor",
-    "minimizedIconColor"
-}
-local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
-    background = true, outline = true, underline = true, shadow = true,
-    separator = true
-}
-local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
-local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
-local VALID_ANCHOR_POINTS = {
-    TOPLEFT = true, TOP = true, TOPRIGHT = true,
-    LEFT = true, CENTER = true, RIGHT = true,
-    BOTTOMLEFT = true, BOTTOM = true, BOTTOMRIGHT = true
-}
+local COLOR_SETTING_KEYS = definitions.colorKeys
+local VALID_CATEGORY_HIGHLIGHT_EFFECTS = definitions.enums.categoryHighlightEffect.allowed
+local VALID_TITLE_BAR_POSITIONS = definitions.enums.titleBarPosition.allowed
+local VALID_MINIMIZE_MODES = definitions.enums.minimizeMode.allowed
+local VALID_ANCHOR_POINTS = definitions.enums.anchorPoint.allowed
 
 local function ValidateObject(value, allowedFields, description)
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
@@ -288,13 +275,13 @@ local function ValidateProfileSettings(value)
         end
     end
     for _, key in ipairs({"x", "y"}) do
-        settings[key] = ValidateNumber(value[key], -100000, 100000, key, true)
+        settings[key] = ValidateNumber(value[key], limits.position.min, limits.position.max, key, true)
     end
     for _, field in ipairs({
-        {"height", 150, 630},
-        {"minimizedIconSize", addon.MIN_MINIMIZED_ICON_SIZE, addon.MAX_MINIMIZED_ICON_SIZE},
-        {"selectedCategory", 1, addon.MAX_CATEGORIES},
-        {"fadeDelay", 0, 60}
+        {"height", limits.height.min, limits.height.max},
+        {"minimizedIconSize", limits.minimizedIconSize.min, limits.minimizedIconSize.max},
+        {"selectedCategory", limits.selectedCategory.min, limits.selectedCategory.max},
+        {"fadeDelay", limits.fadeDelay.min, limits.fadeDelay.max}
     }) do
         local key = field[1]
         settings[key] = ValidateNumber(
@@ -302,7 +289,7 @@ local function ValidateProfileSettings(value)
         )
     end
     settings.inactiveOpacity = ValidateNumber(
-        value.inactiveOpacity, 0.1, 1, "inactiveOpacity", false
+        value.inactiveOpacity, limits.opacity.min, limits.opacity.max, "inactiveOpacity", false
     )
     for _, field in ipairs({
         {"minimizeMode", VALID_MINIMIZE_MODES},
@@ -324,13 +311,13 @@ local function ValidateThemeSettings(value)
         settings[key] = ValidateName(value[key], MAX_FONT_NAME_LENGTH, key)
     end
     for _, key in ipairs({"categoryFontSize", "emoteFontSize"}) do
-        settings[key] = ValidateNumber(value[key], 8, 24, key, true)
+        settings[key] = ValidateNumber(value[key], limits.fontSize.min, limits.fontSize.max, key, true)
     end
     settings.categoryHighlightThickness = ValidateNumber(
-        value.categoryHighlightThickness, 1, 6, "categoryHighlightThickness", true
+        value.categoryHighlightThickness, limits.highlightThickness.min, limits.highlightThickness.max, "categoryHighlightThickness", true
     )
     settings.windowOpacity = ValidateNumber(
-        value.windowOpacity, 0.1, 1, "windowOpacity", false
+        value.windowOpacity, limits.opacity.min, limits.opacity.max, "windowOpacity", false
     )
 
     for _, key in ipairs(COLOR_SETTING_KEYS) do

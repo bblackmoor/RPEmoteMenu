@@ -1,6 +1,6 @@
 -- Component contracts use explicit inputs/context rather than private upvalues.
 local addon = {}
-for _, file in ipairs({'WindowGeometry.lua','WindowFade.lua'}) do
+for _, file in ipairs({'SettingDefinitions.lua','WindowGeometry.lua','WindowFade.lua'}) do
     assert(loadfile('RPEmoteMenu/'..file))('RPEmoteMenu',addon)
 end
 local geometry=addon.WindowGeometry

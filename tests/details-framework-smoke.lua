@@ -137,7 +137,7 @@ switch.widget.SetValue = setValue
 -- The real existing database and picker manager remain the swatch authority.
 assert(RPEmoteMenuDB == nil, "adapter loading/editing does not initialize saved data")
 function strtrim(value) return (value:gsub("^%s+", ""):gsub("%s+$", "")) end
-for _, file in ipairs({"Defaults.lua", "BuiltInThemes.lua", "Database.lua"}) do
+for _, file in ipairs({"Defaults.lua", "SettingDefinitions.lua", "BuiltInThemes.lua", "Database.lua"}) do
     assert(loadfile(root .. file))("RPEmoteMenu", ns)
 end
 ns.Database.InitializeDatabase()

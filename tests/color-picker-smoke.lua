@@ -15,7 +15,7 @@ function ColorPickerFrame:SetupColorPickerAndShow(info)
  info.swatchFunc()
 end
 addon.MinimizedIconColor={Apply=function() end}
-loadModule('Defaults.lua'); loadModule('BuiltInThemes.lua'); loadModule('Database.lua')
+loadModule('Defaults.lua'); loadModule('SettingDefinitions.lua'); loadModule('BuiltInThemes.lua'); loadModule('Database.lua')
 local db=addon.Database; db.InitializeDatabase()
 local module=io.open('RPEmoteMenu/SettingsColorPicker.lua')
 if module then module:close(); loadModule('SettingsColorPicker.lua') end

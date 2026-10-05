@@ -33,7 +33,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
 
     StaticPopupDialogs["RPEMOTEMENU_THEME_NAME"] = {
         text = "Enter a Theme name.", button1 = "Create", button2 = CANCEL or "Cancel",
-        hasEditBox = true, maxLetters = 64, editBoxWidth = 260,
+        hasEditBox = true, maxLetters = addon.SettingDefinitions.nameLengths.theme, editBoxWidth = 260,
         OnShow = function(self, data)
             local box = GetEditBox(self)
             box:SetText(data.initial)

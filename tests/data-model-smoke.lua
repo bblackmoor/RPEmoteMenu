@@ -7,6 +7,7 @@ function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 local character = 'First'
 function UnitName() return character, 'Example' end
 loadModule('RPEmoteMenu/Defaults.lua')
+loadModule('RPEmoteMenu/SettingDefinitions.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
 loadModule('RPEmoteMenu/JSON.lua')
 loadModule('RPEmoteMenu/Database.lua')
@@ -117,3 +118,83 @@ db.SetActive(true); db.InitializeDatabase()
 assert(db.GetGlobalSettings().active == true)
 
 print('PASS default ownership, character selection, shared Themes, deletion, reload, restore')
+
+-- Shared metadata must preserve recovery versus strict field validation.
+local definitions = addon.SettingDefinitions
+for _, enum in pairs(definitions.enums) do
+    for _, value in ipairs(enum.values) do assert(enum.allowed[value]) end
+    local count = 0
+    for _ in pairs(enum.allowed) do count = count + 1 end
+    assert(count == #enum.values)
+end
+assert(table.concat(definitions.enums.categoryHighlightEffect.values, ',') == 'background,outline,separator,underline,shadow')
+assert(table.concat(definitions.enums.minimizeMode.values, ',') == 'NONE,TITLE_BAR,ICON')
+assert(table.concat(definitions.enums.titleBarPosition.values, ',') == 'TOP,LEFT')
+local function CheckLimit(copy, export, kind, key, limit, default, integer)
+    for _, value in ipairs({limit.min, limit.max}) do
+        assert(copy({[key] = value})[key] == value)
+        local document = assert(json.Decode(assert(export())))
+        document.settings[key] = value
+        assert(assert(decodeDocument(document, kind)).settings[key] == value)
+    end
+    for _, value in ipairs({limit.min - 1, limit.max + 1, math.huge, -math.huge, 0/0}) do
+        local normalized = copy({[key] = value})[key]
+        if value ~= value or value == math.huge or value == -math.huge then
+            assert(normalized == default)
+        else
+            assert(normalized == (value < limit.min and limit.min or limit.max))
+            local document = assert(json.Decode(assert(export())))
+            document.settings[key] = value
+            assert(assert(decodeDocument(document, kind)).settings[key] == default)
+        end
+    end
+    if integer then
+        local value = limit.min + 0.5
+        assert(copy({[key] = value})[key] == limit.min)
+        local document = assert(json.Decode(assert(export())))
+        document.settings[key] = value
+        assert(assert(decodeDocument(document, kind)).settings[key] == default)
+    end
+end
+for _, field in ipairs({{'height','height'}, {'x','position'}, {'y','position'},
+    {'fadeDelay','fadeDelay'}, {'minimizedIconSize','minimizedIconSize'}, {'inactiveOpacity','opacity'}}) do
+    CheckLimit(db.CopyProfileSettings, serialization.ExportProfile, 'profile', field[1],
+        definitions.limits[field[2]], addon.DefaultProfileSettings[field[1]], field[2] ~= 'opacity')
+end
+for _, field in ipairs({{'categoryFontSize','fontSize'}, {'emoteFontSize','fontSize'},
+    {'categoryHighlightThickness','highlightThickness'}, {'windowOpacity','opacity'}}) do
+    CheckLimit(db.CopyThemeSettings, serialization.ExportTheme, 'theme', field[1],
+        definitions.limits[field[2]], addon.DefaultThemeSettings[field[1]], field[2] ~= 'opacity')
+end
+for _, field in ipairs({{'minimizeMode','minimizeMode','profile'}, {'point','anchorPoint','profile'},
+    {'relativePoint','anchorPoint','profile'}, {'titleBarPosition','titleBarPosition','theme'},
+    {'categoryHighlightEffect','categoryHighlightEffect','theme'}}) do
+    local profile = field[3] == 'profile'
+    local copy = profile and db.CopyProfileSettings or db.CopyThemeSettings
+    local export = profile and serialization.ExportProfile or serialization.ExportTheme
+    local defaults = profile and addon.DefaultProfileSettings or addon.DefaultThemeSettings
+    for _, value in ipairs(definitions.enums[field[2]].values) do
+        assert(copy({[field[1]] = value})[field[1]] == value)
+        local document = assert(json.Decode(assert(export())))
+        document.settings[field[1]] = value
+        assert(assert(decodeDocument(document, field[3])).settings[field[1]] == value)
+    end
+    assert(copy({[field[1]] = 'unsupported'})[field[1]] == defaults[field[1]])
+    local document = assert(json.Decode(assert(export())))
+    document.settings[field[1]] = 'unsupported'
+    assert(assert(decodeDocument(document, field[3])).settings[field[1]] == defaults[field[1]])
+end
+print('PASS shared setting boundaries, enum order and recovery versus invalid import field fallback')
+
+for _, value in ipairs({definitions.limits.selectedCategory.min, definitions.limits.selectedCategory.max}) do
+    assert(db.CopyProfileSettings({selectedCategory = value}).selectedCategory == value)
+    local document = assert(json.Decode(assert(serialization.ExportProfile())))
+    document.settings.selectedCategory = value
+    assert(assert(decodeDocument(document, 'profile')).settings.selectedCategory == value)
+end
+for _, value in ipairs({0, addon.MAX_CATEGORIES + 1, 1.5}) do
+    assert(db.CopyProfileSettings({selectedCategory = value}).selectedCategory == addon.DefaultProfileSettings.selectedCategory)
+    local document = assert(json.Decode(assert(serialization.ExportProfile())))
+    document.settings.selectedCategory = value
+    assert(assert(decodeDocument(document, 'profile')).settings.selectedCategory == addon.DefaultProfileSettings.selectedCategory)
+end

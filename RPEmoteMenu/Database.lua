@@ -1,4 +1,6 @@
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 
 addon.Database = {}
 
@@ -17,42 +19,18 @@ local MAX_EMOTES = addon.MAX_EMOTES
 local SCHEMA_VERSION = 15
 local DEFAULT_PROFILE_NAME = "Default"
 local DEFAULT_THEME_NAME = "Default"
-local MAX_PROFILE_NAME_LENGTH = 64
-local MAX_THEME_NAME_LENGTH = 64
+local MAX_PROFILE_NAME_LENGTH = definitions.nameLengths.profile
+local MAX_THEME_NAME_LENGTH = definitions.nameLengths.theme
 
 for _, definition in ipairs(builtInThemes) do
     builtInThemeByName[definition.name] = definition
 end
 
-local VALID_CATEGORY_HIGHLIGHT_EFFECTS = {
-    background = true,
-    outline = true,
-    underline = true,
-    shadow = true,
-    separator = true
-}
-local VALID_MINIMIZE_MODES = {NONE = true, TITLE_BAR = true, ICON = true}
-local VALID_TITLE_BAR_POSITIONS = {TOP = true, LEFT = true}
-local VALID_ANCHOR_POINTS = {
-    TOPLEFT = true,
-    TOP = true,
-    TOPRIGHT = true,
-    LEFT = true,
-    CENTER = true,
-    RIGHT = true,
-    BOTTOMLEFT = true,
-    BOTTOM = true,
-    BOTTOMRIGHT = true
-}
-local COLOR_SETTING_KEYS = {
-    "categoryTextColor",
-    "selectedCategoryTextColor",
-    "emoteTextColor",
-    "categoryHighlightColor",
-    "categoryBackgroundColor",
-    "emoteBackgroundColor",
-    "minimizedIconColor"
-}
+local VALID_CATEGORY_HIGHLIGHT_EFFECTS = definitions.enums.categoryHighlightEffect.allowed
+local VALID_MINIMIZE_MODES = definitions.enums.minimizeMode.allowed
+local VALID_TITLE_BAR_POSITIONS = definitions.enums.titleBarPosition.allowed
+local VALID_ANCHOR_POINTS = definitions.enums.anchorPoint.allowed
+local COLOR_SETTING_KEYS = definitions.colorKeys
 local globalSettingLookup = {}
 local profileSettingLookup = {}
 local themeSettingLookup = {}
@@ -206,7 +184,7 @@ local function NormalizeGlobalSettings(source)
     end
 
     result.tooltipDelayMs = math.floor(ClampNumber(
-        source.tooltipDelayMs, 0, 1000, globalDefaults.tooltipDelayMs
+        source.tooltipDelayMs, limits.tooltipDelayMs.min, limits.tooltipDelayMs.max, globalDefaults.tooltipDelayMs
     ))
 
     return result
@@ -230,15 +208,21 @@ local function NormalizeProfileSettings(source)
         result.minimizeMode = profileDefaults.minimizeMode
     end
 
-    result.height = math.floor(ClampNumber(source.height, 150, 630, profileDefaults.height))
+    result.height = math.floor(ClampNumber(
+        source.height, limits.height.min, limits.height.max, profileDefaults.height
+    ))
     result.minimizedIconSize = math.floor(ClampNumber(
         source.minimizedIconSize,
-        addon.MIN_MINIMIZED_ICON_SIZE,
-        addon.MAX_MINIMIZED_ICON_SIZE,
+        limits.minimizedIconSize.min,
+        limits.minimizedIconSize.max,
         profileDefaults.minimizedIconSize
     ))
-    result.x = math.floor(ClampNumber(source.x, -100000, 100000, profileDefaults.x))
-    result.y = math.floor(ClampNumber(source.y, -100000, 100000, profileDefaults.y))
+    result.x = math.floor(ClampNumber(
+        source.x, limits.position.min, limits.position.max, profileDefaults.x
+    ))
+    result.y = math.floor(ClampNumber(
+        source.y, limits.position.min, limits.position.max, profileDefaults.y
+    ))
 
     if not VALID_ANCHOR_POINTS[result.point] then
         result.point = profileDefaults.point
@@ -247,16 +231,16 @@ local function NormalizeProfileSettings(source)
         result.relativePoint = profileDefaults.relativePoint
     end
     if result.selectedCategory % 1 ~= 0
-        or result.selectedCategory < 1
-        or result.selectedCategory > MAX_CATEGORIES then
+        or result.selectedCategory < limits.selectedCategory.min
+        or result.selectedCategory > limits.selectedCategory.max then
         result.selectedCategory = profileDefaults.selectedCategory
     end
 
     result.fadeDelay = math.floor(ClampNumber(
-        source.fadeDelay, 0, 60, profileDefaults.fadeDelay
+        source.fadeDelay, limits.fadeDelay.min, limits.fadeDelay.max, profileDefaults.fadeDelay
     ))
     result.inactiveOpacity = ClampNumber(
-        source.inactiveOpacity, 0.1, 1, profileDefaults.inactiveOpacity
+        source.inactiveOpacity, limits.opacity.min, limits.opacity.max, profileDefaults.inactiveOpacity
     )
 
     return result
@@ -285,15 +269,15 @@ local function NormalizeThemeSettings(source)
     end
 
     result.categoryFontSize = math.floor(ClampNumber(
-        source.categoryFontSize, 8, 24, themeDefaults.categoryFontSize
+        source.categoryFontSize, limits.fontSize.min, limits.fontSize.max, themeDefaults.categoryFontSize
     ))
     result.emoteFontSize = math.floor(ClampNumber(
-        source.emoteFontSize, 8, 24, themeDefaults.emoteFontSize
+        source.emoteFontSize, limits.fontSize.min, limits.fontSize.max, themeDefaults.emoteFontSize
     ))
     result.categoryHighlightThickness = math.floor(ClampNumber(
         source.categoryHighlightThickness,
-        1,
-        6,
+        limits.highlightThickness.min,
+        limits.highlightThickness.max,
         themeDefaults.categoryHighlightThickness
     ))
 
@@ -309,7 +293,7 @@ local function NormalizeThemeSettings(source)
     end
 
     result.windowOpacity = ClampNumber(
-        source.windowOpacity, 0.1, 1, themeDefaults.windowOpacity
+        source.windowOpacity, limits.opacity.min, limits.opacity.max, themeDefaults.windowOpacity
     )
 
     return result
@@ -1433,4 +1417,3 @@ function Database.DuplicateCategory(categoryIndex)
     categories[destinationIndex] = copy
     return true, destinationIndex
 end
-

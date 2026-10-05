@@ -1,4 +1,6 @@
 local _, addon = ...
+local definitions = addon.SettingDefinitions
+local limits = definitions.limits
 
 addon.MainWindow = {}
 
@@ -29,8 +31,8 @@ local titleBarThickness = 32
 local leftTitleBarWidth = 32
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
 local minimumUsableWidth = 220
-local minimumHeight = 150
-local maximumHeight = 630
+local minimumHeight = limits.height.min
+local maximumHeight = limits.height.max
 local minimumSidebarWidth = addon.MIN_SIDEBAR_WIDTH
 local maximumSidebarWidth = addon.MAX_SIDEBAR_WIDTH
 local minimumEmoteColumnWidth = addon.MIN_EMOTE_COLUMN_WIDTH
@@ -110,8 +112,8 @@ local function ScheduleTooltip(owner, populateTooltip)
     end
 
     local delayMs = math.max(
-        0,
-        math.min(1000, tonumber(globalSettings.tooltipDelayMs) or globalDefaults.tooltipDelayMs)
+        limits.tooltipDelayMs.min,
+        math.min(limits.tooltipDelayMs.max, tonumber(globalSettings.tooltipDelayMs) or globalDefaults.tooltipDelayMs)
     )
     if delayMs == 0 then
         ShowIfStillHovered()
@@ -1881,14 +1883,13 @@ local function UpdateWindowBodyVisibility()
 end
 
 function MainWindow.ApplyMinimizeToIconSettings()
-    if profileSettings.minimizeMode ~= "TITLE_BAR"
-        and profileSettings.minimizeMode ~= "ICON" then
+    if not definitions.enums.minimizeMode.allowed[profileSettings.minimizeMode] then
         profileSettings.minimizeMode = "NONE"
     end
     profileSettings.minimizedIconSize = math.max(
-        addon.MIN_MINIMIZED_ICON_SIZE,
+        limits.minimizedIconSize.min,
         math.min(
-            addon.MAX_MINIMIZED_ICON_SIZE,
+            limits.minimizedIconSize.max,
             math.floor(tonumber(profileSettings.minimizedIconSize)
                 or profileDefaults.minimizedIconSize)
         )
@@ -2628,4 +2629,3 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
-

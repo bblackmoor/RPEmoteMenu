@@ -6,7 +6,7 @@ LoadXML('Libs/DetailsFramework/load.xml') -- Construct before PLAYER_LOGIN.
 function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 local addon = {Settings = {}, SettingsUI = {FIELD_GAP = 12}}
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
-Load('Defaults.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
+Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
 local db = addon.Database
 db.InitializeDatabase()
 Load('Scheduling.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
