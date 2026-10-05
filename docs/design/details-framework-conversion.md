@@ -75,7 +75,7 @@ does; keep constructors available before Core initializes the addon.
 
 | Group | Scope and factory values | Behavior to preserve |
 | --- | --- | --- |
-| Startup/interaction | Global: showAtLogin true, tooltipDelayMs 350, hideSettingsGear false | Tooltip field 0–1000 ms; one gear switch controls title/emote gears, preserving right-click editing |
+| Startup/interaction | Global: active true, tooltipDelayMs 350, hideSettingsGear false | Tooltip field 0–1000 ms; one gear switch controls title/emote gears, preserving right-click editing |
 | Fade | Profile: fadeEnabled false, fadeDelay 5, inactiveOpacity 0.5 | Delay 0–60 seconds; opacity displayed as 10–100%; dependent controls disabled/dimmed when fade is off |
 | Minimize | Profile: minimizeMode NONE, minimizedIconSize 32 | NONE/TITLE_BAR/ICON; icon size 16–64 px, enabled only with fade on and ICON selected |
 | Layout | Profile: locked false, height 250, CENTER anchor, x/y 0 | Signed X/Y coordinates; advanced placement can be offscreen; height 150–630; automatic width remains runtime-owned |
@@ -464,3 +464,18 @@ client build, addon version, other DF embedders present/absent and actual result
 
 Phases 1–6 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.
+
+## Activation and text validation follow-up (2.0.222)
+
+The Behavior page replaces show-at-login with a global activation switch and
+Active/Inactive status, matching Simple Nameplates' switch/status presentation.
+/rpem toggles the same saved value. Inactive hides the window and minimized
+icon while settings remain accessible. Activation restores the full window at
+normal Theme opacity, then starts the usual inactivity timers; it does not
+resume an already minimized or faded display. False activation survives reload.
+
+Editors and JSON validation share byte limits: 128 for category names and emote
+labels, 4,096 for commands. Rejected edits stay in the field, leave saved data
+untouched and show a validation error; they are not truncated. Generated
+duplicate category names fit the same limit. Native editor and transfer tests
+cover boundary values, multibyte text, rejection and correction.

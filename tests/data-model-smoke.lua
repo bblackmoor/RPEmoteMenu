@@ -107,4 +107,13 @@ db.GetThemeSettings('Default').categoryFontSize = 18
 assert(db.RestoreDefaultProfile())
 assert(db.GetProfileThemeName('Default') == 'Default')
 assert(db.GetThemeSettings('Default').categoryFontSize == 18)
+
+-- False global activation survives normalization/reload.
+db.SetActive(false)
+assert(db.GetGlobalSettings().active == false)
+db.InitializeDatabase()
+assert(db.GetGlobalSettings().active == false and db.GetGlobalSettings().showAtLogin == nil)
+db.SetActive(true); db.InitializeDatabase()
+assert(db.GetGlobalSettings().active == true)
+
 print('PASS default ownership, character selection, shared Themes, deletion, reload, restore')

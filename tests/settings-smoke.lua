@@ -320,6 +320,12 @@ function mainFrame:IsShown() return self.shown==true end
 function mainFrame:Show() self.shown=true end
 function mainFrame:Hide() self.shown=false end
 addon.MainWindow.GetFrame=function() return mainFrame end
+local activationSettings = {active = false}
+DB.GetGlobalSettings=function() return activationSettings end
+DB.SetActive=function(active)
+    activationSettings.active = active
+    if active then mainFrame:Show() else mainFrame:Hide() end
+end
 addon.MainWindow.UpdateMenu=function() end
 C_AddOns={GetAddOnMetadata=function() return '2.0.203' end}
 SlashCmdList={}
@@ -333,8 +339,8 @@ for _,command in ipairs({'config','options','settings'}) do SlashCmdList.ELLEMOT
 SlashCmdList.ELLEMOTE('about')
 assert(openedSettings==3 and openedAbout==1,'Slash routes did not open Settings/About')
 SlashCmdList.ELLEMOTE('')
-assert(mainFrame:IsShown(),'Slash toggle did not show the menu')
+assert(activationSettings.active and mainFrame:IsShown(),'Slash toggle did not show the menu')
 SlashCmdList.ELLEMOTE('')
-assert(not mainFrame:IsShown(),'Slash toggle did not hide the menu')
+assert(not activationSettings.active and not mainFrame:IsShown(),'Slash toggle did not hide the menu')
 print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')
 

@@ -123,4 +123,30 @@ setUpvalue(backdrop,'themeSettings',{emoteBackgroundColor={r=0,g=0,b=0}})
 setUpvalue(backdrop,'IsWindowBodyHidden',function() return false end)
 backdrop()
 assert(borderlessFrame.backdrop.bgFile and not borderlessFrame.backdrop.edgeFile)
+
+-- Activation restores full visibility/opacity and starts the normal fade timers.
+local activation = addon.MainWindow.ApplyActivation
+local activeSettings = {active = false}
+addon.Database.GetGlobalSettings = function() return activeSettings end
+local activationFrame = {shown = true}
+function activationFrame:Show() self.shown = true end
+function activationFrame:Hide() self.shown = false end
+function activationFrame:IsMouseOver() return self.mouseover end
+local activationIcon = {shown = true}
+function activationIcon:Hide() self.shown = false end
+local minimized, opacityRestored, fadeScheduled, minimizeScheduled = true, 0, 0, 0
+setUpvalue(activation, 'MainFrame', activationFrame)
+setUpvalue(activation, 'MinimizedIconButton', activationIcon)
+setUpvalue(activation, 'CancelWindowAutoHide', function() end)
+setUpvalue(activation, 'SetWindowAutoHidden', function(hidden) minimized = hidden; activationIcon:Hide() end)
+setUpvalue(activation, 'RestoreActiveOpacity', function() opacityRestored = opacityRestored + 1 end)
+setUpvalue(activation, 'ScheduleInactiveFade', function() fadeScheduled = fadeScheduled + 1 end)
+setUpvalue(activation, 'ScheduleWindowAutoHide', function() minimizeScheduled = minimizeScheduled + 1 end)
+activation()
+assert(not activationFrame.shown and not activationIcon.shown and opacityRestored == 0)
+activeSettings.active = true; activation()
+assert(activationFrame.shown and not minimized and opacityRestored == 1)
+assert(fadeScheduled == 1 and minimizeScheduled == 1)
+activationFrame.mouseover = true; activation()
+assert(opacityRestored == 2 and fadeScheduled == 1 and minimizeScheduled == 1)
 print('PASS fixed window corner, moving content, stationary icon, gear visibility, borderless backdrop')

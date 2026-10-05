@@ -107,7 +107,12 @@ for _, object in ipairs(native.objects) do
     end
 end
 local global, profile = db.GetGlobalSettings(), db.GetProfileSettings()
-Switch(login); assert(not global.showAtLogin)
+local activationCalls = 0
+main.ApplyActivation = function() activationCalls = activationCalls + 1 end
+Switch(login); assert(global.active == false and activationCalls == 1)
+container.RefreshControls(); assert(not login:GetChecked())
+Switch(login); assert(global.active == true and activationCalls == 2)
+Switch(login); assert(global.active == false and activationCalls == 3)
 Switch(gear); assert(global.hideSettingsGear and calls.gear == 1 and calls.menu == 1)
 Enter(tooltip, '5000'); assert(global.tooltipDelayMs == 1000)
 Enter(tooltip, '-1'); assert(global.tooltipDelayMs == 0)
@@ -168,6 +173,7 @@ Click(reset)
 assert(profile.height == 250 and profile.x == 0 and profile.y == 0 and profile.point == 'CENTER')
 assert(profile.fadeEnabled and profile.locked and db.GetCategories() == content and db.GetActiveThemeName() == theme)
 Type(tooltip, '999'); Click(restore); Event(tooltip, 'OnEnterPressed')
+assert(db.GetGlobalSettings().active == true and login:GetChecked() and activationCalls == 4)
 assert(db.GetGlobalSettings() ~= global and db.GetGlobalSettings().tooltipDelayMs == 350)
 assert(profile.fadeEnabled and profile.locked and profile.selectedCategory == 2)
 assert(db.GetCategories() == content and db.GetActiveThemeName() == theme, 'global restore preserves Profile/Theme')

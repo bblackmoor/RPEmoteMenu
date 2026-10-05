@@ -10,9 +10,9 @@ local FORMAT_VERSION = 2
 local MAX_DOCUMENT_BYTES = 4 * 1024 * 1024
 local MAX_PROFILE_NAME_LENGTH = 64
 local MAX_THEME_NAME_LENGTH = 64
-local MAX_CATEGORY_NAME_LENGTH = 128
-local MAX_LABEL_LENGTH = 128
-local MAX_COMMAND_LENGTH = 4096
+local MAX_CATEGORY_NAME_LENGTH = addon.ContentTextLimits.categoryName
+local MAX_LABEL_LENGTH = addon.ContentTextLimits.emoteLabel
+local MAX_COMMAND_LENGTH = addon.ContentTextLimits.command
 local MAX_FONT_NAME_LENGTH = 128
 
 local CATEGORY_DOCUMENT_FIELDS = {
@@ -78,7 +78,7 @@ local function ValidateString(value, maximumLength, description)
         return nil, description .. " must be a string."
     end
     if #value > maximumLength then
-        return nil, description .. " exceeds " .. maximumLength .. " characters."
+        return nil, description .. " exceeds " .. maximumLength .. " bytes."
     end
     return value
 end

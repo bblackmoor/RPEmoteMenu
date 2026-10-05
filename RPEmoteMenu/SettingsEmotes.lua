@@ -179,6 +179,11 @@ local function CreateCategoriesSettingsPanel()
     nameLabel:SetWidth(180)
     nameLabel:SetJustifyH("LEFT")
     nameLabel:SetText("Category Name")
+    local nameStatus = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nameStatus:SetPoint("TOPLEFT", panel, "TOPLEFT", 16 + 180 + FIELD_GAP, nameY - 25)
+    nameStatus:SetWidth(420)
+    nameStatus:SetJustifyH("LEFT")
+    nameStatus:SetTextColor(1, 0.35, 0.35, 1)
     local nameBox = Widgets.CreateTextEntry(panel, function()
         return Database.GetCategory(selectedCategoryIndex).name or ""
     end, function(value)
@@ -189,6 +194,10 @@ local function CreateCategoriesSettingsPanel()
             AddonSettings.RefreshCategorySelector()
         end
     end, {width = 420, refreshAfterShow = true,
+        validate = function(value)
+            return Database.ValidateContentText(value, "categoryName", "Category name")
+        end,
+        onValidation = function(errorMessage) nameStatus:SetText(errorMessage or "") end,
         getOwner = function() return Database.GetCategory(selectedCategoryIndex) end})
     nameBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 16 + 180 + FIELD_GAP, nameY)
     local RefreshEmoteRows = UI.CreateEmoteList(panel, function()
@@ -226,6 +235,7 @@ local function CreateCategoriesSettingsPanel()
 
         nameBox:SetEnabled(editable)
         nameBox:RefreshValue()
+        nameStatus:SetText("")
         nameBox:GetFrame():HighlightText(0, 0)
         RefreshEmoteRows()
 

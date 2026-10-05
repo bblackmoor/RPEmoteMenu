@@ -86,7 +86,7 @@ local function CreateAboutPanel()
         "License   GPL-3.0\n\n" ..
 
         "Slash commands\n" ..
-        "    /rpem - Show or hide the RP Emote Menu.\n" ..
+        "    /rpem - Toggle RP Emote Menu Active or Inactive.\n" ..
         "    /rpem about - Open the About page.\n" ..
         "    /rpem config - Open the addon settings.\n" ..
         "    /rpem options - Open the addon settings.\n" ..

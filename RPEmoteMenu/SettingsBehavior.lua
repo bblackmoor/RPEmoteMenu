@@ -52,10 +52,20 @@ end
 local function CreateStartupSection(panel, switches, rows)
     rows:Heading("Startup & Interaction")
 
-    local showAtLoginSwitch = CreateSwitch(panel, "Show the addon at login", rows:Next(),
-        function() return settings.showAtLogin end,
-        function(value) settings.showAtLogin = value end, 255)
-    switches[#switches + 1] = showAtLoginSwitch
+    local activeSwitch = CreateSwitch(panel, "Enable RP Emote Menu", rows:Next(),
+        function() return settings.active end,
+        Database.SetActive, 255)
+    -- Match Simple Nameplates' switch plus Active/Inactive status presentation.
+    local activeStatus = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    activeStatus:SetPoint("LEFT", activeSwitch:GetFrame(), "RIGHT", 8, 0)
+    activeStatus:SetWidth(56)
+    activeStatus:SetJustifyH("LEFT")
+    function activeSwitch:RefreshValue()
+        self:SetChecked(settings.active)
+        activeStatus:SetText(settings.active and "Active" or "Inactive")
+    end
+    activeSwitch:RefreshValue()
+    switches[#switches + 1] = activeSwitch
 
     local tooltipDelayBox = CreateNumberSetting(
         panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 20, rows:Next(), 0, 1000,
@@ -326,6 +336,7 @@ local function CreateGeneralSettingsPanel()
         Database.ResetGlobalSettings()
         settings = Database.GetSettings()
         MainWindow.ApplyProfileSettings()
+        Database.SetActive(settings.active)
         RefreshControls()
     end, 170, 24)
     defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)

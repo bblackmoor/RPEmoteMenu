@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.222
+
+- Replace show-at-login with a global Active switch and Active/Inactive status, following Simple Nameplates; /rpem toggles activation and settings commands remain available while inactive.
+- Activation shows the full window at normal opacity before normal fade/minimize timers resume; deactivation hides the window and minimized icon. Preserve false boolean settings across reload.
+- Share byte limits between editors and transfers: 128 for category names/emote labels and 4,096 for commands. Reject overlong edits without partial saves or truncation, and keep generated duplicate category names within the limit.
+- Add activation, reload, native editing, multibyte text and transfer-boundary regressions. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.221
 
 - Reject factory Theme recreation/restoration when a differently capitalized Theme already uses that name; preserve its settings and Profile assignments and explain how to resolve the conflict.

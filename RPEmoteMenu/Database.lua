@@ -198,9 +198,11 @@ local function NormalizeGlobalSettings(source)
     local result = {}
 
     for key, defaultValue in pairs(globalDefaults) do
-        result[key] = IsValidSavedValue(source[key], defaultValue)
-                and source[key]
-                or defaultValue
+        if IsValidSavedValue(source[key], defaultValue) then
+            result[key] = source[key]
+        else
+            result[key] = defaultValue
+        end
     end
 
     result.tooltipDelayMs = math.floor(ClampNumber(
@@ -215,8 +217,11 @@ local function NormalizeProfileSettings(source)
     source = type(source) == "table" and source or {}
     local result = {}
     for key, defaultValue in pairs(profileDefaults) do
-        result[key] = IsValidSavedValue(source[key], defaultValue)
-            and source[key] or defaultValue
+        if IsValidSavedValue(source[key], defaultValue) then
+            result[key] = source[key]
+        else
+            result[key] = defaultValue
+        end
     end
 
     if VALID_MINIMIZE_MODES[source.minimizeMode] then
@@ -264,9 +269,11 @@ local function NormalizeThemeSettings(source)
 
     for key, defaultValue in pairs(themeDefaults) do
         if type(defaultValue) ~= "table" then
-            result[key] = IsValidSavedValue(source[key], defaultValue)
-                and source[key]
-                or defaultValue
+            if IsValidSavedValue(source[key], defaultValue) then
+                result[key] = source[key]
+            else
+                result[key] = defaultValue
+            end
         end
     end
 
@@ -476,6 +483,15 @@ function Database.GetThemeSettings(themeName)
 end
 
 
+function Database.ValidateContentText(text, kind, label)
+    local limit = addon.ContentTextLimits[kind]
+    if type(text) ~= "string" or #text > limit then
+        return false, label .. " cannot exceed " .. limit .. " bytes."
+    end
+    return true
+end
+
+
 function Database.CopyProfileSettings(source)
     return CopyProfileSettings(source)
 end
@@ -672,6 +688,17 @@ end
 local function CancelThemeColorEdit()
     if addon.SettingsUI and addon.SettingsUI.CancelColorEdit then
         addon.SettingsUI.CancelColorEdit()
+    end
+end
+
+function Database.SetActive(active)
+    RPEmoteMenuDB.globalSettings.active = active == true
+    if not active then CancelThemeColorEdit() end
+    if addon.MainWindow and addon.MainWindow.ApplyActivation then
+        addon.MainWindow.ApplyActivation()
+    end
+    if addon.Settings and addon.Settings.RefreshSettingsPanels then
+        addon.Settings.RefreshSettingsPanels()
     end
 end
 
@@ -1368,14 +1395,24 @@ function Database.DuplicateCategory(categoryIndex)
     if baseName == "" then
         baseName = "Category " .. categoryIndex
     end
-    local copyName = baseName .. " Copy"
+    local function CopyName(number)
+        local suffix = number == 1 and " Copy" or " Copy " .. number
+        local cut = math.min(#baseName, addon.ContentTextLimits.categoryName - #suffix)
+        -- Do not split a UTF-8 character when shortening the generated copy name.
+        while cut > 0 and baseName:byte(cut + 1)
+            and baseName:byte(cut + 1) >= 128 and baseName:byte(cut + 1) < 192 do
+            cut = cut - 1
+        end
+        return baseName:sub(1, cut) .. suffix
+    end
+    local copyName = CopyName(1)
     local suffix = 2
     local names = {}
     for _, category in ipairs(categories) do
         names[string.lower(strtrim(NormalizeString(category.name)))] = true
     end
     while names[string.lower(copyName)] do
-        copyName = baseName .. " Copy " .. suffix
+        copyName = CopyName(suffix)
         suffix = suffix + 1
     end
 

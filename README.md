@@ -39,7 +39,7 @@ Enable the addon at character selection if needed.
 
 ## Using the Menu
 
-- `/rpem` shows or hides the menu; `/rpem config` opens settings. You can also open settings with the title-bar gear or by right-clicking the title bar.
+- `/rpem` toggles the addon Active or Inactive; `/rpem config` opens settings. You can also open settings with the title-bar gear or by right-clicking the title bar.
 - Hover over a category to see its emotes. Click an emote to run its command. Drag categories or emotes to reorder them.
 - Right-click a category to edit it, or right-click an emote to edit its label and commands. The emote gear opens the same editor. **Hide setting gear icons** hides both the title-bar and emote gears without removing right-click editing.
 - An emote appears when it has a label and a default command. Categories with no name are hidden.
@@ -56,7 +56,7 @@ Themes contain fonts, colors, selection effects, menu opacity, title-bar positio
 
 Default Theme can be edited and restored, but cannot be renamed or deleted. The six editable bundled Themes are **Crimson Night**, **Gilded Shadow**, **High Contrast**, **Moonlight**, and **Teal**. Restore individual bundled Themes or all six from their factory definitions. Deleting a Theme used by Profiles requires confirmation and assigns those Profiles Default Theme.
 
-The **Behavior** screen holds global show-at-login, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
+The **Behavior** screen holds global activation, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. Activating shows the full window at normal opacity, then starts the usual inactivity timer; deactivating hides the window and minimized icon. Activation is remembered across logins, and settings remain accessible while inactive. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
 
 Shared font support is included; extra fonts come from SharedMedia or other font-providing addons. The font selectors update when providers register fonts. If a saved font is unavailable, the menu uses Friz Quadrata while preserving the selection, including in imports and exports. It resumes using that font when its provider loads. Rendering retries are limited to failed attempts, and menu widths update with the font.
 
@@ -64,13 +64,13 @@ Shared font support is included; extra fonts come from SharedMedia or other font
 
 **Emotes** exports a category or replaces the selected category with an import. **Profiles** and **Themes** transfer one of each; **Import & Export** transfers Everything (all Profiles, Themes, and their links). Transfers use version 2 JSON. Global preferences and character-to-Profile assignments are excluded.
 
-Imports add Profiles and Themes without overwriting existing ones; name conflicts are resolved with new names. A standalone Profile whose Theme is unavailable uses Default Theme and reports the fallback. Invalid or unknown Profile and Theme settings are silently ignored and defaulted. Malformed categories, emotes, and other format versions are rejected without conversion.
+Imports add Profiles and Themes without overwriting existing ones; name conflicts are resolved with new names. A standalone Profile whose Theme is unavailable uses Default Theme and reports the fallback. Invalid or unknown Profile and Theme settings are silently ignored and defaulted. Malformed categories, emotes, and other format versions are rejected without conversion. Category names and emote labels have a 128-byte limit; commands have a 4,096-byte limit. Editors reject longer values without saving or truncating the entered text.
 
 ## Commands
 
 | Command | Action |
 | --- | --- |
-| `/rpem` | Show or hide the menu |
+| `/rpem` | Toggle the addon Active or Inactive |
 | `/rpem about` | Open the About page |
 | `/rpem config`, `/rpem options`, `/rpem settings` | Open settings |
 
@@ -78,7 +78,7 @@ Imports add Profiles and Themes without overwriting existing ones; name conflict
 
 - Separate Profiles and Themes: Profiles hold categories, emotes, window position and height, selected category, locking, and fade/minimize behavior. Shared Themes hold appearance, so one Theme can style several Profiles.
 - Editable defaults and visual presets: Default Profile now allows category and emote editing and can be restored. Default Theme and five additional bundled Themes are editable and restorable; visual presets no longer create separate content Profiles.
-- Clearer settings ownership: Show-at-login, tooltip delay, and gear visibility are global preferences. Each character still chooses its own account-wide Profile; new characters start with Default Profile and Default Theme.
+- Clearer settings ownership: Activation, tooltip delay, and gear visibility are global preferences. Each character still chooses its own account-wide Profile; new characters start with Default Profile and Default Theme.
 - Easier editing: Right-click categories and emotes to edit them, drag categories into order, and duplicate categories or emotes. One switch hides all settings gears, including emote gears on hover, while preserving right-click editing.
 - Cleaner settings screens: Dedicated Behavior, Profiles, Themes, Emotes, and Import & Export screens use sliding on/off switches, circled information links, consistent spacing, and clearer restore and deletion confirmations. The About page is also available through /rpem about.
 - More flexible presentation: Place the title bar above or beside the menu, with controls above the text on the left title bar. The minimized icon stays at the window's upper-left corner when orientation changes. Visible-menu opacity applies uniformly, and the menu always renders without borders.

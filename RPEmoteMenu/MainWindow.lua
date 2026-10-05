@@ -1155,6 +1155,19 @@ local function GetEmoteEditorDialog()
             return
         end
 
+        for _, field in ipairs({
+            {dialog.NameBox, "emoteLabel", "Emote name"},
+            {dialog.DefaultBox, "command", "Default emote"},
+            {dialog.TargetedBox, "command", "Targeted emote"}
+        }) do
+            local valid, errorMessage = Database.ValidateContentText(field[1]:GetText() or "", field[2], field[3])
+            if not valid then
+                dialog.Status:SetText(errorMessage)
+                dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
+                return -- Keep every field intact and save nothing.
+            end
+        end
+
         emote.label = dialog.NameBox:GetText() or ""
         emote.defaultCommand = dialog.DefaultBox:GetText() or ""
         emote.targetedCommand = dialog.TargetedBox:GetText() or ""
@@ -2847,6 +2860,7 @@ local function InstallWindowScripts()
         MinimizedIconButton:Hide()
     end)
     MainFrame:HookScript("OnShow", function()
+        if not globalSettings.active then MainFrame:Hide(); return end
         if isWindowAutoHidden and IsMinimizedToIcon() then
             MinimizedIconButton:Show()
         end
@@ -2891,11 +2905,7 @@ local function FinishMainWindowCreation()
     -- button instead of trying to rediscover it by its not-yet-ready atlas.
     C_Timer.After(0, UpdatePinButton)
 
-    if globalSettings.showAtLogin then
-        MainFrame:Show()
-    else
-        MainFrame:Hide()
-    end
+    MainWindow.ApplyActivation()
 end
 
 function MainWindow.CreateMainWindow()
@@ -2910,6 +2920,25 @@ function MainWindow.CreateMainWindow()
     CreateResizeGrip()
     InstallWindowScripts()
     FinishMainWindowCreation()
+end
+
+function MainWindow.ApplyActivation()
+    globalSettings = Database.GetGlobalSettings()
+    if not MainFrame then return end
+    CancelWindowAutoHide()
+    fadeGeneration = fadeGeneration + 1
+    if globalSettings.active then
+        SetWindowAutoHidden(false)
+        RestoreActiveOpacity()
+        MainFrame:Show()
+        if not MainFrame:IsMouseOver() then
+            ScheduleInactiveFade()
+            ScheduleWindowAutoHide()
+        end
+    else
+        MainFrame:Hide()
+        if MinimizedIconButton then MinimizedIconButton:Hide() end
+    end
 end
 
 function MainWindow.ApplyThemeSettings()

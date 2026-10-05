@@ -18,14 +18,7 @@ local function HandleSlashCommand(message)
     end
 
     if command == "" then
-        local mainFrame = addon.MainWindow.GetFrame()
-
-        if mainFrame:IsShown() then
-            mainFrame:Hide()
-        else
-            mainFrame:Show()
-            addon.MainWindow.UpdateMenu()
-        end
+        addon.Database.SetActive(not addon.Database.GetGlobalSettings().active)
         return
     end
 

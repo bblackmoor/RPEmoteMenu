@@ -22,6 +22,9 @@ local _, addon = ...
 -- but the {target} tokens above are expanded by this addon before the command
 -- is sent and are therefore easier to use consistently in custom emotes.
 
+-- Shared byte limits keep native editors and JSON transfers compatible.
+addon.ContentTextLimits = {categoryName = 128, emoteLabel = 128, command = 4096}
+
 addon.DefaultSections = {
     -- Category 1
     {
@@ -150,7 +153,7 @@ addon.BuiltInFonts = {
 addon.DefaultGlobalSettings = {
     hideSettingsGear = false,
     tooltipDelayMs = 350,
-    showAtLogin = true
+    active = true
 }
 
 addon.DefaultProfileSettings = {
@@ -189,7 +192,7 @@ addon.DefaultThemeSettings = {
 addon.GlobalSettingKeys = {
     "hideSettingsGear",
     "tooltipDelayMs",
-    "showAtLogin"
+    "active"
 }
 
 addon.ProfileSettingKeys = {

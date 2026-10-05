@@ -261,4 +261,54 @@ assert(db.CreateProfile('Transient')); Select(1); panel.RefreshEditors(); Click(
 dialog.NameBox:SetText('old Profile edit'); assert(db.DeleteProfile('Transient')); assert(db.CreateProfile('Transient'))
 local current=db.GetCategory(1).emotes[1]; savedLabel=current.label; before=updates; dialog.SaveButton.scripts.OnClick()
 assert(current.label==savedLabel and updates==before)
+
+-- Rejected category edits preserve entered text and saved content on Enter/focus loss.
+assert(db.SetActiveProfile('Default')); Select(1); panel.RefreshEditors()
+local originalCategoryName = db.GetCategory(1).name
+local overlong = string.rep('A', addon.ContentTextLimits.categoryName + 1)
+Type(overlong); before = updates; Event('OnEnterPressed')
+assert(nameBox:GetText() == overlong and db.GetCategory(1).name == originalCategoryName and updates == before)
+Event('OnEditFocusLost')
+assert(nameBox:GetText() == overlong and db.GetCategory(1).name == originalCategoryName)
+Type(string.rep('A', addon.ContentTextLimits.categoryName)); Event('OnEnterPressed')
+assert(#db.GetCategory(1).name == addon.ContentTextLimits.categoryName)
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportCategory(1)), 'category'))
+-- Byte limits also handle multibyte text consistently with the importer.
+Type(string.rep('é', 65)); Event('OnEnterPressed')
+assert(nameBox:GetText() == string.rep('é', 65) and #db.GetCategory(1).name == 128)
+Event('OnEscapePressed'); assert(nameBox:GetText() == db.GetCategory(1).name)
+
+panel.RefreshEditors(); Click(rows[1].EditButton)
+local saved = db.GetCategory(1).emotes[1]
+local previousLabel, previousDefault, previousTargeted = saved.label, saved.defaultCommand, saved.targetedCommand
+for _, field in ipairs({{dialog.NameBox, 128}, {dialog.DefaultBox, 4096}, {dialog.TargetedBox, 4096}}) do
+    dialog.NameBox:SetText('Valid')
+    dialog.DefaultBox:SetText('/e valid')
+    dialog.TargetedBox:SetText('')
+    local entered = string.rep('X', field[2] + 1)
+    field[1]:SetText(entered); before = updates
+    dialog.SaveButton.scripts.OnClick()
+    assert(dialog:IsShown() and field[1]:GetText() == entered)
+    assert(saved.label == previousLabel and saved.defaultCommand == previousDefault
+        and saved.targetedCommand == previousTargeted and updates == before)
+    assert(dialog.Status:GetText():find('bytes', 1, true))
+end
+dialog.NameBox:SetText(string.rep('L', 128))
+dialog.DefaultBox:SetText(string.rep('D', 4096))
+dialog.TargetedBox:SetText(string.rep('T', 4096))
+dialog.SaveButton.scripts.OnClick()
+assert(not dialog:IsShown() and #saved.label == 128 and #saved.defaultCommand == 4096 and #saved.targetedCommand == 4096)
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportCategory(1)), 'category'))
+
+-- Generated duplicate names also stay within the transfer limit.
+EmptyCategory(2)
+local ok, duplicateIndex = db.DuplicateCategory(1)
+assert(ok and #db.GetCategory(duplicateIndex).name <= addon.ContentTextLimits.categoryName)
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportCategory(duplicateIndex)), 'category'))
+
+db.GetCategory(1).name = string.rep('é', 64)
+EmptyCategory(3)
+ok, duplicateIndex = db.DuplicateCategory(1)
+assert(ok and db.GetCategory(duplicateIndex).name == string.rep('é', 61) .. ' Copy')
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportCategory(duplicateIndex)), 'category'))
 print('PASS real Emotes widgets and captured native editor/delete/restore/import targets across Profile changes, reorder, replacement and dialog retirement')

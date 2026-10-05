@@ -297,6 +297,11 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
         dirty = false
         if not handle.enabled or owner ~= CurrentOwner() then handle:RefreshValue(); return end
         local value = frame:GetText()
+        if options.validate then
+            local valid, errorMessage = options.validate(value)
+            if options.onValidation then options.onValidation(errorMessage) end
+            if not valid then dirty = true; return false end
+        end
         if options.normalize then value = options.normalize(value) end
         if value == nil then handle:RefreshValue(); return end
         applyValue(value)
@@ -325,8 +330,12 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
     frame:SetScript("OnTextChanged", function(_, byUser)
         if byUser and handle.enabled then dirty = true end
     end)
-    frame:SetScript("OnEnterPressed", function() Commit(); frame:ClearFocus() end)
-    frame:SetScript("OnEditFocusLost", function() Commit(); handle:RefreshValue() end)
+    frame:SetScript("OnEnterPressed", function()
+        if Commit() ~= false then frame:ClearFocus() end
+    end)
+    frame:SetScript("OnEditFocusLost", function()
+        if Commit() ~= false then handle:RefreshValue() end
+    end)
     frame:SetScript("OnEscapePressed", function() handle:CancelEdit() end)
     frame:HookScript("OnHide", function() handle:CancelEdit() end)
     handle:RefreshValue()
