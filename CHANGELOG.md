@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.248
+
+- Finish active move/resize gestures before hiding, Profile rebinding, locking or Theme application.
+- Save interrupted gestures to their original Profile and clear interaction state before native stop callbacks, preventing stale releases and later layout changes from overwriting saved geometry.
+- Add integration coverage for Profile changes in both title-bar orientations, hidden resizes, late release callbacks, locking and Theme application. All seventeen smoke suites pass; in-game acceptance remains pending.
+
 ## 2.1.247
 
 - Use native WoW window dragging instead of polling the cursor and resetting the anchor every frame.
@@ -244,5 +250,6 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
 

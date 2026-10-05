@@ -199,5 +199,62 @@ frame:GetScript('OnDragStart')(frame); assert(not frame.moving, 'locked window b
 profile.locked=false; main.ApplyMovementLock()
 frame:GetScript('OnDragStart')(frame); assert(frame.moving)
 frame:Hide(); assert(not frame.moving, 'hidden window retained native movement')
-print('PASS real window geometry, native dragging, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
-
+-- Interrupted gestures finish against the old Profile before settings rebind.
+frame:Show()
+for _, position in ipairs({'TOP','LEFT'}) do
+    theme=db.GetThemeSettings(); theme.titleBarPosition=position
+    for _, gesture in ipairs({'drag','resize'}) do
+        profile=db.GetProfileSettings()
+        profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
+        main.ApplyProfileSettings()
+        local originalProfile=profile
+        if gesture=='drag' then
+            frame:GetScript('OnDragStart')(frame)
+            frame:ClearAllPoints(); frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',270,660)
+        else
+            grip:GetScript('OnMouseDown')(grip,'LeftButton')
+            frame:SetHeight(310)
+        end
+        assert(db.CreateProfile('Interrupted '..position..' '..gesture,nil,addon.DefaultProfileSettings))
+        profile=db.GetProfileSettings()
+        assert(not frame.moving and not frame.sizing, 'Profile change retained native gesture')
+        if gesture=='drag' then
+            assert(originalProfile.x==270 and originalProfile.y==660,
+                'interrupted drag was not saved to its original Profile')
+        else
+            assert(originalProfile.height==310, 'interrupted resize was not saved to its original Profile')
+        end
+        local x,y,height=profile.x,profile.y,profile.height
+        frame:ClearAllPoints(); frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',290,680)
+        frame:SetHeight(height+20)
+        frame:GetScript('OnDragStop')(frame)
+        grip:GetScript('OnMouseUp')(grip)
+        assert(profile.x==x and profile.y==y and profile.height==height,
+            'late gesture callbacks overwrote the new Profile')
+    end
+end
+-- Hiding/reactivating retires resizing even when its mouse-up never arrives.
+profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
+main.ApplyProfileSettings()
+grip:GetScript('OnMouseDown')(grip,'LeftButton')
+frame:SetHeight(325)
+db.SetActive(false)
+assert(not frame.moving and not frame.sizing and profile.height==325)
+db.SetActive(true)
+frame:SetHeight(350)
+assert(profile.height==325, 'hidden resize left persistence active after reactivation')
+grip:GetScript('OnMouseUp')(grip)
+assert(profile.height==325, 'late hidden resize release persisted unrelated height')
+-- Lock and Theme application use the same gesture cleanup.
+main.ApplyProfileSettings()
+frame:GetScript('OnDragStart')(frame)
+profile.locked=true; main.ApplyMovementLock()
+assert(not frame.moving)
+profile.locked=false; main.ApplyMovementLock()
+grip:GetScript('OnMouseDown')(grip,'LeftButton')
+frame:SetHeight(335)
+main.ApplyThemeSettings()
+assert(not frame.sizing and profile.height==335)
+frame:SetHeight(355)
+assert(profile.height==335, 'Theme application left resizing persistence active')
+print('PASS real window geometry, native dragging, interrupted gesture ownership, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')

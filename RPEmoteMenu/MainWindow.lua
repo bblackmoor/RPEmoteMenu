@@ -428,6 +428,25 @@ local function SaveWindowSize()
     RefreshGeneralWindowFields()
 end
 
+local function FinishWindowInteraction()
+    local wasMoving, wasResizing = isWindowMoving, isUserResizing
+    if not MainFrame or (not wasMoving and not wasResizing) then
+        return
+    end
+
+    -- Clear ownership before native stop/layout callbacks can change geometry.
+    -- Call before rebinding settings so the gesture saves to its original Profile.
+    isWindowMoving = false
+    isUserResizing = false
+    MainFrame:StopMovingOrSizing()
+    if wasResizing then
+        SaveWindowSize()
+    else
+        SaveWindowPosition()
+        RestoreWindowPosition()
+    end
+end
+
 local function RestoreWindowSize()
     local width = CalculateColumnWidths()
     local height = math.max(
@@ -651,6 +670,7 @@ end
 
 function MainWindow.ApplyMovementLock()
     local unlocked = not profileSettings.locked
+    if not unlocked then FinishWindowInteraction() end
 
     MainFrame:SetMovable(unlocked)
     MainFrame:SetResizable(unlocked)
@@ -1930,18 +1950,7 @@ end
 
 local function StopWindowMoving()
     if not isWindowMoving then return end
-    MainFrame:StopMovingOrSizing()
-    isWindowMoving = false
-
-    local left = MainFrame:GetLeft()
-    local top = MainFrame:GetTop()
-    if left and top then
-        -- Clamp using the expanded dimensions, even while the window is
-        -- collapsed, so restoring the menu cannot place part of it off-screen.
-        MainWindow.ApplyWindowGeometry(left, top, nil, profileSettings.height)
-    else
-        SaveWindowPosition()
-    end
+    FinishWindowInteraction()
 end
 
 local function CreateMainFrame()
@@ -2386,11 +2395,7 @@ local function CreateResizeGrip()
         end
     end)
     ResizeGrip:SetScript("OnMouseUp", function()
-        MainFrame:StopMovingOrSizing()
-        if isUserResizing then
-            SaveWindowSize()
-            isUserResizing = false
-        end
+        if isUserResizing then FinishWindowInteraction() end
     end)
 
 
@@ -2408,7 +2413,7 @@ local function InstallWindowScripts()
         ScheduleWindowAutoHide()
     end)
     MainFrame:HookScript("OnHide", function()
-        StopWindowMoving()
+        FinishWindowInteraction()
         CancelTooltip()
         MinimizedIconButton:Hide()
     end)
@@ -2495,6 +2500,7 @@ function MainWindow.ApplyActivation()
 end
 
 function MainWindow.ApplyThemeSettings()
+    FinishWindowInteraction()
     -- A Theme change keeps the current Profile and its selected category.
     themeSettings = Database.GetThemeSettings()
     if not MainFrame then return end
@@ -2508,6 +2514,7 @@ function MainWindow.ApplyThemeSettings()
 end
 
 function MainWindow.ApplyProfileSettings()
+    FinishWindowInteraction()
     BindSettings()
     selectedCategoryIndex = profileSettings.selectedCategory
 
@@ -2553,4 +2560,3 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
-
