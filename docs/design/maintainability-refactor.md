@@ -14,7 +14,7 @@ This version change does not imply a database or JSON schema change.
 | 2 | Separate transfer-dialog text layout/caret handling, import actions and dialog lifecycle into named components | Implemented in 2.1.230; in-game acceptance pending |
 | 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Implemented in 2.1.231; in-game acceptance pending |
 | 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Implemented in 2.1.232; in-game acceptance pending |
-| 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Planned |
+| 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Implemented in 2.1.233; in-game acceptance pending |
 | 6 | Reduce tests' dependence on private local names/upvalue replacement through explicit component contracts and integration boundaries | Planned |
 
 Phase boundaries are intentional. Phase 2 keeps the opening methods' behavior
@@ -125,7 +125,7 @@ All thirteen smoke suites pass. Integration tests exercise all 64 ordered mode
 transitions, callback/target cleanup, fresh category targets, focus/selection,
 button state and all four export failure paths preserving an active session.
 Existing stale-confirmation and import-result tests remain intact. In-game focus,
-selection/copy and native rendering checks remain pending. Phases 5–6 are planned.
+selection/copy and native rendering checks remain pending. Phase 6 is planned.
 
 
 ## Phase 4 implementation
@@ -149,5 +149,29 @@ All thirteen smoke suites pass. Data-model tests now cover shared numeric
 endpoints, out-of-range and fractional fields, nonfinite saved numbers, every
 allowed enum, invalid-enum fallback and stable dropdown order. Existing widget,
 geometry, transfer, dialog-ownership and component tests remain intact. Native
-control and geometry acceptance remains pending in-game. Phases 5 and 6 remain
-separate work.
+control and geometry acceptance remains pending in-game. Phase 6 remains separate work.
+
+
+## Phase 5 implementation
+
+VisibleSlotOrder.Move takes the records table, ordered visible slot indices, a
+source position and an insertion gap in the original visible sequence. It moves
+record references among those slots without compacting hidden slots, cloning
+records or replacing the owning table. Invalid positions and adjacent no-op gaps
+return false without mutation. The component loads before MainWindow.
+
+MainWindow's two named reorder callers retain their visibility rules and supply
+slot indices. The category caller captures the selected category object and
+updates runtime/Profile selection to its new slot after a successful move. Drag
+tracking, auto-scroll, indicators, ownership policy, deferred click suppression,
+scroll restoration and settings refresh remain in the existing callers. The
+settings emote list still compacts its populated records and is unchanged.
+No library, saved-data migration or transfer-schema change is included.
+
+All fourteen smoke suites pass. The new suite tests the component directly with
+sparse slots, record identity, hidden records, empty/singleton lists, invalid
+positions and all source/insertion-gap combinations. It also constructs the real
+MainWindow with native frames stubbed and exercises every category/emote drag
+combination, category-selection identity, incomplete hidden emotes, no-op refresh
+policy and drag cleanup. Existing settings compaction and stale dialog tests
+remain intact. In-game drag/scroll acceptance remains pending. Phase 6 is planned.

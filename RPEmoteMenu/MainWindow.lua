@@ -1230,40 +1230,25 @@ end
 
 local function ReorderVisibleCategories(sourcePosition, insertionPosition)
     local categories = Database.GetCategories()
-    local visible = GetVisibleCategories()
-    local source = visible[sourcePosition]
-
-    if not source or insertionPosition < 1 or insertionPosition > #visible + 1 then
-        return false
-    end
-
-    if insertionPosition > sourcePosition then
-        insertionPosition = insertionPosition - 1
-    end
-
-    if insertionPosition == sourcePosition then
-        return false
+    local visibleIndices = {}
+    for position, entry in ipairs(GetVisibleCategories()) do
+        visibleIndices[position] = entry.index
     end
 
     local selectedCategory = categories[selectedCategoryIndex]
-    local visibleIndices = {}
-    local records = {}
-    for position, entry in ipairs(visible) do
-        visibleIndices[position] = entry.index
-        records[position] = entry.category
+    if not addon.VisibleSlotOrder.Move(
+        categories, visibleIndices, sourcePosition, insertionPosition
+    ) then
+        return false
     end
 
-    local moved = table.remove(records, sourcePosition)
-    table.insert(records, insertionPosition, moved)
-
-    for position, categoryIndex in ipairs(visibleIndices) do
-        categories[categoryIndex] = records[position]
-        if records[position] == selectedCategory then
+    -- Selection follows the same category object to its new visible slot.
+    for _, categoryIndex in ipairs(visibleIndices) do
+        if categories[categoryIndex] == selectedCategory then
             selectedCategoryIndex = categoryIndex
             profileSettings.selectedCategory = categoryIndex
         end
     end
-
     return true
 end
 
@@ -1400,36 +1385,15 @@ end
 
 local function ReorderVisibleEmotes(categoryIndex, sourcePosition, insertionPosition)
     local category = Database.GetCategory(categoryIndex)
-    local visible = GetVisibleEmotes(category)
-    local source = visible[sourcePosition]
-
-    if not source or insertionPosition < 1 or insertionPosition > #visible + 1 then
-        return false
-    end
-
-    if insertionPosition > sourcePosition then
-        insertionPosition = insertionPosition - 1
-    end
-
-    if insertionPosition == sourcePosition then
-        return false
-    end
+    if not category then return false end
 
     local visibleIndices = {}
-    local records = {}
-    for position, entry in ipairs(visible) do
+    for position, entry in ipairs(GetVisibleEmotes(category)) do
         visibleIndices[position] = entry.index
-        records[position] = entry.emote
     end
-
-    local moved = table.remove(records, sourcePosition)
-    table.insert(records, insertionPosition, moved)
-
-    for position, emoteIndex in ipairs(visibleIndices) do
-        category.emotes[emoteIndex] = records[position]
-    end
-
-    return true
+    return addon.VisibleSlotOrder.Move(
+        category.emotes, visibleIndices, sourcePosition, insertionPosition
+    )
 end
 
 local function StartEmoteDrag(button)

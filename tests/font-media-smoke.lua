@@ -25,7 +25,7 @@ local function nextTimer()
  local item=table.remove(timers,1); assert(item,'Timer missing'); item.fn(); return item.delay
 end
 local function drain() local n=0; while #timers>0 do nextTimer(); n=n+1; assert(n<30) end end
-for _,n in ipairs({'Libs/LibStub/LibStub.lua','Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua','Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua','Defaults.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do loadModule(n) end
+for _,n in ipairs({'Libs/LibStub/LibStub.lua','Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua','Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua','Defaults.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do loadModule(n) end
 local db=addon.Database; db.InitializeDatabase()
 local media=LibStub('LibSharedMedia-3.0')
 local choices,textRefresh=0,0
