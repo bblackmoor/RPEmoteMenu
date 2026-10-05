@@ -822,6 +822,8 @@ function Database.CreateTheme(themeName, sourceSettings)
     local validName, errorMessage = ValidateNewThemeName(themeName)
     if not validName then return false, errorMessage end
 
+    -- Roll back live colors before cloning either the current or explicit source.
+    CancelThemeColorEdit()
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings or Database.GetThemeSettings()
     RPEmoteMenuDB.themes[validName] = {

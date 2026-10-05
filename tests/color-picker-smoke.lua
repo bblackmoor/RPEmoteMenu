@@ -102,10 +102,36 @@ mutation(function() return db.RestoreDefaultProfile() end)
 info=open(); preview(info,0.1,0.2,0.3)
 db.SetProfileTheme('Default','Teal'); db.SetProfileTheme('Default','Default')
 restored=copy(color()); info.cancelFunc(); preview(info,1,0,0); same(color(),restored)
-print('color-picker smoke passed')
 
 
 info = open()
 assert(info.extraInfo.owner and info.extraInfo.target.name == db.GetActiveThemeName())
 assert(info.extraInfo.target.object == db.GetThemeSettings())
 addon.SettingsUI.CancelColorEdit()
+
+-- Theme creation and copying must clone accepted colors, not a live preview.
+local function cloneTheme(name, action)
+ local sourceName=db.GetActiveThemeName()
+ local source=db.GetThemeSettings()
+ local opening=copy(color())
+ local stale=open(); preview(stale,0.01,0.02,0.03)
+ same(color(),{r=0.01,g=0.02,b=0.03})
+ assert(action(sourceName,name))
+ same(source.categoryTextColor,opening)
+ same(db.GetThemeSettings(name).categoryTextColor,opening)
+ assert(not ColorPickerFrame.shown)
+ assert(db.SetProfileTheme(db.GetActiveProfileName(),name))
+ stale.cancelFunc(); preview(stale,1,0,0)
+ same(source.categoryTextColor,opening); same(color(),opening)
+end
+cloneTheme('Created Without Preview',function(_,name) return db.CreateTheme(name) end)
+cloneTheme('Copied Without Preview',db.CopyTheme)
+
+-- Failed validation leaves the current preview open and cancelable.
+info=open(); original=copy(info.extraInfo.original); preview(info,0.02,0.03,0.04)
+assert(not db.CreateTheme(db.GetActiveThemeName()))
+assert(not db.CopyTheme('Missing Theme','Unused Copy'))
+assert(not db.CopyTheme(db.GetActiveThemeName(),db.GetActiveThemeName()))
+same(color(),{r=0.02,g=0.03,b=0.04}); assert(ColorPickerFrame.shown)
+info.cancelFunc(); same(color(),original); ColorPickerFrame:Hide()
+print('color-picker smoke passed')
