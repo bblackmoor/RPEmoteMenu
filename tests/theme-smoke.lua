@@ -36,7 +36,7 @@ addon.MainWindow.ScheduleFontRefreshes = function() fontUpdates = fontUpdates + 
 addon.MainWindow.ApplyProfileSettings = function() end
 addon.MinimizedIconColor = {Apply = function() iconUpdates = iconUpdates + 1 end}
 for _, name in ipairs({'SettingsColorPicker.lua', 'SettingsWidgets.lua', 'SettingsControls.lua',
-    'SettingsExchange.lua', 'SettingsThemeDialogs.lua', 'SettingsThemeIcon.lua'}) do Load(name) end
+    'SettingsExchangeText.lua', 'SettingsExchangeActions.lua', 'SettingsExchangeLifecycle.lua', 'SettingsExchange.lua', 'SettingsThemeDialogs.lua', 'SettingsThemeIcon.lua'}) do Load(name) end
 local widgets, buttons, swatches, dropdowns = addon.SettingsWidgets, {}, {}, {}
 local buttonFactory, colorFactory, menuFactory = widgets.CreateButton, widgets.CreateColorPicker, widgets.CreateDropdown
 widgets.CreateButton = function(parent, label, ...)

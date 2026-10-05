@@ -355,16 +355,7 @@ exchange.editBox:GetScript("OnEscapePressed")(exchange.editBox)
 assert(not exchange:IsShown())
 
 -- Controlled renderer metrics verify layout uses wrapped glyph widths, not bytes.
-local function Upvalue(fn, target)
-    for i=1,30 do
-        local name,value=debug.getupvalue(fn,i)
-        if name==target then return value end
-        if not name then break end
-    end
-    error('Missing '..target)
-end
-local layout=Upvalue(exchange.editBox:GetScript('OnTextChanged'),'RefreshTextLayout')
-local measurement=Upvalue(layout,'measurement')
+local measurement=exchange.textMeasurement
 local fonts=0
 function measurement:SetFont(path,size,flags)
     assert(path==STANDARD_TEXT_FONT and size==12); fonts=fonts+1

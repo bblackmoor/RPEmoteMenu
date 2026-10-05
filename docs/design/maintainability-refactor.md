@@ -11,7 +11,7 @@ This version change does not imply a database or JSON schema change.
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Separate MainWindow responsibilities: emote-editor presentation/actions/session lifecycle, independent geometry calculations, and fade/auto-hide/animation state | Implemented in 2.1.229; in-game acceptance pending |
-| 2 | Separate transfer-dialog text layout/caret handling, import actions and dialog lifecycle into named components | Planned |
+| 2 | Separate transfer-dialog text layout/caret handling, import actions and dialog lifecycle into named components | Implemented in 2.1.230; in-game acceptance pending |
 | 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Planned |
 | 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Planned |
 | 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Planned |
@@ -71,3 +71,35 @@ In-game acceptance remains open. Check editor opening/saving, activation,
 Profile/Theme changes, top/left title bars, stationary icon placement, movement,
 height persistence, all minimized modes and delayed fades. Test standalone and
 alongside another DF embedder. Phases 2–6 require separate implementation commits.
+
+## Phase 2 implementation
+
+SettingsExchange is now a 300-line frame/mode coordinator, down from 538 lines.
+Its eight opening methods remain byte-for-byte unchanged; Phase 3 owns their
+repeated setup. Three components load immediately before the coordinator:
+
+- SettingsExchangeText creates an independent layout controller from explicit
+  edit box, viewport, scroll child and measurement inputs. It owns renderer
+  measurement, cached caret bounds, resizing and reentrancy state. Refresh,
+  ResetCaret and UpdateCaret are its small interface.
+- SettingsExchangeActions installs status/action-state handling, import execution,
+  the category replacement confirmation and button dispatch. Captured-target
+  checks stay beside the mutations they protect. Import result/callback behavior
+  and successful category-target rebinding are preserved.
+- SettingsExchangeLifecycle wires native text, cursor, size, show, Escape and
+  hide events to the components. It resets caret state before text measurement,
+  clears status before action-state validation on user input, and retires the
+  category target and focus when hidden.
+
+The coordinator constructs all components before publishing the lazy singleton.
+No saved-data, transfer-schema, UI layout, scheduling or mode-policy change is
+included. The affected renderer test now uses the dialog's explicit measurement
+frame rather than discovering private local functions by upvalue name. Broad
+test-boundary cleanup remains Phase 6.
+
+All thirteen smoke suites pass. The new component test exercises measurement,
+caret resizing, failed/successful Profile imports, result callbacks, captured
+category confirmations, stale confirmation rejection after hiding, status ordering
+and Escape cleanup. Existing integration suites retain real database, serialization
+and framework coverage for transfers, exact drafts, stale targets and all settings
+routes. Native rendering/event timing and selection/copy remain in-game checks.

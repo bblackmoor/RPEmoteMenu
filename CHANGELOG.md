@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.230
+
+- Complete maintainability Phase 2: separate transfer text layout/caret state, import actions and native lifecycle wiring into dedicated components.
+- Keep SettingsExchange as the frame/mode coordinator and preserve all eight mode-opening methods unchanged for Phase 3.
+- Preserve exact drafts, rendered wrapping, caret resizing, category replacement guards, confirmation snapshots, import callbacks and result messages.
+- Replace the affected text-layout test's private-upvalue lookup with explicit measurement input and add focused component/lifecycle coverage. All thirteen smoke suites pass; in-game acceptance remains pending.
+
 ## 2.1.229
 
 - Begin the six-phase maintainability refactor and change the base version to 2.1 while continuing the running commit number.
