@@ -75,7 +75,7 @@ local SetWindowAutoHidden
 local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
-local windowDragState
+local isWindowMoving = false
 local appliedTitleBarPosition
 local tooltipGeneration = 0
 local tooltipOwner
@@ -1920,18 +1920,18 @@ local function StartWindowMoving()
         return
     end
 
-    local scale = UIParent:GetEffectiveScale()
-    local cursorX, cursorY = GetCursorPosition()
-    windowDragState = {
-        cursorX = cursorX / scale,
-        cursorY = cursorY / scale,
-        left = left,
-        top = top,
-    }
+    -- Normalize the anchor before handing movement to the client. Native
+    -- dragging follows the cursor without per-frame Lua position updates.
+    AnchorFrameByTopLeft()
+    MainWindow.NotifyActivity()
+    isWindowMoving = true
+    MainFrame:StartMoving()
 end
 
 local function StopWindowMoving()
-    windowDragState = nil
+    if not isWindowMoving then return end
+    MainFrame:StopMovingOrSizing()
+    isWindowMoving = false
 
     local left = MainFrame:GetLeft()
     local top = MainFrame:GetTop()
@@ -1942,32 +1942,6 @@ local function StopWindowMoving()
     else
         SaveWindowPosition()
     end
-end
-
-local function UpdateWindowDrag()
-    if not windowDragState then
-        return false
-    end
-
-    local scale = UIParent:GetEffectiveScale()
-    local cursorX, cursorY = GetCursorPosition()
-    local left = windowDragState.left
-        + (cursorX / scale) - windowDragState.cursorX
-    local top = windowDragState.top
-        + (cursorY / scale) - windowDragState.cursorY
-
-    -- Calculate every position from the initial mouse/frame coordinates. This
-    -- avoids both Blizzard's sticky edge clamping and the anchor-dependent
-    -- jump produced by StartMoving() with the vertical title bar.
-    left, top = ClampWindowGeometry(
-        left,
-        top,
-        GetExpandedWidth(),
-        profileSettings.height
-    )
-    MainFrame:ClearAllPoints()
-    MainFrame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
-    return true
 end
 
 local function CreateMainFrame()
@@ -2434,6 +2408,7 @@ local function InstallWindowScripts()
         ScheduleWindowAutoHide()
     end)
     MainFrame:HookScript("OnHide", function()
+        StopWindowMoving()
         CancelTooltip()
         MinimizedIconButton:Hide()
     end)
@@ -2445,7 +2420,7 @@ local function InstallWindowScripts()
     end)
     local mouseCheckElapsed = 0
     MainFrame:SetScript("OnUpdate", function(self, elapsed)
-        if UpdateWindowDrag() then
+        if isWindowMoving then
             return
         end
 

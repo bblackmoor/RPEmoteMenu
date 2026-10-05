@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.247
+
+- Use native WoW window dragging instead of polling the cursor and resetting the anchor every frame.
+- Preserve the upper-left corner when dragging begins, save and clamp the position on release, and stop movement when the menu is hidden.
+- Verify both title-bar orientations, drag handles, movement locking and saved-position restoration; in-game responsiveness still requires acceptance.
+
 ## 2.1.234
 
 - Complete maintainability Phase 6: replace private-upvalue inspection and mutation in the remaining behavior, geometry, scheduling and font suites with real window/widget integration.

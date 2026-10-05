@@ -166,5 +166,38 @@ profile=db.GetProfileSettings(); main.ApplyProfileSettings()
 assert(profile.x==-75 and profile.y==-40)
 db.InitializeDatabase(); profile=db.GetProfileSettings(); main.ApplyProfileSettings()
 assert(profile.x==-75 and profile.y==-40)
-print('PASS real window geometry, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
+-- Native dragging owns live movement; Lua must not reset its anchor on update.
+profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
+for _, position in ipairs({'TOP','LEFT'}) do
+    theme.titleBarPosition=position
+    profile.point,profile.relativePoint='CENTER','CENTER'
+    profile.x,profile.y,profile.height=0,0,200
+    main.ApplyProfileSettings()
+    local titleBar
+    for _, object in ipairs(native.objects) do
+        if object:GetParent()==frame and object.titleTextShortened~=nil then titleBar=object end
+    end
+    assert(titleBar)
+    for _, handle in ipairs({frame,titleBar,icon}) do
+        local left,top=frame:GetLeft(),frame:GetTop()
+        handle:GetScript('OnDragStart')(handle)
+        assert(frame.moving and frame.moveStart[1]==left and frame.moveStart[2]==top,
+            'native movement changed the initial corner')
+        frame:ClearAllPoints(); frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',250,650)
+        local nativeAnchor=frame.point
+        frame:GetScript('OnUpdate')(frame,0.2)
+        assert(frame.point==nativeAnchor, 'Lua repositioned a natively dragged frame')
+        handle:GetScript('OnDragStop')(handle)
+        assert(not frame.moving and profile.x==250 and profile.y==650)
+        assert(profile.point=='TOPLEFT' and profile.relativePoint=='BOTTOMLEFT')
+        main.ApplyProfileSettings()
+        assert(frame:GetLeft()==250 and frame:GetTop()==650, 'dragged position did not restore')
+    end
+end
+profile.locked=true; main.ApplyMovementLock()
+frame:GetScript('OnDragStart')(frame); assert(not frame.moving, 'locked window began native movement')
+profile.locked=false; main.ApplyMovementLock()
+frame:GetScript('OnDragStart')(frame); assert(frame.moving)
+frame:Hide(); assert(not frame.moving, 'hidden window retained native movement')
+print('PASS real window geometry, native dragging, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
 

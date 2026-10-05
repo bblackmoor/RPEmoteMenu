@@ -21,7 +21,11 @@ function methods:Show()
     if not wasShown and self.name=='RPEmoteMenu' and self.scripts.OnShow then self.scripts.OnShow(self) end
 end
 function methods:StartSizing(direction) self.sizing=direction end
-function methods:StopMovingOrSizing() self.sizing=nil end
+function methods:StartMoving()
+    self.moving=true
+    self.moveStart={self:GetLeft(),self:GetTop()}
+end
+function methods:StopMovingOrSizing() self.sizing=nil; self.moving=false end
 function methods:GetShadowOffset() return 0, 0 end
 function methods:GetShadowColor() return 0, 0, 0, 1 end
 function methods:SetRotation(value) self.rotation = value end
