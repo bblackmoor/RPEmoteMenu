@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.218
+
+- Close open dropdown menus when disabled and guard native pooled option clicks before Details Framework changes selection; disabled, closed and retired entries leave saved values and displayed selection unchanged.
+- Preserve canonical selection and label caches after callback refresh/rejection; leave the pinned shared framework unchanged.
+- Hide missing-font tooltips on refresh, mouse leave and control hiding only when owned by that selector; preserve other controls’ tooltips.
+- Exercise native option clicks across adapter, Behavior, Profile, Theme and Emotes suites, including row reuse and rejection. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.217
 
 - Bind native emote Save, Delete, category restore and category import operations to their captured Profile/category/emote identities; reject stale targets after selection, reorder or replacement.

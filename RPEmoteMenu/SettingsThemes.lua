@@ -63,7 +63,11 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
     control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
         controlX and y + 5 or y - 26)
     control:GetFrame().settingKey = key
+    local function HideOwnedTooltip()
+        if GameTooltip:IsOwned(control:GetFrame()) then GameTooltip:Hide() end
+    end
     function control:RefreshValue()
+        HideOwnedTooltip()
         local name = getSettings()[key] or ""
         local available = addon.IsFontAvailable(name)
         self.MissingFontName = not available and name or nil
@@ -80,7 +84,8 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
         GameTooltip:AddLine("RP Emote Menu is displaying Friz Quadrata instead.", 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
-    control:HookScript("OnLeave", function() if control.MissingFontName then GameTooltip:Hide() end end)
+    control:HookScript("OnLeave", HideOwnedTooltip)
+    control:HookScript("OnHide", HideOwnedTooltip)
     control:RefreshValue()
     return control
 end

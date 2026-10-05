@@ -82,8 +82,10 @@ local function Type(control, text)
 end
 local function Enter(control, text) Type(control, text); Event(control, 'OnEnterPressed') end
 local function Select(mode)
-    for _, entry in ipairs(minimize.widget.func()) do
-        if entry.value == mode then entry.onclick(minimize.widget, nil, mode); return end
+    if not minimize.widget.opened then Event(minimize, 'OnMouseDown', 'LeftButton') end
+    if not minimize.enabled then return end
+    for _, row in ipairs(minimize.widget.menus) do
+        if row.table.value == mode then row:GetScript('OnMouseDown')(row, 'LeftButton'); return end
     end
     error('Missing minimize choice ' .. mode)
 end
@@ -120,6 +122,14 @@ assert(profile.fadeEnabled and delay.frame:IsEnabled() and opacity.frame:IsEnabl
 assert(not icon.frame:IsEnabled())
 Select('TITLE_BAR'); assert(profile.minimizeMode == 'TITLE_BAR' and not icon.frame:IsEnabled())
 Select('ICON'); assert(profile.minimizeMode == 'ICON' and icon.frame:IsEnabled())
+Event(minimize, 'OnMouseDown', 'LeftButton')
+local pendingMode = minimize.widget.menus[1]
+Switch(fade); assert(not minimize.widget.opened and not minimize.enabled)
+local previousMinimizeCalls = calls.minimize
+pendingMode:GetScript('OnMouseDown')(pendingMode, 'LeftButton')
+assert(profile.minimizeMode == 'ICON' and minimize.widget.label:GetText() == 'Icon'
+    and minimize.widget.myvalue == 'ICON' and calls.minimize == previousMinimizeCalls)
+Switch(fade)
 Enter(icon, '999'); assert(profile.minimizedIconSize == 64)
 Enter(icon, '1'); assert(profile.minimizedIconSize == 16)
 Event(icon, 'OnMouseWheel', 1); assert(profile.minimizedIconSize == 17)

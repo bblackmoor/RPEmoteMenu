@@ -78,7 +78,6 @@ CANCEL='Cancel'; DELETE='Delete'; OKAY='Okay'; CLOSE='Close'
 StaticPopupDialogs={}; local lastPopup
 function StaticPopup_Show(name, text, _, data) lastPopup={name=name,text=text,data=data} end
 C_Timer={After=function() end}
-GameTooltip=setmetatable({}, Widget)
 UISpecialFrames={}
 function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
 Settings={RegisterCanvasLayoutCategory=function(panel) return panel end,

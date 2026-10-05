@@ -401,6 +401,34 @@ unchanged runtime call counts on rejection. Stale native-control comments were
 removed, and Behavior asserts retired factories plus the used native composition
 helpers explicitly. All ten smoke suites pass; client acceptance remains open.
 
+## Post-conversion dropdown and tooltip fixes (2.0.218)
+
+A second review exercised DF's full native option-click sequence. Its handler
+selects before the addon callback and writes the clicked value again afterward;
+callback guards alone therefore protected data but not the displayed selection.
+The addon adapter now wraps only its own native row scripts through DF's
+per-instance option-update hook. It rejects disabled, closed, refreshing or
+retired-generation rows before native selection, including reused row frames.
+Disabling a dropdown also closes its open menu. Accepted clicks still use the
+native handler, then restore the binding's canonical value/label cache so an
+explicit rejection or refresh in the callback wins over DF's trailing write.
+Programmatic value/label updates keep those caches consistent. The pinned
+framework files and shared global handlers remain unchanged.
+
+Font selectors now hide only their owned native GameTooltip during refresh,
+mouse leave and hiding. This retires the unavailable-font message when a provider
+arrives during hover and leaves another control's tooltip alone.
+
+Normal selections in the Behavior, Profile/utility, Theme and Emotes suites now
+open real DF menus and invoke the actual pooled row's native mouse handler.
+Focused adapter tests cover disabled/open menus, retired and reused handlers,
+closed menus, valid selection, callback rejection and canonical displayed/internal
+state. Behavior checks disabling a pending minimize choice; Theme checks provider
+arrival during hover, ordinary leave/hide and another tooltip owner. Native UI
+stubs now implement tooltip ownership and WoW's min/max globals, and settings
+registration tests retain that shared tooltip stub. All ten smoke suites pass;
+rendering, native client timing, library coexistence and taint checks remain open.
+
 ## Verification baseline and acceptance checklist
 
 All five existing suites passed during Phase 1 with:

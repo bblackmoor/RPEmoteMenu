@@ -91,9 +91,18 @@ local function Option(control, value)
     for _, entry in ipairs(control.widget.func()) do if entry.value == value then return entry end end
 end
 local function Select(control, value)
-    local entry = assert(Option(control, value), 'choice not present: ' .. value)
-    entry.onclick(control.widget, nil, value)
+    assert(Option(control, value), 'choice not present: ' .. value)
+    if not control.widget.opened then
+        control.frame:GetScript('OnMouseDown')(control.frame, 'LeftButton')
+    end
+    for _, row in ipairs(control.widget.menus) do
+        if row:IsShown() and row.table.value == value then
+            row:GetScript('OnMouseDown')(row, 'LeftButton'); return
+        end
+    end
+    error('native choice row not present: ' .. value)
 end
+
 local function Accept(request, name)
     local dialog = StaticPopupDialogs[request.name]
     local popup = CreateFrame('Frame')

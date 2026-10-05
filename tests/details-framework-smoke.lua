@@ -217,4 +217,48 @@ LibStub = nil
 assert(widgets.GetFramework() == nil, "missing library fails only at adapter construction")
 LibStub = originalStub
 assert(widgets.GetFramework() == df)
-print("Details Framework smoke: passed")
+
+
+-- Traverse the actual native option handler, which selects before its callback.
+local nativeChanges = 0
+local review = widgets.CreateDropdown(UIParent, function()
+    return {{value='ONE',label='One'}, {value='TWO',label='Two'}}
+end, function() nativeChanges = nativeChanges + 1 end)
+local function OpenReview()
+    review.frame:GetScript('OnMouseDown')(review.frame, 'LeftButton')
+    assert(review.widget.opened)
+end
+local function AssertOne()
+    assert(review:GetValue() == 'ONE' and review.widget.myvalue == 'ONE')
+    assert(review.widget.label:GetText() == 'One' and review.widget.myvaluelabel == 'One')
+end
+review:SetValue('ONE', 'One'); OpenReview()
+local row = review.widget.menus[2]
+local disabledClick = row:GetScript('OnMouseDown')
+review:SetEnabled(false); assert(not review.widget.opened)
+disabledClick(row, 'LeftButton'); AssertOne(); assert(nativeChanges == 0)
+review.frame:GetScript('OnMouseDown')(review.frame, 'LeftButton'); assert(not review.widget.opened)
+review:SetEnabled(true); OpenReview()
+local retiredClick = row:GetScript('OnMouseDown')
+review:InvalidateOptions(); review:SetValue('ONE', 'One')
+retiredClick(row, 'LeftButton'); AssertOne(); assert(nativeChanges == 0)
+OpenReview(); assert(review.widget.menus[2] == row, 'pooled rows should be reused')
+retiredClick(row, 'LeftButton'); AssertOne(); assert(nativeChanges == 0)
+row:GetScript('OnMouseDown')(row, 'LeftButton')
+assert(nativeChanges == 1 and review:GetValue() == 'TWO' and review.widget.myvalue == 'TWO')
+assert(review.widget.label:GetText() == 'Two' and not review.widget.opened)
+row:GetScript('OnMouseDown')(row, 'LeftButton'); assert(nativeChanges == 1, 'closed menus are inert')
+-- An explicit rejection/refresh during the callback wins over DF's final write.
+local rejected
+rejected = widgets.CreateDropdown(UIParent, function()
+    return {{value='ONE',label='One'}, {value='TWO',label='Two'}}
+end, function()
+    rejected:SetValue('ONE', 'Canonical One')
+end)
+rejected:SetValue('ONE', 'Canonical One')
+rejected.frame:GetScript('OnMouseDown')(rejected.frame, 'LeftButton')
+local rejectedRow = rejected.widget.menus[2]
+rejectedRow:GetScript('OnMouseDown')(rejectedRow, 'LeftButton')
+assert(rejected:GetValue() == 'ONE' and rejected.widget.myvalue == 'ONE')
+assert(rejected.widget.label:GetText() == 'Canonical One' and rejected.widget.myvaluelabel == 'Canonical One')
+print('PASS Details Framework adapters and native dropdown clicks, disable, retirement, row reuse and callback rejection')

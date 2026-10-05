@@ -133,6 +133,30 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
     thumb:SetTexture(WHITE)
     thumb:SetTexCoord(0, 1, 0, 1)
     handle = NewHandle(widget, onChanged)
+    -- DF selects before notifying and writes its value again after callbacks.
+    -- Guard this instance's native row handlers before either mutation occurs.
+    local nativeClicks = {}
+    local updateOptionFrame = widget.OnUpdateOptionFrame
+    widget.OnUpdateOptionFrame = function(dropdown, row, entry)
+        if updateOptionFrame then updateOptionFrame(dropdown, row, entry) end
+        nativeClicks[row] = nativeClicks[row] or row:GetScript("OnMouseDown")
+        local click, generation = nativeClicks[row], cached
+        row:SetScript("OnMouseDown", function(frame, ...)
+            if not handle.enabled or handle.refreshDepth ~= 0 or not widget.opened
+                or not frame:IsShown() or cached ~= generation or frame.table ~= entry then
+                return
+            end
+            click(frame, ...)
+            -- A binding may refresh/reject selection in its callback. Keep that
+            -- canonical value instead of DF's trailing write of the clicked entry.
+            handle:Refresh(widget.SetValue, handle.value)
+            widget.myvaluelabel = widget.label:GetText()
+        end)
+    end
+    function handle:SetEnabled(enabled)
+        if enabled ~= true and widget.opened then widget:Close() end
+        Handle.SetEnabled(self, enabled)
+    end
     function handle:InvalidateOptions()
         cached = nil
         -- Rows in an already-open menu still hold their old choice callbacks.
@@ -147,9 +171,13 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
         else
             self:Refresh(self.widget.Select, value, false, false, false)
         end
+        self.widget.myvaluelabel = self.widget.label:GetText()
     end
     function handle:GetValue() return self.value end
-    function handle:SetLabel(text) self.widget.label:SetText(text) end
+    function handle:SetLabel(text)
+        self.widget.label:SetText(text)
+        self.widget.myvaluelabel = text
+    end
     function handle:SetLabelStyle(font, size, r, g, b)
         self.widget.label:SetFont(font, size, "")
         self.widget.label:SetTextColor(r, g, b, 1)

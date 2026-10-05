@@ -69,9 +69,18 @@ local function Option(control, value)
     for _, entry in ipairs(control.widget.func()) do if entry.value == value then return entry end end
 end
 local function Select(control, value)
-    local choice = assert(Option(control, value), 'missing choice: ' .. value)
-    choice.onclick(control.widget, nil, value)
+    assert(Option(control, value), 'choice not present: ' .. value)
+    if not control.widget.opened then
+        control.frame:GetScript('OnMouseDown')(control.frame, 'LeftButton')
+    end
+    for _, row in ipairs(control.widget.menus) do
+        if row:IsShown() and row.table.value == value then
+            row:GetScript('OnMouseDown')(row, 'LeftButton'); return
+        end
+    end
+    error('native choice row not present: ' .. value)
 end
+
 local function Accept(data, name)
     local popup = CreateFrame('Frame'); popup.data = data.data
     popup.editBox = CreateFrame('EditBox', nil, popup); popup.button1 = CreateFrame('Button', nil, popup)
@@ -247,4 +256,24 @@ for _, object in ipairs(native.objects) do
         end
     end
 end
-print('PASS real Theme widgets, shared edits, font providers, picker ownership, conditional fields and reset scope')
+
+
+-- A font arriving during hover retires our tooltip without touching another owner.
+local settings = db.GetThemeSettings()
+settings.categoryFont = 'Review Missing'
+panel.RefreshControls(); Event(controls.categoryFont, 'OnEnter')
+assert(GameTooltip:IsOwned(controls.categoryFont.frame) and GameTooltip:IsShown())
+media:Register('font', 'Review Missing', 'Interface\\Fonts\\review.ttf'); Drain()
+assert(controls.categoryFont.MissingFontName == nil and not GameTooltip:IsShown())
+Event(controls.categoryFont, 'OnLeave'); assert(not GameTooltip:IsShown())
+settings.categoryFont = 'Still Missing'; panel.RefreshFontControls()
+Event(controls.categoryFont, 'OnEnter'); Event(controls.categoryFont, 'OnLeave')
+assert(not GameTooltip:IsShown())
+Event(controls.categoryFont, 'OnEnter'); Event(controls.categoryFont, 'OnHide')
+assert(not GameTooltip:IsShown())
+Event(controls.categoryFont, 'OnEnter')
+local otherOwner = CreateFrame('Frame')
+GameTooltip:SetOwner(otherOwner); GameTooltip:SetText('Other tooltip'); GameTooltip:Show()
+panel.RefreshFontControls(); Event(controls.categoryFont, 'OnLeave'); Event(controls.categoryFont, 'OnHide')
+assert(GameTooltip:IsOwned(otherOwner) and GameTooltip:IsShown() and GameTooltip:GetText() == 'Other tooltip')
+print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')

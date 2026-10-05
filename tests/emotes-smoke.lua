@@ -65,7 +65,8 @@ local function Click(control)
     local f=control.frame; f.scripts.OnMouseDown(f,'LeftButton'); f.scripts.OnMouseUp(f,'LeftButton')
 end
 local function Select(i)
-    local choice=selector.widget.func()[i]; choice.onclick(selector.widget,nil,choice.value)
+    if not selector.widget.opened then selector.frame:GetScript('OnMouseDown')(selector.frame,'LeftButton') end
+    local row=selector.widget.menus[i]; row:GetScript('OnMouseDown')(row,'LeftButton')
 end
 local function Type(value)
     nameBox.frame:SetFocus(); nameBox.frame:SetText(value); nameBox.frame.scripts.OnTextChanged(nameBox.frame,true)

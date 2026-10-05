@@ -11,7 +11,7 @@ bit = {band=function() return 0 end}; function securecallfunction(f, ...) return
 function getfenv() return _G end
 unpack = unpack or table.unpack
 loadstring = loadstring or load
-floor, ceil, abs = math.floor, math.ceil, math.abs
+floor, ceil, abs, min, max = math.floor, math.ceil, math.abs, math.min, math.max
 strmatch, strfind, strsub, strlower, format = string.match, string.find, string.sub, string.lower, string.format
 function wipe(t) for k in pairs(t) do t[k]=nil end return t end
 function Mixin(t, ...) for i=1,select('#',...) do for k,v in pairs(select(i,...)) do t[k]=v end end return t end
@@ -61,6 +61,8 @@ end
 function CreateFrame(kind,name,parent) return object(name,parent,kind) end
 function methods:GetName() return self.name end
 function methods:GetParent() return self.parent end
+function methods:SetOwner(owner) self.owner=owner end
+function methods:IsOwned(owner) return self.owner==owner end
 function methods:GetObjectType() return self.kind end
 function methods:IsObjectType(kind) return self.kind==kind end
 function methods:GetWidth() return self.width end
