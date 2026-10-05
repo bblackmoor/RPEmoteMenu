@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.251
+
+- Refresh menu fonts after display-size and UI-scale changes, including Alt-Tab window resizing; defer refresh until WoW applies the new scale.
+- Invalidate cached title, category, outline, emote and empty-state glyphs and remeasure automatic column widths without changing saved font sizes or window geometry.
+- Add display-scale regression coverage for hidden menus in both title-bar orientations and all three minimize modes. All seventeen smoke suites pass; in-game acceptance remains pending.
+
 ## 2.1.250
 
 - Treat native dragging and resizing as activity; block new inactivity requests, pending timers and automatic collapse completion while a gesture is active.

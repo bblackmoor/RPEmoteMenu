@@ -333,4 +333,54 @@ for _, position in ipairs({'TOP','LEFT'}) do
     end
 end
 C_Timer.After=originalAfter
+-- Model WoW's cached glyph scale: identical SetFont calls leave it stale.
+-- Display changes must refresh even hidden/compact menus without saving geometry.
+local methods=getmetatable(UIParent).__index
+local oldSetFont,oldGetFont=methods.SetFont,methods.GetFont
+local displayScale=1
+function methods:SetFont(file,size,flags)
+    local previous=self.testFont
+    if not previous or previous[1]~=file or previous[2]~=size or previous[3]~=flags then
+        self.glyphScale=displayScale
+    end
+    self.testFont={file,size,flags}
+    return true
+end
+function methods:GetFont()
+    return unpack(self.testFont or {STANDARD_TEXT_FONT,12,''})
+end
+local title
+for _,object in ipairs(native.objects) do
+    if object.kind=='FontString' and object.rotation~=nil then title=object end
+end
+assert(title, 'title font missing')
+for _,position in ipairs({'TOP','LEFT'}) do
+    for _,mode in ipairs({'NONE','TITLE','ICON'}) do
+        theme.titleBarPosition=position
+        profile.fadeEnabled=mode~='NONE'; profile.minimizeMode=mode
+        main.ApplyProfileSettings()
+        frame:Hide()
+        local x,y,height=profile.x,profile.y,profile.height
+        local timers={}
+        C_Timer.After=function(delay,fn) timers[#timers+1]={delay=delay,fn=fn} end
+        displayScale=displayScale+0.2
+        local event=assert(frame:GetScript('OnEvent'))
+        event(frame,'DISPLAY_SIZE_CHANGED'); event(frame,'UI_SCALE_CHANGED')
+        assert(category.Text.glyphScale~=displayScale, 'font refresh was not deferred')
+        local count=0
+        while #timers>0 do
+            count=count+1; assert(count<20, 'display refresh did not settle')
+            table.remove(timers,1).fn()
+        end
+        assert(category.Text.glyphScale==displayScale and emote.Text.glyphScale==displayScale
+            and title.glyphScale==displayScale, 'display scale left stale glyphs')
+        for _,outline in ipairs(category.TextOutline) do assert(outline.glyphScale==displayScale) end
+        assert(category.Text.testFont[2]==theme.categoryFontSize
+            and emote.Text.testFont[2]==theme.emoteFontSize, 'display refresh changed saved font size')
+        assert(profile.x==x and profile.y==y and profile.height==height
+            and not frame:IsShown(), 'display refresh changed geometry or activation')
+        C_Timer.After=originalAfter
+    end
+end
+methods.SetFont,methods.GetFont=oldSetFont,oldGetFont
 print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, inactivity guards, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')

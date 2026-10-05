@@ -229,6 +229,9 @@ local function MeasureText(text, fontName, fontSize)
     end
 
     local fontPath = addon.GetFontPath(fontName)
+    -- A display/UI-scale change can leave cached glyph metrics at the old
+    -- scale. Changing size first makes SetFont rebuild them before measuring.
+    WidthMeasurementText:SetFont(fontPath, fontSize + 1, "")
     if not WidthMeasurementText:SetFont(fontPath, fontSize, "") then
         WidthMeasurementText:SetFont(STANDARD_TEXT_FONT, fontSize, "")
     end
@@ -763,6 +766,20 @@ function MainWindow.RefreshFontDisplays(updateLayout)
 
     local categoryApplied = true
     local emoteApplied = true
+    -- Template fonts need the same cache invalidation as the Theme fonts.
+    -- Keep their original font, size, flags and color.
+    local function RefreshTemplateFont(text)
+        if not text then return end
+        local file, size, flags = text:GetFont()
+        if not file or not size then return end
+        text:SetFont(file, size + 1, flags or "")
+        text:SetFont(file, size, flags or "")
+    end
+    RefreshTemplateFont(TitleText)
+    RefreshTemplateFont(CategoryEmptyLabel)
+    for _, button in ipairs({CategoryEmptyButton, EmoteEmptyButton}) do
+        if button.GetFontString then RefreshTemplateFont(button:GetFontString()) end
+    end
     categoryButtonHeight = math.max(24, themeSettings.categoryFontSize + 10)
     emoteButtonHeight = math.max(20, themeSettings.emoteFontSize + 8)
 
@@ -2418,6 +2435,17 @@ local function CreateResizeGrip()
 end
 
 local function InstallWindowScripts()
+    -- WoW resizes/scales frames automatically, but font glyphs and measured
+    -- column widths can remain cached at the previous display scale. Defer
+    -- until the client has applied it; the shared font queue coalesces events
+    -- and also runs while the menu is hidden or minimized.
+    MainFrame:RegisterEvent("DISPLAY_SIZE_CHANGED")
+    MainFrame:RegisterEvent("UI_SCALE_CHANGED")
+    MainFrame:SetScript("OnEvent", function(_, event)
+        if event == "DISPLAY_SIZE_CHANGED" or event == "UI_SCALE_CHANGED" then
+            MainWindow.ScheduleFontRefreshes(true)
+        end
+    end)
     MainFrame:HookScript("OnEnter", function()
         if isWindowAutoHidden and not IsMinimizedToIcon() then
             SetWindowAutoHidden(false)
