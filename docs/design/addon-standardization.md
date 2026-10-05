@@ -31,3 +31,11 @@ Validation includes direct database changes during previews, callback retirement
 The [shared conventions](settings-conventions.md) document module names, API contracts, deliberate differences, the test coverage map and pending native WoW acceptance. Both repositories have identical settings-contracts.lua helpers and repository-specific smoke entry points. The default test checks the local actual picker module; a peer path enables both actual modules together, including both takeover directions and native setup/hide variants. Existing integration suites cover actual libraries, registration, refresh, disabled controls, responsive layout, dialogs and database mutations.
 
 Architecture documents and README development commands reflect the current modules. No shared runtime dependency or packaging workflow was introduced. All four code phases are implemented; client acceptance remains pending.
+
+## Post-phase picker review fixes
+
+Opening sessions now ignore native OnHide emitted during setup of the previous owner, so the incoming session remains active until its own native lifecycle begins. Coexistence tests assert actual preview writes, original-color rollback and picker closure in both takeover directions, with and without setup hiding the previous picker.
+
+Simple Nameplates color rows provide a saved-RGB getter to the swatch adapter. Opening reads that getter and refreshes the displayed swatch silently; it no longer captures a stale display color as the rollback original. Priority and effect color tests cover direct database changes without a page refresh. Generic swatches without a saved getter retain their display-RGB fallback.
+
+Both complete suites and actual-addon coexistence checks pass. Native WoW verification remains pending; no client occurrence is claimed for the simulated setup-hide ordering.

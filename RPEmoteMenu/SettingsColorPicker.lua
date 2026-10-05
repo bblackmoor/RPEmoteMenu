@@ -42,7 +42,11 @@ function UI.OpenColorEditor(owner, getColor, applyColor)
     if not pickerHooked then
         pickerHooked = true
         -- Okay/hide commits the preview and makes retained callbacks inert.
-        ColorPickerFrame:HookScript("OnHide", function() FinishEdit(activeEdit, false) end)
+        ColorPickerFrame:HookScript("OnHide", function()
+            -- Setup may hide the previous picker before assigning our extraInfo.
+            -- That hide belongs to the outgoing session, not this opening edit.
+            if activeEdit and not activeEdit.opening then FinishEdit(activeEdit, false) end
+        end)
     end
     ColorPickerFrame:SetupColorPickerAndShow({
         r = color.r, g = color.g, b = color.b,

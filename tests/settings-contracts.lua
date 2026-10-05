@@ -105,14 +105,20 @@ function Contracts.PickerCoexistence(first, second)
         assert(ColorPickerFrame.shown and ColorPickerFrame:GetExtraInfo() == bInfo.extraInfo,
             "displaced addon leaves the current picker open")
         assert(a.writes == writesA and b.writes == writesB, "displaced callbacks cannot write")
-        Preview(bInfo, sample); b.UI.CancelColorEdit(); Same(b.color, originalB)
+        Preview(bInfo, sample); Same(b.color, sample)
+        assert(b.writes == writesB + 1, "incoming picker preview applies exactly once")
+        b.UI.CancelColorEdit(); Same(b.color, originalB)
+        assert(not ColorPickerFrame.shown, "incoming picker cancellation closes it")
         Same(a.color, sample) -- Displacement does not roll back another owner's preview.
         aInfo = a:Open()
         writesA, writesB = a.writes, b.writes
         b.UI.CancelColorEdit(); bInfo.cancelFunc(); Preview(bInfo, originalB)
         assert(ColorPickerFrame.shown and ColorPickerFrame:GetExtraInfo() == aInfo.extraInfo)
         assert(a.writes == writesA and b.writes == writesB, "ownership works in both directions")
-        a.UI.CancelColorEdit()
+        Preview(aInfo, originalB); Same(a.color, originalB)
+        assert(a.writes == writesA + 1, "returning picker preview applies exactly once")
+        a.UI.CancelColorEdit(); Same(a.color, sample)
+        assert(not ColorPickerFrame.shown, "returning picker cancellation closes it")
     end
 end
 return Contracts

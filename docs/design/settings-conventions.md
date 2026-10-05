@@ -32,7 +32,7 @@ About uses a large heading, muted description, Version/Author/Category/License m
 | Profile confirmation after selection change | Unchanged captured original may remain valid | Captured original must still be selected |
 | Specialized refresh | Editor targets, category selection, font refresh | Appearance draft cancellation, font refresh, runtime plate refresh |
 
-Both pickers use RGB tables for get/apply callbacks. Setup is silent, live previews apply, cancellation restores the original only while target identity remains current, native Okay/hide commits, and retired callbacks are inert. CancelColorEdit(owner) only cancels that owner; callers using frame scripts must wrap a global cancellation in a zero-argument callback. Native picker extraInfo identifies ownership. An addon must not close or roll back a picker owned by another addon.
+Both pickers use RGB tables for get/apply callbacks. Setup is silent and ignores hides emitted while the new session is opening; live previews apply, cancellation restores the original only while target identity remains current, native Okay/hide commits, and retired callbacks are inert. CancelColorEdit(owner) only cancels that owner; callers using frame scripts must wrap a global cancellation in a zero-argument callback. Native picker extraInfo identifies ownership. An addon must not close or roll back a picker owned by another addon.
 
 Database mutations retire affected previews before changing their selection or replacing data. Profile dialogs validate captured identity at acceptance; bundled restore also validates formerly missing names. These rules do not migrate saved data or change reset ownership.
 
@@ -65,6 +65,8 @@ texlua tests/settings-contract-smoke.lua /path/to/SimpleNameplates/SimpleNamepla
 # In SimpleNameplates:
 texlua tests/settings-contract-smoke.lua /path/to/RPEmoteMenu/RPEmoteMenu/SettingsColorPicker.lua
 ```
+
+Simple Nameplates color rows pass a saved-RGB getter to their widget adapter; opening refreshes the swatch silently and captures current saved RGB for rollback. Generic adapter swatches may use display RGB when no saved getter is supplied.
 
 The coexistence check runs both takeover directions and setup variants with and without an intermediate native hide. It checks committed/displaced previews, owner-specific cancellation and stale callbacks against the actual modules.
 
