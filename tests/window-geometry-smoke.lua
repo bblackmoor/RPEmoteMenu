@@ -257,4 +257,47 @@ main.ApplyThemeSettings()
 assert(not frame.sizing and profile.height==335)
 frame:SetHeight(355)
 assert(profile.height==335, 'Theme application left resizing persistence active')
-print('PASS real window geometry, native dragging, interrupted gesture ownership, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
+-- Explicit layout actions supersede gestures and survive their stale callbacks.
+for _, position in ipairs({'TOP','LEFT'}) do
+    theme.titleBarPosition=position
+    for _, gesture in ipairs({'drag','resize'}) do
+        for _, action in ipairs({'center','reset','exact'}) do
+            profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
+            profile.point,profile.relativePoint='TOPLEFT','BOTTOMLEFT'
+            profile.x,profile.y,profile.height=250,650,300
+            main.ApplyProfileSettings()
+            if gesture=='drag' then
+                frame:GetScript('OnDragStart')(frame)
+                frame:ClearAllPoints(); frame:SetPoint('TOPLEFT',UIParent,'BOTTOMLEFT',275,675)
+            else
+                grip:GetScript('OnMouseDown')(grip,'LeftButton')
+                frame:SetHeight(320)
+            end
+            if action=='center' then
+                main.CenterWindow()
+                assert(profile.point=='CENTER' and profile.relativePoint=='CENTER'
+                    and profile.x==0 and profile.y==0)
+            elseif action=='reset' then
+                main.ResetWindowPosition()
+                assert(profile.point==addon.DefaultProfileSettings.point
+                    and profile.relativePoint==addon.DefaultProfileSettings.relativePoint
+                    and profile.x==addon.DefaultProfileSettings.x
+                    and profile.y==addon.DefaultProfileSettings.y
+                    and profile.height==addon.DefaultProfileSettings.height)
+            else
+                main.ApplyWindowGeometry(-75,-40,nil,285,true)
+                assert(profile.x==-75 and profile.y==-40 and profile.height==285)
+            end
+            assert(not frame.moving and not frame.sizing, action..' retained '..gesture)
+            local point,relative,x,y,height=profile.point,profile.relativePoint,
+                profile.x,profile.y,profile.height
+            frame:SetHeight(height+20)
+            frame:GetScript('OnDragStop')(frame)
+            grip:GetScript('OnMouseUp')(grip)
+            assert(profile.point==point and profile.relativePoint==relative
+                and profile.x==x and profile.y==y and profile.height==height,
+                'stale '..gesture..' callbacks overwrote '..action..' layout')
+        end
+    end
+end
+print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')

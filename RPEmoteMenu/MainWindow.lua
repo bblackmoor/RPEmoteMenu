@@ -318,6 +318,8 @@ local function CalculateColumnWidths()
     return width + (IsTitleBarOnLeft() and leftTitleBarWidth or 0)
 end
 
+local FinishWindowInteraction
+
 local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
     return addon.WindowGeometry.Clamp(x, y, width, height, allowOffscreen, {
         screenWidth = UIParent:GetWidth(), screenHeight = UIParent:GetHeight(),
@@ -331,6 +333,7 @@ end
 function MainWindow.ApplyWindowGeometry(
     x, y, width, height, preserveAnchor, preserveProfileGeometry
 )
+    FinishWindowInteraction()
     width = CalculateColumnWidths()
     x, y, width, height = ClampWindowGeometry(
         x,
@@ -428,7 +431,7 @@ local function SaveWindowSize()
     RefreshGeneralWindowFields()
 end
 
-local function FinishWindowInteraction()
+FinishWindowInteraction = function()
     local wasMoving, wasResizing = isWindowMoving, isUserResizing
     if not MainFrame or (not wasMoving and not wasResizing) then
         return
@@ -474,6 +477,7 @@ local function RestoreWindowSize()
 end
 
 function MainWindow.ResetWindowPosition()
+    FinishWindowInteraction()
     Database.ResetWindowLayout()
     local width = CalculateColumnWidths()
 
@@ -503,6 +507,7 @@ function MainWindow.CenterWindow()
         return
     end
 
+    FinishWindowInteraction()
     profileSettings.point = "CENTER"
     profileSettings.relativePoint = "CENTER"
     profileSettings.x = 0

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.249
+
+- Finish active drag/resize gestures before Center Window, Reset Window and exact geometry changes, allowing the requested layout to supersede the gesture.
+- Preserve center anchors, reset defaults and signed advanced offsets against delayed release callbacks and unrelated size events.
+- Cover all three actions during dragging and resizing in both title-bar orientations. All seventeen smoke suites and Lua syntax checks pass; in-game acceptance remains pending.
+
 ## 2.1.248
 
 - Finish active move/resize gestures before hiding, Profile rebinding, locking or Theme application.
