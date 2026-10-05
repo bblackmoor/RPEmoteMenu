@@ -429,4 +429,33 @@ local previousTheme = db.GetActiveThemeName()
 importDialog.editBox:SetText(importedText)
 importDialog.actionButton:GetScript('OnClick')(importDialog.actionButton)
 assert(db.GetActiveThemeName() ~= previousTheme and management:GetValue() == db.GetActiveThemeName())
+
+-- Bulk restoration includes Default appearance, shared users and runtime refresh.
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.RefreshControls()
+assert(db.SetProfileTheme('Shared', 'Default'))
+local originalDefault = db.GetTheme('Default')
+originalDefault.settings.categoryFontSize = 21
+Click(buttons['Restore Bundled Themes']); local restoreWithDefault = request
+assert(restoreWithDefault.data[1].name == 'Default')
+assert(StaticPopupDialogs[restoreWithDefault.name].text:find('Default Theme', 1, true))
+local callsBeforeDefault = applies
+Accept(restoreWithDefault)
+assert(db.GetTheme('Default') ~= originalDefault)
+assert(db.GetThemeSettings('Default').categoryFontSize == addon.DefaultThemeSettings.categoryFontSize)
+assert(db.GetProfileThemeName('Shared') == 'Default' and db.GetActiveThemeName() == 'Default')
+assert(applies == callsBeforeDefault + 1)
+assert(db.GetTheme('Teal Custom') == capitalized, 'custom Themes must remain unchanged')
+
+-- Replacing Default while confirmation is open invalidates the whole batch.
+Click(buttons['Restore Bundled Themes']); local staleDefaultBulk = request
+assert(db.RestoreDefaultTheme())
+local currentDefaults = {}
+for _, target in ipairs(staleDefaultBulk.data) do currentDefaults[target.name] = db.GetTheme(target.name) end
+callsBeforeDefault = applies
+Accept(staleDefaultBulk)
+for name, object in pairs(currentDefaults) do assert(db.GetTheme(name) == object) end
+assert(applies == callsBeforeDefault)
+
+local restoredCount = assert(db.RestoreBuiltInThemes())
+assert(restoredCount == #addon.BuiltInThemes + 1)
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')

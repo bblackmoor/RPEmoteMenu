@@ -7,7 +7,7 @@ function UI.CaptureThemeDialogTarget(name)
 end
 
 function UI.CaptureBundledThemeDialogTargets()
-    local targets = {}
+    local targets = {UI.CaptureThemeDialogTarget("Default")}
     for _, definition in ipairs(addon.BuiltInThemes) do
         targets[#targets + 1] = UI.CaptureThemeDialogTarget(definition.name)
     end
@@ -112,7 +112,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUNDLED_THEMES"] = {
-        text = "Restore all bundled Themes to factory appearance? Edited presets will be reset and missing ones recreated.",
+        text = "Restore Default Theme and all bundled Themes to factory appearance? Edited presets will be reset and missing ones recreated.",
         button1 = "Restore", button2 = CANCEL or "Cancel",
         OnAccept = function(_, targets)
             -- Check every slot before restoring any, including intentionally missing presets.
@@ -128,7 +128,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
                 SetStatus(errorMessage, true)
                 return
             end
-            SetStatus("Restored " .. count .. " bundled Themes.")
+            SetStatus("Restored " .. count .. " Themes, including Default.")
         end,
         timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
     }

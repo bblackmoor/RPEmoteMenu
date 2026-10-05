@@ -1251,21 +1251,25 @@ end
 
 
 function Database.RestoreBuiltInThemes()
+    local valid, errorMessage = ValidateThemeRestoreName(DEFAULT_THEME_NAME)
+    if not valid then return nil, errorMessage end
     -- Validate the entire batch before resetting any preset or cancelling previews.
     for _, definition in ipairs(builtInThemes) do
         local valid, errorMessage = ValidateThemeRestoreName(definition.name)
         if not valid then return nil, errorMessage end
     end
     CancelThemeColorEdit()
+    RPEmoteMenuDB.themes[DEFAULT_THEME_NAME] = {settings = CopyThemeSettings(themeDefaults)}
     for _, definition in ipairs(builtInThemes) do
         RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
     end
-    if builtInThemeByName[Database.GetActiveThemeName()] then
+    local activeTheme = Database.GetActiveThemeName()
+    if activeTheme == DEFAULT_THEME_NAME or builtInThemeByName[activeTheme] then
         RefreshThemeViews()
     else
         RefreshSettingsViews()
     end
-    return #builtInThemes
+    return #builtInThemes + 1
 end
 
 

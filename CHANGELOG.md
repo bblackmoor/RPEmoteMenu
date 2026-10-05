@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.223
+
+- Include Default Theme in Restore Bundled Themes, along with all five bundled presets; preserve custom Themes and Profile assignments.
+- Include Default in captured-target and name-conflict validation before any bulk mutation, and refresh the active appearance when Default is restored.
+- Update confirmation text, restored count and README; add coverage for Default restoration and stale-confirmation rejection. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.222
 
 - Replace show-at-login with a global Active switch and Active/Inactive status, following Simple Nameplates; /rpem toggles activation and settings commands remain available while inactive.
