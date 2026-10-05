@@ -115,7 +115,7 @@ assert(not db.RenameProfile('Default', 'Invalid') and not db.DeleteProfile('Defa
 assert(Option(selector, 'Default')) -- Prime cached lists before lifecycle changes.
 Select(themeSelector, 'Teal')
 assert(db.GetActiveThemeName() == 'Teal' and themeSelector:GetValue() == 'Teal')
--- The still-native Theme editor must track assignment from the converted page.
+-- The Theme editor must track assignment from the Profiles page.
 local themeSelected
 for _, object in ipairs(native.objects) do
     local parent = object:GetParent()

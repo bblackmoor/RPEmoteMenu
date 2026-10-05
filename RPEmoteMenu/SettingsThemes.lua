@@ -7,7 +7,7 @@ local GetExchangeDialog = UI.GetExchangeDialog
 local Widgets = addon.SettingsWidgets
 local FIELD_GAP = UI.FIELD_GAP
 
--- Theme-only composition; Emote editors keep their native helpers until Phase 6.
+-- Theme-local labels and rows compose the shared widget adapters.
 local function CreateLabel(parent, text, x, y)
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)

@@ -144,7 +144,12 @@ local function InstallExchangeActions(dialog)
     function dialog:UpdateActionState()
         if self.mode == "import" then
             local hasText = strtrim(editBox:GetText() or "") ~= ""
-            actionButton:SetEnabled(hasText)
+            local validTarget = self.dataType ~= "category"
+                or Database.IsCurrentContentTarget(self.categoryTarget)
+            actionButton:SetEnabled(hasText and validTarget)
+            if not validTarget then
+                SetStatus("The Profile or category changed. Reopen Import before replacing content.", true)
+            end
         else
             actionButton:SetEnabled(true)
         end
@@ -173,7 +178,7 @@ local function InstallExchangeActions(dialog)
         dialog:Hide()
     end)
 
-    local function PerformImport(importText, dataType, categoryIndex)
+    local function PerformImport(importText, dataType, categoryIndex, target)
         dataType = dataType or dialog.dataType
         local success
         local result
@@ -187,6 +192,13 @@ local function InstallExchangeActions(dialog)
             success, result, sourceProfileName =
                 Serialization.ImportThemeAsNew(importText)
         elseif dataType == "category" then
+            if dialog.mode ~= "import" or dialog.dataType ~= "category"
+                or target ~= dialog.categoryTarget
+                or not Database.IsCurrentContentTarget(target) then
+                SetStatus("The Profile or category changed. Reopen Import before replacing content.", true)
+                dialog:UpdateActionState()
+                return
+            end
             success, result = Serialization.ImportCategory(
                 categoryIndex or dialog.categoryIndex,
                 importText
@@ -202,6 +214,10 @@ local function InstallExchangeActions(dialog)
             return
         end
 
+        if dataType == "category" then
+            -- A successful import replaces the category; bind the next action to it.
+            dialog.categoryTarget = Database.CaptureContentTarget(categoryIndex or dialog.categoryIndex)
+        end
         editBox:SetText("")
         dialog:UpdateActionState()
 
@@ -235,7 +251,7 @@ local function InstallExchangeActions(dialog)
         button1 = "Replace",
         button2 = CANCEL or "Cancel",
         OnAccept = function(_, data)
-            PerformImport(data.importText, "category", data.categoryIndex)
+            PerformImport(data.importText, "category", data.categoryIndex, data.target)
         end,
         timeout = 0,
         whileDead = true,
@@ -253,6 +269,11 @@ local function InstallExchangeActions(dialog)
 
         local importText = editBox:GetText()
         if dialog.dataType == "category"
+            and not Database.IsCurrentContentTarget(dialog.categoryTarget) then
+            dialog:UpdateActionState()
+            return
+        end
+        if dialog.dataType == "category"
             and CategoryHasContent(Database.GetCategory(dialog.categoryIndex)) then
             StaticPopup_Show(
                 "RPEMOTEMENU_IMPORT_OVER_CATEGORY",
@@ -260,16 +281,18 @@ local function InstallExchangeActions(dialog)
                 nil,
                 {
                     importText = importText,
-                    categoryIndex = dialog.categoryIndex
+                    categoryIndex = dialog.categoryIndex,
+                    target = dialog.categoryTarget
                 }
             )
             return
         end
 
-        PerformImport(importText, dialog.dataType)
+        PerformImport(importText, dialog.dataType, nil, dialog.categoryTarget)
     end)
 
     dialog:SetScript("OnHide", function()
+        dialog.categoryTarget = nil
         editBox:ClearFocus()
     end)
 
@@ -289,6 +312,7 @@ local function InstallExchangeModes(dialog)
             return false, errorMessage
         end
 
+        self.categoryTarget = nil
         self.mode = "export"
         self.dataType = "category"
         self.categoryIndex = categoryIndex
@@ -309,6 +333,7 @@ local function InstallExchangeModes(dialog)
     end
 
     function dialog:OpenImport(categoryIndex)
+        self.categoryTarget = Database.CaptureContentTarget(categoryIndex)
         self.mode = "import"
         self.dataType = "category"
         self.categoryIndex = categoryIndex
@@ -335,6 +360,7 @@ local function InstallExchangeModes(dialog)
 
         self.mode = "export"
         self.dataType = "profile"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
@@ -358,6 +384,7 @@ local function InstallExchangeModes(dialog)
     function dialog:OpenProfileImport(onProfileImported)
         self.mode = "import"
         self.dataType = "profile"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = onProfileImported
@@ -383,6 +410,7 @@ local function InstallExchangeModes(dialog)
 
         self.mode = "export"
         self.dataType = "theme"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.onProfileImported = nil
         self.onThemeImported = nil
@@ -403,6 +431,7 @@ local function InstallExchangeModes(dialog)
     function dialog:OpenThemeImport(onThemeImported)
         self.mode = "import"
         self.dataType = "theme"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.onProfileImported = nil
         self.onThemeImported = onThemeImported
@@ -427,6 +456,7 @@ local function InstallExchangeModes(dialog)
 
         self.mode = "export"
         self.dataType = "everything"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
@@ -450,6 +480,7 @@ local function InstallExchangeModes(dialog)
     function dialog:OpenEverythingImport()
         self.mode = "import"
         self.dataType = "everything"
+        self.categoryTarget = nil
         self.categoryIndex = nil
         self.profileName = nil
         self.onProfileImported = nil
@@ -486,3 +517,4 @@ UI.RefreshExchangeDialog = function()
         exchangeDialog:UpdateActionState()
     end
 end
+

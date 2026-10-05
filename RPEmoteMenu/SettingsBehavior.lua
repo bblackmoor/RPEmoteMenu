@@ -7,7 +7,7 @@ local settings
 local FIELD_GAP = UI.FIELD_GAP
 local Widgets = addon.SettingsWidgets
 
--- Behavior-only composition: other pages keep the native SettingsUI factories.
+-- Behavior-local labels and rows compose the shared widget adapters.
 local function CreateSwitch(parent, label, y, getValue, setValue, controlX)
     local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     caption:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)

@@ -525,6 +525,43 @@ function Database.GetCategory(categoryIndex)
 end
 
 
+-- Pending content dialogs bind to actual saved records, not mutable slot numbers.
+-- A category/all-category operation also captures its contained emote identities.
+function Database.CaptureContentTarget(categoryIndex, emoteIndex)
+    local profile = Database.GetActiveProfile()
+    local target = {profile = profile, categories = profile.categories,
+        categoryIndex = categoryIndex, emoteIndex = emoteIndex, records = {}}
+    local first, last = categoryIndex or 1, categoryIndex or MAX_CATEGORIES
+    for index = first, last do
+        local category = profile.categories[index]
+        if not category then return nil end
+        local record = {category = category, emotes = category.emotes, records = {}}
+        local startEmote, endEmote = emoteIndex or 1, emoteIndex or MAX_EMOTES
+        for slot = startEmote, endEmote do
+            if not category.emotes[slot] then return nil end
+            record.records[slot] = category.emotes[slot]
+        end
+        target.records[index] = record
+    end
+    return target
+end
+
+function Database.IsCurrentContentTarget(target)
+    if not target or target.profile ~= Database.GetActiveProfile()
+        or target.categories ~= Database.GetCategories() then return false end
+    for index, record in pairs(target.records) do
+        local category = target.categories[index]
+        if category ~= record.category or category.emotes ~= record.emotes then
+            return false
+        end
+        for slot, emote in pairs(record.records) do
+            if category.emotes[slot] ~= emote then return false end
+        end
+    end
+    return true
+end
+
+
 local function FindProfileByName(profileName)
     local requestedName = string.lower(profileName)
 

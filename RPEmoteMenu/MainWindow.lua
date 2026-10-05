@@ -1148,7 +1148,10 @@ local function GetEmoteEditorDialog()
         local emote = category and category.emotes
             and category.emotes[dialog.emoteIndex]
 
-        if not emote then
+        if not emote or not Database.IsCurrentContentTarget(dialog.contentTarget) then
+            dialog.Status:SetText("The Profile or emote changed. Reopen the editor before saving.")
+            dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
+            dialog.SaveButton:SetEnabled(false)
             return
         end
 
@@ -1180,6 +1183,7 @@ local function GetEmoteEditorDialog()
 
         self.categoryIndex = categoryIndex
         self.emoteIndex = emoteIndex
+        self.contentTarget = Database.CaptureContentTarget(categoryIndex, emoteIndex)
         self.NameBox:SetText(emote.label or "")
         self.DefaultBox:SetText(emote.defaultCommand or "")
         self.TargetedBox:SetText(emote.targetedCommand or "")
@@ -1196,6 +1200,7 @@ local function GetEmoteEditorDialog()
         end
 
         self.SaveButton:SetEnabled(editable)
+        self.Status:SetTextColor(0.8, 0.8, 0.8, 1)
         self.Status:SetText(editable
             and "Changes apply to the current profile."
             or "The Default profile's emotes cannot be edited. Copy it to a custom profile first.")
@@ -1206,6 +1211,12 @@ local function GetEmoteEditorDialog()
         self:Raise()
     end
 
+    dialog:SetScript("OnHide", function(self)
+        self.contentTarget = nil
+        for _, box in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
+            box:ClearFocus()
+        end
+    end)
     emoteEditorDialog = dialog
     return dialog
 end

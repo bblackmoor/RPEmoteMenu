@@ -11,7 +11,6 @@ local db = addon.Database
 db.InitializeDatabase()
 Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
 local widgets, main = addon.SettingsWidgets, addon.MainWindow
-local nativeSwitch, nativeInteger = addon.SettingsUI.CreateSwitch, addon.SettingsUI.CreateIntegerEditBox
 local controls = {Switch = {}, IntegerEntry = {}, Dropdown = {}, Button = {}}
 for kind, collection in pairs(controls) do
     local factory = widgets['Create' .. kind]
@@ -63,8 +62,10 @@ Load('SettingsBehavior.lua')
 local container = addon.SettingsUI.CreateGeneralSettingsPanel()
 addon.Settings.RefreshSettingsPanels = container.RefreshControls
 container.RefreshControls()
-assert(addon.SettingsUI.CreateSwitch == nativeSwitch and addon.SettingsUI.CreateIntegerEditBox == nativeInteger,
-    'later-phase native factories stay available')
+assert(addon.SettingsUI.CreateSwitch == nil and addon.SettingsUI.CreateIntegerEditBox == nil,
+    'unused native widget factories remain retired')
+assert(type(addon.SettingsUI.CreateRows) == 'function'
+    and type(addon.SettingsUI.CreateInfoLink) == 'function', 'used native composition helpers missing')
 assert(#controls.Switch == 4 and #controls.IntegerEntry == 7 and #controls.Dropdown == 1 and #controls.Button == 3)
 local login, gear, fade, lock = unpack(controls.Switch)
 local tooltip, delay, opacity, icon, x, y, height = unpack(controls.IntegerEntry)

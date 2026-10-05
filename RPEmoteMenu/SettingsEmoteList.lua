@@ -108,13 +108,17 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         end
     end
 
-    local function DeleteEmote(categoryIndex, emoteIndex)
+    local function DeleteEmote(data)
         if not Database.CanEditActiveProfile() then
             return
         end
 
-        local category = Database.GetCategory(categoryIndex)
-        category.emotes[emoteIndex] = {
+        if not Database.IsCurrentContentTarget(data and data.target) then
+            print("RP Emote Menu: The Profile or emote changed. Reopen the delete confirmation.")
+            return
+        end
+        local category = Database.GetCategory(data.categoryIndex)
+        category.emotes[data.emoteIndex] = {
             label = "",
             defaultCommand = "",
             targetedCommand = ""
@@ -128,7 +132,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         button1 = DELETE or "Delete",
         button2 = CANCEL or "Cancel",
         OnAccept = function(_, data)
-            DeleteEmote(data.categoryIndex, data.emoteIndex)
+            DeleteEmote(data)
         end,
         timeout = 0,
         whileDead = true,
@@ -243,7 +247,9 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
                     nil,
                     {
                         categoryIndex = getSelectedCategoryIndex(),
-                        emoteIndex = row.emoteIndex
+                        emoteIndex = row.emoteIndex,
+                        target = Database.CaptureContentTarget(
+                            getSelectedCategoryIndex(), row.emoteIndex)
                     }
                 )
             end

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.217
+
+- Bind native emote Save, Delete, category restore and category import operations to their captured Profile/category/emote identities; reject stale targets after selection, reorder or replacement.
+- Retire category-import confirmations when the shared dialog closes or opens another session, preserve pasted JSON on rejection, and require reopening before retrying a changed target.
+- Expand Emotes regression coverage for the reproduced data-loss cases and valid operations; remove obsolete native-control comments and replace a vacuous Behavior assertion. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.216
 
 - Complete Phase 6: convert Emotes selectors, category-name editing and ordinary action buttons to Details Framework; retain custom rows, scrolling, native dialogs and JSON editor.

@@ -3,6 +3,7 @@
 local native = dofile('tests/details-framework-ui-stubs.lua')
 local methods = getmetatable(UIParent).__index
 function methods:IsMouseOver() return self.mouseover == true end
+function methods:SetEnabled(value) if value then self:Enable() else self:Disable() end end
 function methods:GetID() return self.categoryID end
 function methods:GetFontString() return nil end
 function strtrim(v) return (v:gsub('^%s+', ''):gsub('%s+$', '')) end
@@ -145,7 +146,7 @@ assert(panel.GetSelectedCategory()==2 and db.GetProfileSettings().selectedCatego
 assert(db.GetCategory(2).emotes[1].defaultCommand==' /e 1 ' and db.GetCategory(2)~=category)
 for i=1,10 do db.GetCategory(i).name='Full' end
 panel.RefreshEditors(); assert(not buttons['Duplicate Category'].frame:IsEnabled() and not db.DuplicateCategory(2))
--- Confirmations keep captured slot/current-Profile target wiring, as before conversion.
+-- Confirmations retain their original category when settings selection changes.
 Click(buttons['Restore Built-in Category']); local restore=popup; Select(3); Accept(restore)
 assert(db.GetCategory(2).name==addon.DefaultSections[2].name and db.GetCategory(3).name=='Full')
 Click(buttons['Restore All Built-in Categories']); Accept(popup)
@@ -154,10 +155,10 @@ Select(2); Click(buttons.Export)
 local exchange=addon.SettingsUI.GetExchangeDialog()
 assert(exchange.categoryIndex==2 and exchange.editBox.kind=='EditBox')
 Click(buttons.Import); assert(exchange.categoryIndex==2)
--- The native confirmations still resolve captured slots against the current Profile.
+-- A Profile change rejects a pending restore instead of retargeting it.
 Select(1); Click(buttons['Restore Built-in Category']); local acrossProfile=popup
 assert(db.SetActiveProfile('Other')); db.GetCategory(1).name='Other changed'; Accept(acrossProfile)
-assert(db.GetCategory(1).name==initial)
+assert(db.GetCategory(1).name=='Other changed')
 assert(db.SetActiveProfile('Default')); Select(2)
 -- Disabled actions and fields reject synthetic clicks/input as well as real UI input.
 local canEdit=db.CanEditActiveProfile; db.CanEditActiveProfile=function() return false end
@@ -168,4 +169,95 @@ db.CanEditActiveProfile=canEdit; panel.RefreshEditors()
 assert(rows[1].EditButton.widget.text=='Edit')
 for _, helper in ipairs({'CreateSwitch','CreateLabeledEditBox','CreateIntegerEditBox','CreateNumberSetting','CreateColorSetting','CreateFontSetting'}) do assert(addon.SettingsUI[helper]==nil) end
 assert(addon.SettingsUI.CreateRows and addon.SettingsUI.CreateInfoLink)
-print('PASS real Emotes widgets, exact/empty text, ownership, deferred show, native editor, capacity, drag, actions and cleanup')
+
+
+-- Pending native editor operations never write to a different saved record.
+assert(db.SetActiveProfile('Default')); Select(1)
+local a=EmptyCategory(1); a.name='A'; a.emotes[1]={label='A original',defaultCommand='A command',targetedCommand=''}
+panel.RefreshEditors(); Click(rows[1].EditButton); dialog.NameBox:SetText('A edited')
+assert(db.SetActiveProfile('Other')); Select(1)
+local b=EmptyCategory(1); b.name='B'; b.emotes[1]={label='B original',defaultCommand='B command',targetedCommand=''}
+local before=updates; dialog.SaveButton.scripts.OnClick()
+assert(a.emotes[1].label=='A original' and b.emotes[1].label=='B original' and updates==before)
+assert(not dialog.SaveButton:IsEnabled() and dialog.Status:GetText():find('Reopen',1,true))
+assert(db.SetActiveProfile('Default')); Select(1)
+a.emotes[1]={label='First',defaultCommand='First command',targetedCommand=''}
+a.emotes[2]={label='Second',defaultCommand='Second command',targetedCommand=''}
+panel.RefreshEditors(); Click(rows[1].EditButton); dialog.NameBox:SetText('wrong slot')
+rows[1].scripts.OnDragStart(rows[1]); rows[2].mouseover=true; rows[1].scripts.OnDragStop(rows[1]); rows[2].mouseover=false
+before=updates; dialog.NameBox.scripts.OnEnterPressed(dialog.NameBox)
+assert(a.emotes[1].label=='Second' and a.emotes[2].label=='First' and updates==before)
+Click(rows[1].EditButton); dialog.NameBox:SetText('stale replacement')
+local index=dialog.emoteIndex; assert(db.ResetCategoryToDefaults(1))
+local replacement=db.GetCategory(1).emotes[index]; local savedLabel=replacement.label
+before=updates; dialog.SaveButton.scripts.OnClick()
+assert(replacement.label==savedLabel and updates==before)
+-- Hiding retires even callbacks invoked synthetically after the window closes.
+panel.RefreshEditors(); Click(rows[1].EditButton); dialog.NameBox:SetText('hidden edit'); dialog:Hide()
+before=updates; dialog.SaveButton.scripts.OnClick(); assert(replacement.label==savedLabel and updates==before)
+Click(rows[1].EditButton); assert(dialog.SaveButton:IsEnabled())
+dialog.NameBox:SetText('  fresh edit  '); dialog.SaveButton.scripts.OnClick()
+assert(replacement.label=='  fresh edit  ')
+-- Delete binds to the original record and slot; reorder/reset/Profile changes retire it.
+a=EmptyCategory(1)
+a.emotes[1]={label='First',defaultCommand='First command',targetedCommand=''}
+a.emotes[2]={label='Second',defaultCommand='Second command',targetedCommand=''}
+panel.RefreshEditors(); Click(rows[1].DeleteButton); local pendingDelete=popup
+rows[1].scripts.OnDragStart(rows[1]); rows[2].mouseover=true; rows[1].scripts.OnDragStop(rows[1]); rows[2].mouseover=false
+before=updates; Accept(pendingDelete)
+assert(a.emotes[1].label=='Second' and a.emotes[2].label=='First' and updates==before)
+Click(rows[1].DeleteButton); pendingDelete=popup; assert(db.ResetCategoryToDefaults(1))
+replacement=db.GetCategory(1).emotes[1]; savedLabel=replacement.label; before=updates; Accept(pendingDelete)
+assert(replacement.label==savedLabel and updates==before)
+Click(rows[1].DeleteButton); pendingDelete=popup; assert(db.SetActiveProfile('Other'))
+before=updates; Accept(pendingDelete); assert(b.emotes[1].label=='B original' and updates==before)
+assert(db.SetActiveProfile('Default')); Select(1); Click(rows[1].DeleteButton); Accept(popup)
+assert(not addon.SettingsUI.EmoteHasContent(db.GetCategory(1).emotes[1]))
+-- Restore rejects same-slot replacement and whole-Profile/record changes.
+Click(buttons['Restore Built-in Category']); local pendingRestore=popup
+assert(db.ResetCategoryToDefaults(1)); local restored=db.GetCategory(1); restored.name='Keep replacement'
+before=updates; Accept(pendingRestore); assert(db.GetCategory(1)==restored and restored.name=='Keep replacement' and updates==before)
+Click(buttons['Restore All Built-in Categories']); local pendingAll=popup
+assert(db.SetActiveProfile('Other')); before=updates; Accept(pendingAll)
+assert(db.GetCategory(1)==b and b.name=='B' and updates==before)
+assert(db.SetActiveProfile('Default')); Click(buttons['Restore All Built-in Categories']); pendingAll=popup
+assert(db.ResetCategoryToDefaults(2)); db.GetCategory(2).name='Keep category 2'
+before=updates; Accept(pendingAll); assert(db.GetCategory(2).name=='Keep category 2' and updates==before)
+Click(buttons['Restore All Built-in Categories']); pendingAll=popup
+local category2=db.GetCategory(2); category2.emotes[1]={label='New record',defaultCommand='',targetedCommand=''}
+before=updates; Accept(pendingAll); assert(category2.emotes[1].label=='New record' and updates==before)
+Click(buttons['Restore All Built-in Categories']); Accept(popup)
+assert(db.GetCategory(2).name==addon.DefaultSections[2].name)
+-- Import binds when the editor opens, including empty categories without a popup.
+Select(1); local source=db.GetCategory(1); source.name='Imported source'; source.emotes[1].label='  Imported label  '
+local exported=assert(addon.Serialization.ExportCategory(1))
+exchange:OpenImport(1); exchange.editBox:SetText(exported); exchange.actionButton.scripts.OnClick()
+local pendingImport=popup; assert(pendingImport.name=='RPEMOTEMENU_IMPORT_OVER_CATEGORY')
+assert(db.SetActiveProfile('Other')); before=updates; Accept(pendingImport)
+assert(db.GetCategory(1)==b and b.name=='B' and updates==before)
+assert(not exchange.actionButton:IsEnabled() and exchange.editBox:GetText()==exported)
+assert(db.SetActiveProfile('Default')); Select(1)
+exchange:OpenImport(1); exchange.editBox:SetText(exported); exchange.actionButton.scripts.OnClick(); pendingImport=popup
+assert(db.ResetCategoryToDefaults(1)); restored=db.GetCategory(1); before=updates; Accept(pendingImport)
+assert(db.GetCategory(1)==restored and updates==before)
+-- Reopening/hiding the shared dialog cannot authorize an earlier confirmation.
+exchange:OpenImport(1); exchange.editBox:SetText(exported); exchange.actionButton.scripts.OnClick(); pendingImport=popup
+exchange:OpenImport(2); exchange.editBox:SetText('new session'); before=updates; Accept(pendingImport)
+assert(exchange.editBox:GetText()=='new session' and updates==before)
+exchange:OpenImport(1); exchange.editBox:SetText(exported); exchange.actionButton.scripts.OnClick(); pendingImport=popup
+exchange:Hide(); before=updates; Accept(pendingImport); assert(db.GetCategory(1)==restored and updates==before)
+exchange:OpenImport(1); exchange.editBox:SetText(exported); exchange.actionButton.scripts.OnClick(); Accept(popup)
+assert(db.GetCategory(1)~=restored and db.GetCategory(1).name=='Imported source')
+assert(db.GetCategory(1).emotes[1].label=='  Imported label  ')
+assert(exchange.categoryTarget and db.IsCurrentContentTarget(exchange.categoryTarget))
+local empty=EmptyCategory(3); exchange:OpenImport(3); exchange.editBox:SetText(exported)
+assert(db.SetActiveProfile('Other')); before=updates; exchange.actionButton.scripts.OnClick()
+assert(db.GetProfile('Default').categories[3]==empty and updates==before)
+assert(db.SetActiveProfile('Default')); exchange:OpenImport(3); exchange.editBox:SetText(exported)
+exchange.actionButton.scripts.OnClick(); assert(db.GetCategory(3).name=='Imported source')
+-- Owner identity distinguishes a deleted/recreated Profile with the same name.
+assert(db.CreateProfile('Transient')); Select(1); panel.RefreshEditors(); Click(rows[1].EditButton)
+dialog.NameBox:SetText('old Profile edit'); assert(db.DeleteProfile('Transient')); assert(db.CreateProfile('Transient'))
+local current=db.GetCategory(1).emotes[1]; savedLabel=current.label; before=updates; dialog.SaveButton.scripts.OnClick()
+assert(current.label==savedLabel and updates==before)
+print('PASS real Emotes widgets and captured native editor/delete/restore/import targets across Profile changes, reorder, replacement and dialog retirement')

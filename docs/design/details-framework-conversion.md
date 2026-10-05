@@ -106,7 +106,7 @@ activating it. Theme edits remain shared by every referencing Profile.
 | Restore Theme / Restore Bundled Themes | Confirmation; factory appearance of the named Theme or bundled definitions, preserving custom Themes and Profile data |
 | Restore Yellow | Selected Theme's icon tint only; cancel the live picker before applying factory yellow |
 | Delete Theme in use | Warn with referencing Profiles; confirmed deletion assigns those Profiles Default Theme |
-| Restore category / all categories | Confirmation; selected Profile content via existing database methods; retain current target wiring |
+| Restore category / all categories | Confirmation; captured Profile/category/emote identities checked before existing database reset methods; reject changed targets |
 | Import/export | Version 2; preserve validation/defaulting, conflicts, missing-Theme fallback, links and exclusions of globals/character assignments |
 
 ## Input, picker and font contracts
@@ -345,11 +345,10 @@ and dirty guard that prevents overwriting newer input or refreshes. List refresh
 and page hiding cancel a pending drag before pooled rows can represent another
 category/Profile/record; ordinary reorder still uses the existing packing policy.
 
-Category restores and emote deletion retain their native confirmations and
-existing target wiring: captured category/emote slots are resolved against the
-current Profile at acceptance. MainWindow's native editor also retains its
-explicit Save/Cancel and current-Profile lookup. This phase does not redesign
-those lifecycle operations or the database/serialization schema.
+At the initial Phase 6 checkpoint, category restores, emote deletion and
+MainWindow's explicit Save/Cancel editor retained their native target wiring.
+The subsequent 2.0.217 review fixes below guard those operations against stale
+Profile/content targets. The database/serialization schema is unchanged.
 
 SettingsControls now contains only the shared row cursor and used native circled
 information link. The unused switch, labeled-content, integer, numeric, swatch
@@ -365,6 +364,42 @@ drag ordering/retirement, delete/restore targets, transfers, disabled controls,
 positions and helper cleanup. All ten smoke suites pass. The final client
 checkpoint remains open, including native input/event timing, drag interaction,
 layout, library coexistence and security/taint observations.
+
+## Post-conversion content safety fixes (2.0.217)
+
+The review reproduced native-dialog data loss after Profile changes, emote
+reordering and category restoration. Database now provides an in-memory content
+target snapshot and identity check shared by these dialogs. A snapshot captures
+the actual Profile, categories array, relevant category/emotes tables and emote
+records at their original slots. Single-emote operations check that record;
+category/all-category operations check their contained records too. No snapshot
+is saved or exported, and no schema or low-level reset/import semantics change.
+
+MainWindow Save refuses a changed Profile/category/emote target, shows a reopen
+message and disables Save; reopening captures a fresh target. Closing the editor
+retires its target and clears focus. Delete and category/all-category restore
+confirmations validate their captured targets before mutation and report rejected
+stale requests. Browsing another settings category alone does not redirect or
+invalidate an otherwise unchanged captured target.
+
+Category import captures its target when its native JSON editor opens, even for
+an empty destination that does not need confirmation. Action state and execution
+both check that identity. Replace confirmations also capture the import session;
+closing or reopening the shared dialog retires the old session. Rejection keeps
+the pasted JSON. A successful import captures the replacement category for later
+imports in the same session. Profile/Theme/Everything transfer behavior stays as
+before. These native content operations now preserve the originally captured
+content identity instead of resolving only mutable slot numbers at acceptance.
+
+The expanded Emotes suite reproduces and rejects cross-Profile editor saves,
+editor Save/Enter after reorder/restore, closed-editor callbacks, Delete after
+reorder/restore/Profile changes, same-slot and all-category reset changes, imports
+across Profile/replacement changes, old confirmations after reopen/hide, empty
+category imports and a deleted/recreated Profile with the same name. It also
+checks valid Save/Delete/restore/import, fresh-session recovery, exact strings and
+unchanged runtime call counts on rejection. Stale native-control comments were
+removed, and Behavior asserts retired factories plus the used native composition
+helpers explicitly. All ten smoke suites pass; client acceptance remains open.
 
 ## Verification baseline and acceptance checklist
 

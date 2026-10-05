@@ -91,7 +91,8 @@ local function CreateCategoriesSettingsPanel()
             "RPEMOTEMENU_RESTORE_CATEGORY",
             "Category " .. selectedCategoryIndex,
             nil,
-            {categoryIndex = selectedCategoryIndex}
+            {categoryIndex = selectedCategoryIndex,
+                target = Database.CaptureContentTarget(selectedCategoryIndex)}
         )
     end, 190, 24)
 
@@ -100,7 +101,11 @@ local function CreateCategoriesSettingsPanel()
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
         OnAccept = function(_, data)
-            Database.ResetCategoryToDefaults(data.categoryIndex)
+            if Database.IsCurrentContentTarget(data and data.target) then
+                Database.ResetCategoryToDefaults(data.categoryIndex)
+            else
+                print("RP Emote Menu: The Profile or category changed. Reopen the restore confirmation.")
+            end
         end,
         timeout = 0,
         whileDead = true,
@@ -112,7 +117,11 @@ local function CreateCategoriesSettingsPanel()
         text = "Replace every category and emote in the current profile with the built-in set?\n\nThis cannot be undone.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
-        OnAccept = function()
+        OnAccept = function(_, data)
+            if not Database.IsCurrentContentTarget(data and data.target) then
+                print("RP Emote Menu: The Profile or categories changed. Reopen the restore confirmation.")
+                return
+            end
             if Database.ResetAllCategoriesToDefaults() then
                 print("RP Emote Menu: Restored all built-in categories and emotes.")
             end
@@ -125,7 +134,8 @@ local function CreateCategoriesSettingsPanel()
 
     resetAllCategoriesButton = Widgets.CreateButton(panel,
         "Restore All Built-in Categories", function()
-            StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES")
+            StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES", nil, nil,
+                {target = Database.CaptureContentTarget()})
         end, 240, 24)
     resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, actionsY)
 
