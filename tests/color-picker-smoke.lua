@@ -1,4 +1,4 @@
--- Real database mutations, native/DF swatches and the shared picker manager.
+-- Real database mutations, DF swatches and the shared picker manager.
 local addon={SettingsUI={FIELD_GAP=12},Settings={},MainWindow={}}
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
 function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
@@ -22,9 +22,11 @@ if module then module:close(); loadModule('SettingsColorPicker.lua') end
 loadModule('SettingsWidgets.lua'); loadModule('SettingsControls.lua'); loadModule('SettingsThemeIcon.lua')
 local parent=CreateFrame('Frame'); local writes=0
 local function color() return db.GetThemeSettings().categoryTextColor end
-local swatch=addon.SettingsUI.CreateColorSetting(parent,'Text','categoryTextColor',0,0,color,
+local swatch=addon.SettingsWidgets.CreateColorPicker(parent,color,
  function(v) writes=writes+1; db.GetThemeSettings().categoryTextColor=v end)
-local function open() swatch.scripts.OnClick(swatch); return ColorPickerFrame.info end
+local function open()
+ local f=swatch:GetFrame(); f.scripts.OnMouseDown(f,'LeftButton'); f.scripts.OnMouseUp(f,'LeftButton'); return ColorPickerFrame.info
+end
 local function preview(info,r,g,b)
  ColorPickerFrame.r,ColorPickerFrame.g,ColorPickerFrame.b=r,g,b; info.swatchFunc()
 end
@@ -44,7 +46,7 @@ info=open(); preview(info,0.2,0.3,0.4); ColorPickerFrame:Hide()
 local accepted=copy(color()); info.cancelFunc(); preview(info,1,0,0); same(color(),accepted)
 info=open(); preview(info,0.5,0.6,0.7); local replacement=open(); same(color(),accepted)
 info.cancelFunc(); preview(info,1,0,0); same(color(),accepted)
-preview(replacement,0.6,0.7,0.8); swatch:Hide(); same(color(),accepted)
+preview(replacement,0.6,0.7,0.8); swatch:GetFrame():Hide(); same(color(),accepted)
 info=open(); preview(info,0.1,0.2,0.3); db.RestoreDefaultTheme()
 local restored=copy(color()); info.cancelFunc(); preview(info,1,0,0); same(color(),restored)
 local previous=db.GetThemeSettings()

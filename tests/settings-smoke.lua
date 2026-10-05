@@ -8,7 +8,7 @@ local function loadModule(path)
 end
 loadModule('RPEmoteMenu/Defaults.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
--- Behavior uses real DF; the later-phase pages still use native controls.
+-- All ordinary settings widgets use real DF; specialized native frames remain.
 local native = dofile('tests/details-framework-ui-stubs.lua')
 local widgets = native.objects
 local Widget = getmetatable(UIParent).__index

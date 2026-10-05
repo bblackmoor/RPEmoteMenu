@@ -24,7 +24,11 @@ Phase 5 (Themes) implemented on 2026-10-05 in 2.0.215. Theme management,
 typography, colors, effects, opacity, title-bar selection and icon controls now
 use the adapters. FontMedia, SettingsColorPicker, native lifecycle dialogs and
 the icon preview remain their existing policies/components. The in-game
-checkpoint remains pending; Phase 6 remains planned.
+checkpoint remains pending.
+
+Phase 6 (Emotes and cleanup) implemented on 2026-10-05 in 2.0.216. All ordinary
+settings widgets now use the adapters; custom rows, scrolling, native dialogs,
+information links and JSON editors remain. Final in-game acceptance is pending.
 
 This document governs the new widget conversion. The older
 [settings architecture](settings-architecture.md) remains the guide to readable
@@ -49,7 +53,7 @@ repository tree. Existing open client checks do not constitute observed success.
 | Module | Current responsibility | Conversion treatment |
 | --- | --- | --- |
 | Settings.lua | About, page registration, refresh orchestration, slash destinations | Native category registration/IDs preserved; About link converted in Phase 4 |
-| SettingsControls.lua | Row cursor, switches, info links, numeric/content editors, swatches, font selectors | Retain rows and labels; delegate widgets to an isolated adapter |
+| SettingsControls.lua | Shared row cursor and native circled information link | Unused native widget factories retired in Phase 6; pages compose labels around adapters |
 | SettingsBehavior.lua | Startup/interaction, fade/minimize dependencies, window geometry | Converted in Phase 3; ownership and ranges preserved |
 | SettingsProfiles.lua / SettingsProfileDialogs.lua | Character selection, Theme assignment, CRUD, Default restore, transfer | Profiles widgets converted in Phase 4; native confirmation/name dialogs retained |
 | SettingsThemes.lua / SettingsThemeDialogs.lua | Theme selection/CRUD, two-column typography, effects, opacity, title bar | Widgets converted in Phase 5; shared assignment and native dialogs preserved |
@@ -175,7 +179,7 @@ including nested dropdown scrollbars. Details/Plater must not be required.
 | 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Implemented; client pending |
 | 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Implemented; client pending |
 | 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Implemented; client pending |
-| 6 — Emotes and cleanup | Ordinary Emotes widgets; retire unused helpers; update docs | Exact/empty text, category/emote edit/drag/duplicate/delete, limits, preserved custom rows/JSON editor, registration/refresh; final client checkpoint | Planned |
+| 6 — Emotes and cleanup | Ordinary Emotes widgets; retire unused helpers; update docs | Exact/empty text, category/emote edit/drag/duplicate/delete, limits, preserved custom rows/JSON editor, registration/refresh; final client checkpoint | Implemented; client pending |
 
 Keep the custom scroll canvases, category/emote drag rows, icon preview, native
 information links, confirmations and JSON editor where they remain appropriate.
@@ -322,6 +326,46 @@ actual policies. Picker/settings/Profile-utility inspections now cover the
 converted Theme controls. All nine smoke suites pass. Client layout, native
 input/picker timing, font rendering, coexistence and security checks remain open.
 
+## Phase 6 implementation
+
+Emotes now uses a 300-wide DF category selector, the 420-wide category-name
+entry, five category action buttons, Add Emote and three buttons on each of the
+ten pooled rows. The adapter exposes silent button text updates and explicit
+native anchor clearing for list refreshes. Native labels, spacing, scroll canvas,
+row backgrounds, drag/drop ordering, limits and the MainWindow Save/Cancel emote
+dialog remain. Browsing the settings selector retains its existing distinction
+from runtime category selection; successful category duplication updates both.
+
+The category-name binding captures the actual category table, so Profile changes,
+category selection/reordering and factory/import replacement cannot redirect a
+pending edit. Exact whitespace and empty strings are preserved; Enter/focus loss
+commit once, Escape/hide/disable cancel, and refresh remains silent. Its opt-in
+next-tick show refresh repairs text cleared by Blizzard layout, with a revision
+and dirty guard that prevents overwriting newer input or refreshes. List refresh
+and page hiding cancel a pending drag before pooled rows can represent another
+category/Profile/record; ordinary reorder still uses the existing packing policy.
+
+Category restores and emote deletion retain their native confirmations and
+existing target wiring: captured category/emote slots are resolved against the
+current Profile at acceptance. MainWindow's native editor also retains its
+explicit Save/Cancel and current-Profile lookup. This phase does not redesign
+those lifecycle operations or the database/serialization schema.
+
+SettingsControls now contains only the shared row cursor and used native circled
+information link. The unused switch, labeled-content, integer, numeric, swatch
+and font factories are removed. Picker regression tests use the real DF swatch;
+font selector behavior is covered by the real Theme suite while the FontMedia
+suite retains library, serialization, fallback, retry and width policy checks.
+
+The new `tests/emotes-smoke.lua` uses real DF, database, serialization and the
+native MainWindow editor to cover exact/empty text, ownership and replacements,
+deferred show, stale menus, selection/runtime distinction, independent copies,
+empty/targeted-only/full lists, ten-category/ten-emote limits, edit/Save/Cancel,
+drag ordering/retirement, delete/restore targets, transfers, disabled controls,
+positions and helper cleanup. All ten smoke suites pass. The final client
+checkpoint remains open, including native input/event timing, drag interaction,
+layout, library coexistence and security/taint observations.
+
 ## Verification baseline and acceptance checklist
 
 All five existing suites passed during Phase 1 with:
@@ -355,5 +399,5 @@ client build, addon version, other DF embedders present/absent and actual result
 - Startup without Details/Plater, then coexistence with another DF embedder;
   control assets present and no observed Lua/security/taint errors in/out of combat.
 
-Phases 1–5 report source/test readiness only. Neither these tests nor SNP's still
+Phases 1–6 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.

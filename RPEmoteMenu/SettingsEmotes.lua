@@ -6,7 +6,7 @@ local AddonSettings = addon.Settings
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local MAX_EMOTES = addon.MAX_EMOTES
 local FIELD_GAP = UI.FIELD_GAP
-local CreateLabeledEditBox = UI.CreateLabeledEditBox
+local Widgets = addon.SettingsWidgets
 local GetExchangeDialog = UI.GetExchangeDialog
 local resetAllCategoriesButton
 
@@ -63,15 +63,7 @@ local function CreateCategoriesSettingsPanel()
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, headingY)
     heading:SetText("Emotes")
 
-    local selector = CreateFrame(
-        "DropdownButton",
-        nil,
-        panel,
-        "WowStyle1DropdownTemplate"
-    )
-    selector:SetWidth(300)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, selectorY)
-
+    local SelectCategory
     local function GetCategoryLabel(categoryIndex)
         local category = Database.GetCategory(categoryIndex)
         local categoryName = strtrim(category and category.name or "")
@@ -84,20 +76,24 @@ local function CreateCategoriesSettingsPanel()
         return label
     end
 
-    selector:SetDefaultText(GetCategoryLabel(selectedCategoryIndex))
+    local selector = Widgets.CreateDropdown(panel, function()
+        local options = {}
+        for index = 1, MAX_CATEGORIES do
+            options[#options + 1] = {label = GetCategoryLabel(index), value = index}
+        end
+        return options
+    end, function(index) SelectCategory(index) end)
+    selector:SetWidth(300)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, selectorY)
 
-    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    resetButton:SetSize(190, 24)
-    resetButton:SetText("Restore Built-in Category")
-    resetButton:SetEnabled(Database.CanEditActiveProfile())
-    resetButton:SetScript("OnClick", function()
+    local resetButton = Widgets.CreateButton(panel, "Restore Built-in Category", function()
         StaticPopup_Show(
             "RPEMOTEMENU_RESTORE_CATEGORY",
             "Category " .. selectedCategoryIndex,
             nil,
             {categoryIndex = selectedCategoryIndex}
         )
-    end)
+    end, 190, 24)
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_CATEGORY"] = {
         text = "Replace %s and all of its emotes with the built-in category?\n\nThis cannot be undone.",
@@ -127,45 +123,30 @@ local function CreateCategoriesSettingsPanel()
         preferredIndex = 3
     }
 
-    resetAllCategoriesButton = CreateFrame(
-        "Button",
-        nil,
-        panel,
-        "UIPanelButtonTemplate"
-    )
-    resetAllCategoriesButton:SetSize(240, 24)
+    resetAllCategoriesButton = Widgets.CreateButton(panel,
+        "Restore All Built-in Categories", function()
+            StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES")
+        end, 240, 24)
     resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, actionsY)
-    resetAllCategoriesButton:SetText("Restore All Built-in Categories")
-    resetAllCategoriesButton:SetEnabled(Database.CanEditActiveProfile())
-    resetAllCategoriesButton:SetScript("OnClick", function()
-        StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES")
-    end)
 
-    local duplicateCategoryButton = CreateFrame(
-        "Button",
-        nil,
-        panel,
-        "UIPanelButtonTemplate"
-    )
-    duplicateCategoryButton:SetSize(160, 24)
+    local duplicateCategoryButton = Widgets.CreateButton(panel,
+        "Duplicate Category", function()
+            local success, result = Database.DuplicateCategory(selectedCategoryIndex)
+            if success then
+                SelectCategory(result)
+                MainWindow.SetSelectedCategory(result)
+                MainWindow.UpdateMenu()
+            end
+        end, 160, 24)
     duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, actionsY)
-    duplicateCategoryButton:SetText("Duplicate Category")
 
-    local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    importButton:SetSize(90, 24)
-    importButton:SetText("Import")
-    importButton:SetEnabled(Database.CanEditActiveProfile())
-    importButton:SetScript("OnClick", function()
+    local importButton = Widgets.CreateButton(panel, "Import", function()
         GetExchangeDialog():OpenImport(selectedCategoryIndex)
-    end)
-
-    local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    exportButton:SetSize(90, 24)
-    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, exchangeY)
-    exportButton:SetText("Export")
-    exportButton:SetScript("OnClick", function()
+    end, 90, 24)
+    local exportButton = Widgets.CreateButton(panel, "Export", function()
         GetExchangeDialog():OpenExport(selectedCategoryIndex)
-    end)
+    end, 90, 24)
+    exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, exchangeY)
 
     importButton:SetPoint("LEFT", exportButton, "RIGHT", 8, 0)
     resetButton:SetPoint("LEFT", selector, "RIGHT", FIELD_GAP, 0)
@@ -183,25 +164,33 @@ local function CreateCategoriesSettingsPanel()
     )
     placeholderText:SetTextColor(0.8, 0.8, 0.8)
 
-    local nameBox = CreateLabeledEditBox(
-        panel,
-        "Category Name",
-        16,
-        nameY,
-        420,
-        selectedCategoryIndex,
-        nil,
-        "name"
-    )
+    local nameLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nameLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, nameY - 5)
+    nameLabel:SetWidth(180)
+    nameLabel:SetJustifyH("LEFT")
+    nameLabel:SetText("Category Name")
+    local nameBox = Widgets.CreateTextEntry(panel, function()
+        return Database.GetCategory(selectedCategoryIndex).name or ""
+    end, function(value)
+        if not Database.CanEditActiveProfile() then return end
+        Database.GetCategory(selectedCategoryIndex).name = value
+        MainWindow.UpdateMenu()
+        if AddonSettings.RefreshCategorySelector then
+            AddonSettings.RefreshCategorySelector()
+        end
+    end, {width = 420, refreshAfterShow = true,
+        getOwner = function() return Database.GetCategory(selectedCategoryIndex) end})
+    nameBox:SetPoint("TOPLEFT", panel, "TOPLEFT", 16 + 180 + FIELD_GAP, nameY)
     local RefreshEmoteRows = UI.CreateEmoteList(panel, function()
         return selectedCategoryIndex
     end, listHeadingY, listTopY)
 
     local function RefreshCategorySelector()
-        selector:OverrideText(GetCategoryLabel(selectedCategoryIndex))
+        selector:InvalidateOptions()
+        selector:SetValue(selectedCategoryIndex, GetCategoryLabel(selectedCategoryIndex))
     end
 
-    local function SelectCategory(categoryIndex)
+    SelectCategory = function(categoryIndex)
         if type(categoryIndex) ~= "number"
             or categoryIndex < 1
             or categoryIndex > MAX_CATEGORIES then
@@ -210,32 +199,8 @@ local function CreateCategoriesSettingsPanel()
 
         selectedCategoryIndex = categoryIndex
 
-        nameBox.categoryIndex = categoryIndex
         panel.RefreshEditors()
     end
-
-    duplicateCategoryButton:SetScript("OnClick", function()
-        local success, result = Database.DuplicateCategory(selectedCategoryIndex)
-        if success then
-            SelectCategory(result)
-            MainWindow.SetSelectedCategory(result)
-            MainWindow.UpdateMenu()
-        end
-    end)
-
-    selector:SetupMenu(function(_, rootDescription)
-        for categoryIndex = 1, MAX_CATEGORIES do
-            rootDescription:CreateRadio(
-                GetCategoryLabel(categoryIndex),
-                function()
-                    return selectedCategoryIndex == categoryIndex
-                end,
-                function()
-                    SelectCategory(categoryIndex)
-                end
-            )
-        end
-    end)
 
     panel.RefreshEditors = function(changedCategoryIndex)
         if changedCategoryIndex
@@ -249,7 +214,9 @@ local function CreateCategoriesSettingsPanel()
         importButton:SetEnabled(editable)
         duplicateCategoryButton:SetEnabled(editable and HasEmptyCategorySlot(selectedCategoryIndex))
 
-        nameBox:RefreshFromDatabase()
+        nameBox:SetEnabled(editable)
+        nameBox:RefreshValue()
+        nameBox:GetFrame():HighlightText(0, 0)
         RefreshEmoteRows()
 
         RefreshCategorySelector()
@@ -258,6 +225,8 @@ local function CreateCategoriesSettingsPanel()
     panel:SetScript("OnShow", function(self)
         self.RefreshEditors()
     end)
+
+    panel:HookScript("OnHide", function() nameBox:CancelEdit() end)
 
     panel.categorySelector = selector
     panel.SelectCategory = SelectCategory
@@ -273,3 +242,4 @@ end
 
 
 UI.CreateCategoriesSettingsPanel = CreateCategoriesSettingsPanel
+

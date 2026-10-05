@@ -1,9 +1,9 @@
 # Settings Architecture
 
 Status: the earlier structural refactor was implemented in its Phases 6–8;
-in-game integration checks remain open. Phases 1–5 of the separate Details Framework
-widget conversion are implemented; Behavior, Profile/utility and Theme client
-checkpoints remain open; see [the current conversion baseline and phases](details-framework-conversion.md).
+in-game integration checks remain open. Phases 1–6 of the separate Details Framework
+widget conversion are implemented; all client checkpoints, including final
+acceptance, remain open; see [the current conversion baseline and phases](details-framework-conversion.md).
 
 ## Goal
 
@@ -42,7 +42,10 @@ Settings.lua
     refresh orchestration
 
 SettingsControls.lua
-    common settings controls and row cursor
+    shared row cursor and native information link
+
+SettingsWidgets.lua
+    Details Framework adapters and input/picker contracts
 
 SettingsExchange.lua
     shared JSON transfer dialog

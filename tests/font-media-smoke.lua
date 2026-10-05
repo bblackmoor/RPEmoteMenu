@@ -62,33 +62,9 @@ local original=media; media.testMarker={}
 LibStub.minors['LibSharedMedia-3.0']=LibStub.minors['LibSharedMedia-3.0']+1
 loadModule('Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua')
 assert(LibStub('LibSharedMedia-3.0')==original and original.testMarker)
--- Selector labels, choices and refreshes use actual FontMedia methods.
-local Widget={}
-Widget.__index=function(_,k)
- if k=='Text' or k=='InternalText' or k=='MissingFontName' then return nil end
- return Widget[k] or function() end
-end
-function Widget:CreateFontString() return CreateFrame('FontString',nil,self) end
-function Widget:SetScript(k,fn) self.scripts[k]=fn end
-function Widget:HookScript(k,fn) self.scripts[k]=fn end
-function Widget:SetupMenu(fn) self.menu=fn end
-function Widget:SetText(v) self.text=v end
-function Widget:OverrideText(v) self.text=v end
-function Widget:GetFontString() return nil end
-function CreateFrame(_,_,parent) return setmetatable({scripts={},parent=parent},Widget) end
-GameTooltip=setmetatable({},Widget)
-loadModule('SettingsControls.lua')
+-- Real DF selector choices/labels are covered in theme-smoke.lua.
 teal.categoryFont='Absent'
-local writes=0
-local selector=addon.SettingsUI.CreateFontSetting(CreateFrame('Frame'),'Font','categoryFont',0,0,function() return teal end,function() writes=writes+1 end)
-assert(selector.MissingFontName=='Absent' and selector.PreviewText.text=='Absent (unavailable)')
-local missingChoice=false
-selector.menu(selector,{CreateRadio=function(_,label,selected)
- if label=='Absent (unavailable)' then missingChoice=selected() end
-end})
-assert(missingChoice)
-media:Register('font','Absent','Interface\\Fonts\\absent.ttf'); drain(); selector:RefreshValue()
-assert(selector.MissingFontName==nil and selector.PreviewText.text=='Absent' and writes==0)
+media:Register('font','Absent','Interface\\Fonts\\absent.ttf'); drain()
 -- Actual rendering retries stop on success, are bounded, and retire on a newer request.
 addon.MainWindow.ScheduleFontRefreshes=realSchedule
 local realRefresh=addon.MainWindow.RefreshFontDisplays
@@ -157,4 +133,4 @@ drain(); assert(calculate()==availableWidth and teal.categoryFont=='Absent')
 for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
  if line:match('%.lua$') then assert(loadfile('RPEmoteMenu/'..line)) end
 end
-print('PASS real font libraries, late providers, missing choices, overrides, serialization, selectors and bounded rendering retries')
+print('PASS real font libraries, late providers, missing choices, overrides, serialization and bounded rendering retries')

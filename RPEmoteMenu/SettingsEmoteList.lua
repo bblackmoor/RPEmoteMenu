@@ -2,6 +2,7 @@ local _, addon = ...
 local UI = addon.SettingsUI
 local Database = addon.Database
 local MainWindow = addon.MainWindow
+local Widgets = addon.SettingsWidgets
 local MAX_EMOTES = addon.MAX_EMOTES
 local EmoteHasContent = UI.EmoteHasContent
 
@@ -45,9 +46,7 @@ local function CreateEmoteListLayout(panel, headingY, topY)
     listContent:SetSize(590, 1)
     listScrollFrame:SetScrollChild(listContent)
 
-    local addButton = CreateFrame("Button", nil, listContent, "UIPanelButtonTemplate")
-    addButton:SetSize(110, 24)
-    addButton:SetText("Add Emote")
+    local addButton = Widgets.CreateButton(listContent, "Add Emote", nil, 110, 24)
 
     local emptyText = listContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     emptyText:SetPoint("TOPLEFT", listContent, "TOPLEFT", 10, -15)
@@ -64,7 +63,14 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
     local emoteRows = {}
     local draggedRow
 
+    local function CancelRowDrag()
+        if draggedRow then draggedRow:SetAlpha(1); draggedRow = nil end
+    end
+    panel:HookScript("OnHide", CancelRowDrag)
+
     local function RefreshEmoteRows()
+        -- Pooled rows may now represent another category, Profile or record.
+        CancelRowDrag()
         local populated = GetPopulatedEmotes(getSelectedCategoryIndex())
         local editable = Database.CanEditActiveProfile()
 
@@ -146,7 +152,8 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
 
         local sourcePosition = row.visiblePosition
         draggedRow = nil
-        if not targetPosition or not sourcePosition or targetPosition == sourcePosition then
+        if not Database.CanEditActiveProfile()
+            or not targetPosition or not sourcePosition or targetPosition == sourcePosition then
             return
         end
 
@@ -197,30 +204,25 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         row.Summary:SetWordWrap(false)
         row.Summary:SetTextColor(0.7, 0.7, 0.7, 1)
 
-        row.EditButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-        row.EditButton:SetSize(52, 22)
+        row.EditButton = Widgets.CreateButton(row, "Edit", nil, 52, 22)
         row.EditButton:SetPoint("RIGHT", row, "RIGHT", -154, 0)
-        row.DuplicateButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-        row.DuplicateButton:SetSize(76, 22)
+        row.DuplicateButton = Widgets.CreateButton(row, "Duplicate", nil, 76, 22)
         row.DuplicateButton:SetPoint("RIGHT", row, "RIGHT", -73, 0)
-        row.DuplicateButton:SetText("Duplicate")
-        row.DeleteButton = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
-        row.DeleteButton:SetSize(62, 22)
+        row.DeleteButton = Widgets.CreateButton(row, "Delete", nil, 62, 22)
         row.DeleteButton:SetPoint("RIGHT", row, "RIGHT", -5, 0)
-        row.DeleteButton:SetText("Delete")
         row:Hide()
         return row
     end
 
     -- Editing and drag behavior is wired after the row's visual structure exists.
     local function WireEmoteRow(row)
-        row.EditButton:SetScript("OnClick", function()
+        row.EditButton.onChanged = function()
             if row.emoteIndex then
                 MainWindow.OpenEmoteEditor(getSelectedCategoryIndex(), row.emoteIndex)
             end
-        end)
+        end
 
-        row.DuplicateButton:SetScript("OnClick", function()
+        row.DuplicateButton.onChanged = function()
             if row.emoteIndex then
                 local success = Database.DuplicateEmote(
                     getSelectedCategoryIndex(),
@@ -231,9 +233,9 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
                     RefreshEmoteRows()
                 end
             end
-        end)
+        end
 
-        row.DeleteButton:SetScript("OnClick", function()
+        row.DeleteButton.onChanged = function()
             if row.emoteIndex then
                 StaticPopup_Show(
                     "RPEMOTEMENU_DELETE_EMOTE",
@@ -245,7 +247,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
                     }
                 )
             end
-        end)
+        end
 
         row:SetScript("OnDragStart", function(self)
             if Database.CanEditActiveProfile() and self.emoteIndex then
@@ -261,7 +263,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         WireEmoteRow(emoteRows[rowIndex])
     end
 
-    addButton:SetScript("OnClick", function()
+    addButton.onChanged = function()
         if not Database.CanEditActiveProfile() then
             return
         end
@@ -273,7 +275,8 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
                 return
             end
         end
-    end)
+    end
 
     return RefreshEmoteRows
 end
+

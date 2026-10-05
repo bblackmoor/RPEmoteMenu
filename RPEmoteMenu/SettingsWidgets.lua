@@ -1,7 +1,7 @@
 -- Details Framework boundary for converted settings pages.
 -- Switch/menu/button templates and wrapper boundary adapted from SimpleNameplates
 -- commit 044722657498da26ecbc74c05bfe7cd70ab5b8bc; editing/picker policy is ours.
--- Construction is lazy. Existing pages keep their native controls in Phase 2.
+-- Construction is lazy; settings pages compose labels and bind data ownership.
 local _, addon = ...
 local UI = addon.SettingsUI
 local Widgets = {}
@@ -168,6 +168,7 @@ function Widgets.CreateButton(parent, text, onClick, width, height)
         function() Notify(handle) end, width or 190, height or 24, text,
         nil, nil, nil, nil, nil, nil, buttonTemplate)
     handle = NewHandle(widget, onClick)
+    function handle:SetText(value) self:Refresh(self.widget.SetText, value) end
     return handle
 end
 
@@ -194,6 +195,7 @@ end
 function Handle:Enable() self:SetEnabled(true) end
 function Handle:Disable() self:SetEnabled(false) end
 function Handle:ClearFocus() self.frame:ClearFocus() end
+function Handle:ClearAllPoints() self.frame:ClearAllPoints() end
 function Handle:SetSize(w, h) self.frame:SetSize(w, h) end
 function Handle:SetWidth(w) self.frame:SetWidth(w) end
 function Handle:SetHeight(h) self.frame:SetHeight(h) end
@@ -244,13 +246,14 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
         function() end, options.width or 70, 24, nil, nil, nil, textTemplate)
     local handle = NewHandle(widget)
     local frame = handle.frame
-    local dirty, owner
+    local dirty, owner, revision = false, nil, 0
     local function CurrentOwner() return options.getOwner and options.getOwner() end
     -- Refresh uses the native frame rather than DF's text metamethod so an exact
     -- empty or whitespace-only value is never rewritten by framework policy.
     function handle:SetText(value)
         local text = tostring(value or "")
         dirty = false
+        revision = revision + 1
         owner = CurrentOwner()
         frame:SetText(text)
         frame:SetCursorPosition(0)
@@ -279,7 +282,18 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
         if owner ~= CurrentOwner() then handle:RefreshValue() end
         owner = CurrentOwner()
     end)
-    frame:HookScript("OnShow", function() handle:RefreshValue() end)
+    frame:HookScript("OnShow", function()
+        handle:RefreshValue()
+        if options.refreshAfterShow then
+            local shownRevision = revision
+            C_Timer.After(0, function()
+                -- Blizzard layout may clear text. Never overwrite a newer edit/refresh.
+                if frame:IsShown() and not dirty and revision == shownRevision then
+                    handle:RefreshValue()
+                end
+            end)
+        end
+    end)
     frame:SetScript("OnTextChanged", function(_, byUser)
         if byUser and handle.enabled then dirty = true end
     end)

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.216
+
+- Complete Phase 6: convert Emotes selectors, category-name editing and ordinary action buttons to Details Framework; retain custom rows, scrolling, native dialogs and JSON editor.
+- Guard pending category-name edits, preserve exact/empty values and deferred show refresh, and retire active list drags before rows are refreshed or the page is hidden.
+- Remove unused native widget helpers and add real-framework Emotes integration coverage; all ten smoke suites pass, with final in-game acceptance pending.
+
 ## 2.0.215
 
 - Convert Theme management, fonts, numeric fields, RGB swatches, effects, opacity, title-bar selection and icon actions to Details Framework while preserving layout and native dialogs/preview.
