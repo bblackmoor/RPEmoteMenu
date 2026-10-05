@@ -26,6 +26,8 @@ Simple Nameplates database mutations cancel drafts before profile selection/CRUD
 
 Validation includes direct database changes during previews, callback retirement, same-name replacement, stale lifecycle and bundled restore confirmations, missing bundled target replacement, and shared-picker takeover. Full smoke suites pass; native visual verification remains pending.
 
-## Phase 4 — Shared regression checks and documentation
+## Phase 4 — Shared regression checks and documentation (implemented)
 
-Document the agreed conventions and strengthen comparable regression checks. Review load order, registration, refresh, responsive layout and disabled-control behavior across both addons. Avoid a shared runtime dependency unless it has a clear maintenance benefit.
+The [shared conventions](settings-conventions.md) document module names, API contracts, deliberate differences, the test coverage map and pending native WoW acceptance. Both repositories have identical settings-contracts.lua helpers and repository-specific smoke entry points. The default test checks the local actual picker module; a peer path enables both actual modules together, including both takeover directions and native setup/hide variants. Existing integration suites cover actual libraries, registration, refresh, disabled controls, responsive layout, dialogs and database mutations.
+
+Architecture documents and README development commands reflect the current modules. No shared runtime dependency or packaging workflow was introduced. All four code phases are implemented; client acceptance remains pending.

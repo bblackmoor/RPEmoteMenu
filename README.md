@@ -91,6 +91,21 @@ The current saved-data model intentionally does not migrate v1 or earlier v2 lay
 
 The existing 10-category, 100-emote limit, default and targeted commands, character-name tokens, emote dragging, and per-character Profile selection remain available.
 
+## Development
+
+The [shared settings conventions](docs/design/settings-conventions.md) describe module contracts, deliberate differences from Simple Nameplates, comparable regression coverage and pending native acceptance. The [standardization record](docs/design/addon-standardization.md) preserves all four completed code phases.
+
+Run all 16 local smoke suites from the repository root with LuaTeX:
+
+```sh
+for test in tests/*-smoke.lua; do
+    texlua "$test" || exit 1
+done
+git diff --check
+```
+
+Tests use actual bundled libraries and addon modules with native UI fixtures. They do not establish native rendering or client frame restrictions. See the shared conventions for the optional actual-addon picker coexistence check and the pending in-game checklist.
+
 -----
 
 **AI disclaimer:** AI-assisted tools were used in development. The author reviewed and approved the code and documentation and remains responsible for the project.
@@ -99,3 +114,4 @@ Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)
 Licensed under GPL-3.0 [https://www.gnu.org/licenses/gpl-3.0.en.html](https://www.gnu.org/licenses/gpl-3.0.en.html)  
 Release history: [CHANGELOG.md](CHANGELOG.md)  
 Source: [https://github.com/bblackmoor/RPEmoteMenu](https://github.com/bblackmoor/RPEmoteMenu)
+

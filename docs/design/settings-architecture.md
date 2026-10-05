@@ -5,6 +5,12 @@ in-game integration checks remain open. Phases 1–6 of the separate Details Fra
 widget conversion are implemented; all client checkpoints, including final
 acceptance, remain open; see [the current conversion baseline and phases](details-framework-conversion.md).
 
+## Current standardization
+
+Current as of 2.1.241. The four cross-addon standardization code phases are implemented; native acceptance remains pending. See [shared conventions and coverage](settings-conventions.md) and [the phase record](addon-standardization.md).
+
+SettingsPanels holds page factories; RegisterSettingsPanels owns ordered registration, API/factory preflight and duplicate protection. Ordinary editable pages expose panel.Refresh. RefreshEditors, category selection and font refresh retain their specialized contracts. About now owns a responsive scroll page in SettingsAbout.lua. Profile and Theme confirmations live in SettingsProfileDialogs.lua and SettingsThemeDialogs.lua; RGB sessions live in SettingsColorPicker.lua. Dialogs validate captured object identity; an unchanged original target can remain valid after a selection change. Database mutations cancel affected previews before replacing their data.
+
 ## Goal
 
 The settings source should be easy for a human to read and modify. When a developer opens the source for a settings tab and reads downward, the code should encounter substantially the same sections and controls, in the same order, that the user sees when looking downward at that tab in WoW.
@@ -45,7 +51,16 @@ SettingsControls.lua
     shared row cursor and native information link
 
 SettingsWidgets.lua
-    Details Framework adapters and input/picker contracts
+    Details Framework adapters and widget input contracts
+
+SettingsColorPicker.lua
+    native RGB session ownership and preview/commit/cancel
+
+SettingsAbout.lua
+    responsive About page
+
+SettingsProfileDialogs.lua / SettingsThemeDialogs.lua
+    captured-target native lifecycle confirmations
 
 SettingsExchange.lua
     shared JSON transfer dialog
@@ -209,3 +224,4 @@ The structural settings refactor followed the new data model, runtime ownership,
 serialization, and initial Profile/Theme UI conversion. Ordinary settings rows now
 use a small cursor; the two-column Theme editor and dynamic Emote list keep their
 own layouts. Manual in-game verification is still required.
+
