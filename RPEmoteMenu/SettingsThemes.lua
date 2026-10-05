@@ -481,7 +481,7 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
 end
 
 -- The editor operates on the Theme selected above it.
-local function CreateThemesSettingsPanel()
+local function CreateThemesPanel()
     local container = CreateFrame("Frame")
     local scrollFrame = CreateFrame(
         "ScrollFrame",
@@ -540,7 +540,7 @@ local function CreateThemesSettingsPanel()
         controls.emoteFont:RefreshValue()
     end
 
-    local function RefreshControls()
+    local function Refresh()
         for key, control in pairs(controls) do
             if control.RefreshValue then
                 control:RefreshValue()
@@ -555,26 +555,26 @@ local function CreateThemesSettingsPanel()
 
     local management = CreateThemeManagementControls(panel)
 
-    container.RefreshControls = function()
+    container.Refresh = function()
         themeName = Database.GetActiveThemeName()
         themeSettings = Database.GetThemeSettings(themeName)
         management.Refresh()
-        RefreshControls()
+        Refresh()
     end
     container.RefreshFontControls = RefreshFontControls
     container.themeControls = controls
     AddonSettings.RefreshFontControls = RefreshFontControls
-    container:SetScript("OnShow", container.RefreshControls)
+    container:SetScript("OnShow", container.Refresh)
     container:SetScript("OnHide", function()
         for _, control in pairs(controls) do
             if control.CancelEdit then control:CancelEdit() end
         end
         UI.CancelColorEdit()
     end)
-    container.RefreshControls()
+    container.Refresh()
     return container
 end
 
 
-UI.CreateThemesSettingsPanel = CreateThemesSettingsPanel
+addon.SettingsPanels.Themes = CreateThemesPanel
 

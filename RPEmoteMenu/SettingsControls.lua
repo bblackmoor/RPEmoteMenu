@@ -1,6 +1,7 @@
 local _, addon = ...
 local UI = addon.SettingsUI
 local FIELD_GAP = UI.FIELD_GAP
+addon.SettingsPanels = addon.SettingsPanels or {}
 
 -- Ordinary rows share one cursor. Each panel chooses its own starting point
 -- and can add a deliberate gap before a new section.

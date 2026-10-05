@@ -63,7 +63,7 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
         end
     end
 end
-addon.Settings.CreateSettingsPanel()
+addon.Settings.RegisterSettingsPanels()
 assert(#categories == 6 and categories[1].label == 'RP Emote Menu' and categories[3].label == 'Profiles')
 local profiles, transfer = categories[3].panel, categories[6].panel
 for _, entry in ipairs(buttonCandidates) do

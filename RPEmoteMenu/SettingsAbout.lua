@@ -2,7 +2,7 @@ local _, addon = ...
 local UI, Widgets = addon.SettingsUI, addon.SettingsWidgets
 local SOURCE_URL = "https://github.com/bblackmoor/rpemotemenu"
 
-function UI.CreateAboutPanel()
+local function CreateAboutPanel()
     local panel, content, layout = UI.CreateScrollablePanel("About")
     StaticPopupDialogs["RPEMOTEMENU_COPY_SOURCE"] = {
         text = "Press Ctrl+C to copy the source URL.",
@@ -56,3 +56,5 @@ function UI.CreateAboutPanel()
     layout:Finish()
     return panel
 end
+
+addon.SettingsPanels.About = CreateAboutPanel

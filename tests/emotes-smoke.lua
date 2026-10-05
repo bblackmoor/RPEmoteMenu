@@ -44,7 +44,7 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
         end
     end
 end
-addon.Settings.CreateSettingsPanel()
+addon.Settings.RegisterSettingsPanels()
 assert(#panels==6 and panels[5].label=='Emotes')
 local panel=panels[5].panel
 local buttons, nameBox, rows = {}, nil, {}
@@ -500,3 +500,4 @@ end
 edit.HighlightText,edit.SetFocus=originalHighlight,originalFocus
 exchange:Hide()
 print('PASS all 64 transfer-mode transitions, callback/target cleanup, focus/selection and failed export session preservation')
+

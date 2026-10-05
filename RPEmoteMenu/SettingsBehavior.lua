@@ -301,7 +301,7 @@ local function CreateLayoutSection(panel, switches, rows)
 end
 
 -- Global/Profile behavior is organized by startup/interaction, inactivity/minimize behavior, and layout.
-local function CreateGeneralSettingsPanel()
+local function CreateBehaviorPanel()
     settings = Database.GetSettings()
     local container = CreateFrame("Frame")
     local scrollFrame, panel = Widgets.CreateCanvasScrollBox(container, {step = 40})
@@ -309,7 +309,7 @@ local function CreateGeneralSettingsPanel()
     scrollFrame:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", -28, 0)
     panel:SetSize(700, 670)
     local switches = {}
-    local RefreshControls
+    local Refresh
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
@@ -327,7 +327,7 @@ local function CreateGeneralSettingsPanel()
         settings = Database.GetSettings()
         MainWindow.ApplyProfileSettings()
         Database.SetActive(settings.active)
-        RefreshControls()
+        Refresh()
     end, 170, 24)
     defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
 
@@ -354,7 +354,7 @@ local function CreateGeneralSettingsPanel()
         RefreshInactiveControls()
     end
 
-    RefreshControls = function()
+    Refresh = function()
         for _, switch in ipairs(switches) do
             switch:RefreshValue()
         end
@@ -362,8 +362,8 @@ local function CreateGeneralSettingsPanel()
         AddonSettings.RefreshGeneralWindowFields()
     end
 
-    container.RefreshControls = RefreshControls
-    container:SetScript("OnShow", RefreshControls)
+    container.Refresh = Refresh
+    container:SetScript("OnShow", Refresh)
     container:SetScript("OnHide", function()
         for _, control in ipairs({tooltipDelayBox, fadeDelayBox, inactiveOpacityBox,
             iconSizeBox, positionXBox, positionYBox, heightBox}) do
@@ -375,5 +375,5 @@ local function CreateGeneralSettingsPanel()
 end
 
 
-UI.CreateGeneralSettingsPanel = CreateGeneralSettingsPanel
+addon.SettingsPanels.Behavior = CreateBehaviorPanel
 

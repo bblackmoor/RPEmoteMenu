@@ -6,7 +6,7 @@ local GetExchangeDialog = UI.GetExchangeDialog
 local CreateInfoLink = UI.CreateInfoLink
 
 -- Profile management keeps character selection, Theme assignment, and lifecycle actions together.
-local function CreateProfilesSettingsPanel()
+local function CreateProfilesPanel()
     local panel = CreateFrame("Frame")
     local rows = UI.CreateRows(panel, 20, -85, 30)
     local profileLabelY = rows:Next(27)
@@ -191,5 +191,5 @@ local function CreateProfilesSettingsPanel()
 end
 
 
-UI.CreateProfilesSettingsPanel = CreateProfilesSettingsPanel
+addon.SettingsPanels.Profiles = CreateProfilesPanel
 

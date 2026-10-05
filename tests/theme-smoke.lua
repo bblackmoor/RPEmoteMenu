@@ -49,8 +49,8 @@ widgets.CreateDropdown = function(...)
     local control = menuFactory(...); dropdowns[#dropdowns + 1] = control; return control
 end
 Load('SettingsThemes.lua')
-local panel = addon.SettingsUI.CreateThemesSettingsPanel()
-addon.Settings.RefreshSettingsPanels = panel.RefreshControls
+local panel = addon.SettingsPanels.Themes()
+addon.Settings.RefreshSettingsPanels = panel.Refresh
 addon.InitializeFontMedia()
 local controls = panel.themeControls
 local management = dropdowns[#dropdowns]
@@ -103,7 +103,7 @@ assert(buttons['Restore Theme'].frame:IsEnabled())
 -- Font policy, missing-name preservation, inexpensive labels and late providers.
 local default = db.GetThemeSettings()
 default.categoryFont = 'Absent'; default.emoteFont = 'Other Absent'
-panel.RefreshControls()
+panel.Refresh()
 local exported = assert(addon.Serialization.ExportTheme())
 local missing = assert(Option(controls.categoryFont, 'Absent'))
 assert(missing.label == 'Absent (unavailable)' and missing.font == nil)
@@ -198,7 +198,7 @@ Type(controls.categoryFontSize, '18'); Click(color); edit = ColorPickerFrame.inf
 Preview(edit, 0.9, 0.1, 0.2); panel:Hide(); Preview(edit, 1, 0, 0)
 assert(teal.categoryFontSize == 23 and teal.categoryTextColor.r == 0.3 and not ColorPickerFrame:IsShown())
 -- Geometry mutations stay runtime-owned; this suite checks the callback boundary.
-panel.RefreshControls(); before = applies
+panel.Refresh(); before = applies
 local profileSettings, x = db.GetProfileSettings(), db.GetProfileSettings().x
 Select(controls.titleBarPosition, 'LEFT')
 assert(teal.titleBarPosition == 'LEFT' and applies == before + 1 and profileSettings.x == x)
@@ -244,7 +244,7 @@ Click(buttons['Import Theme']); exchange.editBox:SetText(text)
 exchange.actionButton:GetScript('OnClick')(exchange.actionButton)
 assert(db.GetActiveThemeName() ~= 'Teal' and db.GetThemeSettings().categoryFontSize == factorySize)
 assert(management:GetValue() == db.GetActiveThemeName())
-before = applies; panel.RefreshControls(); panel.RefreshFontControls(); assert(applies == before)
+before = applies; panel.Refresh(); panel.RefreshFontControls(); assert(applies == before)
 for _, object in ipairs(native.objects) do
     if object.point and type(object.point[2]) == 'table' then assert(not object.point[2].frame and not object.point[2].widget) end
 end
@@ -263,7 +263,7 @@ end
 -- A font arriving during hover retires our tooltip without touching another owner.
 local settings = db.GetThemeSettings()
 settings.categoryFont = 'Review Missing'
-panel.RefreshControls(); Event(controls.categoryFont, 'OnEnter')
+panel.Refresh(); Event(controls.categoryFont, 'OnEnter')
 assert(GameTooltip:IsOwned(controls.categoryFont.frame) and GameTooltip:IsShown())
 media:Register('font', 'Review Missing', 'Interface\\Fonts\\review.ttf'); Drain()
 assert(controls.categoryFont.MissingFontName == nil and not GameTooltip:IsShown())
@@ -283,7 +283,7 @@ assert(GameTooltip:IsOwned(otherOwner) and GameTooltip:IsShown() and GameTooltip
 for _, action in ipairs({'Copy', 'Rename', 'Delete'}) do
     local name = 'Guard Theme ' .. action
     assert(db.CreateTheme(name)); assert(db.SetProfileTheme(db.GetActiveProfileName(), name))
-    panel.RefreshControls()
+    panel.Refresh()
     Click(buttons[action]); local pending = request
     local original = db.GetTheme(name)
     assert(db.RenameTheme(name, name .. ' Original')); assert(db.CreateTheme(name))
@@ -292,7 +292,7 @@ for _, action in ipairs({'Copy', 'Rename', 'Delete'}) do
     Accept(pending, action ~= 'Delete' and name .. ' Result' or nil)
     assert(db.GetTheme(name) == replacement and db.GetTheme(name .. ' Original') == original)
     assert(not db.GetTheme(name .. ' Result') and applies == calls)
-    assert(db.SetProfileTheme(db.GetActiveProfileName(), name)); panel.RefreshControls()
+    assert(db.SetProfileTheme(db.GetActiveProfileName(), name)); panel.Refresh()
     Click(buttons[action]); pending = request
     assert(db.DeleteTheme(name, true)); assert(db.CreateTheme(name))
     replacement = db.GetTheme(name); calls = applies
@@ -300,7 +300,7 @@ for _, action in ipairs({'Copy', 'Rename', 'Delete'}) do
     assert(db.GetTheme(name) == replacement and not db.GetTheme(name .. ' Result'))
     assert(applies == calls)
 end
-assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.RefreshControls()
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.Refresh()
 Click(buttons['Restore Theme']); local staleRestore = request
 assert(db.RestoreTheme('Default'))
 local replacementDefault = db.GetTheme('Default')
@@ -388,8 +388,8 @@ assert(db.GetProfileThemeName('Deletion Renamed') == 'Default')
 
 -- Case-only renames cannot make recreation or bulk restore violate name uniqueness.
 assert(db.RestoreTheme('Teal'))
-assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Teal')); panel.RefreshControls()
-assert(db.RenameTheme('Teal', 'TEAL')); panel.RefreshControls()
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Teal')); panel.Refresh()
+assert(db.RenameTheme('Teal', 'TEAL')); panel.Refresh()
 local capitalized = db.GetTheme('TEAL')
 capitalized.settings.categoryFontSize = 31
 local savedThemes = {}
@@ -411,7 +411,7 @@ assert(applies == callsBeforeConflict, 'conflicting restores must not partially 
 assert(addon.Serialization.Decode(assert(addon.Serialization.ExportEverything()), 'everything'))
 
 -- Renaming the conflicting custom Theme allows safe factory recreation.
-assert(db.RenameTheme('TEAL', 'Teal Custom')); panel.RefreshControls()
+assert(db.RenameTheme('TEAL', 'Teal Custom')); panel.Refresh()
 Select(management, 'Teal')
 assert(db.GetTheme('Teal') and db.GetTheme('Teal Custom') == capitalized)
 assert(capitalized.settings.categoryFontSize == 31)
@@ -431,7 +431,7 @@ importDialog.actionButton:GetScript('OnClick')(importDialog.actionButton)
 assert(db.GetActiveThemeName() ~= previousTheme and management:GetValue() == db.GetActiveThemeName())
 
 -- Bulk restoration includes Default appearance, shared users and runtime refresh.
-assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.RefreshControls()
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.Refresh()
 assert(db.SetProfileTheme('Shared', 'Default'))
 local originalDefault = db.GetTheme('Default')
 originalDefault.settings.categoryFontSize = 21
@@ -459,3 +459,4 @@ assert(applies == callsBeforeDefault)
 local restoredCount = assert(db.RestoreBuiltInThemes())
 assert(restoredCount == #addon.BuiltInThemes + 1)
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')
+

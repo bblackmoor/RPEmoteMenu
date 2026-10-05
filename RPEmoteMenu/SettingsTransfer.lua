@@ -3,7 +3,7 @@ local UI = addon.SettingsUI
 local Widgets = addon.SettingsWidgets
 local GetExchangeDialog = UI.GetExchangeDialog
 
-local function CreateImportExportSettingsPanel()
+local function CreateImportExportPanel()
     local panel = CreateFrame("Frame")
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
@@ -59,5 +59,5 @@ local function CreateImportExportSettingsPanel()
 end
 
 
-UI.CreateImportExportSettingsPanel = CreateImportExportSettingsPanel
+addon.SettingsPanels.ImportExport = CreateImportExportPanel
 

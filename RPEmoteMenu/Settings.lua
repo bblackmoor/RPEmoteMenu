@@ -7,98 +7,74 @@ local AddonSettings = addon.Settings
 local UI = addon.SettingsUI
 local Database = addon.Database
 local MAX_CATEGORIES = addon.MAX_CATEGORIES
-local settings
-local settingsCategory
-local generalSettingsCategory
-local profilesSettingsCategory
-local categoriesSettingsCategory
-local importExportSettingsCategory
-local categoriesSettingsPanel
+local rootCategory
+local categories, panels = {}, {}
+local pageOrder = {
+    {key = "About", label = "About"},
+    {key = "Behavior", label = "Behavior"},
+    {key = "Profiles", label = "Profiles"},
+    {key = "Themes", label = "Themes"},
+    {key = "Emotes", label = "Emotes"},
+    {key = "ImportExport", label = "Import & Export"},
+}
 
-function AddonSettings.CreateSettingsPanel()
-    settings = Database.GetSettings()
-    local aboutPanel = UI.CreateAboutPanel()
-    local generalPanel = UI.CreateGeneralSettingsPanel()
-    local themesPanel = UI.CreateThemesSettingsPanel()
-    local profilesPanel = UI.CreateProfilesSettingsPanel()
-    categoriesSettingsPanel = UI.CreateCategoriesSettingsPanel()
-    local importExportPanel = UI.CreateImportExportSettingsPanel()
-
-    settingsCategory = Settings.RegisterCanvasLayoutCategory(aboutPanel, "RP Emote Menu")
-    Settings.RegisterAddOnCategory(settingsCategory)
-
-    generalSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        generalPanel,
-        "Behavior"
-    )
-
-    profilesSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        profilesPanel,
-        "Profiles"
-    )
-
-    Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        themesPanel,
-        "Themes"
-    )
-
-    AddonSettings.RefreshProfiles = profilesPanel.Refresh
-
-    categoriesSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        categoriesSettingsPanel,
-        "Emotes"
-    )
-
-    importExportSettingsCategory = Settings.RegisterCanvasLayoutSubcategory(
-        settingsCategory,
-        importExportPanel,
-        "Import & Export"
-    )
-
-    AddonSettings.RefreshSettingsPanels = function()
-        settings = Database.GetSettings()
-        generalPanel.RefreshControls()
-        themesPanel.RefreshControls()
-        profilesPanel.Refresh()
-        categoriesSettingsPanel.SelectCategory(settings.selectedCategory)
+function AddonSettings.RegisterSettingsPanels()
+    if rootCategory or not addon.SettingsPanels or not Settings or not Settings.RegisterCanvasLayoutCategory
+        or not Settings.RegisterCanvasLayoutSubcategory or not Settings.RegisterAddOnCategory then return end
+    -- Validate all factories before constructing or registering any page.
+    for _, page in ipairs(pageOrder) do
+        if type(addon.SettingsPanels[page.key]) ~= "function" then return end
+    end
+    for _, page in ipairs(pageOrder) do
+        panels[page.key] = addon.SettingsPanels[page.key]()
+    end
+    rootCategory = Settings.RegisterCanvasLayoutCategory(panels.About, "RP Emote Menu")
+    categories.About = rootCategory
+    Settings.RegisterAddOnCategory(rootCategory)
+    for index = 2, #pageOrder do
+        local page = pageOrder[index]
+        categories[page.key] = Settings.RegisterCanvasLayoutSubcategory(rootCategory, panels[page.key], page.label)
     end
 
+    AddonSettings.RefreshProfiles = panels.Profiles.Refresh
+    AddonSettings.RefreshSettingsPanels = function()
+        local settings = Database.GetSettings()
+        panels.Behavior.Refresh()
+        panels.Themes.Refresh()
+        panels.Profiles.Refresh()
+        panels.Emotes.SelectCategory(settings.selectedCategory)
+    end
     AddonSettings.RefreshEditors = function(categoryIndex)
         UI.RefreshExchangeDialog()
-
-        categoriesSettingsPanel.RefreshEditors(categoryIndex)
+        panels.Emotes.RefreshEditors(categoryIndex)
     end
 end
 
 AddonSettings.OpenAbout = function()
-    if settingsCategory then
-        Settings.OpenToCategory(settingsCategory:GetID())
+    if rootCategory then
+        Settings.OpenToCategory(rootCategory:GetID())
     end
 end
 
 AddonSettings.Open = function()
-    if generalSettingsCategory then
-        Settings.OpenToCategory(generalSettingsCategory:GetID())
-    elseif settingsCategory then
-        Settings.OpenToCategory(settingsCategory:GetID())
+    if categories.Behavior then
+        Settings.OpenToCategory(categories.Behavior:GetID())
+    elseif rootCategory then
+        Settings.OpenToCategory(rootCategory:GetID())
     end
 end
 
 AddonSettings.OpenEmotes = function(categoryIndex)
-    if categoriesSettingsPanel
+    if panels.Emotes
         and type(categoryIndex) == "number"
         and categoryIndex % 1 == 0
         and categoryIndex >= 1
         and categoryIndex <= MAX_CATEGORIES then
-        categoriesSettingsPanel.SelectCategory(categoryIndex)
+        panels.Emotes.SelectCategory(categoryIndex)
     end
 
-    if categoriesSettingsCategory then
-        Settings.OpenToCategory(categoriesSettingsCategory:GetID())
+    if categories.Emotes then
+        Settings.OpenToCategory(categories.Emotes:GetID())
     else
         AddonSettings.Open()
     end

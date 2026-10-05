@@ -8,9 +8,13 @@ Both About pages use a large About heading, muted description, Version/Author/Ca
 
 Validation: both complete smoke suites pass, including responsive About expansion/contraction and source-copy behavior. Verify final appearance and native scrolling in WoW at narrow and normal Settings widths.
 
-## Phase 2 — Naming and page registration
+## Phase 2 — Naming and page registration (implemented)
 
-Align names for equivalent local variables, helpers and page contracts. Keep domain-specific Profile/Theme and nameplate terminology. Review registration and refresh contracts before restructuring them.
+Settings modules now use addon, UI and Widgets for equivalent locals. Both addons publish page factories through SettingsPanels and use RegisterSettingsPanels with explicit pageOrder, rootCategory, categories and panels. Registration checks all required APIs and factories before constructing pages and ignores repeated calls. Visible page order and slash routes are preserved.
+
+Ordinary editable pages expose panel.Refresh; RP Emote Menu retains RefreshEditors, category selection and font refresh, and Simple Nameplates retains its OnHide edit-cancellation behavior. Equivalent layout fields use LayoutFullWidth/ LayoutText and the info helper is CreateInfoLink. Runtime namespace structure, database contracts and embedded libraries remain addon-specific.
+
+Validation: complete smoke suites, registration preflight/retry/idempotence/order/routing, silent construction and control refresh, profile switching, picker cancellation and editor-target tests. Native appearance verification in WoW remains pending.
 
 ## Phase 3 — Database, dialog and picker contracts
 

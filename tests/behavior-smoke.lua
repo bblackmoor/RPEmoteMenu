@@ -44,9 +44,9 @@ main.ApplyProfileSettings = function()
     applyProfile()
 end
 Load('SettingsBehavior.lua')
-local container = addon.SettingsUI.CreateGeneralSettingsPanel()
-addon.Settings.RefreshSettingsPanels = container.RefreshControls
-container.RefreshControls()
+local container = addon.SettingsPanels.Behavior()
+addon.Settings.RefreshSettingsPanels = container.Refresh
+container.Refresh()
 assert(addon.SettingsUI.CreateSwitch == nil and addon.SettingsUI.CreateIntegerEditBox == nil,
     'unused native widget factories remain retired')
 assert(type(addon.SettingsUI.CreateRows) == 'function'
@@ -95,7 +95,7 @@ local global, profile = db.GetGlobalSettings(), db.GetProfileSettings()
 local activationCalls = 0
 main.ApplyActivation = function() activationCalls = activationCalls + 1 end
 Switch(login); assert(global.active == false and activationCalls == 1)
-container.RefreshControls(); assert(not login:GetChecked())
+container.Refresh(); assert(not login:GetChecked())
 Switch(login); assert(global.active == true and activationCalls == 2)
 Switch(login); assert(global.active == false and activationCalls == 3)
 Switch(gear); assert(global.hideSettingsGear and calls.gear == 1 and calls.menu == 1)
@@ -179,10 +179,10 @@ main.ApplyProfileSettings(); Event(x, 'OnEnterPressed')
 assert(other.x == -75 and profile.x == 0 and x:GetText() == '-75')
 Type(x, '-555'); container:Hide(); Event(x, 'OnEnterPressed')
 assert(other.x == -75, 'hiding the page cancels pending editing')
-container.RefreshControls()
+container.Refresh()
 local snapshot = {}
 for key, value in pairs(calls) do snapshot[key] = value end
-container.RefreshControls(); addon.Settings.RefreshGeneralWindowFields()
+container.Refresh(); addon.Settings.RefreshGeneralWindowFields()
 for key, value in pairs(calls) do assert(snapshot[key] == value, 'runtime refresh reentered setter') end
 local scroll = x.frame:GetParent():GetParent()
 function scroll:GetVerticalScrollRange() return 200 end
@@ -210,7 +210,7 @@ for _, point in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
     for _, relative in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
         heightProfile.point,heightProfile.relativePoint=point,relative
         heightProfile.x,heightProfile.y,heightProfile.height=-75,-40,250
-        main.ApplyProfileSettings(); container.RefreshControls()
+        main.ApplyProfileSettings(); container.Refresh()
         local left,top=frame:GetLeft(),frame:GetTop()
         Enter(height, '270')
         assert(heightProfile.height==270 and heightProfile.point==point

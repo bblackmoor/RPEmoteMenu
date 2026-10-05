@@ -39,7 +39,7 @@ local function HasEmptyCategorySlot(selectedCategoryIndex)
     return false
 end
 
-local function CreateCategoriesSettingsPanel()
+local function CreateEmotesPanel()
     local settings = Database.GetSettings()
     local panel = CreateFrame("Frame")
     local rows = UI.CreateRows(panel, 16, -16, 32)
@@ -242,8 +242,10 @@ local function CreateCategoriesSettingsPanel()
         RefreshCategorySelector()
     end
 
+    panel.Refresh = function() panel.RefreshEditors() end
+
     panel:SetScript("OnShow", function(self)
-        self.RefreshEditors()
+        self.Refresh()
     end)
 
     panel:HookScript("OnHide", function() nameBox:CancelEdit() end)
@@ -261,6 +263,6 @@ local function CreateCategoriesSettingsPanel()
 end
 
 
-UI.CreateCategoriesSettingsPanel = CreateCategoriesSettingsPanel
+addon.SettingsPanels.Emotes = CreateEmotesPanel
 
 

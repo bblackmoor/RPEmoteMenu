@@ -95,7 +95,7 @@ end
 local first=DB.GetCategory(1)
 first.emotes[1].label='First'
 first.emotes[2].label='Second'
-addon.Settings.CreateSettingsPanel()
+addon.Settings.RegisterSettingsPanels()
 addon.Settings.Open()
 addon.Settings.OpenAbout()
 addon.Settings.OpenEmotes(1)
@@ -316,7 +316,7 @@ addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() e
 addon.Settings.OpenAbout=function() openedAbout=openedAbout+1; originalAbout() end
 DB.InitializeDatabase=function() end
 addon.MainWindow.CreateMainWindow=function() end
-addon.Settings.CreateSettingsPanel=function() end
+addon.Settings.RegisterSettingsPanels=function() end
 local mainFrame=CreateFrame('Frame')
 function mainFrame:IsShown() return self.shown==true end
 function mainFrame:Show() self.shown=true end
@@ -345,3 +345,4 @@ assert(activationSettings.active and mainFrame:IsShown(),'Slash toggle did not s
 SlashCmdList.ELLEMOTE('')
 assert(not activationSettings.active and not mainFrame:IsShown(),'Slash toggle did not hide the menu')
 print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')
+

@@ -38,7 +38,7 @@ eventFrame:SetScript("OnEvent", function(_, _, loadedAddonName)
 
     addon.Database.InitializeDatabase()
     addon.MainWindow.CreateMainWindow()
-    addon.Settings.CreateSettingsPanel()
+    addon.Settings.RegisterSettingsPanels()
     if addon.InitializeFontMedia then addon.InitializeFontMedia() end
 
     SLASH_ELLEMOTE1 = "/rpem"
@@ -46,3 +46,4 @@ eventFrame:SetScript("OnEvent", function(_, _, loadedAddonName)
 
     eventFrame:UnregisterEvent("ADDON_LOADED")
 end)
+
