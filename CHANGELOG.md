@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.213
+
+- Convert the Behavior page's switches, numeric fields, minimize selector and action buttons to Details Framework while preserving layout, ownership and runtime calls.
+- Guard pending Global/Profile edits across selection and resets; cancel edits when fields are disabled or the page is hidden, and keep refreshes silent.
+- Add real-framework/database Behavior integration tests covering dependencies, input limits, signed coordinates, reset scopes, geometry and scrolling; in-game checks remain pending.
+
 ## 2.0.212
 
 - Complete settings conversion Phase 2: embed pinned Details Framework and isolated switch, dropdown, button, RGB swatch, text and integer adapters; settings pages retain their current controls.

@@ -5,9 +5,48 @@ local Database = addon.Database
 local MainWindow = addon.MainWindow
 local settings
 local FIELD_GAP = UI.FIELD_GAP
-local CreateSwitch = UI.CreateSwitch
-local CreateNumberSetting = UI.CreateNumberSetting
-local CreateIntegerEditBox = UI.CreateIntegerEditBox
+local Widgets = addon.SettingsWidgets
+
+-- Behavior-only composition: other pages keep the native SettingsUI factories.
+local function CreateSwitch(parent, label, y, getValue, setValue, controlX)
+    local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    caption:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
+    caption:SetText(label)
+    local control = Widgets.CreateSwitch(parent, setValue)
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX, y + 4)
+    function control:RefreshValue() self:SetChecked(getValue()) end
+    control:RefreshValue()
+    return control
+end
+
+local function CreateIntegerEditBox(parent, x, y, width, getValue, applyValue,
+    allowNegative, minimum, maximum, getOwner)
+    local control = Widgets.CreateIntegerEntry(parent, getValue, applyValue, {
+        width = width, allowNegative = allowNegative,
+        minimum = minimum, maximum = maximum,
+        getOwner = getOwner or Database.GetProfileSettings,
+    })
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    return control
+end
+
+local function CreateNumberSetting(parent, labelText, settingKey, x, y,
+    minimum, maximum, getValue, applyValue, suffix, controlX, getOwner)
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    label:SetText(labelText)
+    local control = CreateIntegerEditBox(parent, controlX, y + 4, 70,
+        getValue, applyValue, false, minimum, maximum, getOwner)
+    control.Label = label
+    control:GetFrame().settingKey = settingKey
+    if suffix then
+        local suffixLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        suffixLabel:SetPoint("LEFT", control:GetFrame(), "RIGHT", FIELD_GAP, 0)
+        suffixLabel:SetText(suffix)
+        control.SuffixLabel = suffixLabel
+    end
+    return control
+end
 
 -- Startup and interaction settings.
 local function CreateStartupSection(panel, switches, rows)
@@ -22,7 +61,7 @@ local function CreateStartupSection(panel, switches, rows)
         panel, "Tooltip delay (0-1000)", "tooltipDelayMs", 20, rows:Next(), 0, 1000,
         function() return settings.tooltipDelayMs end,
         function(value) settings.tooltipDelayMs = value end,
-        "ms", 255
+        "ms", 255, Database.GetGlobalSettings
     )
 
     local hideSettingsSwitch = CreateSwitch(panel, "Hide setting gear icons", rows:Next(),
@@ -35,7 +74,7 @@ local function CreateStartupSection(panel, switches, rows)
     switches[#switches + 1] = hideSettingsSwitch
 
     local gearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    gearNote:SetPoint("LEFT", hideSettingsSwitch, "RIGHT", FIELD_GAP, 0)
+    gearNote:SetPoint("LEFT", hideSettingsSwitch:GetFrame(), "RIGHT", FIELD_GAP, 0)
     gearNote:SetText("(right-click an emote to edit)")
 
     return tooltipDelayBox
@@ -84,38 +123,20 @@ local function CreateInactivitySection(panel, switches, rows)
     minimizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, minimizeY)
     minimizeLabel:SetText("Minimize to")
 
-    local minimizeSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        panel,
-        "WowStyle1DropdownTemplate"
-    )
+    local minimizeLabels = {NONE = "None", TITLE_BAR = "Title Bar", ICON = "Icon"}
+    local minimizeSelector = Widgets.CreateDropdown(panel, function()
+        local options = {}
+        for _, mode in ipairs({"NONE", "TITLE_BAR", "ICON"}) do
+            options[#options + 1] = {label = minimizeLabels[mode], value = mode}
+        end
+        return options
+    end, function(mode)
+        settings.minimizeMode = mode
+        MainWindow.ApplyMinimizeToIconSettings()
+        if RefreshIconControls then RefreshIconControls() end
+    end)
     minimizeSelector:SetWidth(150)
     minimizeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 255, minimizeY + 5)
-    minimizeSelector:SetDefaultText("None")
-
-    local minimizeLabels = {
-        NONE = "None",
-        TITLE_BAR = "Title Bar",
-        ICON = "Icon"
-    }
-
-    minimizeSelector:SetupMenu(function(_, rootDescription)
-        for _, mode in ipairs({"NONE", "TITLE_BAR", "ICON"}) do
-            rootDescription:CreateRadio(
-                minimizeLabels[mode],
-                function() return settings.minimizeMode == mode end,
-                function()
-                    settings.minimizeMode = mode
-                    minimizeSelector:OverrideText(minimizeLabels[mode])
-                    MainWindow.ApplyMinimizeToIconSettings()
-                    if RefreshIconControls then
-                        RefreshIconControls()
-                    end
-                end
-            )
-        end
-    end)
 
     local iconSizeY = rows:Next()
     local iconSizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -128,11 +149,12 @@ local function CreateInactivitySection(panel, switches, rows)
         function(value)
             settings.minimizedIconSize = value
             MainWindow.ApplyMinimizeToIconSettings()
-        end
+        end,
+        false, addon.MIN_MINIMIZED_ICON_SIZE, addon.MAX_MINIMIZED_ICON_SIZE
     )
 
     local iconSizeRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    iconSizeRange:SetPoint("LEFT", iconSizeBox, "RIGHT", FIELD_GAP, 0)
+    iconSizeRange:SetPoint("LEFT", iconSizeBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
     iconSizeRange:SetText("(16-64 px)")
 
     RefreshIconControls = function()
@@ -149,12 +171,8 @@ local function CreateInactivitySection(panel, switches, rows)
         local alpha = enabled and 1 or 0.45
 
         for _, control in ipairs({fadeDelayBox, inactiveOpacityBox}) do
-            if enabled then
-                control:Enable()
-            else
-                control:ClearFocus()
-                control:Disable()
-            end
+            -- Disable cancels before clearing focus; ClearFocus first would commit.
+            control:SetEnabled(enabled)
 
             control:SetAlpha(alpha)
             control.Label:SetAlpha(alpha)
@@ -177,17 +195,10 @@ local function CreateLayoutSection(panel, switches, rows)
     rows:Heading("Layout", 25)
 
     local centerY = rows:Next(45)
-    local centerButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    centerButton:SetSize(130, 24)
+    local centerButton = Widgets.CreateButton(panel, "Center Window", MainWindow.CenterWindow, 130, 24)
     centerButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, centerY)
-    centerButton:SetText("Center Window")
-    centerButton:SetScript("OnClick", MainWindow.CenterWindow)
-
-    local resetButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    resetButton:SetSize(125, 24)
+    local resetButton = Widgets.CreateButton(panel, "Reset Window", MainWindow.ResetWindowPosition, 125, 24)
     resetButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 160, centerY)
-    resetButton:SetText("Reset Window")
-    resetButton:SetScript("OnClick", MainWindow.ResetWindowPosition)
 
     local positionY = rows:Next(35)
     local positionLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -225,11 +236,11 @@ local function CreateLayoutSection(panel, switches, rows)
     )
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    xLabel:SetPoint("RIGHT", positionXBox, "LEFT", -FIELD_GAP, 0)
+    xLabel:SetPoint("RIGHT", positionXBox:GetFrame(), "LEFT", -FIELD_GAP, 0)
     xLabel:SetText("X")
 
     local yLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    yLabel:SetPoint("RIGHT", positionYBox, "LEFT", -FIELD_GAP, 0)
+    yLabel:SetPoint("RIGHT", positionYBox:GetFrame(), "LEFT", -FIELD_GAP, 0)
     yLabel:SetText("Y")
 
     local heightY = rows:Next(35)
@@ -247,11 +258,12 @@ local function CreateLayoutSection(panel, switches, rows)
                 nil,
                 value
             )
-        end
+        end,
+        false, 150, 630
     )
 
     local heightRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    heightRange:SetPoint("LEFT", heightBox, "RIGHT", FIELD_GAP, 0)
+    heightRange:SetPoint("LEFT", heightBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
     heightRange:SetText("(150-630 px)")
 
     local lockSwitch = CreateSwitch(panel, "Lock window", rows:Next(),
@@ -272,7 +284,7 @@ local function CreateLayoutSection(panel, switches, rows)
     return lockSwitch, positionXBox, positionYBox, heightBox
 end
 
--- Global behavior is organized by startup/interaction, inactivity/minimize behavior, and layout.
+-- Global/Profile behavior is organized by startup/interaction, inactivity/minimize behavior, and layout.
 local function CreateGeneralSettingsPanel()
     settings = Database.GetSettings()
     local container = CreateFrame("Frame")
@@ -310,16 +322,13 @@ local function CreateGeneralSettingsPanel()
     )
     description:SetTextColor(0.8, 0.8, 0.8)
 
-    local defaultsButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    defaultsButton:SetSize(170, 24)
-    defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
-    defaultsButton:SetText("Restore Global Defaults")
-    defaultsButton:SetScript("OnClick", function()
+    local defaultsButton = Widgets.CreateButton(panel, "Restore Global Defaults", function()
         Database.ResetGlobalSettings()
         settings = Database.GetSettings()
         MainWindow.ApplyProfileSettings()
         RefreshControls()
-    end)
+    end, 170, 24)
+    defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
 
     local rows = UI.CreateRows(panel, 20, -95, 30)
     local tooltipDelayBox = CreateStartupSection(panel, switches, rows)
@@ -338,9 +347,8 @@ local function CreateGeneralSettingsPanel()
         fadeDelayBox:RefreshValue()
         tooltipDelayBox:RefreshValue()
         inactiveOpacityBox:RefreshValue()
-        minimizeSelector:OverrideText(
-            minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE
-        )
+        minimizeSelector:SetValue(settings.minimizeMode,
+            minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE)
         iconSizeBox:RefreshValue()
         RefreshInactiveControls()
     end
@@ -355,6 +363,12 @@ local function CreateGeneralSettingsPanel()
 
     container.RefreshControls = RefreshControls
     container:SetScript("OnShow", RefreshControls)
+    container:SetScript("OnHide", function()
+        for _, control in ipairs({tooltipDelayBox, fadeDelayBox, inactiveOpacityBox,
+            iconSizeBox, positionXBox, positionYBox, heightBox}) do
+            control:CancelEdit()
+        end
+    end)
 
     return container
 end

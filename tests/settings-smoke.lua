@@ -8,43 +8,25 @@ local function loadModule(path)
 end
 loadModule('RPEmoteMenu/Defaults.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
-local widgets = {}
-local Widget = {}
-Widget.__index = function(_, key)
-    if key == "Text" or key == "InternalText" or key == "MissingFontName" or key == "emoteIndex" or key == "parent" then return nil end
-    return Widget[key] or function() end
-end
-function Widget:CreateFontString() return CreateFrame('FontString', nil, self) end
-function Widget:CreateTexture() return CreateFrame('Texture', nil, self) end
-function Widget:SetText(v) self.text = v end
-function Widget:OverrideText(v) self.text = v end
-function Widget:GetText() return self.text or '' end
+-- Behavior uses real DF; the later-phase pages still use native controls.
+local native = dofile('tests/details-framework-ui-stubs.lua')
+local widgets = native.objects
+local Widget = getmetatable(UIParent).__index
+function Widget:SetDefaultText(value) self:SetText(value) end
+function Widget:OverrideText(value) self:SetText(value) end
 function Widget:SetPoint(point, relative, relativePoint, x, y)
-  self.anchor={point=point,relative=relative,relativePoint=relativePoint,x=x,y=y}
+    self.point = {point, relative, relativePoint, x, y}
+    self.anchor = {point=point,relative=relative,relativePoint=relativePoint,x=x,y=y}
 end
-function Widget:SetSize(w,h) self.width=w; self.height=h end
-function Widget:GetWidth() return self.width or 250 end
-function Widget:GetHeight() return self.height or 24 end
-function Widget:GetStringWidth() return 10 end
-function Widget:GetStringHeight() return 16 end
-function Widget:SetScript(event, callback) self.scripts[event]=callback end
-function Widget:HookScript(event, callback) self.scripts[event]=callback end
-function Widget:SetEnabled(v) self.enabled=v end
-function Widget:IsEnabled() return self.enabled ~= false end
-function Widget:SetupMenu(fn) self.menu=fn end
-function Widget:SetChecked(v) self.checked=v end
+function Widget:SetEnabled(value) if value then self:Enable() else self:Disable() end end
+function Widget:SetupMenu(fn) self.menu = fn end
+function Widget:SetChecked(value) self.checked = value end
 function Widget:GetChecked() return self.checked end
 function Widget:GetID() return 1 end
-function Widget:IsShown() return true end
-function Widget:IsMouseOver() return self.mouseover == true end
 function Widget:GetFontString() return nil end
-function Widget:SetFont() return true end
-function Widget:SetVerticalScroll() end
-function CreateFrame(kind, _, parent)
-    local widget=setmetatable({kind=kind,parent=parent,scripts={}}, Widget)
-    widgets[#widgets+1]=widget
-    return widget
-end
+function Widget:IsMouseOver() return self.mouseover == true end
+local LoadXML = dofile('tests/details-framework-loader.lua')
+LoadXML('Libs/DetailsFramework/load.xml')
 local activeProfile='Default'
 local profiles={Default={theme='Default'}}
 local tealSettings={}
@@ -92,7 +74,7 @@ addon.IsFontAvailable=function() return true end
 addon.GetAvailableFonts=function() return {{name='Friz Quadrata'}} end
 addon.Serialization={}
 UIParent=CreateFrame('Frame')
-STANDARD_TEXT_FONT='font'; CANCEL='Cancel'; DELETE='Delete'; OKAY='Okay'; CLOSE='Close'
+CANCEL='Cancel'; DELETE='Delete'; OKAY='Okay'; CLOSE='Close'
 StaticPopupDialogs={}; local lastPopup
 function StaticPopup_Show(name, text, _, data) lastPopup={name=name,text=text,data=data} end
 C_Timer={After=function() end}

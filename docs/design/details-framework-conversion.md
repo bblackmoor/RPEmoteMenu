@@ -9,7 +9,11 @@ remain unchanged.
 
 Phase 2 (foundation) completed on 2026-10-05 in 2.0.212. The pinned framework
 and addon-owned adapters are embedded and tested; all existing settings pages
-still construct native controls. Phases 3–6 remain planned.
+still constructed native controls at that checkpoint.
+
+Phase 3 (Behavior) implemented on 2026-10-05 in 2.0.213. Its ordinary controls
+now use the adapters, with ownership, dependency, reset and geometry regression
+checks. The in-game checkpoint remains pending; Phases 4–6 remain planned.
 
 This document governs the new widget conversion. The older
 [settings architecture](settings-architecture.md) remains the guide to readable
@@ -35,7 +39,7 @@ repository tree. Existing open client checks do not constitute observed success.
 | --- | --- | --- |
 | Settings.lua | About, page registration, refresh orchestration, slash destinations | Preserve native category registration and IDs; adapt About's ordinary controls |
 | SettingsControls.lua | Row cursor, switches, info links, numeric/content editors, swatches, font selectors | Retain rows and labels; delegate widgets to an isolated adapter |
-| SettingsBehavior.lua | Startup/interaction, fade/minimize dependencies, window geometry | Convert in Phase 3 without moving ownership or changing ranges |
+| SettingsBehavior.lua | Startup/interaction, fade/minimize dependencies, window geometry | Converted in Phase 3; ownership and ranges preserved |
 | SettingsProfiles.lua / SettingsProfileDialogs.lua | Character selection, Theme assignment, CRUD, Default restore, transfer | Convert page widgets; retain native confirmation/name dialogs |
 | SettingsThemes.lua / SettingsThemeDialogs.lua | Theme selection/CRUD, two-column typography, effects, opacity, title bar | Convert widgets; preserve shared Theme assignment and native dialogs |
 | SettingsThemeIcon.lua | Icon swatch, Restore Yellow, preview | Adapt swatch/button; retain icon preview and reset scope |
@@ -157,7 +161,7 @@ including nested dropdown scrollbars. Details/Plater must not be required.
 | --- | --- | --- | --- |
 | 1 — Baseline | This inventory, contracts, scope and phase plan | Review source; run existing suites; no runtime/control edits | Complete |
 | 2 — Foundation | Embed pinned DF; isolated switch/menu/button/swatch/text-entry adapters | Real-library tests for load order, frames, enable state, silent refresh, exact/empty text, Enter/Escape/focus loss, signed numbers and assets; pages remain native | Complete |
-| 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Planned |
+| 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Implemented; client pending |
 | 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Planned |
 | 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Planned |
 | 6 — Emotes and cleanup | Ordinary Emotes widgets; retire unused helpers; update docs | Exact/empty text, category/emote edit/drag/duplicate/delete, limits, preserved custom rows/JSON editor, registration/refresh; final client checkpoint | Planned |
@@ -202,6 +206,38 @@ and verifies compatible newer LibStub copies are retained. Native UI stand-ins
 cover API calls and callbacks, not rendering/security or client event ordering.
 All six smoke suites pass. No page conversion or saved-data migration is included.
 
+## Phase 3 implementation
+
+The Behavior page now uses four DF switches, seven compact integer entries, the
+minimize dropdown and three action buttons. Behavior-local composition retains
+native headings/labels, the row cursor and scroll canvas; the shared SettingsUI
+factories remain native for later-phase pages. Native labels anchor to unwrapped
+frames. Existing control positions, widths, row spacing and disabled alpha remain
+unchanged; native rendering still requires the client checkpoint.
+
+Tooltip editing captures `Database.GetGlobalSettings()`; window fields capture
+`Database.GetProfileSettings()`. These identities guard pending input across
+selection or replacement, unlike the stable merged settings proxy. Global restore
+still changes only global preferences. Center/reset actions and coordinates still
+use MainWindow's existing geometry policy, preserving signed/offscreen advanced
+placement, height limits, automatic width and anchor behavior. Numeric setters
+retain their original runtime update calls and bounds.
+
+Fade/minimize dependencies cancel edits before disabling fields rather than
+clearing focus first. Page hide cancels pending numeric edits; page show and
+runtime/database refreshes update values silently. The minimize menu's selected
+value and label refresh together, without invoking its action.
+
+`tests/behavior-smoke.lua` constructs the real DF controls before PLAYER_LOGIN,
+uses the real database and geometry functions, and checks ownership transitions,
+disabled/cancelled/invalid editing, limits/wheel input, reset scopes, refresh
+reentrancy, exact positions/widths/native anchors and scroll bounds. Only native
+UI and unrelated renderer operations/measurements are stubbed. The existing
+settings suite now loads real DF alongside still-native later-phase pages,
+retaining registration, cross-page, Emote drag and slash-route checks. All seven
+smoke suites pass. The new Behavior controls need in-game verification before
+recording the Phase 3 client checkpoint as passed.
+
 ## Verification baseline and acceptance checklist
 
 All five existing suites passed during Phase 1 with:
@@ -235,5 +271,5 @@ client build, addon version, other DF embedders present/absent and actual result
 - Startup without Details/Plater, then coexistence with another DF embedder;
   control assets present and no observed Lua/security/taint errors in/out of combat.
 
-Phases 1–2 report source/test readiness only. Neither these tests nor SNP's still
+Phases 1–3 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.
