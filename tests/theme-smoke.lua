@@ -385,4 +385,48 @@ assert(db.CreateProfile('Unrelated Profile'))
 Accept(pending)
 assert(not db.GetTheme('Deletion Guard') and db.GetProfileThemeName('Deletion B') == 'Default')
 assert(db.GetProfileThemeName('Deletion Renamed') == 'Default')
+
+-- Case-only renames cannot make recreation or bulk restore violate name uniqueness.
+assert(db.RestoreTheme('Teal'))
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Teal')); panel.RefreshControls()
+assert(db.RenameTheme('Teal', 'TEAL')); panel.RefreshControls()
+local capitalized = db.GetTheme('TEAL')
+capitalized.settings.categoryFontSize = 31
+local savedThemes = {}
+for _, name in ipairs(db.GetThemeNames()) do savedThemes[name] = db.GetTheme(name) end
+local callsBeforeConflict = applies
+assert(Option(management, 'Teal').label == 'Recreate Teal')
+Select(management, 'Teal')
+assert(not db.GetTheme('Teal') and db.GetTheme('TEAL') == capitalized)
+assert(db.GetActiveThemeName() == 'TEAL' and management:GetValue() == 'TEAL')
+assert(applies == callsBeforeConflict)
+local success, conflict = db.RestoreTheme('Teal')
+assert(not success and conflict:find('TEAL', 1, true))
+local count, bulkError = db.RestoreBuiltInThemes()
+assert(not count and bulkError:find('TEAL', 1, true))
+Click(buttons['Restore Bundled Themes']); Accept(request)
+for name, object in pairs(savedThemes) do assert(db.GetTheme(name) == object) end
+assert(not db.GetTheme('Teal') and capitalized.settings.categoryFontSize == 31)
+assert(applies == callsBeforeConflict, 'conflicting restores must not partially update Themes')
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportEverything()), 'everything'))
+
+-- Renaming the conflicting custom Theme allows safe factory recreation.
+assert(db.RenameTheme('TEAL', 'Teal Custom')); panel.RefreshControls()
+Select(management, 'Teal')
+assert(db.GetTheme('Teal') and db.GetTheme('Teal Custom') == capitalized)
+assert(capitalized.settings.categoryFontSize == 31)
+Click(buttons['Restore Bundled Themes']); Accept(request)
+assert(db.GetTheme('Teal Custom') == capitalized and capitalized.settings.categoryFontSize == 31)
+assert(addon.Serialization.Decode(assert(addon.Serialization.ExportEverything()), 'everything'))
+
+-- Import copy describes the actual active-Profile assignment.
+Click(buttons['Export Theme'])
+local importedText = addon.SettingsUI.GetExchangeDialog().editBox:GetText()
+Click(buttons['Import Theme'])
+local importDialog = addon.SettingsUI.GetExchangeDialog()
+assert(importDialog.instructions:GetText():find('assigns it to the active Profile', 1, true))
+local previousTheme = db.GetActiveThemeName()
+importDialog.editBox:SetText(importedText)
+importDialog.actionButton:GetScript('OnClick')(importDialog.actionButton)
+assert(db.GetActiveThemeName() ~= previousTheme and management:GetValue() == db.GetActiveThemeName())
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')

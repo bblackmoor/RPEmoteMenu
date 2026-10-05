@@ -887,6 +887,18 @@ function Database.DeleteTheme(themeName, confirmedInUse)
 end
 
 
+-- Factory names obey the same case-insensitive uniqueness rule as CRUD/imports.
+-- Preserve differently capitalized custom Themes rather than replacing them.
+local function ValidateThemeRestoreName(themeName)
+    for existingName in pairs(RPEmoteMenuDB.themes) do
+        if existingName ~= themeName
+            and string.lower(existingName) == string.lower(themeName) then
+            return nil, 'Rename Theme "' .. existingName .. '" before restoring "' .. themeName .. '".'
+        end
+    end
+    return true
+end
+
 function Database.RestoreTheme(themeName)
     local source
     if themeName == DEFAULT_THEME_NAME then
@@ -898,6 +910,9 @@ function Database.RestoreTheme(themeName)
     if not source then
         return false, "Only Default and bundled themes have factory settings."
     end
+
+    local valid, errorMessage = ValidateThemeRestoreName(themeName)
+    if not valid then return false, errorMessage end
 
     CancelThemeColorEdit()
     RPEmoteMenuDB.themes[themeName] = {settings = CopyThemeSettings(source)}
@@ -1209,6 +1224,11 @@ end
 
 
 function Database.RestoreBuiltInThemes()
+    -- Validate the entire batch before resetting any preset or cancelling previews.
+    for _, definition in ipairs(builtInThemes) do
+        local valid, errorMessage = ValidateThemeRestoreName(definition.name)
+        if not valid then return nil, errorMessage end
+    end
     CancelThemeColorEdit()
     for _, definition in ipairs(builtInThemes) do
         RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)

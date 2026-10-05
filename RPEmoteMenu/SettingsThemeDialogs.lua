@@ -123,7 +123,11 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
             for _, target in ipairs(targets) do
                 if not CheckTarget(target, true) then return end
             end
-            local count = Database.RestoreBuiltInThemes()
+            local count, errorMessage = Database.RestoreBuiltInThemes()
+            if not count then
+                SetStatus(errorMessage, true)
+                return
+            end
             SetStatus("Restored " .. count .. " bundled Themes.")
         end,
         timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3

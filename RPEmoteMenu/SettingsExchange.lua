@@ -436,7 +436,7 @@ local function InstallExchangeModes(dialog)
         self.onProfileImported = nil
         self.onThemeImported = onThemeImported
         title:SetText("Import Theme")
-        instructions:SetText("Paste exported Theme JSON below. Importing adds a new Theme without changing any Profile.")
+        instructions:SetText("Paste exported Theme JSON below. Importing adds a new Theme and assigns it to the active Profile.")
         actionButton:SetText("Import Theme")
         SetStatus("")
         editBox:SetText("")

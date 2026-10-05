@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.221
+
+- Reject factory Theme recreation/restoration when a differently capitalized Theme already uses that name; preserve its settings and Profile assignments and explain how to resolve the conflict.
+- Check all bundled Theme names before bulk restoration to prevent partial resets or duplicate names that break Everything export/import.
+- Correct Theme import instructions to state that the imported Theme is assigned to the active Profile.
+- Add regression coverage for native recreation, atomic bulk rejection, conflict resolution and export/import validity. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.220
 
 - Bind Theme deletion warnings to the displayed affected Profile names and objects; reject acceptance if Profiles join, leave, are renamed or are replaced while the dialog is open.
