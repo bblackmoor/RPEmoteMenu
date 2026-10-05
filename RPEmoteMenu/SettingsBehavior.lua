@@ -312,7 +312,7 @@ local function CreateGeneralSettingsPanel()
     local RefreshControls
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
     heading:SetText("App Behavior & Preferences")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -320,7 +320,7 @@ local function CreateGeneralSettingsPanel()
     description:SetText(
         "Startup preferences are global; window behavior and layout belong to the selected Profile."
     )
-    description:SetTextColor(0.8, 0.8, 0.8)
+    description:SetTextColor(0.72, 0.72, 0.72)
 
     local defaultsButton = Widgets.CreateButton(panel, "Restore Global Defaults", function()
         Database.ResetGlobalSettings()

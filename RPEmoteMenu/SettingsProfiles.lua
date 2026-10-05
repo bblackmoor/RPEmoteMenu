@@ -21,7 +21,7 @@ local function CreateProfilesSettingsPanel()
     local statusY = rows:Next()
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
     heading:SetText("Profiles")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -32,7 +32,7 @@ local function CreateProfilesSettingsPanel()
         "Profiles are shared account-wide; each character selects one. " ..
         "Default can be edited and restored, but not renamed or deleted."
     )
-    description:SetTextColor(0.8, 0.8, 0.8)
+    description:SetTextColor(0.72, 0.72, 0.72)
 
     local currentProfileLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileLabelY)
@@ -192,3 +192,4 @@ end
 
 
 UI.CreateProfilesSettingsPanel = CreateProfilesSettingsPanel
+

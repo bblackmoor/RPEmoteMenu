@@ -505,7 +505,7 @@ local function CreateThemesSettingsPanel()
     end
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
     heading:SetText("Themes")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -515,7 +515,7 @@ local function CreateThemesSettingsPanel()
     description:SetText(
         "Edit shared Themes here. Selecting a Theme assigns it to the active Profile."
     )
-    description:SetTextColor(0.8, 0.8, 0.8)
+    description:SetTextColor(0.72, 0.72, 0.72)
 
     local editor = CreateFrame("Frame", nil, panel)
     editor:SetSize(700, 590)
@@ -577,3 +577,4 @@ end
 
 
 UI.CreateThemesSettingsPanel = CreateThemesSettingsPanel
+

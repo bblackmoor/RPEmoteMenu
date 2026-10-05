@@ -60,7 +60,7 @@ local function CreateCategoriesSettingsPanel()
     end
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, headingY)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, headingY)
     heading:SetText("Emotes")
 
     local SelectCategory
@@ -262,4 +262,5 @@ end
 
 
 UI.CreateCategoriesSettingsPanel = CreateCategoriesSettingsPanel
+
 

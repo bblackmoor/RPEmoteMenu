@@ -7,7 +7,7 @@ local function CreateImportExportSettingsPanel()
     local panel = CreateFrame("Frame")
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -16)
+    heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
     heading:SetText("Import & Export")
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -17,7 +17,7 @@ local function CreateImportExportSettingsPanel()
     description:SetText(
         "Save or transfer all Profiles and Themes together."
     )
-    description:SetTextColor(0.8, 0.8, 0.8)
+    description:SetTextColor(0.72, 0.72, 0.72)
 
     local profilesDescription = panel:CreateFontString(
         nil,
@@ -60,3 +60,4 @@ end
 
 
 UI.CreateImportExportSettingsPanel = CreateImportExportSettingsPanel
+

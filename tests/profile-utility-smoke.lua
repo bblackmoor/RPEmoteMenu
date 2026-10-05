@@ -290,3 +290,45 @@ assert(db.GetProfile('Default') == replacementDefault and replacementDefault.set
 assert(runtimeCalls == callsBeforeRestore)
 
 print('PASS real Profile/utility widgets, captured dialogs, CRUD, menu freshness, transfer and long menus')
+
+
+-- About paragraphs and the copy-source link reflow when the viewport narrows.
+do
+    local linkFrame = links[source].frame
+    local content = linkFrame:GetParent()
+    local scroll = content:GetParent()
+    local panel = scroll:GetParent()
+    local paragraphs = {}
+    for _, object in ipairs(native.objects) do
+        if object.kind == "FontString" and object:GetParent() == content then
+            local text = object:GetText() or ""
+            if text:find("Version:", 1, true) then
+                assert(text:find("Author: Brandon Blackmoor", 1, true))
+                assert(text:find("Category:", 1, true) and text:find("License: GPL-3.0", 1, true))
+            end
+            if object.LayoutFullWidth then
+                paragraphs[#paragraphs + 1] = object
+                object.GetStringHeight = function(self)
+                    assert(self:GetHeight() == 0, "clear previous text height before measuring")
+                    return math.ceil(#(self:GetText() or "") * 6 / self:GetWidth()) * 12
+                end
+            end
+        end
+    end
+    linkFrame.text.GetStringHeight = function(self)
+        assert(self:GetHeight() == 0)
+        return math.ceil(#self:GetText() * 6 / self:GetWidth()) * 12
+    end
+    assert(#paragraphs >= 4, "About uses responsive paragraphs")
+    scroll:SetSize(640, 180)
+    panel:GetScript("OnShow")(panel)
+    local wideHeight = content:GetHeight()
+    scroll:SetSize(240, 180)
+    scroll:GetScript("OnSizeChanged")(scroll, 240, 180)
+    assert(content:GetHeight() > wideHeight, "narrow About expands scroll content")
+    assert(linkFrame:GetWidth() == content:GetWidth() - 48)
+    assert(linkFrame:GetHeight() > 16, "source link wraps with its clickable area")
+    scroll:SetSize(640, 180)
+    panel:GetScript("OnShow")(panel)
+    assert(content:GetHeight() == wideHeight, "About shrinks again without stale height")
+end
