@@ -5,7 +5,11 @@
 Phase 1 (baseline) completed on 2026-10-05 against RP Emote Menu 2.0.211,
 commit `6c1835d735d7234c97633cbe2ac5b60f68ff7984`. This phase changes documentation
 only. The addon version, controls, runtime, saved-data schema and JSON format
-remain unchanged. Phases 2–6 are planned, not implemented.
+remain unchanged.
+
+Phase 2 (foundation) completed on 2026-10-05 in 2.0.212. The pinned framework
+and addon-owned adapters are embedded and tested; all existing settings pages
+still construct native controls. Phases 3–6 remain planned.
 
 This document governs the new widget conversion. The older
 [settings architecture](settings-architecture.md) remains the guide to readable
@@ -152,7 +156,7 @@ including nested dropdown scrollbars. Details/Plater must not be required.
 | Phase | Deliverable | Completion gate | Status |
 | --- | --- | --- | --- |
 | 1 — Baseline | This inventory, contracts, scope and phase plan | Review source; run existing suites; no runtime/control edits | Complete |
-| 2 — Foundation | Embed pinned DF; isolated switch/menu/button/swatch/text-entry adapters | Real-library tests for load order, frames, enable state, silent refresh, exact/empty text, Enter/Escape/focus loss, signed numbers and assets; pages remain native | Planned |
+| 2 — Foundation | Embed pinned DF; isolated switch/menu/button/swatch/text-entry adapters | Real-library tests for load order, frames, enable state, silent refresh, exact/empty text, Enter/Escape/focus loss, signed numbers and assets; pages remain native | Complete |
 | 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Planned |
 | 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Planned |
 | 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Planned |
@@ -163,6 +167,40 @@ information links, confirmations and JSON editor where they remain appropriate.
 Conversion completeness means a coherent adapter for ordinary settings widgets,
 not replacing every native frame with a library object. Do not advance to the
 next phase without the user's instruction.
+
+## Phase 2 implementation
+
+`SettingsWidgets.lua` exports isolated switch, dropdown, button, link, RGB swatch,
+text-entry and integer-entry factories. Handles expose `GetFrame`, explicit
+native-frame parenting/anchors, enable state, sizing and script hooks. Silent
+setters and per-handle refresh guards keep refreshes from becoming user actions;
+failed framework setters restore the guard before propagating their error.
+Dropdowns cache caller-provided options, support explicit invalidation, and can
+update a supplied selected label without rebuilding choices. FontMedia remains
+the font policy; pages will provide its choices and labels during conversion.
+
+Text entries replace only their own native editing handlers, preserving exact
+whitespace and empty strings. User edits commit once on Enter/focus loss and
+cancel on Escape/hide/disable. `getOwner` bindings reject pending commits after
+Profile/Theme/content identity changes; pages must supply that identity and
+refresh after database changes. Page show reapplies saved text. Integer entries
+retain compact fields, optional limits, signed-coordinate validation and wheel
+increments. Callers still own database setters and runtime updates. Label,
+suffix and row composition remain page/helper responsibilities during conversion.
+
+Swatches reuse SettingsColorPicker with native owner frames; the adapter does
+not create a second session manager. Used control assets come from Blizzard,
+including the dropdown thumb. The bundle preserves the upstream license and
+provenance in `Libs/DetailsFramework/UPSTREAM.json`; dependencies precede its
+recursive manifest, and adapters load after SettingsColorPicker and before pages.
+
+The new real-library smoke suite loads 52 scripts through nine XML manifests
+without Details/Plater, constructs every adapter, checks exact/empty text and
+editing events, guards owner changes, tests signed numbers/wheel/limits,
+exercises swatches through the real database/session manager, checks used assets,
+and verifies compatible newer LibStub copies are retained. Native UI stand-ins
+cover API calls and callbacks, not rendering/security or client event ordering.
+All six smoke suites pass. No page conversion or saved-data migration is included.
 
 ## Verification baseline and acceptance checklist
 
@@ -197,5 +235,5 @@ client build, addon version, other DF embedders present/absent and actual result
 - Startup without Details/Plater, then coexistence with another DF embedder;
   control assets present and no observed Lua/security/taint errors in/out of combat.
 
-Phase 1 reports source/test readiness only. Neither these tests nor SNP's still
+Phases 1–2 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.

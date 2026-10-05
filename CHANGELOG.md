@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 2.0.212
+
+- Complete settings conversion Phase 2: embed pinned Details Framework and isolated switch, dropdown, button, RGB swatch, text and integer adapters; settings pages retain their current controls.
+- Preserve exact/empty text, edit cancellation, owner guards, silent refresh, disabled controls and signed numeric editing; reuse the existing color-picker manager and font policy.
+- Add real-framework integration checks alongside the five existing smoke suites.
 
 - Complete settings conversion Phase 1: document current behavior, ownership, input contracts, the six-phase Details Framework plan, and verification gates; no runtime or addon-version change.
 
