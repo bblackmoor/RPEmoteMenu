@@ -185,17 +185,19 @@ local function CreateThemeManagementControls(panel)
     end)
     Button("Copy", 123, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
-            {action = "copy", source = selectedName, initial = selectedName .. " Copy"})
+            {action = "copy", source = selectedName, initial = selectedName .. " Copy",
+                target = UI.CaptureThemeDialogTarget(selectedName)})
     end)
     renameButton = Button("Rename", 226, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
-            {action = "rename", source = selectedName, initial = selectedName})
+            {action = "rename", source = selectedName, initial = selectedName,
+                target = UI.CaptureThemeDialogTarget(selectedName)})
     end)
     deleteButton = Button("Delete", 329, primaryY, 95, function()
         UI.ConfirmThemeDeletion(selectedName)
     end)
     restoreButton = Button("Restore Theme", 20, secondaryY, 125, function()
-        StaticPopup_Show("RPEMOTEMENU_RESTORE_THEME", selectedName, nil, selectedName)
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_THEME", selectedName, nil, UI.CaptureThemeDialogTarget(selectedName))
     end)
     Button("Export Theme", 153, secondaryY, 125, function()
         local success, errorMessage = GetExchangeDialog():OpenThemeExport(selectedName)
@@ -205,7 +207,8 @@ local function CreateThemeManagementControls(panel)
         GetExchangeDialog():OpenThemeImport(function(name) SelectTheme(name) end)
     end)
     Button("Restore Bundled Themes", 20, restoreY, 190, function()
-        StaticPopup_Show("RPEMOTEMENU_RESTORE_BUNDLED_THEMES")
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_BUNDLED_THEMES", nil, nil,
+            UI.CaptureBundledThemeDialogTargets())
     end)
 
     Refresh()

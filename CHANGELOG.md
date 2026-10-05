@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.219
+
+- Bind Profile and Theme Copy, Rename, Delete and factory-restore dialogs to their original objects; reject pending actions after deletion, name reuse or same-name replacement.
+- Validate every bundled Theme target before a bulk restore, including missing presets, so a stale confirmation cannot partially reset or overwrite replacement Themes.
+- Add native-dialog regression coverage for name reuse, deletion/recreation and restore replacements. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.218
 
 - Close open dropdown menus when disabled and guard native pooled option clicks before Details Framework changes selection; disabled, closed and retired entries leave saved values and displayed selection unchanged.

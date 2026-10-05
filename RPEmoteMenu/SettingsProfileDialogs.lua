@@ -2,8 +2,19 @@ local _, addon = ...
 local UI = addon.SettingsUI
 local Database = addon.Database
 
+function UI.CaptureProfileDialogTarget(name)
+    return {name = name, object = Database.GetProfile(name)}
+end
+
 -- Profile lifecycle prompts are independent of panel construction.
 function UI.RegisterProfileDialogs(SetStatus)
+    local function CheckTarget(target)
+        if target and target.object and Database.GetProfile(target.name) == target.object then
+            return true
+        end
+        SetStatus("The Profile changed. Reopen the dialog before continuing.", true)
+        return false
+    end
     local function GetPopupEditBox(popup)
         return popup.GetEditBox and popup:GetEditBox() or popup.editBox
     end
@@ -32,6 +43,7 @@ function UI.RegisterProfileDialogs(SetStatus)
             local name = GetPopupEditBox(self):GetText()
             local success, result
             if data.action == "copy" then
+                if not CheckTarget(data.target) then return end
                 success, result = Database.CopyProfile(data.source, name)
             else
                 success, result = Database.CreateProfile(name)
@@ -62,7 +74,8 @@ function UI.RegisterProfileDialogs(SetStatus)
         text = "Restore Default Profile's original categories, emotes, window settings, and Default Theme assignment?\n\nChanges to Default Profile will be lost. Default Theme appearance will not change.",
         button1 = "Restore",
         button2 = CANCEL or "Cancel",
-        OnAccept = function()
+        OnAccept = function(_, target)
+            if not CheckTarget(target) then return end
             Database.RestoreDefaultProfile()
             SetStatus("Restored the Default profile.")
         end,
@@ -88,17 +101,18 @@ function UI.RegisterProfileDialogs(SetStatus)
         hasEditBox = true,
         maxLetters = 64,
         editBoxWidth = 260,
-        OnShow = function(self, profileName)
+        OnShow = function(self, target)
             local editBox = GetPopupEditBox(self)
 
-            editBox:SetText(profileName or self.data)
+            editBox:SetText((target or self.data).name)
             editBox:HighlightText()
             editBox:SetFocus()
             GetPopupButton1(self):SetEnabled(false)
         end,
-        OnAccept = function(self, profileName)
+        OnAccept = function(self, target)
+            if not CheckTarget(target) then return end
             local success, result = Database.RenameProfile(
-                profileName,
+                target.name,
                 GetPopupEditBox(self):GetText()
             )
 
@@ -112,7 +126,7 @@ function UI.RegisterProfileDialogs(SetStatus)
             local popup = self:GetParent()
             local validName = Database.ValidateNewProfileName(
                 self:GetText(),
-                popup.data
+                popup.data.name
             )
 
             GetPopupButton1(popup):SetEnabled(validName ~= nil)
@@ -134,7 +148,9 @@ function UI.RegisterProfileDialogs(SetStatus)
         preferredIndex = 3
     }
 
-    local function DeleteProfile(_, profileName)
+    local function DeleteProfile(_, target)
+        if not CheckTarget(target) then return end
+        local profileName = target.name
         local success, errorMessage = Database.DeleteProfile(profileName)
 
         if success then

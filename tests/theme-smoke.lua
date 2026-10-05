@@ -276,4 +276,58 @@ local otherOwner = CreateFrame('Frame')
 GameTooltip:SetOwner(otherOwner); GameTooltip:SetText('Other tooltip'); GameTooltip:Show()
 panel.RefreshFontControls(); Event(controls.categoryFont, 'OnLeave'); Event(controls.categoryFont, 'OnHide')
 assert(GameTooltip:IsOwned(otherOwner) and GameTooltip:IsShown() and GameTooltip:GetText() == 'Other tooltip')
+
+-- Native prompts retain the source object, even when its old name is reused.
+for _, action in ipairs({'Copy', 'Rename', 'Delete'}) do
+    local name = 'Guard Theme ' .. action
+    assert(db.CreateTheme(name)); assert(db.SetProfileTheme(db.GetActiveProfileName(), name))
+    panel.RefreshControls()
+    Click(buttons[action]); local pending = request
+    local original = db.GetTheme(name)
+    assert(db.RenameTheme(name, name .. ' Original')); assert(db.CreateTheme(name))
+    local replacement = db.GetTheme(name)
+    local calls = applies
+    Accept(pending, action ~= 'Delete' and name .. ' Result' or nil)
+    assert(db.GetTheme(name) == replacement and db.GetTheme(name .. ' Original') == original)
+    assert(not db.GetTheme(name .. ' Result') and applies == calls)
+    assert(db.SetProfileTheme(db.GetActiveProfileName(), name)); panel.RefreshControls()
+    Click(buttons[action]); pending = request
+    assert(db.DeleteTheme(name, true)); assert(db.CreateTheme(name))
+    replacement = db.GetTheme(name); calls = applies
+    Accept(pending, action ~= 'Delete' and name .. ' Result' or nil)
+    assert(db.GetTheme(name) == replacement and not db.GetTheme(name .. ' Result'))
+    assert(applies == calls)
+end
+assert(db.SetProfileTheme(db.GetActiveProfileName(), 'Default')); panel.RefreshControls()
+Click(buttons['Restore Theme']); local staleRestore = request
+assert(db.RestoreTheme('Default'))
+local replacementDefault = db.GetTheme('Default')
+replacementDefault.settings.categoryFontSize = 29
+local callsBeforeRestore = applies
+Accept(staleRestore)
+assert(db.GetTheme('Default') == replacementDefault and replacementDefault.settings.categoryFontSize == 29)
+assert(applies == callsBeforeRestore)
+
+Click(buttons['Restore Bundled Themes']); local staleBulk = request
+local preset = addon.BuiltInThemes[1].name
+assert(db.RestoreTheme(preset))
+local replacements = {}
+for _, definition in ipairs(addon.BuiltInThemes) do
+    replacements[definition.name] = db.GetTheme(definition.name)
+end
+callsBeforeRestore = applies
+Accept(staleBulk)
+for name, object in pairs(replacements) do assert(db.GetTheme(name) == object) end
+assert(applies == callsBeforeRestore, 'bulk rejection must precede all mutations')
+
+assert(db.DeleteTheme(preset, true))
+Click(buttons['Restore Bundled Themes']); local missingBulk = request
+assert(db.CreateTheme(preset))
+local recreated = db.GetTheme(preset)
+Accept(missingBulk)
+assert(db.GetTheme(preset) == recreated, 'missing slot must not follow a new replacement')
+assert(db.DeleteTheme(preset, true))
+Click(buttons['Restore Bundled Themes']); Accept(request)
+assert(db.GetTheme(preset), 'an unchanged missing bundled Theme should still be recreated')
+
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')

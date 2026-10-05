@@ -258,4 +258,35 @@ for _, control in ipairs({selector, themeSelector, buttons.Create, buttons.Copy,
 end
 addon.Settings.OpenAbout(); assert(opened == categories[1].panel.categoryID)
 addon.Settings.Open(); assert(opened == categories[2].panel.categoryID)
+
+-- Pending lifecycle actions must never follow a reused name to a replacement.
+for _, action in ipairs({'Copy', 'Rename', 'Delete'}) do
+    local name = 'Guard Profile ' .. action
+    assert(db.CreateProfile(name))
+    Click(buttons[action]); local pending = popupRequest
+    local original = db.GetProfile(name)
+    assert(db.RenameProfile(name, name .. ' Original'))
+    assert(db.CreateProfile(name))
+    local replacement = db.GetProfile(name)
+    local calls = runtimeCalls
+    Accept(pending, action ~= 'Delete' and name .. ' Result' or nil)
+    assert(db.GetProfile(name) == replacement and db.GetProfile(name .. ' Original') == original)
+    assert(not db.GetProfile(name .. ' Result') and runtimeCalls == calls)
+    -- Deletion followed by recreation is also a distinct object.
+    Click(buttons[action]); pending = popupRequest
+    assert(db.DeleteProfile(name)); assert(db.CreateProfile(name))
+    replacement = db.GetProfile(name); calls = runtimeCalls
+    Accept(pending, action ~= 'Delete' and name .. ' Result' or nil)
+    assert(db.GetProfile(name) == replacement and not db.GetProfile(name .. ' Result'))
+    assert(runtimeCalls == calls)
+end
+Click(buttons['Restore Default']); local staleDefault = popupRequest
+db.RestoreDefaultProfile()
+local replacementDefault = db.GetProfile('Default')
+replacementDefault.settings.x = 731
+local callsBeforeRestore = runtimeCalls
+Accept(staleDefault)
+assert(db.GetProfile('Default') == replacementDefault and replacementDefault.settings.x == 731)
+assert(runtimeCalls == callsBeforeRestore)
+
 print('PASS real Profile/utility widgets, captured dialogs, CRUD, menu freshness, transfer and long menus')

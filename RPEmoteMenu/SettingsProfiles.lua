@@ -117,7 +117,8 @@ local function CreateProfilesSettingsPanel()
     themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeSelectorY)
 
     local restoreDefaultButton = Widgets.CreateButton(panel, "Restore Default", function()
-        StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
+        StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE", nil, nil,
+            UI.CaptureProfileDialogTarget("Default"))
     end, 140, 24)
     restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, restoreY)
 
@@ -138,6 +139,7 @@ local function CreateProfilesSettingsPanel()
         StaticPopup_Show("RPEMOTEMENU_NEW_PROFILE", nil, nil, {
             action = action,
             source = name,
+            target = action == "copy" and UI.CaptureProfileDialogTarget(name) or nil,
             initial = action == "copy" and name .. " Copy" or ""
         })
     end
@@ -150,14 +152,14 @@ local function CreateProfilesSettingsPanel()
     renameButton = Widgets.CreateButton(panel, "Rename", function()
         local name = Database.GetActiveProfileName()
         if not Database.CanRenameOrDeleteActiveProfile() then return end
-        StaticPopup_Show("RPEMOTEMENU_RENAME_PROFILE", name, nil, name)
+        StaticPopup_Show("RPEMOTEMENU_RENAME_PROFILE", name, nil, UI.CaptureProfileDialogTarget(name))
     end, 95, 24)
     renameButton:SetPoint("LEFT", copyButton, "RIGHT", 8, 0)
 
     deleteButton = Widgets.CreateButton(panel, "Delete", function()
         local name = Database.GetActiveProfileName()
         if not Database.CanRenameOrDeleteActiveProfile() then return end
-        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", name, nil, name)
+        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", name, nil, UI.CaptureProfileDialogTarget(name))
     end, 95, 24)
     deleteButton:SetPoint("LEFT", renameButton, "RIGHT", 8, 0)
 
