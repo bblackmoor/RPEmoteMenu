@@ -4,10 +4,86 @@ local AddonSettings = addon.Settings
 local Database = addon.Database
 local MainWindow = addon.MainWindow
 local GetExchangeDialog = UI.GetExchangeDialog
-local CreateNumberSetting = UI.CreateNumberSetting
-local CreateColorSetting = UI.CreateColorSetting
-local CreateFontSetting = UI.CreateFontSetting
+local Widgets = addon.SettingsWidgets
 local FIELD_GAP = UI.FIELD_GAP
+
+-- Theme-only composition; Emote editors keep their native helpers until Phase 6.
+local function CreateLabel(parent, text, x, y)
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+    label:SetText(text)
+    return label
+end
+
+local function CreateNumberSetting(parent, text, key, x, y, minimum, maximum,
+    getValue, applyValue, suffix, controlX)
+    local label = CreateLabel(parent, text, x, y)
+    local control = Widgets.CreateIntegerEntry(parent, getValue, applyValue, {
+        width = 70, minimum = minimum, maximum = maximum,
+        getOwner = Database.GetThemeSettings,
+    })
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
+        controlX and y + 4 or y - 26)
+    control:GetFrame().settingKey = key
+    control.Label = label
+    if suffix then
+        local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        caption:SetPoint("LEFT", control:GetFrame(), "RIGHT", FIELD_GAP, 0)
+        caption:SetText(suffix)
+        control.SuffixLabel = caption
+    end
+    return control
+end
+
+local function CreateColorSetting(parent, text, key, x, y, getValue, applyValue, controlX)
+    CreateLabel(parent, text, x, y)
+    local control = Widgets.CreateColorPicker(parent, getValue, applyValue)
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
+        controlX and y + 4 or y - 26)
+    control:GetFrame().settingKey = key
+    return control
+end
+
+local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange, controlX)
+    CreateLabel(parent, text, x, y)
+    local control
+    control = Widgets.CreateDropdown(parent, function()
+        local choices = {}
+        for _, font in ipairs(addon.GetAvailableFonts(getSettings()[key])) do
+            choices[#choices + 1] = {value = font.name,
+                label = font.unavailable and font.name .. " (unavailable)" or font.name,
+                font = font.path}
+        end
+        return choices
+    end, function(name)
+        getSettings()[key] = name
+        control:RefreshValue()
+        onChange()
+    end)
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
+        controlX and y + 5 or y - 26)
+    control:GetFrame().settingKey = key
+    function control:RefreshValue()
+        local name = getSettings()[key] or ""
+        local available = addon.IsFontAvailable(name)
+        self.MissingFontName = not available and name or nil
+        self:InvalidateOptions()
+        self:SetValue(name, available and name or name .. " (unavailable)")
+        -- Menu rows preview fonts; the selected label must stay readable.
+        self:SetLabelStyle(STANDARD_TEXT_FONT, 12, 1, available and 1 or 0.35, available and 1 or 0.35)
+    end
+    control:HookScript("OnEnter", function(frame)
+        if not control.MissingFontName then return end
+        GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
+        GameTooltip:SetText("Font unavailable")
+        GameTooltip:AddLine(control.MissingFontName .. " is not registered by WoW or LibSharedMedia.", 1, 1, 1, true)
+        GameTooltip:AddLine("RP Emote Menu is displaying Friz Quadrata instead.", 0.8, 0.8, 0.8, true)
+        GameTooltip:Show()
+    end)
+    control:HookScript("OnLeave", function() if control.MissingFontName then GameTooltip:Hide() end end)
+    control:RefreshValue()
+    return control
+end
 
 -- The editor always follows the Theme assigned to the active Profile.
 local function CreateThemeManagementControls(panel)
@@ -21,10 +97,7 @@ local function CreateThemeManagementControls(panel)
     local restoreY = rows:Next()
     local statusY = rows:Next()
 
-    local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
-    selector:SetWidth(250)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, selectorY)
-    selector:SetDefaultText(selectedName)
+    local selector
 
     local label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, labelY)
@@ -51,13 +124,14 @@ local function CreateThemeManagementControls(panel)
     local function SelectTheme(name)
         local success, errorMessage = Database.SetProfileTheme(
             Database.GetActiveProfileName(), name)
-        if not success then SetStatus(errorMessage, true) end
+        if not success then SetStatus(errorMessage, true); Refresh() end
     end
 
     local renameButton, deleteButton, restoreButton
     Refresh = function()
         selectedName = Database.GetActiveThemeName()
-        selector:OverrideText(selectedName)
+        selector:InvalidateOptions()
+        selector:SetValue(selectedName, selectedName)
         description:SetText((Database.IsBuiltInThemeName(selectedName)
                 and "Bundled Theme: " or "") .. Database.GetThemeDescription(selectedName)
             .. " Used by this character.")
@@ -67,32 +141,36 @@ local function CreateThemeManagementControls(panel)
             or Database.IsBuiltInThemeName(selectedName))
     end
 
-    selector:SetupMenu(function(_, root)
+    selector = Widgets.CreateDropdown(panel, function()
+        local options = {}
         for _, name in ipairs(Database.GetThemeNames()) do
-            root:CreateRadio(Database.IsBuiltInThemeName(name)
-                    and (name .. " (Bundled)") or name,
-                function() return selectedName == name end,
-                function() SelectTheme(name) end)
+            options[#options + 1] = {value = name,
+                label = Database.IsBuiltInThemeName(name) and name .. " (Bundled)" or name}
         end
         for _, definition in ipairs(addon.BuiltInThemes) do
             if not Database.GetTheme(definition.name) then
-                root:CreateButton("Recreate " .. definition.name, function()
-                    Database.RestoreTheme(definition.name)
-                    SelectTheme(definition.name)
-                    SetStatus("Recreated " .. definition.name .. ".")
-                end)
+                options[#options + 1] = {label = "Recreate " .. definition.name, value = definition.name}
             end
         end
+        return options
+    end, function(name)
+        if not Database.GetTheme(name) and Database.IsBuiltInThemeName(name) then
+            local success, message = Database.RestoreTheme(name)
+            if not success then SetStatus(message, true); Refresh(); return end
+            SelectTheme(name)
+            SetStatus("Recreated " .. name .. ".")
+        else
+            SelectTheme(name)
+        end
     end)
+    selector:SetWidth(250)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, selectorY)
 
     UI.RegisterThemeDialogs(SelectTheme, SetStatus)
 
     local function Button(caption, x, y, width, action)
-        local button = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-        button:SetSize(width, 24)
+        local button = Widgets.CreateButton(panel, caption, action, width, 24)
         button:SetPoint("TOPLEFT", panel, "TOPLEFT", x, y)
-        button:SetText(caption)
-        button:SetScript("OnClick", action)
         return button
     end
 
@@ -285,17 +363,7 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     highlightEffectLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, effectY)
     highlightEffectLabel:SetText("Selection effect")
 
-    local highlightEffectSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        editor,
-        "WowStyle1DropdownTemplate"
-    )
-    highlightEffectSelector:SetWidth(135)
-    highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, effectY + 5)
-    highlightEffectSelector:SetDefaultText("Background")
-    highlightEffectSelector.settingKey = "categoryHighlightEffect"
-    controls.categoryHighlightEffect = highlightEffectSelector
+    local highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
         editor, "Thickness", "categoryHighlightThickness", 330, effectY, 1, 6,
@@ -324,26 +392,25 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
         thicknessControl:SetShown(usesThickness)
         thicknessControl.Label:SetShown(usesThickness)
         thicknessControl.SuffixLabel:SetShown(usesThickness)
-        highlightEffectSelector:OverrideText(
-            highlightEffectLabels[state.GetSettings().categoryHighlightEffect]
-        )
+        highlightEffectSelector:SetValue(state.GetSettings().categoryHighlightEffect,
+            highlightEffectLabels[state.GetSettings().categoryHighlightEffect])
     end
 
-    highlightEffectSelector:SetupMenu(function(_, rootDescription)
-        for _, effect in ipairs({
-            "background", "outline", "separator", "underline", "shadow"
-        }) do
-            rootDescription:CreateRadio(
-                highlightEffectLabels[effect],
-                function() return state.GetSettings().categoryHighlightEffect == effect end,
-                function()
-                    state.GetSettings().categoryHighlightEffect = effect
-                    RefreshHighlightControls()
-                    state.Apply()
-                end
-            )
+    highlightEffectSelector = Widgets.CreateDropdown(editor, function()
+        local options = {}
+        for _, effect in ipairs({"background", "outline", "separator", "underline", "shadow"}) do
+            options[#options + 1] = {label = highlightEffectLabels[effect], value = effect}
         end
+        return options
+    end, function(effect)
+        state.GetSettings().categoryHighlightEffect = effect
+        RefreshHighlightControls()
+        state.Apply()
     end)
+    highlightEffectSelector:SetWidth(135)
+    highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, effectY + 5)
+    highlightEffectSelector:GetFrame().settingKey = "categoryHighlightEffect"
+    controls.categoryHighlightEffect = highlightEffectSelector
 
     return RefreshHighlightControls
 end
@@ -378,33 +445,17 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
     titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, titleY)
     titleBarLabel:SetText("Title bar")
 
-    local titleBarSelector = CreateFrame(
-        "DropdownButton",
-        nil,
-        editor,
-        "WowStyle1DropdownTemplate"
-    )
+    local titleBarLabels = {TOP = "Top", LEFT = "Left"}
+    local titleBarSelector = Widgets.CreateDropdown(editor, function()
+        return {{label = "Top", value = "TOP"}, {label = "Left", value = "LEFT"}}
+    end, function(position)
+        state.GetSettings().titleBarPosition = position
+        state.Apply()
+    end)
     titleBarSelector:SetWidth(150)
     titleBarSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, titleY + 5)
-    titleBarSelector:SetDefaultText("Top")
-    titleBarSelector.settingKey = "titleBarPosition"
+    titleBarSelector:GetFrame().settingKey = "titleBarPosition"
     controls.titleBarPosition = titleBarSelector
-
-    local titleBarLabels = {TOP = "Top", LEFT = "Left"}
-
-    titleBarSelector:SetupMenu(function(_, rootDescription)
-        for _, position in ipairs({"TOP", "LEFT"}) do
-            rootDescription:CreateRadio(
-                titleBarLabels[position],
-                function() return state.GetSettings().titleBarPosition == position end,
-                function()
-                    state.GetSettings().titleBarPosition = position
-                    titleBarSelector:OverrideText(titleBarLabels[position])
-                    state.Apply()
-                end
-            )
-        end
-    end)
 
     rows:Heading("Minimized Icon", 30)
 
@@ -483,9 +534,8 @@ local function CreateThemesSettingsPanel()
         end
 
         RefreshHighlightControls()
-        titleBarSelector:OverrideText(
-            titleBarLabels[themeSettings.titleBarPosition] or titleBarLabels.TOP
-        )
+        titleBarSelector:SetValue(themeSettings.titleBarPosition,
+            titleBarLabels[themeSettings.titleBarPosition] or titleBarLabels.TOP)
         refreshIconColor()
     end
 
@@ -501,10 +551,15 @@ local function CreateThemesSettingsPanel()
     container.themeControls = controls
     AddonSettings.RefreshFontControls = RefreshFontControls
     container:SetScript("OnShow", container.RefreshControls)
+    container:SetScript("OnHide", function()
+        for _, control in pairs(controls) do
+            if control.CancelEdit then control:CancelEdit() end
+        end
+        UI.CancelColorEdit()
+    end)
     container.RefreshControls()
     return container
 end
 
 
 UI.CreateThemesSettingsPanel = CreateThemesSettingsPanel
-

@@ -185,11 +185,10 @@ local function isChildOf(w, ancestor)
 end
 local selectedTheme=false
 for _,w in ipairs(widgets) do
-  if w.menu and isChildOf(w,themesPanel) then
-    local root={CreateRadio=function(_,label,_,action)
-      if label=='Teal (Bundled)' then action(); selectedTheme=true end
-    end, CreateButton=function() end}
-    w.menu(w,root)
+  if w.MyObject and isChildOf(w,themesPanel) and w.anchor and w.anchor.y==-103 then
+    for _,option in ipairs(w.MyObject.func()) do
+      if option.value=='Teal' then option.onclick(w.MyObject,nil,option.value); selectedTheme=true; break end
+    end
     if selectedTheme then break end
   end
 end
@@ -198,7 +197,10 @@ assert(DB.GetActiveThemeName()=='Teal','Editor selection did not change characte
 local foundDelete=false
 for _,w in ipairs(widgets) do
   if w.text=='Delete' and isChildOf(w,themesPanel) then
-    w.scripts.OnClick()
+    local frame = w.kind=='FontString' and w.parent or w
+    if frame.scripts.OnMouseDown then
+      frame.scripts.OnMouseDown(frame,'LeftButton'); frame.scripts.OnMouseUp(frame,'LeftButton')
+    else frame.scripts.OnClick() end
     foundDelete=true
     break
   end
@@ -211,7 +213,7 @@ local function SelectThemeFont()
   for _,w in ipairs(widgets) do
     if w.settingKey=='categoryFont' and isChildOf(w,themesPanel) then
       local chosen=false
-      w.menu(w,{CreateRadio=function(_,_,_,action) action(); chosen=true end})
+      local option=w.MyObject.func()[1]; option.onclick(w.MyObject,nil,option.value); chosen=true
       assert(chosen,'Theme font menu had no options')
       return
     end
@@ -233,7 +235,8 @@ local resetIcon=false
 for _,w in ipairs(widgets) do
   if w.text=='Restore Yellow' and isChildOf(w,themesPanel) then
     tealSettings.minimizedIconColor={r=0,g=0,b=1}
-    w.scripts.OnClick(w)
+    local frame = w.kind=='FontString' and w.parent or w
+    frame.scripts.OnMouseDown(frame,'LeftButton'); frame.scripts.OnMouseUp(frame,'LeftButton')
     resetIcon=true
     assert(tealSettings.minimizedIconColor.r==1 and tealSettings.minimizedIconColor.b==0)
     break
@@ -255,15 +258,10 @@ end
 assert(assigned and DB.GetActiveThemeName()=='Default')
 local editorSelection
 for _,w in ipairs(widgets) do
-  if w.menu and isChildOf(w,themesPanel)
-    and type(w.anchor)=='table' and w.anchor.y==-103 then
-    w.menu(w,{CreateRadio=function(_,label,isSelected)
-      if isSelected() then editorSelection=label end
-    end, CreateButton=function() end})
-    if editorSelection then
-      assert(w.text=='Default','Theme editor dropdown did not refresh its text: '..tostring(w.text))
-      break
-    end
+  if w.MyObject and isChildOf(w,themesPanel) and w.anchor and w.anchor.y==-103 then
+    editorSelection=w.MyObject.myvalue
+    assert(w.MyObject.label:GetText()=='Default', 'Theme editor dropdown did not refresh its text')
+    break
   end
 end
 assert(editorSelection=='Default','Theme editor did not follow Profile assignment')

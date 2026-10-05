@@ -40,7 +40,7 @@ local runtimeCalls = 0
 for _, name in ipairs({'ApplyProfileSettings', 'ApplyThemeSettings', 'UpdateMenu', 'ScheduleFontRefreshes'}) do
     addon.MainWindow[name] = function() runtimeCalls = runtimeCalls + 1 end
 end
-local buttons, dropdowns, links = {}, {}, {}
+local buttons, dropdowns, links, buttonCandidates = {}, {}, {}, {}
 -- Follow the actual settings module order, including Settings.lua before Widgets.
 for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
     if line:match('^Settings[%w]*%.lua$') or line == 'MinimizedIconColor.lua' then
@@ -50,7 +50,7 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
             local button, dropdown, link = widgets.CreateButton, widgets.CreateDropdown, widgets.CreateLink
             widgets.CreateButton = function(parent, text, ...)
                 local control = button(parent, text, ...)
-                buttons[text] = control; return control
+                buttonCandidates[#buttonCandidates + 1] = {text = text, control = control}; return control
             end
             widgets.CreateDropdown = function(...)
                 local control = dropdown(...)
@@ -66,6 +66,10 @@ end
 addon.Settings.CreateSettingsPanel()
 assert(#categories == 6 and categories[1].label == 'RP Emote Menu' and categories[3].label == 'Profiles')
 local profiles, transfer = categories[3].panel, categories[6].panel
+for _, entry in ipairs(buttonCandidates) do
+    local parent = entry.control.frame:GetParent()
+    if parent == profiles or parent == transfer then buttons[entry.text] = entry.control end
+end
 local selectors = {}
 for _, control in ipairs(dropdowns) do
     if control.frame:GetParent() == profiles then selectors[#selectors + 1] = control end
@@ -116,13 +120,11 @@ local themeSelected
 for _, object in ipairs(native.objects) do
     local parent = object:GetParent()
     while parent and parent ~= categories[4].panel do parent = parent:GetParent() end
-    if object.menu and parent == categories[4].panel and object.point and object.point[5] == -103 then
-        object.menu(object, {CreateRadio = function(_, label, selected)
-            if selected() then themeSelected = label end
-        end, CreateButton = function() end})
+    if object.MyObject and parent == categories[4].panel and object.point and object.point[5] == -103 then
+        themeSelected = object.MyObject.myvalue
     end
 end
-assert(themeSelected == 'Teal (Bundled)')
+assert(themeSelected == 'Teal')
 Click(buttons.Create); Accept(popupRequest, 'Fresh')
 assert(db.GetActiveProfileName() == 'Fresh' and db.GetActiveThemeName() == 'Teal')
 assert(Option(selector, 'Fresh') and buttons.Rename.frame:IsEnabled())

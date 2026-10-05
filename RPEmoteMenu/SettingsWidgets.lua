@@ -150,6 +150,10 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
     end
     function handle:GetValue() return self.value end
     function handle:SetLabel(text) self.widget.label:SetText(text) end
+    function handle:SetLabelStyle(font, size, r, g, b)
+        self.widget.label:SetFont(font, size, "")
+        self.widget.label:SetTextColor(r, g, b, 1)
+    end
     local notify = onChanged
     handle.onChanged = function(value)
         handle.value = value

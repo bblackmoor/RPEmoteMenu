@@ -1,24 +1,12 @@
--- Real database mutations and both native color-picker owners.
+-- Real database mutations, native/DF swatches and the shared picker manager.
 local addon={SettingsUI={FIELD_GAP=12},Settings={},MainWindow={}}
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
 function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
 function UnitName() return 'Tester','Realm' end
-STANDARD_TEXT_FONT='font'
-local Widget={}
-Widget.__index=function(_,k) return Widget[k] or function() end end
-function Widget:SetScript(k,fn) self.scripts[k]=fn end
-function Widget:HookScript(k,fn)
- local old=self.scripts[k]
- self.scripts[k]=function(...) if old then old(...) end; fn(...) end
-end
-function Widget:Hide() self.shown=false; if self.scripts.OnHide then self.scripts.OnHide(self) end end
-function Widget:CreateFontString() return CreateFrame('FontString',nil,self) end
-function Widget:CreateTexture() return CreateFrame('Texture',nil,self) end
-local frames={}
-function CreateFrame(kind,_,parent)
- local w=setmetatable({scripts={},parent=parent,shown=true},Widget)
- frames[#frames+1]=w; return w
-end
+local native = dofile('tests/details-framework-ui-stubs.lua')
+local frames = native.objects
+local LoadXML = dofile('tests/details-framework-loader.lua')
+LoadXML('Libs/DetailsFramework/load.xml')
 ColorPickerFrame=CreateFrame('Frame')
 function ColorPickerFrame:GetExtraInfo() return self.info and self.info.extraInfo end
 function ColorPickerFrame:GetColorRGB() return self.r,self.g,self.b end
@@ -31,7 +19,7 @@ loadModule('Defaults.lua'); loadModule('BuiltInThemes.lua'); loadModule('Databas
 local db=addon.Database; db.InitializeDatabase()
 local module=io.open('RPEmoteMenu/SettingsColorPicker.lua')
 if module then module:close(); loadModule('SettingsColorPicker.lua') end
-loadModule('SettingsControls.lua'); loadModule('SettingsThemeIcon.lua')
+loadModule('SettingsWidgets.lua'); loadModule('SettingsControls.lua'); loadModule('SettingsThemeIcon.lua')
 local parent=CreateFrame('Frame'); local writes=0
 local function color() return db.GetThemeSettings().categoryTextColor end
 local swatch=addon.SettingsUI.CreateColorSetting(parent,'Text','categoryTextColor',0,0,color,
@@ -75,14 +63,16 @@ addon.SettingsUI.CreateThemeIconColorControls(parent,0,0,true,db.GetActiveThemeN
 local icon,reset
 for i=start+1,#frames do
  local w=frames[i]
- if w.scripts.OnClick then if rawget(w,"Swatch") then icon=w else reset=w end end
+ if w.scripts.OnMouseUp then
+  if w.MyObject and w.MyObject.__iscolorpicker then icon=w else reset=w end
+ end
 end
 assert(icon and reset)
-icon.scripts.OnClick(icon); info=ColorPickerFrame.info
-preview(info,0,0,1); reset.scripts.OnClick(reset)
+icon.scripts.OnMouseDown(icon,'LeftButton'); icon.scripts.OnMouseUp(icon,'LeftButton'); info=ColorPickerFrame.info
+preview(info,0,0,1); reset.scripts.OnMouseDown(reset,'LeftButton'); reset.scripts.OnMouseUp(reset,'LeftButton')
 local yellow=copy(db.GetThemeSettings().minimizedIconColor)
 info.cancelFunc(); preview(info,0,1,0); same(db.GetThemeSettings().minimizedIconColor,yellow)
-icon.scripts.OnClick(icon); info=ColorPickerFrame.info
+icon.scripts.OnMouseDown(icon,'LeftButton'); icon.scripts.OnMouseUp(icon,'LeftButton'); info=ColorPickerFrame.info
 preview(info,0,0,1); db.SetProfileTheme('Default','Teal')
 local tealIcon=copy(db.GetThemeSettings().minimizedIconColor)
 info.cancelFunc(); preview(info,0,1,0); same(db.GetThemeSettings().minimizedIconColor,tealIcon)

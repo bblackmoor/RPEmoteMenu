@@ -18,7 +18,13 @@ checks. The in-game checkpoint remains pending.
 Phase 4 (Profiles and utility pages) implemented on 2026-10-05 in 2.0.214.
 Profiles, About's source link and the transfer-page buttons use the adapters;
 name/confirmation popups, the circled information link and JSON dialog stay
-native. Its in-game checkpoint remains pending; Phases 5–6 remain planned.
+native. Its in-game checkpoint remains pending.
+
+Phase 5 (Themes) implemented on 2026-10-05 in 2.0.215. Theme management,
+typography, colors, effects, opacity, title-bar selection and icon controls now
+use the adapters. FontMedia, SettingsColorPicker, native lifecycle dialogs and
+the icon preview remain their existing policies/components. The in-game
+checkpoint remains pending; Phase 6 remains planned.
 
 This document governs the new widget conversion. The older
 [settings architecture](settings-architecture.md) remains the guide to readable
@@ -46,8 +52,8 @@ repository tree. Existing open client checks do not constitute observed success.
 | SettingsControls.lua | Row cursor, switches, info links, numeric/content editors, swatches, font selectors | Retain rows and labels; delegate widgets to an isolated adapter |
 | SettingsBehavior.lua | Startup/interaction, fade/minimize dependencies, window geometry | Converted in Phase 3; ownership and ranges preserved |
 | SettingsProfiles.lua / SettingsProfileDialogs.lua | Character selection, Theme assignment, CRUD, Default restore, transfer | Profiles widgets converted in Phase 4; native confirmation/name dialogs retained |
-| SettingsThemes.lua / SettingsThemeDialogs.lua | Theme selection/CRUD, two-column typography, effects, opacity, title bar | Convert widgets; preserve shared Theme assignment and native dialogs |
-| SettingsThemeIcon.lua | Icon swatch, Restore Yellow, preview | Adapt swatch/button; retain icon preview and reset scope |
+| SettingsThemes.lua / SettingsThemeDialogs.lua | Theme selection/CRUD, two-column typography, effects, opacity, title bar | Widgets converted in Phase 5; shared assignment and native dialogs preserved |
+| SettingsThemeIcon.lua | Icon swatch, Restore Yellow, preview | Swatch/button converted in Phase 5; native preview and reset scope retained |
 | SettingsColorPicker.lua | Native RGB session ownership, preview/cancel, stale callbacks | Reuse as the sole picker lifecycle; do not copy the SNP picker manager |
 | FontMedia.lua | Built-in/shared names, lookup, late-provider notifications | Reuse as the sole font policy; do not embed this policy in DF controls |
 | SettingsEmotes.lua / SettingsEmoteList.lua | Category selector/actions/editor and pooled draggable emote rows | Convert ordinary widgets; retain custom rows, scrolling and drag mechanics |
@@ -168,7 +174,7 @@ including nested dropdown scrollbars. Details/Plater must not be required.
 | 2 — Foundation | Embed pinned DF; isolated switch/menu/button/swatch/text-entry adapters | Real-library tests for load order, frames, enable state, silent refresh, exact/empty text, Enter/Escape/focus loss, signed numbers and assets; pages remain native | Complete |
 | 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Implemented; client pending |
 | 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Implemented; client pending |
-| 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Planned |
+| 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Implemented; client pending |
 | 6 — Emotes and cleanup | Ordinary Emotes widgets; retire unused helpers; update docs | Exact/empty text, category/emote edit/drag/duplicate/delete, limits, preserved custom rows/JSON editor, registration/refresh; final client checkpoint | Planned |
 
 Keep the custom scroll canvases, category/emote drag rows, icon preview, native
@@ -275,6 +281,47 @@ inspects the converted Profile selector while keeping its Theme/Emote/route
 checks. All eight smoke suites pass; visual layout, native popup/input timing,
 scrolling and coexistence/security observations remain pending in-game.
 
+## Phase 5 implementation
+
+The Themes page now composes five DF dropdowns, four compact numeric entries,
+seven RGB swatches (including the icon) and nine action buttons. Labels and the
+two-column layout remain native; selectors/field widths, row offsets, suffixes,
+management spacing and icon preview placement are preserved. Theme-only helper
+composition leaves the native Emote controls available for Phase 6. Existing
+Theme dialogs and JSON exchange modes remain native, with captured mutation
+targets, Default protection, shared assignments and factory restore scopes.
+Missing bundled Themes retain their Recreate choices in the management menu.
+
+Both font selectors obtain choices, paths and availability from FontMedia.
+Menus preview registered font paths and retain unavailable selections. Selected
+labels use the standard readable font, missing names use the existing red label
+and tooltip, and label refresh invalidates choices without building menu rows
+or writing a Theme. Late providers and shared overrides still use FontMedia's
+callbacks; MainWindow's bounded rendering retries and automatic-width policy
+are unchanged. The adapter adds explicit label styling without moving font
+policy into the framework or modifying the pinned library.
+
+Numeric editors capture the actual Theme settings table, preserving bounds,
+wheel input, percent conversion and compact typography fields. Hidden thickness
+fields cancel pending input; page hiding cancels numeric/picker edits. Selection
+and same-name factory replacements retire pending edits. Ordinary and icon
+swatches route through SettingsColorPicker; icon refresh uses the adapter's color
+setter so the white base texture is not tinted twice. Restore Yellow cancels the
+live picker first and preserves unrelated settings. The native preview continues
+to desaturate/tint the addon icon, and title-bar changes still call the existing
+active-Theme runtime update without moving geometry into the settings page.
+
+The new `tests/theme-smoke.lua` uses real DF, database, media and serialization
+to cover missing/returning/shared fonts, two independent selectors, readable
+labels/tooltips, long menus, cheap label refresh, shared edits, numeric ownership
+and limits, hidden fields, RGB Cancel/Okay/stale callbacks, page hide, icon tint
+and Restore Yellow, captured CRUD/reset targets, in-use deletion, Recreate,
+bundled reset scope and Theme transfers. Native UI/rendering and runtime update
+calls are stubbed; the existing geometry and font-rendering suites exercise their
+actual policies. Picker/settings/Profile-utility inspections now cover the
+converted Theme controls. All nine smoke suites pass. Client layout, native
+input/picker timing, font rendering, coexistence and security checks remain open.
+
 ## Verification baseline and acceptance checklist
 
 All five existing suites passed during Phase 1 with:
@@ -308,5 +355,5 @@ client build, addon version, other DF embedders present/absent and actual result
 - Startup without Details/Plater, then coexistence with another DF embedder;
   control assets present and no observed Lua/security/taint errors in/out of combat.
 
-Phases 1–4 report source/test readiness only. Neither these tests nor SNP's still
+Phases 1–5 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.

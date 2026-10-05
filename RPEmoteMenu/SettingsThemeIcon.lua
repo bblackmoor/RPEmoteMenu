@@ -2,6 +2,7 @@ local _, addon = ...
 
 local UI = addon.SettingsUI
 local Database = addon.Database
+local Widgets = addon.SettingsWidgets
 
 local function CopyColor(color)
     return {
@@ -29,7 +30,7 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
 
     local function RefreshSwatch()
         local color = GetSelectedSettings().minimizedIconColor
-        colorControl.Swatch:SetColorTexture(color.r, color.g, color.b, 1)
+        colorControl:SetColor(color.r, color.g, color.b)
         previewControl.Icon:SetDesaturated(true)
         previewControl.Icon:SetVertexColor(color.r, color.g, color.b, 1)
     end
@@ -46,45 +47,25 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
     label:SetText("Icon color")
 
-    local button = CreateFrame("Button", nil, parent, "BackdropTemplate")
-    button:SetSize(52, 24)
+    local button = Widgets.CreateColorPicker(parent, function()
+        return GetSelectedSettings().minimizedIconColor
+    end, SetColor)
+    colorControl = button
     if inline then
         button:SetPoint("LEFT", label, "RIGHT", 80, 0)
     else
         button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
     end
-    button:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1
-    })
-    button:SetBackdropColor(0.08, 0.08, 0.08, 1)
-    button:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
 
-    button.Swatch = button:CreateTexture(nil, "ARTWORK")
-    button.Swatch:SetPoint("TOPLEFT", button, "TOPLEFT", 4, -4)
-    button.Swatch:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -4, 4)
-    colorControl = button
-
-    button:SetScript("OnClick", function()
-        UI.OpenColorEditor(button, function()
-            return GetSelectedSettings().minimizedIconColor
-        end, SetColor)
-    end)
-    UI.InstallColorEditorOwner(button)
-
-    local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    resetButton:SetSize(150, 24)
-    resetButton:SetPoint("LEFT", button, "RIGHT", 12, 0)
-    resetButton:SetText("Restore Yellow")
-    resetButton:SetScript("OnClick", function()
+    local resetButton = Widgets.CreateButton(parent, "Restore Yellow", function()
         UI.CancelColorEdit()
         SetColor(addon.DefaultThemeSettings.minimizedIconColor)
-    end)
+    end, 150, 24)
+    resetButton:SetPoint("LEFT", button, "RIGHT", 12, 0)
 
     local preview = CreateFrame("Frame", nil, parent)
     preview:SetSize(32, 32)
-    preview:SetPoint("LEFT", resetButton, "RIGHT", 12, 0)
+    preview:SetPoint("LEFT", resetButton:GetFrame(), "RIGHT", 12, 0)
     preview.Icon = preview:CreateTexture(nil, "ARTWORK")
     preview.Icon:SetAllPoints(preview)
     preview.Icon:SetTexture(
@@ -95,4 +76,3 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
     RefreshSwatch()
     return RefreshSwatch
 end
-

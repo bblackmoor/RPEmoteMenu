@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.215
+
+- Convert Theme management, fonts, numeric fields, RGB swatches, effects, opacity, title-bar selection and icon actions to Details Framework while preserving layout and native dialogs/preview.
+- Retain FontMedia missing/late/shared-font handling and the existing picker manager; preserve shared Theme edits, captured restore targets, Recreate actions and reset scopes.
+- Add Theme integration coverage for fonts, ownership, hidden fields, picker lifecycle, tint, CRUD and transfers; all nine smoke suites pass, with in-game checks pending.
+
 ## 2.0.214
 
 - Convert Profiles selectors/actions, About's source link and the Everything transfer buttons to Details Framework; preserve layout, native popups and the JSON editor.
