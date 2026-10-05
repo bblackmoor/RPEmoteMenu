@@ -129,4 +129,42 @@ main.ApplyProfileSettings(); assert(frame:GetHeight()==345)
 assert(sizeEvents>0)
 -- Delayed animation/cancellation and hover policy use explicit WindowFade context
 -- in window-components-smoke.lua; the integration here checks real presentation.
-print('PASS real window fixed corner, moving content, stationary icon, gear visibility, borderless backdrop and activation')
+-- Every accepted anchor pair restores signed offsets and preserves the window
+-- corner across both orientations, including compact title/icon presentation.
+local anchors=addon.SettingDefinitions.enums.anchorPoint.values
+for _, mode in ipairs({'NONE','ICON','TITLE_BAR'}) do
+    profile.fadeEnabled=mode~='NONE'; profile.minimizeMode=mode
+    for _, point in ipairs(anchors) do
+        for _, relative in ipairs(anchors) do
+            profile.point,profile.relativePoint=point,relative
+            profile.x,profile.y,profile.height=-75,-40,345
+            theme.titleBarPosition='TOP'
+            main.ApplyProfileSettings()
+            assert(profile.x==-75 and profile.y==-40, 'restoration lost signed offsets')
+            local left,top=frame:GetLeft(),frame:GetTop()
+            for _, position in ipairs({'LEFT','TOP'}) do
+                theme.titleBarPosition=position; main.ApplyThemeSettings()
+                -- Stored integer offsets can round half-pixel center anchors.
+                assert(math.abs(frame:GetLeft()-left)<=1 and math.abs(frame:GetTop()-top)<=1,
+                    'anchor corner moved: '..point..'/'..relative..' '..mode..' '..position)
+                assert(profile.point==point and profile.relativePoint==relative)
+            end
+            local x,y=profile.x,profile.y
+            main.ApplyProfileSettings()
+            assert(profile.x==x and profile.y==y, 'reapplication changed saved anchor offsets')
+        end
+    end
+end
+-- Database reload and a Profile switch must retain advanced signed offsets.
+profile.fadeEnabled=false; profile.minimizeMode='NONE'
+profile.point,profile.relativePoint='TOPLEFT','BOTTOMLEFT'
+main.ApplyWindowGeometry(-75,-40,nil,345,true)
+local originalName=db.GetActiveProfileName()
+assert(db.CreateProfile('Position Regression'))
+assert(db.SetActiveProfile(originalName))
+profile=db.GetProfileSettings(); main.ApplyProfileSettings()
+assert(profile.x==-75 and profile.y==-40)
+db.InitializeDatabase(); profile=db.GetProfileSettings(); main.ApplyProfileSettings()
+assert(profile.x==-75 and profile.y==-40)
+print('PASS real window geometry, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
+

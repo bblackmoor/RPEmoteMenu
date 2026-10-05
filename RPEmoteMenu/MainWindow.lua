@@ -439,17 +439,8 @@ local function RestoreWindowSize()
         )
     )
 
-    if profileSettings.point ~= "CENTER" or profileSettings.relativePoint ~= "CENTER" then
-        local x, y
-        x, y, width, height = ClampWindowGeometry(
-            profileSettings.x,
-            profileSettings.y,
-            width,
-            height
-        )
-        profileSettings.x = x
-        profileSettings.y = y
-    end
+    -- Saved x/y are signed anchor offsets, not physical TOPLEFT coordinates.
+    -- Restore them verbatim; movement/reset operations own on-screen clamping.
     profileSettings.height = height
     local frameWidth, frameHeight = GetCurrentFrameSize(width, height)
     SetInternalFrameSize(frameWidth, frameHeight)
@@ -1883,20 +1874,14 @@ function MainWindow.ApplyTitleBarPosition(
         local top = MainFrame:GetTop()
         if top then
             local left = MainFrame:GetLeft()
-            if profileSettings.point == "CENTER"
-                and profileSettings.relativePoint == "CENTER" then
+            if left then
                 local width = CalculateColumnWidths()
-                local frameWidth, frameHeight = GetCurrentFrameSize(
-                    width,
-                    profileSettings.height
-                )
-                if left then
-                    x = left + frameWidth / 2 - UIParent:GetWidth() / 2
-                end
-                y = top - frameHeight / 2 - UIParent:GetHeight() / 2
-            else
-                if left then x = left end
-                y = top
+                local frameWidth, frameHeight = GetCurrentFrameSize(width, profileSettings.height)
+                x, y = addon.WindowGeometry.GetAnchorOffsets(left, top, {
+                    point = profileSettings.point, relativePoint = profileSettings.relativePoint,
+                    width = frameWidth, height = frameHeight,
+                    screenWidth = UIParent:GetWidth(), screenHeight = UIParent:GetHeight(),
+                })
             end
         end
     end
@@ -2593,3 +2578,4 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
+

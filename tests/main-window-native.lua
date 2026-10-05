@@ -36,8 +36,11 @@ function methods:GetLeft()
     if not p then return 0 end
     local relative = p[2] or UIParent
     local left = relative == self and 0 or relative:GetLeft()
-    if p[3] == 'CENTER' then left = left + relative:GetWidth() / 2 end
-    if p[1] == 'CENTER' then left = left - self:GetWidth() / 2 end
+    local function horizontal(anchor)
+        if anchor:find('LEFT') then return 0 elseif anchor:find('RIGHT') then return 1 end
+        return 0.5
+    end
+    left = left + horizontal(p[3]) * relative:GetWidth() - horizontal(p[1]) * self:GetWidth()
     return left + (p[4] or 0)
 end
 function methods:GetTop()
@@ -46,9 +49,11 @@ function methods:GetTop()
     if not p then return self == UIParent and self:GetHeight() or 600 end
     local relative = p[2] or UIParent
     local top = relative == self and 0 or relative:GetTop()
-    if p[3] == 'BOTTOMLEFT' then top = top - relative:GetHeight()
-    elseif p[3] == 'CENTER' then top = top - relative:GetHeight() / 2 end
-    if p[1] == 'CENTER' then top = top + self:GetHeight() / 2 end
+    local function fromTop(anchor)
+        if anchor:find('TOP') then return 0 elseif anchor:find('BOTTOM') then return 1 end
+        return 0.5
+    end
+    top = top - fromTop(p[3]) * relative:GetHeight() + fromTop(p[1]) * self:GetHeight()
     return top + (p[5] or 0)
 end
 function methods:GetRight() return self:GetLeft() + self:GetWidth() end

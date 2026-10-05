@@ -232,3 +232,24 @@ through both minimized modes and title-bar orientations, Active rejection during
 Show and minimized icon restoration. These checks fail when the corresponding
 native event dispatch is suppressed. All fourteen smoke suites pass; native
 client drawing/event timing and in-game acceptance remain pending.
+
+
+## Anchor restoration fixes (2.1.236)
+
+RestoreWindowSize no longer treats saved signed anchor offsets as on-screen
+TOPLEFT coordinates. Advanced negative x/y values survive Profile reapplication,
+Profile switches and database reloads. User drag/resize and reset/center actions
+retain their existing clamping/recovery policy.
+
+WindowGeometry.GetAnchorOffsets converts an observed upper-left corner to the
+saved point/relativePoint pair using the new frame dimensions and UIParent size.
+Title-bar changes now use that conversion for every accepted anchor pair rather
+than special-casing CENTER and interpreting all other anchors as TOPLEFT.
+The native coordinate fixture independently models all nine anchor positions.
+
+All fourteen smoke suites pass. Window integration checks exercise all 81
+accepted anchor pairs with expanded, Icon and Title Bar modes, both orientation
+changes, anchor identity and reapplication. Integer saved offsets retain the
+existing rounding policy (up to one UI unit across the orientation round trip).
+Signed offset checks also cover Profile switching and database reload. Saved-data
+and transfer schema are unchanged; in-game acceptance remains pending.

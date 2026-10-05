@@ -42,3 +42,18 @@ function Geometry.GetFrameSize(width, height, options)
     end
     return width, options.titleBarThickness
 end
+
+
+-- Convert a physical upper-left corner to offsets for any accepted anchor pair.
+-- Coordinates use UIParent's bottom-left origin, as GetLeft/GetTop do.
+local anchorFractions = {
+    TOPLEFT={0,1}, TOP={0.5,1}, TOPRIGHT={1,1},
+    LEFT={0,0.5}, CENTER={0.5,0.5}, RIGHT={1,0.5},
+    BOTTOMLEFT={0,0}, BOTTOM={0.5,0}, BOTTOMRIGHT={1,0}
+}
+function Geometry.GetAnchorOffsets(left, top, options)
+    local point = assert(anchorFractions[options.point], "Invalid window anchor")
+    local relative = assert(anchorFractions[options.relativePoint], "Invalid relative anchor")
+    return left + point[1] * options.width - relative[1] * options.screenWidth,
+        top - (1 - point[2]) * options.height - relative[2] * options.screenHeight
+end
