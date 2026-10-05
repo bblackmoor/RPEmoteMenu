@@ -9,7 +9,7 @@ local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu'
 Load('Defaults.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
 local db = addon.Database
 db.InitializeDatabase()
-Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
+Load('Scheduling.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
 local widgets, main = addon.SettingsWidgets, addon.MainWindow
 local controls = {Switch = {}, IntegerEntry = {}, Dropdown = {}, Button = {}}
 for kind, collection in pairs(controls) do

@@ -36,7 +36,11 @@ WOW_PROJECT_ID, WOW_PROJECT_MAINLINE = 1,1
 WOW_PROJECT_CLASSIC, WOW_PROJECT_BURNING_CRUSADE_CLASSIC, WOW_PROJECT_WRATH_CLASSIC = 2,5,11
 Enum = {SpellBookItemType={Spell=1,None=0,Flyout=2,FutureSpell=3,PetAction=4}, SpellBookSpellBank={Player=0,Pet=1},PowerType={Mana=0}}
 C_Spell, C_SpellBook, C_SpecializationInfo = {},{},{}
-C_Timer = {After=function() end,NewTicker=function() return {Cancel=function() end} end}
+C_Timer = {After=function() end,NewTimer=function(delay, callback)
+    local timer = {Cancel=function(self) self.cancelled=true end}
+    C_Timer.After(delay, function() if not timer.cancelled then callback(timer) end end)
+    return timer
+end,NewTicker=function() return {Cancel=function() end} end}
 C_AddOns = {IsAddOnLoaded=function() return false end,GetAddOnMetadata=function() return nil end}
 C_Texture = {GetAtlasInfo=function() return nil end}
 C_ClassTalents = {}

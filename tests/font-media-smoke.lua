@@ -1,3 +1,4 @@
+local native = dofile("tests/details-framework-ui-stubs.lua")
 -- Real embedded media libraries, database/serialization, selector and rendering paths.
 local addon={SettingsUI={FIELD_GAP=12},Settings={}}
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
@@ -10,7 +11,16 @@ function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
 function UnitName() return 'Tester','Realm' end
 STANDARD_TEXT_FONT='Fonts\\FRIZQT__.TTF'
 local timers={}
-C_Timer={After=function(delay,fn) timers[#timers+1]={delay=delay,fn=fn} end}
+C_Timer={After=function(delay,fn) timers[#timers+1]={delay=delay,fn=fn} end,
+ NewTimer=function(delay,fn)
+  local timer={}; function timer:Cancel() self.cancelled=true end
+  timers[#timers+1]={delay=delay,fn=function() if not timer.cancelled then fn(timer) end end}
+  return timer
+ end}
+local LoadXML = dofile('tests/details-framework-loader.lua')
+LoadXML('Libs/DetailsFramework/load.xml')
+timers = {} -- Ignore framework bootstrap work; observe addon font schedules.
+loadModule('Scheduling.lua')
 local function nextTimer()
  local item=table.remove(timers,1); assert(item,'Timer missing'); item.fn(); return item.delay
 end

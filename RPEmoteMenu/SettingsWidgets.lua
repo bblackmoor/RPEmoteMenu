@@ -364,7 +364,7 @@ function Widgets.CreateTextEntry(parent, getValue, applyValue, options)
         handle:RefreshValue()
         if options.refreshAfterShow then
             local shownRevision = revision
-            C_Timer.After(0, function()
+            addon.Scheduling.Defer(function()
                 -- Blizzard layout may clear text. Never overwrite a newer edit/refresh.
                 if frame:IsShown() and not dirty and revision == shownRevision then
                     handle:RefreshValue()

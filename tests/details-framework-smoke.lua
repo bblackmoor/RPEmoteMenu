@@ -10,6 +10,7 @@ local df = LibStub:GetLibrary("DetailsFramework-1.0")
 assert(df.dversion == 762)
 for _, callback in ipairs(df.OnLoginSchedules) do callback() end
 local ns = {SettingsUI = {}}
+assert(loadfile(root .. "Scheduling.lua"))("RPEmoteMenu", ns)
 local originalUI = ns.SettingsUI
 assert(loadfile(root .. "SettingsWidgets.lua"))("RPEmoteMenu", ns)
 local widgets = ns.SettingsWidgets

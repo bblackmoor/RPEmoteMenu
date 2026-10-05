@@ -1,6 +1,7 @@
 local _, addon = ...
 
 local MinimizedIconColor = {}
+local iconRefreshKey = {}
 addon.MinimizedIconColor = MinimizedIconColor
 
 local function GetThemeSettings()
@@ -37,7 +38,7 @@ end
 
 
 hooksecurefunc(addon.MainWindow, "CreateMainWindow", function()
-    C_Timer.After(0, MinimizedIconColor.Apply)
+    addon.Scheduling.NextTick(iconRefreshKey, MinimizedIconColor.Apply)
 end)
 
 hooksecurefunc(addon.MainWindow, "ApplyMinimizeToIconSettings", function()
@@ -51,3 +52,4 @@ end)
 hooksecurefunc(addon.MainWindow, "ApplyThemeSettings", function()
     MinimizedIconColor.Apply()
 end)
+

@@ -8,7 +8,7 @@ dialog target guards, picker sessions and existing user behavior.
 | --- | --- | --- |
 | 1 | Behavior and Emotes scroll containers use Details Framework canvases | Implemented in 2.0.224; client acceptance pending |
 | 2 | Remaining emote-editor and import/export dialog presentation uses Details Framework | Implemented in 2.0.225; client acceptance pending |
-| 3 | Suitable refresh/timer bookkeeping uses Details Framework scheduling | Pending |
+| 3 | Suitable refresh/timer bookkeeping uses Details Framework scheduling | Implemented in 2.0.226; client acceptance pending |
 
 The optional CallbackHandler notification refactor is excluded by user decision.
 No new library is planned. Profile/Theme normalization, JSON/transfer validation,
@@ -65,4 +65,35 @@ large transfer text, single action dispatch, stale targets and scroll clamping.
 In-game acceptance: check both dialogs' labels, buttons and close control; drag
 and press Escape; save with Enter; reject oversized commands without losing input;
 paste/export large JSON, select/copy it and scroll to its end. Test standalone
-and alongside another DF embedder. Phase 3 remains pending.
+and alongside another DF embedder. Phase 3 is described below.
+
+## Phase 3 implementation
+
+Scheduling.lua loads before FontMedia and resolves DF Schedules lazily so it
+uses the current shared library. It requires NewTimer and RunNextTick. Its private
+pending map uses addon-owned table/frame keys; it does not share named scheduler
+IDs with other addons or alter DF global scheduling state.
+
+NextTick preserves the first queued deadline and merges repeated requests for
+scroll indicators, emote hover, font-provider changes, pin state and icon tint.
+Each callback reads current state. Replace cancels superseded tooltip/font-retry
+timers; Cancel removes the request before canceling its native timer. Dispatch
+checks request identity and clears the entry before invoking the callback, so
+reentrant requests and callback errors cannot strand or overwrite a new pass.
+Defer preserves independent next-frame callbacks, including drag click-suppression
+and revision-guarded settings text refreshes.
+
+Tooltip zero-delay display remains immediate. Tooltip ownership/hover checks and
+font-generation guards remain addon-owned. Font retries retain delays of 0.25,
+0.75, 2, 5, 10 and 12 seconds and stop on success or supersession. Existing fade
+timers, opacity animations, auto-hide transitions and per-frame drag tracking
+remain unchanged. The optional CallbackHandler refactor remains excluded.
+
+All eleven smoke suites pass. A new suite exercises real DF timers with controlled
+native delivery, repeated requests, cancellation, forced stale callbacks,
+reentrant callbacks, callback errors, independent deferrals, missing APIs and
+actual tooltip cancellation. Existing font tests cover retry bounds and retirement.
+In-game acceptance: hover rapidly between controls, change tooltip delay and
+Themes/fonts, register a late font provider, scroll/resize and drag emotes, toggle
+activation and check fade/minimize behavior. Test standalone and alongside another
+DF embedder. All three source phases are complete; client acceptance remains open.

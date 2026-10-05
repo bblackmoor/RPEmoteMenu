@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.226
+
+- Complete library-offloading Phase 3 with an addon scheduling adapter backed by Details Framework timers.
+- Coalesce repeated scroll-indicator, emote-hover, font-provider, pin and minimized-icon refreshes; preserve independent next-frame callbacks and settings field revision guards.
+- Cancel superseded tooltip and font-retry timers while retaining ownership/generation checks, existing delays and bounded retries. Fade animation and drag tracking remain unchanged.
+- Clear queue entries before callback dispatch so reentrant refreshes survive; add real-framework tests for cancellation, stale delivery, coalescing, callback errors and tooltip ownership. All eleven smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.225
 
 - Complete library-offloading Phase 2: use Details Framework panels, labels, buttons and draft text entries for the emote editor and import/export dialogs.

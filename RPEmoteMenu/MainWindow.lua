@@ -3,6 +3,7 @@ local _, addon = ...
 addon.MainWindow = {}
 
 local MainWindow = addon.MainWindow
+local scheduleKeys = {tooltip = {}, font = {}, scroll = {}, pin = {}}
 local Database = addon.Database
 local globalDefaults = addon.DefaultGlobalSettings
 local profileDefaults = addon.DefaultProfileSettings
@@ -93,12 +94,14 @@ local function CancelTooltip(owner)
         return
     end
 
+    addon.Scheduling.Cancel(scheduleKeys.tooltip)
     tooltipGeneration = tooltipGeneration + 1
     tooltipOwner = nil
     GameTooltip:Hide()
 end
 
 local function ScheduleTooltip(owner, populateTooltip)
+    addon.Scheduling.Cancel(scheduleKeys.tooltip)
     tooltipGeneration = tooltipGeneration + 1
     local generation = tooltipGeneration
     tooltipOwner = owner
@@ -124,7 +127,7 @@ local function ScheduleTooltip(owner, populateTooltip)
     if delayMs == 0 then
         ShowIfStillHovered()
     else
-        C_Timer.After(delayMs / 1000, ShowIfStillHovered)
+        addon.Scheduling.Replace(scheduleKeys.tooltip, delayMs / 1000, ShowIfStillHovered)
     end
 end
 
@@ -983,6 +986,7 @@ end
 -- Registration handles late providers. Retry only when actual text rendering
 -- fails, and stop on success or when a newer Theme/font request supersedes it.
 function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
+    addon.Scheduling.Cancel(scheduleKeys.font)
     fontRefreshGeneration = fontRefreshGeneration + 1
     local requestedGeneration = fontRefreshGeneration
     local retryDelays = {0.25, 0.75, 2, 5, 10, 12} -- At most thirty seconds.
@@ -990,10 +994,10 @@ function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
         if requestedGeneration ~= fontRefreshGeneration then return end
         if MainWindow.RefreshFontDisplays(false) then return end
         local delay = retryDelays[retry]
-        if delay then C_Timer.After(delay, function() Attempt(retry + 1) end) end
+        if delay then addon.Scheduling.Replace(scheduleKeys.font, delay, function() Attempt(retry + 1) end) end
     end
     if skipImmediateRefresh then
-        C_Timer.After(0, function() Attempt(1) end)
+        addon.Scheduling.Replace(scheduleKeys.font, 0, function() Attempt(1) end)
     else
         Attempt(1)
     end
@@ -1251,7 +1255,7 @@ local function RefreshEmoteHovered(button)
 end
 
 local function ScheduleEmoteHoverRefresh(button)
-    C_Timer.After(0, function()
+    addon.Scheduling.NextTick(button, function()
         RefreshEmoteHovered(button)
     end)
 end
@@ -1745,7 +1749,7 @@ local function StopEmoteDrag(button)
     button:SetScript("OnUpdate", nil)
     button:SetAlpha(1)
     button.suppressClick = true
-    C_Timer.After(0, function()
+    addon.Scheduling.Defer(function()
         button.suppressClick = false
     end)
 
@@ -2064,9 +2068,7 @@ function MainWindow.UpdateMenu()
     ScrollChild:SetHeight(math.max(dynamicY, #visibleEmotes == 0 and 26 or 1))
     ScrollFrame:SetVerticalScroll(0)
 
-    C_Timer.After(0, function()
-        UpdateScrollIndicators()
-    end)
+    addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
 
     ScheduleInactiveFade()
 end
@@ -2165,7 +2167,7 @@ local function UpdateWindowBodyVisibility()
         EmoteBackgroundLeft:Show()
         EmoteBackgroundRight:Show()
         MainWindow.UpdateMenu()
-        C_Timer.After(0, UpdateScrollIndicators)
+        addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
     end
 
     ApplyColumnLayout()
@@ -2700,11 +2702,11 @@ local function CreateEmoteArea()
     ScrollBottomIndicator:Hide()
 
     ScrollFrame:HookScript("OnVerticalScroll", function()
-        C_Timer.After(0, UpdateScrollIndicators)
+        addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
     end)
 
     ScrollFrame:HookScript("OnMouseWheel", function()
-        C_Timer.After(0, UpdateScrollIndicators)
+        addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
     end)
 
 
@@ -2874,7 +2876,7 @@ local function FinishMainWindowCreation()
     -- SetAtlas can finish applying after the button is created and overwrite
     -- its tint. Reapply the saved pin state on the next frame using the known
     -- button instead of trying to rediscover it by its not-yet-ready atlas.
-    C_Timer.After(0, UpdatePinButton)
+    addon.Scheduling.NextTick(scheduleKeys.pin, UpdatePinButton)
 
     MainWindow.ApplyActivation()
 end

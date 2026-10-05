@@ -3,7 +3,8 @@ local _, addon = ...
 local media = LibStub("LibSharedMedia-3.0")
 local builtins = {}
 for _, font in ipairs(addon.BuiltInFonts) do builtins[font.name] = font.path end
-local ready, queued, refreshText = false, false, false
+local ready, refreshText = false, false
+local mediaRefreshKey = {}
 
 local function SharedPath(name)
     if type(name) ~= "string" then return end
@@ -47,7 +48,6 @@ function addon.GetAvailableFonts(selected)
 end
 
 local function FlushMediaChanges()
-    queued = false
     local updateText = refreshText
     refreshText = false
     if addon.Settings and addon.Settings.RefreshFontControls then
@@ -66,10 +66,7 @@ local function MediaChanged(event, kind, name)
             refreshText = true
         end
     end
-    if not queued then
-        queued = true
-        C_Timer.After(0, FlushMediaChanges)
-    end
+    addon.Scheduling.NextTick(mediaRefreshKey, FlushMediaChanges)
 end
 
 -- Initialization creates the menu and its selectors before late providers

@@ -1,6 +1,7 @@
 -- Run from the repository root: texlua --luaonly tests/window-geometry-smoke.lua
 -- Exercise MainWindow's actual anchor calculations with simulated screen coordinates.
 local addon={Database={},DefaultGlobalSettings={},DefaultProfileSettings={},DefaultThemeSettings={},COLUMN_CHROME_WIDTH=0,MIN_SIDEBAR_WIDTH=0,MAX_SIDEBAR_WIDTH=0,MIN_EMOTE_COLUMN_WIDTH=0,MAX_EMOTE_COLUMN_WIDTH=0}
+assert(loadfile('RPEmoteMenu/Scheduling.lua'))('RPEmoteMenu',addon)
 assert(loadfile('RPEmoteMenu/MainWindow.lua'))('RPEmoteMenu',addon)
 local apply=addon.MainWindow.ApplyTitleBarPosition
 local function getUpvalue(fn,name)
