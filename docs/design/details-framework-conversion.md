@@ -13,7 +13,12 @@ still constructed native controls at that checkpoint.
 
 Phase 3 (Behavior) implemented on 2026-10-05 in 2.0.213. Its ordinary controls
 now use the adapters, with ownership, dependency, reset and geometry regression
-checks. The in-game checkpoint remains pending; Phases 4–6 remain planned.
+checks. The in-game checkpoint remains pending.
+
+Phase 4 (Profiles and utility pages) implemented on 2026-10-05 in 2.0.214.
+Profiles, About's source link and the transfer-page buttons use the adapters;
+name/confirmation popups, the circled information link and JSON dialog stay
+native. Its in-game checkpoint remains pending; Phases 5–6 remain planned.
 
 This document governs the new widget conversion. The older
 [settings architecture](settings-architecture.md) remains the guide to readable
@@ -37,16 +42,16 @@ repository tree. Existing open client checks do not constitute observed success.
 
 | Module | Current responsibility | Conversion treatment |
 | --- | --- | --- |
-| Settings.lua | About, page registration, refresh orchestration, slash destinations | Preserve native category registration and IDs; adapt About's ordinary controls |
+| Settings.lua | About, page registration, refresh orchestration, slash destinations | Native category registration/IDs preserved; About link converted in Phase 4 |
 | SettingsControls.lua | Row cursor, switches, info links, numeric/content editors, swatches, font selectors | Retain rows and labels; delegate widgets to an isolated adapter |
 | SettingsBehavior.lua | Startup/interaction, fade/minimize dependencies, window geometry | Converted in Phase 3; ownership and ranges preserved |
-| SettingsProfiles.lua / SettingsProfileDialogs.lua | Character selection, Theme assignment, CRUD, Default restore, transfer | Convert page widgets; retain native confirmation/name dialogs |
+| SettingsProfiles.lua / SettingsProfileDialogs.lua | Character selection, Theme assignment, CRUD, Default restore, transfer | Profiles widgets converted in Phase 4; native confirmation/name dialogs retained |
 | SettingsThemes.lua / SettingsThemeDialogs.lua | Theme selection/CRUD, two-column typography, effects, opacity, title bar | Convert widgets; preserve shared Theme assignment and native dialogs |
 | SettingsThemeIcon.lua | Icon swatch, Restore Yellow, preview | Adapt swatch/button; retain icon preview and reset scope |
 | SettingsColorPicker.lua | Native RGB session ownership, preview/cancel, stale callbacks | Reuse as the sole picker lifecycle; do not copy the SNP picker manager |
 | FontMedia.lua | Built-in/shared names, lookup, late-provider notifications | Reuse as the sole font policy; do not embed this policy in DF controls |
 | SettingsEmotes.lua / SettingsEmoteList.lua | Category selector/actions/editor and pooled draggable emote rows | Convert ordinary widgets; retain custom rows, scrolling and drag mechanics |
-| SettingsExchange.lua / SettingsTransfer.lua | Native multiline JSON dialog and transfer-page actions | Retain JSON editor/dialog; convert ordinary transfer buttons |
+| SettingsExchange.lua / SettingsTransfer.lua | Native multiline JSON dialog and transfer-page actions | JSON editor/dialog retained; transfer-page buttons converted in Phase 4 |
 | Database.lua / Serialization.lua | Validation, scope, references, persistence and format 2 | Preserve schema, names, reset semantics and import/export behavior |
 
 Visible order is About (the top-level RP Emote Menu category), Behavior,
@@ -162,7 +167,7 @@ including nested dropdown scrollbars. Details/Plater must not be required.
 | 1 — Baseline | This inventory, contracts, scope and phase plan | Review source; run existing suites; no runtime/control edits | Complete |
 | 2 — Foundation | Embed pinned DF; isolated switch/menu/button/swatch/text-entry adapters | Real-library tests for load order, frames, enable state, silent refresh, exact/empty text, Enter/Escape/focus loss, signed numbers and assets; pages remain native | Complete |
 | 3 — Behavior | Convert its switches, menus, buttons and numeric fields | Ownership, resets, fade/minimize dependencies, coordinate/height/wheel validation, geometry regressions; client checkpoint | Implemented; client pending |
-| 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Planned |
+| 4 — Profiles and utility pages | Profiles, About, transfer-page buttons | CRUD, captured dialog targets, Default protection, Theme synchronization, transfer routes, native dialogs/editor, long menus; client checkpoint | Implemented; client pending |
 | 5 — Themes | Typography, RGB, effects, opacity, layout and icon widgets | Picker regressions, missing/late fonts, shared edits, factory reset scopes, conditional thickness, two-column layout, native geometry; client checkpoint | Planned |
 | 6 — Emotes and cleanup | Ordinary Emotes widgets; retire unused helpers; update docs | Exact/empty text, category/emote edit/drag/duplicate/delete, limits, preserved custom rows/JSON editor, registration/refresh; final client checkpoint | Planned |
 
@@ -238,6 +243,38 @@ retaining registration, cross-page, Emote drag and slash-route checks. All seven
 smoke suites pass. The new Behavior controls need in-game verification before
 recording the Phase 3 client checkpoint as passed.
 
+## Phase 4 implementation
+
+Profiles now uses two 250-wide DF selectors and seven action buttons. About's
+source link resolves SettingsWidgets at constructor time, because Settings.lua
+loads before the adapter. The two Everything buttons use DF while routing to
+the existing exchange methods. Native labels retain their positions; handle
+anchors unwrap native frames. The yellow circled information link remains native,
+as do all name/confirmation popups and the multiline JSON exchange dialog.
+
+Profile/Theme menu providers read the existing database lists. Refresh invalidates
+choices and silently sets both selected values and labels, preserving Theme
+assignment/editor synchronization. Invalidation closes open menus and retires
+callbacks from their previous option generation, so CRUD/import updates cannot
+leave stale choices actionable. Database rejection restores the page's selection.
+Default's Rename/Delete actions remain disabled and guarded. Copy/Rename/Delete
+continue passing captured source names to the existing native dialogs; factory
+restore still targets Default without restoring Theme appearance. Database and
+serialization schemas, import activation/conflict rules, character assignments,
+and runtime implementations are unchanged.
+
+The new `tests/profile-utility-smoke.lua` constructs all six pages in actual
+settings-module order with the real framework, database, media and serialization.
+It covers captured dialog targets across selection changes, a deleted Copy
+source, Default protection, CRUD/menu freshness, Theme synchronization, factory
+restore scope, native information/source popups, Profile/Everything transfers,
+import conflicts/non-activation, invalid input, long scrolling menus, stale-menu
+retirement, selected labels, native anchors and used assets. Native UI/rendering
+and runtime appearance updates are stubbed. The existing settings suite now
+inspects the converted Profile selector while keeping its Theme/Emote/route
+checks. All eight smoke suites pass; visual layout, native popup/input timing,
+scrolling and coexistence/security observations remain pending in-game.
+
 ## Verification baseline and acceptance checklist
 
 All five existing suites passed during Phase 1 with:
@@ -271,5 +308,5 @@ client build, addon version, other DF embedders present/absent and actual result
 - Startup without Details/Plater, then coexistence with another DF embedder;
   control assets present and no observed Lua/security/taint errors in/out of combat.
 
-Phases 1–3 report source/test readiness only. Neither these tests nor SNP's still
+Phases 1–4 report source/test readiness only. Neither these tests nor SNP's still
 open client checklist establish native rendering or security acceptance.

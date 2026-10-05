@@ -242,12 +242,13 @@ end
 assert(resetIcon,'Theme icon color reset missing')
 local assigned=false
 for _,w in ipairs(widgets) do
-  if w.menu and isChildOf(w,profilesPanel)
+  if w.MyObject and isChildOf(w,profilesPanel)
     and type(w.anchor)=='table' and w.anchor.y==-171 then
-    local root={CreateRadio=function(_,label,_,action)
-      if label=='Default' then action(); assigned=true end
-    end}
-    w.menu(w,root)
+    for _,option in ipairs(w.MyObject.func()) do
+      if option.value=='Default' then
+        option.onclick(w.MyObject,nil,option.value); assigned=true; break
+      end
+    end
     if assigned then break end
   end
 end

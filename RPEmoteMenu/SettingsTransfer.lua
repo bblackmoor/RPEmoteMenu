@@ -1,5 +1,6 @@
 local _, addon = ...
 local UI = addon.SettingsUI
+local Widgets = addon.SettingsWidgets
 local GetExchangeDialog = UI.GetExchangeDialog
 
 local function CreateImportExportSettingsPanel()
@@ -33,24 +34,17 @@ local function CreateImportExportSettingsPanel()
     )
     profilesDescription:SetTextColor(0.8, 0.8, 0.8)
 
-    local exportButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    exportButton:SetSize(160, 24)
-    exportButton:SetPoint("TOPLEFT", profilesDescription, "BOTTOMLEFT", 0, -18)
-    exportButton:SetText("Export Everything")
-    exportButton:SetScript("OnClick", function()
+    local exportButton = Widgets.CreateButton(panel, "Export Everything", function()
         GetExchangeDialog():OpenEverythingExport()
-    end)
-
-    local importButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    importButton:SetSize(160, 24)
-    importButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
-    importButton:SetText("Import Everything")
-    importButton:SetScript("OnClick", function()
+    end, 160, 24)
+    exportButton:SetPoint("TOPLEFT", profilesDescription, "BOTTOMLEFT", 0, -18)
+    local importButton = Widgets.CreateButton(panel, "Import Everything", function()
         GetExchangeDialog():OpenEverythingImport()
-    end)
+    end, 160, 24)
+    importButton:SetPoint("LEFT", exportButton, "RIGHT", 10, 0)
 
     local importNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    importNote:SetPoint("TOPLEFT", exportButton, "BOTTOMLEFT", 0, -18)
+    importNote:SetPoint("TOPLEFT", exportButton:GetFrame(), "BOTTOMLEFT", 0, -18)
     importNote:SetWidth(620)
     importNote:SetJustifyH("LEFT")
     importNote:SetText(

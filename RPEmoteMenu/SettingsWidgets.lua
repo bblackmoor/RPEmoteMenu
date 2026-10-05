@@ -115,9 +115,12 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
     local function Options()
         if not cached then
             cached = {}
+            local generation = cached
             for _, option in ipairs(optionsFunction()) do
                 local entry = {label = option.label, value = option.value, font = option.font}
-                entry.onclick = function(_, _, value) Notify(handle, value) end
+                entry.onclick = function(_, _, value)
+                    if cached == generation then Notify(handle, value) end
+                end
                 cached[#cached + 1] = entry
             end
         end
@@ -130,7 +133,11 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
     thumb:SetTexture(WHITE)
     thumb:SetTexCoord(0, 1, 0, 1)
     handle = NewHandle(widget, onChanged)
-    function handle:InvalidateOptions() cached = nil end
+    function handle:InvalidateOptions()
+        cached = nil
+        -- Rows in an already-open menu still hold their old choice callbacks.
+        if self.widget.opened then self.widget:Close() end
+    end
     function handle:SetValue(value, label)
         self.value = value
         if label then

@@ -72,24 +72,11 @@ local function CreateAboutPanel()
     sourceLabel:SetPoint("TOPLEFT", details, "BOTTOMLEFT", 0, -2)
     sourceLabel:SetText("Source    ")
 
-    local sourceLink = CreateFrame("Button", nil, panel)
-    sourceLink:SetPoint("LEFT", sourceLabel, "RIGHT", 0, 0)
-
-    local sourceText = sourceLink:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    sourceText:SetPoint("LEFT", sourceLink, "LEFT")
-    sourceText:SetText(SOURCE_URL)
-    sourceText:SetTextColor(0.35, 0.7, 1, 1)
-
-    sourceLink:SetSize(sourceText:GetStringWidth(), 16)
-    sourceLink:SetScript("OnEnter", function()
-        sourceText:SetTextColor(0.65, 0.85, 1, 1)
-    end)
-    sourceLink:SetScript("OnLeave", function()
-        sourceText:SetTextColor(0.35, 0.7, 1, 1)
-    end)
-    sourceLink:SetScript("OnClick", function()
+    -- Settings.lua loads before the adapter; resolve it when constructing pages.
+    local sourceLink = addon.SettingsWidgets.CreateLink(panel, SOURCE_URL, function()
         StaticPopup_Show("RPEMOTEMENU_COPY_SOURCE", nil, nil, SOURCE_URL)
     end)
+    sourceLink:SetPoint("LEFT", sourceLabel, "RIGHT", 0, 0)
 
     local information = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     information:SetPoint("TOPLEFT", sourceLabel, "BOTTOMLEFT", 0, -2)

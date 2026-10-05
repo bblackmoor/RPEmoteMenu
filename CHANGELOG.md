@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.214
+
+- Convert Profiles selectors/actions, About's source link and the Everything transfer buttons to Details Framework; preserve layout, native popups and the JSON editor.
+- Refresh Profile/Theme menu choices after CRUD and imports, close invalidated menus and retire stale option callbacks while preserving selected labels and Theme synchronization.
+- Add real-framework/database/serialization integration checks for dialog targets, Default protection, reset scope, transfer routes and long scrolling menus; all eight smoke suites pass, with in-game checks pending.
+
 ## 2.0.213
 
 - Convert the Behavior page's switches, numeric fields, minimize selector and action buttons to Details Framework while preserving layout, ownership and runtime calls.

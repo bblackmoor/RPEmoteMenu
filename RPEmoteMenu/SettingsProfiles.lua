@@ -1,6 +1,7 @@
 local _, addon = ...
 local UI = addon.SettingsUI
 local Database = addon.Database
+local Widgets = addon.SettingsWidgets
 local GetExchangeDialog = UI.GetExchangeDialog
 local CreateInfoLink = UI.CreateInfoLink
 
@@ -37,12 +38,7 @@ local function CreateProfilesSettingsPanel()
     currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileLabelY)
     currentProfileLabel:SetText("Selected profile")
 
-    local selector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
-    selector:SetWidth(250)
-    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileSelectorY)
-    selector:SetDefaultText(
-        Database.GetProfileDisplayName(Database.GetActiveProfileName())
-    )
+    local selector
 
     local profileDescription = panel:CreateFontString(
         nil,
@@ -65,10 +61,7 @@ local function CreateProfilesSettingsPanel()
     local deleteButton
     local exportProfileButton
     local importProfileButton
-    local themeSelector = CreateFrame("DropdownButton", nil, panel, "WowStyle1DropdownTemplate")
-    themeSelector:SetWidth(250)
-    themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeSelectorY)
-    themeSelector:SetDefaultText(Database.GetActiveThemeName())
+    local themeSelector
 
     local themeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     themeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeLabelY)
@@ -95,53 +88,40 @@ local function CreateProfilesSettingsPanel()
 
     UI.RegisterProfileDialogs(SetStatus)
 
-    local function BuildProfileMenu(_, rootDescription)
-        for _, profileName in ipairs(Database.GetProfileNames()) do
-            rootDescription:CreateRadio(
-                Database.GetProfileDisplayName(profileName),
-                function()
-                    return Database.GetActiveProfileName() == profileName
-                end,
-                function()
-                    local success, errorMessage = Database.SetActiveProfile(profileName)
-
-                    if success then
-                        SetStatus("Using profile " .. profileName .. ".")
-                    else
-                        SetStatus(errorMessage, true)
-                    end
-                end
-            )
+    selector = Widgets.CreateDropdown(panel, function()
+        local options = {}
+        for _, name in ipairs(Database.GetProfileNames()) do
+            options[#options + 1] = {label = Database.GetProfileDisplayName(name), value = name}
         end
-    end
-
-    selector:SetupMenu(BuildProfileMenu)
-
-    themeSelector:SetupMenu(function(_, root)
-        for _, themeName in ipairs(Database.GetThemeNames()) do
-            root:CreateRadio(themeName,
-                function() return Database.GetActiveThemeName() == themeName end,
-                function()
-                    local success, errorMessage = Database.SetProfileTheme(
-                        Database.GetActiveProfileName(), themeName)
-                    if success then
-                        SetStatus("Assigned " .. themeName .. " to this Profile.")
-                    else
-                        SetStatus(errorMessage, true)
-                    end
-                end)
-        end
+        return options
+    end, function(name)
+        local success, errorMessage = Database.SetActiveProfile(name)
+        if success then SetStatus("Using profile " .. name .. ".")
+        else SetStatus(errorMessage, true); panel.Refresh() end
     end)
+    selector:SetWidth(250)
+    selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileSelectorY)
 
-    local restoreDefaultButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    restoreDefaultButton:SetSize(140, 24)
-    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, restoreY)
-    restoreDefaultButton:SetText("Restore Default")
-    restoreDefaultButton:SetScript("OnClick", function()
+    themeSelector = Widgets.CreateDropdown(panel, function()
+        local options = {}
+        for _, name in ipairs(Database.GetThemeNames()) do
+            options[#options + 1] = {label = name, value = name}
+        end
+        return options
+    end, function(name)
+        local success, errorMessage = Database.SetProfileTheme(Database.GetActiveProfileName(), name)
+        if success then SetStatus("Assigned " .. name .. " to this Profile.")
+        else SetStatus(errorMessage, true); panel.Refresh() end
+    end)
+    themeSelector:SetWidth(250)
+    themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeSelectorY)
+
+    local restoreDefaultButton = Widgets.CreateButton(panel, "Restore Default", function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE")
-    end)
+    end, 140, 24)
+    restoreDefaultButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, restoreY)
 
-    CreateInfoLink(panel, selector, "RPEMOTEMENU_PROFILE_INFO")
+    CreateInfoLink(panel, selector:GetFrame(), "RPEMOTEMENU_PROFILE_INFO")
 
     local profileNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     profileNote:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, noteY)
@@ -162,66 +142,42 @@ local function CreateProfilesSettingsPanel()
         })
     end
 
-    createButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    createButton:SetSize(95, 24)
+    createButton = Widgets.CreateButton(panel, "Create", function() OpenNameDialog("create") end, 95, 24)
     createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, actionsY)
-    createButton:SetText("Create")
-    createButton:SetScript("OnClick", function() OpenNameDialog("create") end)
-
-    copyButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    copyButton:SetSize(95, 24)
+    copyButton = Widgets.CreateButton(panel, "Copy", function() OpenNameDialog("copy") end, 95, 24)
     copyButton:SetPoint("LEFT", createButton, "RIGHT", 8, 0)
-    copyButton:SetText("Copy")
-    copyButton:SetScript("OnClick", function() OpenNameDialog("copy") end)
 
-    renameButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    renameButton:SetSize(95, 24)
+    renameButton = Widgets.CreateButton(panel, "Rename", function()
+        local name = Database.GetActiveProfileName()
+        if not Database.CanRenameOrDeleteActiveProfile() then return end
+        StaticPopup_Show("RPEMOTEMENU_RENAME_PROFILE", name, nil, name)
+    end, 95, 24)
     renameButton:SetPoint("LEFT", copyButton, "RIGHT", 8, 0)
-    renameButton:SetText("Rename")
-    renameButton:SetScript("OnClick", function()
-        local profileName = Database.GetActiveProfileName()
 
-        if not Database.CanRenameOrDeleteActiveProfile() then
-            return
-        end
-
-        StaticPopup_Show("RPEMOTEMENU_RENAME_PROFILE", profileName, nil, profileName)
-    end)
-
-    deleteButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    deleteButton:SetSize(95, 24)
+    deleteButton = Widgets.CreateButton(panel, "Delete", function()
+        local name = Database.GetActiveProfileName()
+        if not Database.CanRenameOrDeleteActiveProfile() then return end
+        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", name, nil, name)
+    end, 95, 24)
     deleteButton:SetPoint("LEFT", renameButton, "RIGHT", 8, 0)
-    deleteButton:SetText("Delete")
-    deleteButton:SetScript("OnClick", function()
-        local profileName = Database.GetActiveProfileName()
 
-        if not Database.CanRenameOrDeleteActiveProfile() then
-            return
-        end
-
-        StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", profileName, nil, profileName)
-    end)
-
-    exportProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    exportProfileButton:SetSize(125, 24)
-    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, exchangeY)
-    exportProfileButton:SetText("Export Profile")
-    exportProfileButton:SetScript("OnClick", function()
+    exportProfileButton = Widgets.CreateButton(panel, "Export Profile", function()
         GetExchangeDialog():OpenProfileExport()
-    end)
-
-    importProfileButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    importProfileButton:SetSize(125, 24)
-    importProfileButton:SetPoint("LEFT", exportProfileButton, "RIGHT", 8, 0)
-    importProfileButton:SetText("Import Profile")
-    importProfileButton:SetScript("OnClick", function()
+    end, 125, 24)
+    exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, exchangeY)
+    importProfileButton = Widgets.CreateButton(panel, "Import Profile", function()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
-    end)
+    end, 125, 24)
+    importProfileButton:SetPoint("LEFT", exportProfileButton, "RIGHT", 8, 0)
 
     panel.Refresh = function()
         local profileName = Database.GetActiveProfileName()
-        selector:OverrideText(Database.GetProfileDisplayName(profileName))
-        themeSelector:OverrideText(Database.GetActiveThemeName())
+        -- CRUD/import refreshes invalidate choices; labels refresh without rebuilding.
+        selector:InvalidateOptions()
+        themeSelector:InvalidateOptions()
+        selector:SetValue(profileName, Database.GetProfileDisplayName(profileName))
+        local themeName = Database.GetActiveThemeName()
+        themeSelector:SetValue(themeName, themeName)
         profileDescription:SetText(Database.GetProfileDescription(profileName))
         UpdateButtonState()
     end
