@@ -126,25 +126,54 @@ local function InstallExchangeActions(dialog)
         end
     end
 
-    editBox:SetScript("OnTextChanged", function(self, userInput)
-        local text = self:GetText() or ""
-        local charactersPerLine = math.max(1, math.floor((self:GetWidth() - 8) / 7))
-        local lineCount = 0
-
-        for line in (text .. "\n"):gmatch("([^\n]*)\n") do
-            lineCount = lineCount + math.max(1, math.ceil(#line / charactersPerLine))
-        end
-
-        self:SetHeight(math.max(scrollFrame:GetHeight() or 0, (lineCount * 16) + 12))
-        dialog.scrollContent:SetHeight(self:GetHeight())
+    -- A hidden FontString uses the client renderer's font metrics and wrapping.
+    -- Keep a trailing blank glyph so empty/final-newline rows have a height.
+    local measurement = dialog:CreateFontString(nil, "OVERLAY")
+    measurement:SetWordWrap(true)
+    measurement:SetNonSpaceWrap(true)
+    measurement:Hide()
+    local updatingLayout = false
+    local function RefreshTextLayout(minimumHeight)
+        if updatingLayout then return end
+        updatingLayout = true
+        local width = math.max(1, scrollFrame:GetWidth())
+        editBox:SetWidth(width)
+        dialog.scrollContent:SetWidth(width)
+        measurement:SetFont(editBox:GetFont())
+        measurement:SetWidth(math.max(1, width - 8))
+        measurement:SetText((editBox:GetText() or "") .. " ")
+        local height = math.max(scrollFrame:GetHeight(),
+            measurement:GetStringHeight() + 8, minimumHeight or 0)
+        editBox:SetHeight(height)
+        dialog.scrollContent:SetHeight(height)
         scrollFrame:RefreshViewport()
+        updatingLayout = false
+    end
 
-        if userInput then
-            SetStatus("")
-        end
-
+    editBox:SetScript("OnTextChanged", function(_, userInput)
+        RefreshTextLayout()
+        if userInput then SetStatus("") end
         dialog:UpdateActionState()
     end)
+    editBox:SetScript("OnCursorChanged", function(_, _, y, _, height)
+        -- Cursor y is negative downward from the top of the EditBox. Its
+        -- immediate parent is the canvas child, so use our viewport explicitly.
+        local top = math.max(0, -y)
+        local bottom = top + height
+        RefreshTextLayout(bottom + 4)
+        local offset = scrollFrame:GetVerticalScroll()
+        local viewportHeight = scrollFrame:GetHeight()
+        if top < offset + 4 then
+            offset = top - 4
+        elseif bottom > offset + viewportHeight - 4 then
+            offset = bottom - viewportHeight + 4
+        end
+        scrollFrame:SetVerticalScroll(math.max(0,
+            math.min(offset, scrollFrame:GetVerticalScrollRange())))
+    end)
+    scrollFrame:HookScript("OnSizeChanged", function() RefreshTextLayout() end)
+    editBox:HookScript("OnSizeChanged", function() RefreshTextLayout() end)
+    dialog:HookScript("OnShow", function() RefreshTextLayout() end)
 
     editBox:SetScript("OnEscapePressed", function(self)
         self:ClearFocus()

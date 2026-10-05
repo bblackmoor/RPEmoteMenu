@@ -57,8 +57,8 @@ existing left-button drag policy, DIALOG strata, screen clamping and a single
 Escape registration. Draft fields bypass DF trimming and focus-loss/Enter commits.
 Emote fields continue to validate 128-byte names and 4096-byte commands on Save,
 without silently truncating rejected input. Transfer fields have no byte/letter
-limit, use a multiline DF text entry and the Phase 1 canvas, and retain existing
-content-height estimation and mode-specific actions.
+limit, use a multiline DF text entry and the Phase 1 canvas, and retain mode-specific actions. Content-height estimation was replaced by
+rendered wrapping and caret-follow scrolling in 2.0.227.
 
 All ten smoke suites pass, including exact whitespace/empty drafts, focus changes,
 large transfer text, single action dispatch, stale targets and scroll clamping.
@@ -97,3 +97,24 @@ In-game acceptance: hover rapidly between controls, change tooltip delay and
 Themes/fonts, register a late font provider, scroll/resize and drag emotes, toggle
 activation and check fade/minimize behavior. Test standalone and alongside another
 DF embedder. All three source phases are complete; client acceptance remains open.
+
+## Transfer-editor follow-up (2.0.227)
+
+A hidden FontString uses the EditBox font and inset-adjusted viewport width with
+word and non-space wrapping enabled. A trailing blank glyph preserves empty and
+final-newline rows. Rendered string height plus insets determines content height;
+the viewport provides its minimum. Text, viewport/editor size and showing the
+dialog refresh layout and clamp offsets. A reentrancy guard prevents native size
+callbacks from recursively updating the layout. Draft text is never rewritten.
+
+OnCursorChanged addresses the viewport explicitly because the EditBox is parented
+to the canvas child. Negative cursor y becomes a top-relative offset; caret height
+and padding define its visible bounds. The callback extends content when cursor
+layout arrives before text measurement, then scrolls upward/downward only when
+needed and clamps to the current range.
+
+Controlled renderer metrics test wide/narrow proportional glyphs, Unicode, width
+changes, trailing newlines, empty text, viewport minimum height, caret movement in
+both directions and reentrant size callbacks. All eleven smoke suites pass.
+In-game acceptance must confirm actual font rendering/wrapping, long pasted JSON,
+Home/End and arrow-key navigation, resizing and selection/copy behavior.

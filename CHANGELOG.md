@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.0.227
+
+- Measure transfer-editor content with font-rendered word and non-space wrapping instead of byte-count estimates; remeasure on text, viewport, editor-size and show changes.
+- Keep empty and trailing-newline rows visible, preserve full draft text, and synchronize edit/scroll-child dimensions with the viewport.
+- Follow the transfer caret in both directions with padding and bounded scroll offsets, including cursor events that precede layout updates.
+- Add regression coverage for proportional glyph widths, Unicode, resizing, caret visibility, empty/shrinking content and reentrant size callbacks. All eleven smoke suites pass; native text rendering remains an in-game check.
+
 ## 2.0.226
 
 - Complete library-offloading Phase 3 with an addon scheduling adapter backed by Details Framework timers.

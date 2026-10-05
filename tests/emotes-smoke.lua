@@ -353,3 +353,73 @@ assert(exchange.scrollFrame:GetVerticalScroll() == 0)
 assert(not exchange.actionButton:IsEnabled())
 exchange.editBox:GetScript("OnEscapePressed")(exchange.editBox)
 assert(not exchange:IsShown())
+
+-- Controlled renderer metrics verify layout uses wrapped glyph widths, not bytes.
+local function Upvalue(fn, target)
+    for i=1,30 do
+        local name,value=debug.getupvalue(fn,i)
+        if name==target then return value end
+        if not name then break end
+    end
+    error('Missing '..target)
+end
+local layout=Upvalue(exchange.editBox:GetScript('OnTextChanged'),'RefreshTextLayout')
+local measurement=Upvalue(layout,'measurement')
+local fonts=0
+function measurement:SetFont(path,size,flags)
+    assert(path==STANDARD_TEXT_FONT and size==12); fonts=fonts+1
+end
+function measurement:GetStringHeight()
+    local lines, width = 1, 0
+    for _, code in utf8.codes(self:GetText()) do
+        if code==10 then
+            lines=lines+1; width=0
+        else
+            local glyph = code==87 and 12 or code==105 and 3 or code==233 and 9 or 3
+            if width+glyph > self:GetWidth() then lines=lines+1; width=0 end
+            width=width+glyph
+        end
+    end
+    return lines*18
+end
+-- Dispatch native size events, including changes made within the layout itself.
+local function Size(frame,width,height)
+    frame:SetSize(width,height)
+    frame:GetScript('OnSizeChanged')(frame,width,height)
+end
+exchange:OpenImport(1)
+Size(exchange.scrollFrame,120,80)
+local edit=exchange.editBox
+edit:SetText(string.rep('W',80))
+local wideHeight=edit:GetHeight()
+assert(wideHeight==170 and measurement:GetWidth()==112)
+edit:SetText(string.rep('i',80)); assert(edit:GetHeight()==80)
+local unicodeText=string.rep('é',80)
+edit:SetText(unicodeText); assert(edit:GetHeight()==134 and edit:GetText()==unicodeText)
+edit:SetText(string.rep('W',80))
+Size(exchange.scrollFrame,240,80)
+assert(edit:GetWidth()==240 and edit:GetHeight()==98, 'resize must remeasure wrapping')
+Size(exchange.scrollFrame,120,80); assert(edit:GetHeight()==wideHeight)
+assert(exchange.scrollContent:GetHeight()==edit:GetHeight() and fonts>0)
+local cursor=edit:GetScript('OnCursorChanged')
+cursor(edit,0,-200,1,18)
+assert(exchange.scrollFrame:GetVerticalScroll()==142 and edit:GetHeight()==222,
+    'lower caret must remain visible, including layout lag')
+cursor(edit,0,-20,1,18); assert(exchange.scrollFrame:GetVerticalScroll()==16)
+cursor(edit,0,-40,1,18); assert(exchange.scrollFrame:GetVerticalScroll()==16,
+    'an already visible caret must not scroll')
+cursor(edit,0,0,1,18); assert(exchange.scrollFrame:GetVerticalScroll()==0)
+edit:SetText('line\n'); assert(edit:GetHeight()==80 and measurement:GetText()=='line\n ')
+edit:SetText(''); assert(exchange.scrollFrame:GetVerticalScroll()==0 and not exchange.actionButton:IsEnabled())
+Size(exchange.scrollFrame,120,400)
+assert(edit:GetHeight()==400 and exchange.scrollContent:GetHeight()==400)
+-- Reentrant native size callbacks cannot recurse indefinitely.
+local originalSetHeight=edit.SetHeight
+function edit:SetHeight(height)
+    local changed=height~=self:GetHeight(); originalSetHeight(self,height)
+    if changed then self:GetScript('OnSizeChanged')(self,self:GetWidth(),height) end
+end
+edit:SetText(string.rep('W',1000))
+assert(edit:GetHeight()>400 and edit:GetText()==string.rep('W',1000))
+exchange:Hide()
+print('PASS transfer wrapped-text measurement, Unicode, resize, caret visibility, clamping and reentrant layout')
