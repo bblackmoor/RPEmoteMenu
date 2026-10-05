@@ -67,33 +67,18 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
     colorControl = button
 
     button:SetScript("OnClick", function()
-        local original = CopyColor(GetSelectedSettings().minimizedIconColor)
-
-        local function ApplyPickerColor()
-            local r, g, b = ColorPickerFrame:GetColorRGB()
-            SetColor({r = r, g = g, b = b})
-        end
-
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = original.r,
-            g = original.g,
-            b = original.b,
-            swatchFunc = ApplyPickerColor,
-            cancelFunc = function(previousColor)
-                if type(previousColor) == "table" then
-                    SetColor(previousColor)
-                else
-                    SetColor(original)
-                end
-            end
-        })
+        UI.OpenColorEditor(button, function()
+            return GetSelectedSettings().minimizedIconColor
+        end, SetColor)
     end)
+    UI.InstallColorEditorOwner(button)
 
     local resetButton = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
     resetButton:SetSize(150, 24)
     resetButton:SetPoint("LEFT", button, "RIGHT", 12, 0)
     resetButton:SetText("Restore Yellow")
     resetButton:SetScript("OnClick", function()
+        UI.CancelColorEdit()
         SetColor(addon.DefaultThemeSettings.minimizedIconColor)
     end)
 
@@ -110,3 +95,4 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
     RefreshSwatch()
     return RefreshSwatch
 end
+

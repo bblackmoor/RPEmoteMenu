@@ -306,26 +306,6 @@ local function Clamp(value, minimum, maximum)
     return math.max(minimum, math.min(maximum, value))
 end
 
-local function CopyColor(color)
-    return {
-        r = color.r,
-        g = color.g,
-        b = color.b
-    }
-end
-
-local function GetPickerColor(value, fallback)
-    if type(value) ~= "table" then
-        return CopyColor(fallback)
-    end
-
-    return {
-        r = value.r or value[1] or fallback.r,
-        g = value.g or value[2] or fallback.g,
-        b = value.b or value[3] or fallback.b
-    }
-end
-
 local function CreateNumberSetting(
     parent,
     labelText,
@@ -407,25 +387,12 @@ local function CreateColorSetting(
     end
 
     button:SetScript("OnClick", function(self)
-        local originalColor = CopyColor(getValue())
-
-        local function ApplyPickerColor()
-            local r, g, b = ColorPickerFrame:GetColorRGB()
-            applyValue({r = r, g = g, b = b})
+        UI.OpenColorEditor(self, getValue, function(color)
+            applyValue(color)
             self:RefreshValue()
-        end
-
-        ColorPickerFrame:SetupColorPickerAndShow({
-            r = originalColor.r,
-            g = originalColor.g,
-            b = originalColor.b,
-            swatchFunc = ApplyPickerColor,
-            cancelFunc = function(previousColor)
-                applyValue(GetPickerColor(previousColor, originalColor))
-                self:RefreshValue()
-            end
-        })
+        end)
     end)
+    UI.InstallColorEditorOwner(button)
 
     button:RefreshValue()
     return button
@@ -552,3 +519,4 @@ UI.CreateIntegerEditBox = CreateIntegerEditBox
 UI.CreateNumberSetting = CreateNumberSetting
 UI.CreateColorSetting = CreateColorSetting
 UI.CreateFontSetting = CreateFontSetting
+

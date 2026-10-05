@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.0.210
+
+- Bind all Theme color pickers, including the minimized icon, to their opening Theme and retire stale callbacks.
+- Cancel previews before Profile/Theme changes, factory restores, swatch hiding, or opening another picker; preserve accepted colors and protect other addons’ pickers.
+
 ## 2.0.209
 
 - Publish the current state as release 2.0.209; see [Changes from v1 to v2](docs/releases/2.0.209.md) for the major-version summary and upgrade compatibility.
@@ -87,3 +92,4 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+

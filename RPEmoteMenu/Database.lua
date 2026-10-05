@@ -631,6 +631,13 @@ function Database.ValidateNewThemeName(themeName, existingThemeName)
 end
 
 
+-- Retire Theme previews before changing selection or replacing saved data.
+local function CancelThemeColorEdit()
+    if addon.SettingsUI and addon.SettingsUI.CancelColorEdit then
+        addon.SettingsUI.CancelColorEdit()
+    end
+end
+
 local function RefreshSettingsViews()
     if addon.Settings and addon.Settings.RefreshSettingsPanels then
         addon.Settings.RefreshSettingsPanels()
@@ -752,6 +759,7 @@ function Database.SetProfileTheme(profileName, themeName)
         return false, "That theme does not exist."
     end
 
+    CancelThemeColorEdit()
     profile.theme = themeName
     if profileName == Database.GetActiveProfileName() then
         RefreshThemeViews()
@@ -793,6 +801,7 @@ function Database.RenameTheme(oldThemeName, newThemeName)
     local validName, errorMessage = ValidateNewThemeName(newThemeName, oldThemeName)
     if not validName then return false, errorMessage end
 
+    CancelThemeColorEdit()
     RPEmoteMenuDB.themes[validName] = theme
     RPEmoteMenuDB.themes[oldThemeName] = nil
     for _, profile in pairs(RPEmoteMenuDB.profiles) do
@@ -822,6 +831,7 @@ function Database.DeleteTheme(themeName, confirmedInUse)
         return false, "This theme is used by profiles.", users
     end
 
+    CancelThemeColorEdit()
     for _, profileName in ipairs(users) do
         RPEmoteMenuDB.profiles[profileName].theme = DEFAULT_THEME_NAME
     end
@@ -852,6 +862,7 @@ function Database.RestoreTheme(themeName)
         return false, "Only Default and bundled themes have factory settings."
     end
 
+    CancelThemeColorEdit()
     RPEmoteMenuDB.themes[themeName] = {settings = CopyThemeSettings(source)}
     if Database.GetActiveThemeName() == themeName then
         RefreshThemeViews()
@@ -878,6 +889,7 @@ function Database.SetActiveProfile(profileName)
         return false, "The current character is not available yet."
     end
 
+    CancelThemeColorEdit()
     RPEmoteMenuDB.activeProfiles[characterKey] = profileName
     RefreshProfileViews()
     return true
@@ -898,6 +910,7 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings, s
         return false, "The source theme does not exist."
     end
 
+    CancelThemeColorEdit()
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings
         or Database.GetProfileSettings()
@@ -943,6 +956,7 @@ function Database.RenameProfile(oldProfileName, newProfileName)
         return false, errorMessage
     end
 
+    CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[validName] = profile
     RPEmoteMenuDB.profiles[oldProfileName] = nil
 
@@ -965,6 +979,7 @@ function Database.DeleteProfile(profileName)
         return false, "That profile does not exist."
     end
 
+    CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[profileName] = nil
 
     for characterKey, activeProfileName in pairs(RPEmoteMenuDB.activeProfiles) do
@@ -1157,6 +1172,7 @@ end
 
 
 function Database.RestoreBuiltInThemes()
+    CancelThemeColorEdit()
     for _, definition in ipairs(builtInThemes) do
         RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
     end
@@ -1173,6 +1189,7 @@ function Database.RestoreProfile(profileName)
     if profileName ~= DEFAULT_PROFILE_NAME then
         return false, "Only the Default profile has factory settings."
     end
+    CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
         theme = DEFAULT_THEME_NAME,
         categories = CopyDefaultCategories(),
@@ -1318,3 +1335,4 @@ function Database.DuplicateCategory(categoryIndex)
     categories[destinationIndex] = copy
     return true, destinationIndex
 end
+
