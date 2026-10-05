@@ -15,7 +15,7 @@ local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 timers = {}
 local addon = {}
-for _, name in ipairs({'Defaults.lua','Scheduling.lua','MainWindow.lua'}) do
+for _, name in ipairs({'Defaults.lua','Scheduling.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon)
 end
 local queue = addon.Scheduling

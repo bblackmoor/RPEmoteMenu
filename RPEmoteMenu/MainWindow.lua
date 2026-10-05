@@ -64,23 +64,12 @@ local ResizeGrip
 local WidthMeasurementText
 local categoryButtons = {}
 local buttonsPool = {}
-local emoteEditorDialog
 local categoryDropIndicator
 local categoryDragState
 local emoteDropIndicator
 local emoteDragState
 local isWindowAutoHidden = false
 local SetWindowAutoHidden
-local ScheduleWindowAutoHide
-local fadeGeneration = 0
-local opacityAnimationGroup
-local opacityAnimation
-local opacityAnimationTarget
-local fadeOutDuration = 1.0
-local fadeInDuration = 0.2
-local autoHideGeneration = 0
-local autoHideScheduled = false
-local autoHideFading = false
 local isApplyingColumnSize = false
 local isUserResizing = false
 local fontRefreshGeneration = 0
@@ -147,6 +136,25 @@ local function UsesMinimizedDisplay()
     return GetMinimizeMode() ~= "NONE"
 end
 
+local windowFade
+local function GetWindowFade()
+    if not windowFade then
+        windowFade = addon.WindowFade.Create({
+            GetFrame = function() return MainFrame end,
+            GetIcon = function() return MinimizedIconButton end,
+            GetProfile = function() return profileSettings end,
+            GetTheme = function() return themeSettings end,
+            IsHidden = function() return isWindowAutoHidden end,
+            UsesMinimizedDisplay = UsesMinimizedDisplay,
+            IsMinimizedToIcon = IsMinimizedToIcon,
+            SetHidden = function(hidden) SetWindowAutoHidden(hidden) end,
+        })
+    end
+    return windowFade
+end
+
+local function ScheduleWindowAutoHide() GetWindowFade().ScheduleAutoHide() end
+
 local function GetContentWidth()
     return sidebarWidth + emoteColumnWidth + columnChromeWidth
 end
@@ -156,25 +164,12 @@ local function GetExpandedWidth()
 end
 
 local function GetCurrentFrameSize(width, height)
-    width = width or GetExpandedWidth()
-    height = height or profileSettings.height
-
-    if not isWindowAutoHidden then
-        return width, height
-    end
-
-    if IsTitleBarOnLeft() then
-        if IsMinimizedToIcon() or not UsesMinimizedDisplay() then
-            return width, height
-        end
-        return leftTitleBarWidth, height
-    end
-
-    if not UsesMinimizedDisplay() then
-        return width, height
-    end
-
-    return width, titleBarThickness
+    return addon.WindowGeometry.GetFrameSize(width or GetExpandedWidth(),
+        height or profileSettings.height, {
+            hidden = isWindowAutoHidden, minimizeMode = GetMinimizeMode(),
+            titleBarOnLeft = IsTitleBarOnLeft(), leftTitleBarWidth = leftTitleBarWidth,
+            titleBarThickness = titleBarThickness,
+        })
 end
 
 local function SetInternalFrameSize(width, height)
@@ -322,32 +317,13 @@ local function CalculateColumnWidths()
 end
 
 local function ClampWindowGeometry(x, y, width, height, allowOffscreen)
-    local screenWidth = math.floor(UIParent:GetWidth() + 0.5)
-    local screenHeight = math.floor(UIParent:GetHeight() + 0.5)
-
-    width = math.floor(tonumber(width)
-        or GetExpandedWidth())
-    height = math.floor(tonumber(height) or profileSettings.height or profileDefaults.height)
-
-    width = math.min(screenWidth, width)
-    height = math.max(minimumHeight, math.min(maximumHeight, screenHeight, height))
-
-    x = math.floor(tonumber(x) or profileSettings.x or 0)
-    y = math.floor(tonumber(y) or profileSettings.y or screenHeight)
-
-    -- Normal movement supplies the window's TOPLEFT point relative to
-    -- UIParent's BOTTOMLEFT and keeps the entire frame on-screen. Advanced
-    -- position fields supply signed offsets for the saved anchor instead; the
-    -- reset and center buttons provide recovery if an extreme value is used.
-    if allowOffscreen then
-        x = math.max(-100000, math.min(100000, x))
-        y = math.max(-100000, math.min(100000, y))
-    else
-        x = math.max(0, math.min(screenWidth - width, x))
-        y = math.max(height, math.min(screenHeight, y))
-    end
-
-    return x, y, width, height
+    return addon.WindowGeometry.Clamp(x, y, width, height, allowOffscreen, {
+        screenWidth = UIParent:GetWidth(), screenHeight = UIParent:GetHeight(),
+        expandedWidth = GetExpandedWidth(), savedHeight = profileSettings.height,
+        defaultHeight = profileDefaults.height, savedX = profileSettings.x,
+        savedY = profileSettings.y, minimumHeight = minimumHeight,
+        maximumHeight = maximumHeight,
+    })
 end
 
 function MainWindow.ApplyWindowGeometry(
@@ -744,125 +720,15 @@ local function ApplyFont(fontString, fontName, size, color, forceRefresh)
     return applied
 end
 
-local opacityAnimationOnFinished
 
 local function SetWindowOpacity(targetOpacity, duration, onFinished)
-    if not MainFrame then
-        return
-    end
-
-    local currentOpacity = MainFrame:GetAlpha()
-
-    if opacityAnimationGroup and opacityAnimationGroup:IsPlaying() then
-        opacityAnimationOnFinished = nil
-        opacityAnimationGroup:Stop()
-    end
-
-    if not duration or math.abs(currentOpacity - targetOpacity) < 0.001 then
-        MainFrame:SetAlpha(targetOpacity)
-        if onFinished then
-            onFinished()
-        end
-        return
-    end
-
-    if not opacityAnimationGroup then
-        opacityAnimationGroup = MainFrame:CreateAnimationGroup()
-        opacityAnimation = opacityAnimationGroup:CreateAnimation("Alpha")
-        opacityAnimation:SetSmoothing("IN_OUT")
-        opacityAnimationGroup:SetScript("OnFinished", function()
-            MainFrame:SetAlpha(opacityAnimationTarget)
-            local callback = opacityAnimationOnFinished
-            opacityAnimationOnFinished = nil
-            if callback then
-                callback()
-            end
-        end)
-    end
-
-    MainFrame:SetAlpha(currentOpacity)
-    opacityAnimationTarget = targetOpacity
-    opacityAnimationOnFinished = onFinished
-    opacityAnimation:SetFromAlpha(currentOpacity)
-    opacityAnimation:SetToAlpha(targetOpacity)
-    opacityAnimation:SetDuration(duration)
-    opacityAnimationGroup:Play()
+    GetWindowFade().SetOpacity(targetOpacity, duration, onFinished)
 end
-
-local function CancelWindowAutoHide()
-    autoHideGeneration = autoHideGeneration + 1
-    autoHideScheduled = false
-    autoHideFading = false
-end
-
-local function RestoreActiveOpacity(animate)
-    fadeGeneration = fadeGeneration + 1
-
-    if MainFrame then
-        SetWindowOpacity(
-            themeSettings.windowOpacity,
-            animate and fadeInDuration or nil
-        )
-    end
-end
-
-local function ScheduleInactiveFade()
-    fadeGeneration = fadeGeneration + 1
-    local requestedGeneration = fadeGeneration
-
-    -- Minimized modes use ScheduleWindowAutoHide for both their fade and
-    -- collapse. None leaves the complete window visible at inactive opacity.
-    if not profileSettings.fadeEnabled or UsesMinimizedDisplay() or not MainFrame then
-        return
-    end
-
-    C_Timer.After(profileSettings.fadeDelay, function()
-        if requestedGeneration ~= fadeGeneration
-            or not profileSettings.fadeEnabled
-            or UsesMinimizedDisplay()
-            or MainFrame:IsMouseOver() then
-            return
-        end
-
-        SetWindowOpacity(
-            math.min(profileSettings.inactiveOpacity, themeSettings.windowOpacity),
-            fadeOutDuration
-        )
-    end)
-end
-
-function MainWindow.NotifyActivity()
-    CancelWindowAutoHide()
-    RestoreActiveOpacity(true)
-end
-
-function MainWindow.ApplyFadeSettings()
-    RestoreActiveOpacity()
-
-    if not profileSettings.fadeEnabled then
-        CancelWindowAutoHide()
-        SetWindowAutoHidden(false)
-    elseif not UsesMinimizedDisplay() then
-        CancelWindowAutoHide()
-        SetWindowAutoHidden(false)
-        if MainFrame and not MainFrame:IsMouseOver() then
-            ScheduleInactiveFade()
-        end
-    elseif isWindowAutoHidden then
-        local hiddenOpacity = math.min(
-            profileSettings.inactiveOpacity,
-            themeSettings.windowOpacity
-        )
-        if IsMinimizedToIcon() then
-            MinimizedIconButton:SetAlpha(hiddenOpacity)
-        else
-            SetWindowOpacity(hiddenOpacity)
-        end
-    elseif MainFrame and not MainFrame:IsMouseOver() then
-        ScheduleInactiveFade()
-        ScheduleWindowAutoHide()
-    end
-end
+local function CancelWindowAutoHide() GetWindowFade().CancelAutoHide() end
+local function RestoreActiveOpacity(animate) GetWindowFade().RestoreActiveOpacity(animate) end
+local function ScheduleInactiveFade() GetWindowFade().ScheduleInactiveFade() end
+function MainWindow.NotifyActivity() GetWindowFade().NotifyActivity() end
+function MainWindow.ApplyFadeSettings() GetWindowFade().ApplySettings() end
 
 function MainWindow.RefreshFontDisplays(updateLayout)
     if not MainFrame then
@@ -1049,168 +915,8 @@ function MainWindow.ApplyAppearance()
 end
 
 -- MENU RENDERING
-local function GetEmoteEditorDialog()
-    if emoteEditorDialog then
-        return emoteEditorDialog
-    end
-
-    local Widgets = addon.SettingsWidgets
-    local dialog = Widgets.CreateDialog("RPEmoteMenuEmoteEditorDialog", 610, 330)
-
-    local title = Widgets.CreateDialogLabel(dialog, "", 16)
-    title:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -16)
-    title:SetText("Edit Emote")
-    dialog.Title = title
-
-    local helpText = Widgets.CreateDialogLabel(dialog, "", 12)
-    helpText:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -10)
-    helpText:SetWidth(570)
-    helpText:SetJustifyH("LEFT")
-    helpText:SetText(
-        "{target} - Target's name without the realm.   " ..
-        "{player} - Current character's name without the realm.\n" ..
-        "Targeted Emote is used only when another unit is targeted. " ..
-        "An emote appears only when it has both a name and a default emote."
-    )
-    helpText:SetTextColor(0.8, 0.8, 0.8, 1)
-
-    local function CreateEditor(labelText, y)
-        local label = Widgets.CreateDialogLabel(dialog, "", 12)
-        label:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, y)
-        label:SetWidth(170)
-        label:SetJustifyH("LEFT")
-        label:SetText(labelText)
-
-        local editBox = Widgets.CreateDialogTextEntry(dialog, 390, 24)
-        editBox:SetSize(390, 24)
-        editBox:SetPoint("TOPLEFT", dialog, "TOPLEFT", 188, y + 5)
-        editBox:SetAutoFocus(false)
-        editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
-        editBox:SetTextColor(1, 1, 1, 1)
-        editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-        return editBox
-    end
-
-    dialog.NameBox = CreateEditor("Emote Name", -112)
-    dialog.DefaultBox = CreateEditor("Default Emote", -152)
-    dialog.TargetedBox = CreateEditor("Targeted Emote (optional)", -192)
-
-    local status = Widgets.CreateDialogLabel(dialog, "", 12)
-    status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 51)
-    status:SetWidth(420)
-    status:SetJustifyH("LEFT")
-    status:SetTextColor(0.8, 0.8, 0.8, 1)
-    dialog.Status = status
-
-    local saveButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
-    saveButton:SetSize(110, 24)
-    saveButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -138, 16)
-    saveButton:SetText("Save")
-    dialog.SaveButton = saveButton
-
-    local cancelButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
-    cancelButton:SetSize(110, 24)
-    cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 16)
-    cancelButton:SetText(CANCEL or "Cancel")
-    cancelButton:SetScript("OnClick", function() dialog:Hide() end)
-
-    local function SaveEmote()
-        if not Database.CanEditActiveProfile() then
-            return
-        end
-
-        local category = Database.GetCategory(dialog.categoryIndex)
-        local emote = category and category.emotes
-            and category.emotes[dialog.emoteIndex]
-
-        if not emote or not Database.IsCurrentContentTarget(dialog.contentTarget) then
-            dialog.Status:SetText("The Profile or emote changed. Reopen the editor before saving.")
-            dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
-            dialog.SaveButton:SetEnabled(false)
-            return
-        end
-
-        for _, field in ipairs({
-            {dialog.NameBox, "emoteLabel", "Emote name"},
-            {dialog.DefaultBox, "command", "Default emote"},
-            {dialog.TargetedBox, "command", "Targeted emote"}
-        }) do
-            local valid, errorMessage = Database.ValidateContentText(field[1]:GetText() or "", field[2], field[3])
-            if not valid then
-                dialog.Status:SetText(errorMessage)
-                dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
-                return -- Keep every field intact and save nothing.
-            end
-        end
-
-        emote.label = dialog.NameBox:GetText() or ""
-        emote.defaultCommand = dialog.DefaultBox:GetText() or ""
-        emote.targetedCommand = dialog.TargetedBox:GetText() or ""
-
-        MainWindow.UpdateMenu()
-        if addon.Settings and addon.Settings.RefreshEditors then
-            addon.Settings.RefreshEditors(dialog.categoryIndex)
-        end
-        dialog:Hide()
-    end
-
-    saveButton:SetScript("OnClick", SaveEmote)
-    for _, editBox in ipairs({dialog.NameBox, dialog.DefaultBox, dialog.TargetedBox}) do
-        editBox:SetScript("OnEnterPressed", function(self)
-            self:ClearFocus()
-            SaveEmote()
-        end)
-    end
-
-    function dialog:Open(categoryIndex, emoteIndex, isNew)
-        local category = Database.GetCategory(categoryIndex)
-        local emote = category and category.emotes and category.emotes[emoteIndex]
-        if not emote then
-            return
-        end
-
-        self.categoryIndex = categoryIndex
-        self.emoteIndex = emoteIndex
-        self.contentTarget = Database.CaptureContentTarget(categoryIndex, emoteIndex)
-        self.NameBox:SetText(emote.label or "")
-        self.DefaultBox:SetText(emote.defaultCommand or "")
-        self.TargetedBox:SetText(emote.targetedCommand or "")
-
-        local editable = Database.CanEditActiveProfile()
-        for _, editBox in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
-            if editable then
-                editBox:Enable()
-                editBox:SetTextColor(1, 1, 1, 1)
-            else
-                editBox:Disable()
-                editBox:SetTextColor(0.65, 0.65, 0.65, 1)
-            end
-        end
-
-        self.SaveButton:SetEnabled(editable)
-        self.Status:SetTextColor(0.8, 0.8, 0.8, 1)
-        self.Status:SetText(editable
-            and "Changes apply to the current profile."
-            or "The Default profile's emotes cannot be edited. Copy it to a custom profile first.")
-        self.Title:SetText(
-            editable and (isNew and "Add Emote" or "Edit Emote") or "View Emote"
-        )
-        self:Show()
-        self:Raise()
-    end
-
-    dialog:SetScript("OnHide", function(self)
-        self.contentTarget = nil
-        for _, box in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
-            box:ClearFocus()
-        end
-    end)
-    emoteEditorDialog = dialog
-    return dialog
-end
-
 function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex, isNew)
-    GetEmoteEditorDialog():Open(categoryIndex, emoteIndex, isNew)
+    addon.EmoteEditor.Open(categoryIndex, emoteIndex, isNew)
 end
 
 local function ApplyEmoteHoverHighlight(button)
@@ -2252,57 +1958,6 @@ SetWindowAutoHidden = function(hidden)
     UpdateWindowBodyVisibility()
 end
 
-ScheduleWindowAutoHide = function()
-    if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
-        or isWindowAutoHidden
-        or autoHideScheduled or autoHideFading then
-        return
-    end
-
-    autoHideGeneration = autoHideGeneration + 1
-    local requestedGeneration = autoHideGeneration
-    autoHideScheduled = true
-
-    C_Timer.After(math.max(tonumber(profileSettings.fadeDelay) or 0, 0), function()
-        if requestedGeneration ~= autoHideGeneration then
-            return
-        end
-
-        autoHideScheduled = false
-
-        if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
-            or isWindowAutoHidden
-            or not MainFrame or MainFrame:IsMouseOver() then
-            return
-        end
-
-        autoHideFading = true
-        fadeGeneration = fadeGeneration + 1
-        local fadeTarget = 0
-
-        SetWindowOpacity(fadeTarget, fadeOutDuration, function()
-            if requestedGeneration ~= autoHideGeneration then
-                return
-            end
-
-            autoHideFading = false
-
-            if not profileSettings.fadeEnabled or not UsesMinimizedDisplay()
-                or MainFrame:IsMouseOver() then
-                RestoreActiveOpacity(true)
-                return
-            end
-
-            SetWindowAutoHidden(true)
-            if IsMinimizedToIcon() then
-                -- The icon is parented to UIParent, so MainFrame can remain
-                -- ready at active opacity behind it.
-                SetWindowOpacity(themeSettings.windowOpacity)
-            end
-        end)
-    end)
-end
-
 -- MAIN WINDOW
 local function StartWindowMoving()
     if profileSettings.locked then
@@ -2859,7 +2514,7 @@ local function InstallWindowScripts()
             if isWindowAutoHidden then
                 SetWindowAutoHidden(false)
             end
-            if autoHideScheduled or autoHideFading then
+            if GetWindowFade().IsAutoHidePending() then
                 MainWindow.NotifyActivity()
             end
         else
@@ -2899,7 +2554,7 @@ function MainWindow.ApplyActivation()
     globalSettings = Database.GetGlobalSettings()
     if not MainFrame then return end
     CancelWindowAutoHide()
-    fadeGeneration = fadeGeneration + 1
+    GetWindowFade().InvalidateFade()
     if globalSettings.active then
         SetWindowAutoHidden(false)
         RestoreActiveOpacity()
@@ -2938,7 +2593,7 @@ function MainWindow.ApplyProfileSettings()
     -- Stop delayed fades from the previous Profile before applying its
     -- replacement. Window geometry and minimize behavior belong to Profile.
     CancelWindowAutoHide()
-    fadeGeneration = fadeGeneration + 1
+    GetWindowFade().InvalidateFade()
     isWindowAutoHidden = profileSettings.fadeEnabled and UsesMinimizedDisplay()
 
     -- Apply Theme layout before restoring the saved Profile geometry.

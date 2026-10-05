@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.229
+
+- Begin the six-phase maintainability refactor and change the base version to 2.1 while continuing the running commit number.
+- Complete Phase 1: extract the emote editor, independent geometry calculations and fade/auto-hide/animation controller from MainWindow behind explicit component boundaries.
+- Preserve MainWindow entry points, captured editor targets, saved geometry, activation, fade timing and minimized-mode behavior. Saved data and transfer schema are unchanged.
+- Record non-overlapping scopes for Phases 2–6; remove unused Core joke code as incidental cleanup.
+- Add explicit geometry/fade component tests and update module loading. All twelve smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.228
 
 - Retain transfer-editor caret bounds and recheck visibility after viewport/editor size changes, including height-only resizing without a new cursor event.
