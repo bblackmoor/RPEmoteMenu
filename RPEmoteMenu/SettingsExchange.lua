@@ -74,55 +74,53 @@ local function CreateExchangeDialogFrame()
 end
 
 local function InstallExchangeModes(dialog)
-    local title = dialog.title
-    local instructions = dialog.instructions
-    local editBox = dialog.editBox
-    local scrollFrame = dialog.scrollFrame
-    local actionButton = dialog.actionButton
-    local SetStatus = dialog.SetStatus
+    -- Assign the entire session before SetText can dispatch native events.
+    -- Every route clears unrelated targets/callbacks through this one boundary.
+    local function OpenSession(options)
+        dialog.mode = options.mode
+        dialog.dataType = options.dataType
+        dialog.categoryIndex = options.categoryIndex
+        dialog.categoryTarget = options.categoryTarget
+        dialog.profileName = nil
+        dialog.onProfileImported = options.onProfileImported
+        dialog.onThemeImported = options.onThemeImported
+        dialog.title:SetText(options.title)
+        dialog.instructions:SetText(options.instructions)
+        dialog.actionButton:SetText(options.actionText or "Select All")
+        dialog.SetStatus("")
+        dialog.editBox:SetText(options.text or "")
+        if options.mode == "export" then dialog.editBox:SetCursorPosition(0) end
+        dialog.scrollFrame:SetVerticalScroll(0)
+        dialog:UpdateActionState()
+        dialog:Show()
+        dialog.editBox:SetFocus()
+        if options.mode == "export" then dialog.editBox:HighlightText() end
+        return true
+    end
+
     function dialog:OpenExport(categoryIndex)
         local exported, errorMessage = Serialization.ExportCategory(categoryIndex)
         if not exported then
             return false, errorMessage
         end
-
-        self.categoryTarget = nil
-        self.mode = "export"
-        self.dataType = "category"
-        self.categoryIndex = categoryIndex
-        self.profileName = nil
-        self.onProfileImported = nil
-        title:SetText("Export Category " .. categoryIndex)
-        instructions:SetText("Copy this JSON to share or save the category and its emotes.")
-        actionButton:SetText("Select All")
-        SetStatus("")
-        editBox:SetText(exported)
-        editBox:SetCursorPosition(0)
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        editBox:HighlightText()
-        return true
+        return OpenSession({
+            mode = "export", dataType = "category",
+            categoryIndex = categoryIndex,
+            text = exported,
+            title = "Export Category " .. categoryIndex,
+            instructions = "Copy this JSON to share or save the category and its emotes.",
+        })
     end
 
     function dialog:OpenImport(categoryIndex)
-        self.categoryTarget = Database.CaptureContentTarget(categoryIndex)
-        self.mode = "import"
-        self.dataType = "category"
-        self.categoryIndex = categoryIndex
-        self.profileName = nil
-        self.onProfileImported = nil
-        title:SetText("Import Category " .. categoryIndex)
-        instructions:SetText("Paste exported category JSON below. Importing replaces this category.")
-        actionButton:SetText("Import")
-        SetStatus("")
-        editBox:SetText("")
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        return true
+        return OpenSession({
+            mode = "import", dataType = "category",
+            categoryIndex = categoryIndex,
+            categoryTarget = Database.CaptureContentTarget(categoryIndex),
+            title = "Import Category " .. categoryIndex,
+            instructions = "Paste exported category JSON below. Importing replaces this category.",
+            actionText = "Import",
+        })
     end
 
     function dialog:OpenProfileExport(profileName)
@@ -131,94 +129,46 @@ local function InstallExchangeModes(dialog)
         if not exported then
             return false, errorMessage
         end
-
-        self.mode = "export"
-        self.dataType = "profile"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.profileName = nil
-        self.onProfileImported = nil
-        title:SetText("Export Profile: " .. profileName)
-        instructions:SetText(
-            "Copy this JSON to save the Profile's settings, categories, "
-            .. "emotes, and Theme name. Export the Theme separately to share its appearance."
-        )
-        actionButton:SetText("Select All")
-        SetStatus("")
-        editBox:SetText(exported)
-        editBox:SetCursorPosition(0)
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        editBox:HighlightText()
-        return true
+        return OpenSession({
+            mode = "export", dataType = "profile",
+            text = exported,
+            title = "Export Profile: " .. profileName,
+            instructions = "Copy this JSON to save the Profile's settings, categories, "
+                .. "emotes, and Theme name. Export the Theme separately to share its appearance.",
+        })
     end
 
     function dialog:OpenProfileImport(onProfileImported)
-        self.mode = "import"
-        self.dataType = "profile"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.profileName = nil
-        self.onProfileImported = onProfileImported
-        title:SetText("Import Profile")
-        instructions:SetText(
-            "Paste exported profile JSON below. Importing adds a new profile without "
-            .. "changing the current profile or character assignments. A missing "
-            .. "Theme is reported and replaced with Default Theme."
-        )
-        actionButton:SetText("Import Profile")
-        SetStatus("")
-        editBox:SetText("")
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        return true
+        return OpenSession({
+            mode = "import", dataType = "profile",
+            onProfileImported = onProfileImported,
+            title = "Import Profile",
+            instructions = "Paste exported profile JSON below. Importing adds a new profile without "
+                .. "changing the current profile or character assignments. A missing "
+                .. "Theme is reported and replaced with Default Theme.",
+            actionText = "Import Profile",
+        })
     end
 
     function dialog:OpenThemeExport(themeName)
         local exported, errorMessage = Serialization.ExportTheme(themeName)
         if not exported then return false, errorMessage end
-
-        self.mode = "export"
-        self.dataType = "theme"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.onProfileImported = nil
-        self.onThemeImported = nil
-        title:SetText("Export Theme: " .. themeName)
-        instructions:SetText("Copy this JSON to save this Theme's appearance. Export its Profiles separately.")
-        actionButton:SetText("Select All")
-        SetStatus("")
-        editBox:SetText(exported)
-        editBox:SetCursorPosition(0)
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        editBox:HighlightText()
-        return true
+        return OpenSession({
+            mode = "export", dataType = "theme",
+            text = exported,
+            title = "Export Theme: " .. themeName,
+            instructions = "Copy this JSON to save this Theme's appearance. Export its Profiles separately.",
+        })
     end
 
     function dialog:OpenThemeImport(onThemeImported)
-        self.mode = "import"
-        self.dataType = "theme"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.onProfileImported = nil
-        self.onThemeImported = onThemeImported
-        title:SetText("Import Theme")
-        instructions:SetText("Paste exported Theme JSON below. Importing adds a new Theme and assigns it to the active Profile.")
-        actionButton:SetText("Import Theme")
-        SetStatus("")
-        editBox:SetText("")
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        return true
+        return OpenSession({
+            mode = "import", dataType = "theme",
+            onThemeImported = onThemeImported,
+            title = "Import Theme",
+            instructions = "Paste exported Theme JSON below. Importing adds a new Theme and assigns it to the active Profile.",
+            actionText = "Import Theme",
+        })
     end
 
     function dialog:OpenEverythingExport()
@@ -227,51 +177,24 @@ local function InstallExchangeModes(dialog)
         if not exported then
             return false, errorMessage
         end
-
-        self.mode = "export"
-        self.dataType = "everything"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.profileName = nil
-        self.onProfileImported = nil
-        title:SetText("Export Everything")
-        instructions:SetText(
-            "Copy this JSON to save all Profiles, Themes, and their relationships. "
-            .. "Character assignments are not included."
-        )
-        actionButton:SetText("Select All")
-        SetStatus("")
-        editBox:SetText(exported)
-        editBox:SetCursorPosition(0)
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        editBox:HighlightText()
-        return true
+        return OpenSession({
+            mode = "export", dataType = "everything",
+            text = exported,
+            title = "Export Everything",
+            instructions = "Copy this JSON to save all Profiles, Themes, and their relationships. "
+                .. "Character assignments are not included.",
+        })
     end
 
     function dialog:OpenEverythingImport()
-        self.mode = "import"
-        self.dataType = "everything"
-        self.categoryTarget = nil
-        self.categoryIndex = nil
-        self.profileName = nil
-        self.onProfileImported = nil
-        title:SetText("Import Everything")
-        instructions:SetText(
-            "Paste an Everything export below. Importing adds Profiles and Themes "
-            .. "with unique names, preserving their links. It does not replace or "
-            .. "activate existing data or change character assignments."
-        )
-        actionButton:SetText("Import Everything")
-        SetStatus("")
-        editBox:SetText("")
-        scrollFrame:SetVerticalScroll(0)
-        self:UpdateActionState()
-        self:Show()
-        editBox:SetFocus()
-        return true
+        return OpenSession({
+            mode = "import", dataType = "everything",
+            title = "Import Everything",
+            instructions = "Paste an Everything export below. Importing adds Profiles and Themes "
+                .. "with unique names, preserving their links. It does not replace or "
+                .. "activate existing data or change character assignments.",
+            actionText = "Import Everything",
+        })
     end
 
 end

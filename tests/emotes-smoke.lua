@@ -430,3 +430,73 @@ edit:SetText(''); Size(exchange.scrollFrame,120,80)
 assert(edit:GetHeight()==80 and exchange.scrollFrame:GetVerticalScroll()==0)
 exchange:Hide()
 print('PASS transfer wrapped-text measurement, Unicode, resize, caret visibility, clamping and reentrant layout')
+
+-- Every transfer-mode transition replaces its complete session consistently.
+assert(db.SetActiveProfile('Default'))
+local profileCallback=function() end
+local themeCallback=function() end
+local profileName=db.GetActiveProfileName()
+local themeName=db.GetActiveThemeName()
+local cases={
+    {method='OpenExport',argument=1,mode='export',kind='category',title='Export Category 1'},
+    {method='OpenImport',argument=1,mode='import',kind='category',title='Import Category 1'},
+    {method='OpenProfileExport',argument=profileName,mode='export',kind='profile',title='Export Profile: '..profileName},
+    {method='OpenProfileImport',argument=profileCallback,mode='import',kind='profile',title='Import Profile'},
+    {method='OpenThemeExport',argument=themeName,mode='export',kind='theme',title='Export Theme: '..themeName},
+    {method='OpenThemeImport',argument=themeCallback,mode='import',kind='theme',title='Import Theme'},
+    {method='OpenEverythingExport',mode='export',kind='everything',title='Export Everything'},
+    {method='OpenEverythingImport',mode='import',kind='everything',title='Import Everything'},
+}
+local highlights,focuses=0,0
+local originalHighlight,originalFocus=edit.HighlightText,edit.SetFocus
+function edit:HighlightText(...) highlights=highlights+1; return originalHighlight(self,...) end
+function edit:SetFocus(...) focuses=focuses+1; return originalFocus(self,...) end
+for _, previous in ipairs(cases) do
+    for _, current in ipairs(cases) do
+        assert(exchange[previous.method](exchange,previous.argument))
+        local oldTarget=exchange.categoryTarget
+        exchange.profileName='stale'; exchange.SetStatus('old status')
+        local beforeHighlight,beforeFocus=highlights,focuses
+        assert(exchange[current.method](exchange,current.argument))
+        assert(exchange.mode==current.mode and exchange.dataType==current.kind)
+        assert(exchange.title:GetText()==current.title and exchange.status:GetText()=='')
+        assert(exchange.profileName==nil)
+        assert(exchange.onProfileImported==(current.method=='OpenProfileImport' and profileCallback or nil))
+        assert(exchange.onThemeImported==(current.method=='OpenThemeImport' and themeCallback or nil))
+        assert(exchange.categoryIndex==(current.kind=='category' and 1 or nil))
+        if current.method=='OpenImport' then
+            assert(exchange.categoryTarget~=oldTarget and db.IsCurrentContentTarget(exchange.categoryTarget))
+        else assert(exchange.categoryTarget==nil) end
+        assert(exchange.scrollFrame:GetVerticalScroll()==0 and focuses==beforeFocus+1)
+        if current.mode=='export' then
+            assert(edit:GetText()~='' and edit.cursor==0 and highlights==beforeHighlight+1)
+            assert(exchange.actionButton:IsEnabled())
+        else
+            assert(edit:GetText()=='' and highlights==beforeHighlight and not exchange.actionButton:IsEnabled())
+        end
+    end
+end
+-- Failed payload preparation must preserve a current import session in full.
+for _, item in ipairs({
+    {'OpenExport','ExportCategory',1},
+    {'OpenProfileExport','ExportProfile',profileName},
+    {'OpenThemeExport','ExportTheme',themeName},
+    {'OpenEverythingExport','ExportEverything'},
+}) do
+    exchange:OpenThemeImport(themeCallback); edit:SetText('  retained draft  ')
+    exchange.SetStatus('retained status'); exchange.scrollFrame:SetVerticalScroll(7)
+    local title,instructions=exchange.title:GetText(),exchange.instructions:GetText()
+    local original=addon.Serialization[item[2]]
+    addon.Serialization[item[2]]=function() return false,'Expected failure' end
+    local beforeHighlight,beforeFocus=highlights,focuses
+    local success,message=exchange[item[1]](exchange,item[3])
+    addon.Serialization[item[2]]=original
+    assert(success==false and message=='Expected failure')
+    assert(exchange.mode=='import' and exchange.dataType=='theme' and exchange.onThemeImported==themeCallback)
+    assert(edit:GetText()=='  retained draft  ' and exchange.status:GetText()=='retained status')
+    assert(exchange.title:GetText()==title and exchange.instructions:GetText()==instructions)
+    assert(exchange.scrollFrame:GetVerticalScroll()==7 and highlights==beforeHighlight and focuses==beforeFocus)
+end
+edit.HighlightText,edit.SetFocus=originalHighlight,originalFocus
+exchange:Hide()
+print('PASS all 64 transfer-mode transitions, callback/target cleanup, focus/selection and failed export session preservation')

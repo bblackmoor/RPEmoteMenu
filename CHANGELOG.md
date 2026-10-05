@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.231
+
+- Complete maintainability Phase 3: consolidate transfer-session setup, captions, text, scrolling, action state, focus and selection in one named helper.
+- Retain eight explicit opening methods with their original instructions, export preparation and mode-specific callbacks; consistently clear unrelated session targets and callbacks.
+- Preserve active sessions when export preparation fails, and retain category-target capture and stale-confirmation rejection.
+- Add coverage for all 64 mode transitions, focus/selection, callback cleanup and all four export failure paths. All thirteen smoke suites pass; in-game acceptance remains pending.
+
 ## 2.1.230
 
 - Complete maintainability Phase 2: separate transfer text layout/caret state, import actions and native lifecycle wiring into dedicated components.

@@ -12,7 +12,7 @@ This version change does not imply a database or JSON schema change.
 | --- | --- | --- |
 | 1 | Separate MainWindow responsibilities: emote-editor presentation/actions/session lifecycle, independent geometry calculations, and fade/auto-hide/animation state | Implemented in 2.1.229; in-game acceptance pending |
 | 2 | Separate transfer-dialog text layout/caret handling, import actions and dialog lifecycle into named components | Implemented in 2.1.230; in-game acceptance pending |
-| 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Planned |
+| 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Implemented in 2.1.231; in-game acceptance pending |
 | 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Planned |
 | 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Planned |
 | 6 | Reduce tests' dependence on private local names/upvalue replacement through explicit component contracts and integration boundaries | Planned |
@@ -103,3 +103,26 @@ category confirmations, stale confirmation rejection after hiding, status orderi
 and Escape cleanup. Existing integration suites retain real database, serialization
 and framework coverage for transfers, exact drafts, stale targets and all settings
 routes. Native rendering/event timing and selection/copy remain in-game checks.
+
+## Phase 3 implementation
+
+InstallExchangeModes retains all eight named entry points and their original
+mode-specific instructions. OpenSession takes named options and centralizes mode,
+data type, category target/index, callback cleanup, captions, status reset, text,
+scroll offset, action state, showing, focus and export selection. All session
+fields are assigned before SetText can invoke native events. Unrelated Profile
+and Theme callbacks and obsolete profileName fields are always cleared.
+
+Exports produce and validate their payload before invoking OpenSession; failure
+returns its error without changing the current draft, status, target/callbacks,
+focus or scroll position. Category imports still capture a fresh content target
+on opening. Replacement confirmation and import execution remain in the Phase 2
+actions component, with their existing identity guards. Imports focus empty text;
+exports reset the cursor and select the full prepared text. No saved-data/schema,
+layout, import policy or library change is included.
+
+All thirteen smoke suites pass. Integration tests exercise all 64 ordered mode
+transitions, callback/target cleanup, fresh category targets, focus/selection,
+button state and all four export failure paths preserving an active session.
+Existing stale-confirmation and import-result tests remain intact. In-game focus,
+selection/copy and native rendering checks remain pending. Phases 4–6 are planned.
