@@ -1,6 +1,8 @@
 # Settings Architecture
 
-Status: implemented in Phases 6–8; in-game integration checks remain open.
+Status: the earlier structural refactor was implemented in its Phases 6–8;
+in-game integration checks remain open. Phase 1 of the separate Details Framework
+widget conversion is complete; see [the current conversion baseline and phases](details-framework-conversion.md).
 
 ## Goal
 

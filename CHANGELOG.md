@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Complete settings conversion Phase 1: document current behavior, ownership, input contracts, the six-phase Details Framework plan, and verification gates; no runtime or addon-version change.
+
 ## 2.0.211
 
 - Bundle shared-font dependencies and isolate font lookup without changing saved Theme names or JSON format.
