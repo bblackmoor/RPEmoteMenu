@@ -271,7 +271,8 @@ local function CreateLayoutSection(panel, switches, rows)
                 settings.x,
                 settings.y,
                 nil,
-                value
+                value,
+                true -- x/y remain offsets for the saved anchor.
             )
         end,
         false, limits.height.min, limits.height.max
@@ -375,3 +376,4 @@ end
 
 
 UI.CreateGeneralSettingsPanel = CreateGeneralSettingsPanel
+

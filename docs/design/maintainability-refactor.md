@@ -253,3 +253,19 @@ changes, anchor identity and reapplication. Integer saved offsets retain the
 existing rounding policy (up to one UI unit across the orientation round trip).
 Signed offset checks also cover Profile switching and database reload. Saved-data
 and transfer schema are unchanged; in-game acceptance remains pending.
+
+
+## Height control anchor fix (2.1.237)
+
+The Window height setter now applies geometry with preserveAnchor enabled,
+matching the advanced position fields. It retains the saved point/relativePoint
+and signed x/y offsets rather than interpreting those offsets as physical
+TOPLEFT coordinates. Existing height limits and reset/drag behavior are unchanged.
+
+The Behavior integration suite no longer expects a centered window's anchor to
+change when editing height. It verifies centered presentation and drives the
+actual Height field for all 81 accepted anchor pairs with signed offsets, typed
+height changes and mouse-wheel changes. Center/bottom anchors retain their
+natural vertical growth behavior. The corrected centered regression fails
+against the old setter. All fourteen smoke suites pass; in-game acceptance
+remains pending. Saved-data and transfer schema are unchanged.

@@ -149,7 +149,11 @@ assert(calls.geometry == geometryCalls and profile.x == -100000 and profile.y ==
 Click(center)
 assert(profile.point == 'CENTER' and profile.x == 0 and profile.y == 0 and x:GetText() == '0')
 Enter(height, '9999')
-assert(profile.height == 630 and height:GetText() == '630' and profile.point == 'TOPLEFT')
+assert(profile.height == 630 and height:GetText() == '630' and profile.point == 'CENTER'
+    and profile.relativePoint == 'CENTER' and profile.x == 0 and profile.y == 0)
+local frame = main.GetFrame()
+assert(frame:GetLeft() == (UIParent:GetWidth()-frame:GetWidth())/2
+    and frame:GetTop() == (UIParent:GetHeight()+630)/2, 'height edit moved centered window')
 Enter(height, '1'); assert(profile.height == 150)
 Switch(lock); assert(profile.locked and calls.lock == 1)
 profile.selectedCategory = 2
@@ -197,5 +201,27 @@ function scroll:GetVerticalScrollRange() return 0 end
 scroll:GetScript('OnScrollRangeChanged')(scroll, 0, 0)
 assert(scroll:GetVerticalScroll() == 0)
 
+-- Drive the actual Height field for every accepted saved anchor pair.
+-- Height changes preserve the logical anchor and signed offsets; bottom/center
+-- anchors naturally move the top edge as the frame grows.
+local heightProfile = db.GetProfileSettings()
+heightProfile.fadeEnabled=false; heightProfile.minimizeMode='NONE'
+for _, point in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
+    for _, relative in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
+        heightProfile.point,heightProfile.relativePoint=point,relative
+        heightProfile.x,heightProfile.y,heightProfile.height=-75,-40,250
+        main.ApplyProfileSettings(); container.RefreshControls()
+        local left,top=frame:GetLeft(),frame:GetTop()
+        Enter(height, '270')
+        assert(heightProfile.height==270 and heightProfile.point==point
+            and heightProfile.relativePoint==relative
+            and heightProfile.x==-75 and heightProfile.y==-40, 'height edit changed saved anchor')
+        local topShift=point:find('TOP') and 0 or (point:find('BOTTOM') and 20 or 10)
+        assert(frame:GetLeft()==left and frame:GetTop()==top+topShift,
+            'height edit moved anchored window: '..point..'/'..relative)
+        Event(height, 'OnMouseWheel', -1)
+        assert(heightProfile.height==269 and heightProfile.x==-75 and heightProfile.y==-40)
+    end
+end
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')
 
