@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.220
+
+- Bind Theme deletion warnings to the displayed affected Profile names and objects; reject acceptance if Profiles join, leave, are renamed or are replaced while the dialog is open.
+- Require reopening to review the current list before deleting the Theme and assigning affected Profiles to Default.
+- Add regression coverage for changed Profile sets, same-name replacements, initially unused Themes and successful fresh confirmations. All ten smoke suites pass; in-game acceptance remains pending.
+
 ## 2.0.219
 
 - Bind Profile and Theme Copy, Rename, Delete and factory-restore dialogs to their original objects; reject pending actions after deletion, name reuse or same-name replacement.

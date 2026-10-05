@@ -72,6 +72,21 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
         text = "%s", button1 = DELETE or "Delete", button2 = CANCEL or "Cancel",
         OnAccept = function(_, data)
             if not CheckTarget(data.target) then return end
+            local users = Database.GetProfilesUsingTheme(data.name)
+            if not data.profiles or #users ~= #data.profiles then
+                SetStatus("Profiles using this Theme changed. Reopen the deletion dialog to review them.", true)
+                return
+            end
+            local confirmedProfiles = {}
+            for _, target in ipairs(data.profiles) do
+                confirmedProfiles[target.name] = target.object
+            end
+            for _, name in ipairs(users) do
+                if confirmedProfiles[name] ~= Database.GetProfile(name) then
+                    SetStatus("Profiles using this Theme changed. Reopen the deletion dialog to review them.", true)
+                    return
+                end
+            end
             local success, result = Database.DeleteTheme(data.name, data.confirmed)
             if success then
                 SelectTheme(Database.GetActiveThemeName())
@@ -118,6 +133,10 @@ end
 
 function UI.ConfirmThemeDeletion(themeName)
     local users = Database.GetProfilesUsingTheme(themeName)
+    local profiles = {}
+    for _, name in ipairs(users) do
+        profiles[#profiles + 1] = {name = name, object = Database.GetProfile(name)}
+    end
     local message = "Delete Theme " .. themeName .. "?"
     if #users > 0 then
         message = message .. "\n\nProfiles using it: "
@@ -125,6 +144,6 @@ function UI.ConfirmThemeDeletion(themeName)
             .. "\n\nThey will be assigned Default Theme."
     end
     StaticPopup_Show("RPEMOTEMENU_DELETE_THEME", message, nil,
-        {name = themeName, confirmed = #users > 0,
+        {name = themeName, confirmed = #users > 0, profiles = profiles,
             target = UI.CaptureThemeDialogTarget(themeName)})
 end

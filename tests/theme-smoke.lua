@@ -219,7 +219,9 @@ assert(db.GetActiveThemeName() == 'Renamed' and db.GetThemeSettings().categoryFo
 Select(management, 'Renamed'); assert(db.SetProfileTheme('Shared', 'Renamed'))
 Click(buttons.Delete); local deletion = request
 assert(deletion.text:find('Shared', 1, true) and deletion.data.confirmed)
-Select(management, 'Default'); Accept(deletion)
+Select(management, 'Default'); before = applies; Accept(deletion)
+assert(db.GetTheme('Renamed') and db.GetProfileThemeName('Shared') == 'Renamed' and applies == before)
+addon.SettingsUI.ConfirmThemeDeletion('Renamed'); Accept(request)
 assert(not db.GetTheme('Renamed') and db.GetProfileThemeName('Shared') == 'Default')
 -- Missing bundled entries recreate through the same menu; bulk reset preserves custom Themes.
 assert(db.DeleteTheme('Teal', true))
@@ -330,4 +332,57 @@ assert(db.DeleteTheme(preset, true))
 Click(buttons['Restore Bundled Themes']); Accept(request)
 assert(db.GetTheme(preset), 'an unchanged missing bundled Theme should still be recreated')
 
+-- Deletion warnings bind the complete affected Profile set and its identities.
+local ui = addon.SettingsUI
+assert(db.CreateTheme('Deletion Guard'))
+assert(db.CreateProfile('Deletion A'))
+assert(db.SetProfileTheme('Deletion A', 'Deletion Guard'))
+local function PendingDeletion()
+    ui.ConfirmThemeDeletion('Deletion Guard')
+    return request
+end
+local function RejectDeletion(pending)
+    local theme = db.GetTheme('Deletion Guard')
+    local calls = applies
+    Accept(pending)
+    assert(db.GetTheme('Deletion Guard') == theme and applies == calls)
+end
+local pending = PendingDeletion()
+assert(db.CreateProfile('Deletion B'))
+assert(db.SetProfileTheme('Deletion B', 'Deletion Guard'))
+RejectDeletion(pending)
+assert(db.GetProfileThemeName('Deletion A') == 'Deletion Guard'
+    and db.GetProfileThemeName('Deletion B') == 'Deletion Guard')
+
+pending = PendingDeletion()
+assert(db.SetProfileTheme('Deletion B', 'Default'))
+RejectDeletion(pending)
+assert(db.GetProfileThemeName('Deletion A') == 'Deletion Guard')
+pending = PendingDeletion()
+assert(db.RenameProfile('Deletion A', 'Deletion Renamed'))
+RejectDeletion(pending)
+assert(db.GetProfileThemeName('Deletion Renamed') == 'Deletion Guard')
+
+pending = PendingDeletion()
+assert(db.DeleteProfile('Deletion Renamed'))
+assert(db.CreateProfile('Deletion Renamed'))
+assert(db.SetProfileTheme('Deletion Renamed', 'Deletion Guard'))
+RejectDeletion(pending)
+assert(db.GetProfileThemeName('Deletion Renamed') == 'Deletion Guard')
+
+assert(db.SetProfileTheme('Deletion Renamed', 'Default'))
+pending = PendingDeletion()
+assert(not pending.data.confirmed)
+assert(db.SetProfileTheme('Deletion B', 'Deletion Guard'))
+RejectDeletion(pending)
+assert(db.GetProfileThemeName('Deletion B') == 'Deletion Guard')
+
+-- Reopening shows the current list, and unchanged confirmation succeeds.
+pending = PendingDeletion()
+assert(pending.text:find('Deletion B', 1, true)
+    and not pending.text:find('Deletion Renamed', 1, true))
+assert(db.CreateProfile('Unrelated Profile'))
+Accept(pending)
+assert(not db.GetTheme('Deletion Guard') and db.GetProfileThemeName('Deletion B') == 'Default')
+assert(db.GetProfileThemeName('Deletion Renamed') == 'Default')
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')
