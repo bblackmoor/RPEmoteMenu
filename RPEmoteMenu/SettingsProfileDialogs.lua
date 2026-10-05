@@ -15,11 +15,11 @@ function UI.RegisterProfileDialogs(SetStatus)
         SetStatus("The Profile changed. Reopen the dialog before continuing.", true)
         return false
     end
-    local function GetPopupEditBox(popup)
+    local function GetEditBox(popup)
         return popup.GetEditBox and popup:GetEditBox() or popup.editBox
     end
 
-    local function GetPopupButton1(popup)
+    local function GetAcceptButton(popup)
         return popup.GetButton1 and popup:GetButton1() or popup.button1
     end
 
@@ -31,16 +31,16 @@ function UI.RegisterProfileDialogs(SetStatus)
         maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
         OnShow = function(self, data)
-            local editBox = GetPopupEditBox(self)
+            local editBox = GetEditBox(self)
             editBox:SetText(data.initial)
             editBox:SetFocus()
             editBox:HighlightText()
-            GetPopupButton1(self):SetText(data.action == "copy" and "Copy" or "Create")
+            GetAcceptButton(self):SetText(data.action == "copy" and "Copy" or "Create")
             local valid = Database.ValidateNewProfileName(editBox:GetText())
-            GetPopupButton1(self):SetEnabled(valid ~= nil)
+            GetAcceptButton(self):SetEnabled(valid ~= nil)
         end,
         OnAccept = function(self, data)
-            local name = GetPopupEditBox(self):GetText()
+            local name = GetEditBox(self):GetText()
             local success, result
             if data.action == "copy" then
                 if not CheckTarget(data.target) then return end
@@ -57,10 +57,10 @@ function UI.RegisterProfileDialogs(SetStatus)
         end,
         EditBoxOnTextChanged = function(self)
             local valid = Database.ValidateNewProfileName(self:GetText())
-            GetPopupButton1(self:GetParent()):SetEnabled(valid ~= nil)
+            GetAcceptButton(self:GetParent()):SetEnabled(valid ~= nil)
         end,
         EditBoxOnEnterPressed = function(self)
-            local button = GetPopupButton1(self:GetParent())
+            local button = GetAcceptButton(self:GetParent())
             if button:IsEnabled() then button:Click() end
         end,
         EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
@@ -102,18 +102,18 @@ function UI.RegisterProfileDialogs(SetStatus)
         maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
         OnShow = function(self, target)
-            local editBox = GetPopupEditBox(self)
+            local editBox = GetEditBox(self)
 
             editBox:SetText((target or self.data).name)
             editBox:HighlightText()
             editBox:SetFocus()
-            GetPopupButton1(self):SetEnabled(false)
+            GetAcceptButton(self):SetEnabled(false)
         end,
         OnAccept = function(self, target)
             if not CheckTarget(target) then return end
             local success, result = Database.RenameProfile(
                 target.name,
-                GetPopupEditBox(self):GetText()
+                GetEditBox(self):GetText()
             )
 
             if success then
@@ -129,11 +129,11 @@ function UI.RegisterProfileDialogs(SetStatus)
                 popup.data.name
             )
 
-            GetPopupButton1(popup):SetEnabled(validName ~= nil)
+            GetAcceptButton(popup):SetEnabled(validName ~= nil)
         end,
         EditBoxOnEnterPressed = function(self)
             local popup = self:GetParent()
-            local acceptButton = GetPopupButton1(popup)
+            local acceptButton = GetAcceptButton(popup)
 
             if acceptButton:IsEnabled() then
                 acceptButton:Click()
@@ -172,3 +172,4 @@ function UI.RegisterProfileDialogs(SetStatus)
     }
 
 end
+

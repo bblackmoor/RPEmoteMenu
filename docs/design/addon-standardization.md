@@ -16,9 +16,15 @@ Ordinary editable pages expose panel.Refresh; RP Emote Menu retains RefreshEdito
 
 Validation: complete smoke suites, registration preflight/retry/idempotence/order/routing, silent construction and control refresh, profile switching, picker cancellation and editor-target tests. Native appearance verification in WoW remains pending.
 
-## Phase 3 — Database, dialog and picker contracts
+## Phase 3 — Database, dialog and picker contracts (implemented)
 
-Compare ownership boundaries, dialog lifecycle, captured targets and color-picker cancellation. Standardize equivalent contracts while preserving each addon's saved-data schema and runtime behavior.
+Both addons now keep native RGB picker lifecycle in SettingsColorPicker.lua, with SettingsUI.OpenColorEditor/CancelColorEdit, owner, target {name, object}, original RGB, opening guard and retirement before rollback. SettingsWidgets retains swatch rendering and adapts its callbacks to RGB tables. Another addon's picker is never closed or rolled back.
+
+Simple Nameplates profile dialogs are extracted to SettingsProfileDialogs.lua. Copy, rename and delete require the captured name and object to remain selected; bundled restore checks every captured object, including missing bundled names. RP Emote Menu retains its captured-target policy that permits acting on an unchanged original object after selection changes.
+
+Simple Nameplates database mutations cancel drafts before profile selection/CRUD/restore or color and appearance resets. Invalid profile mutations do not cancel drafts. GetProfile(name) supplies identity lookup while existing namespace exports and saved-data schemas stay intact.
+
+Validation includes direct database changes during previews, callback retirement, same-name replacement, stale lifecycle and bundled restore confirmations, missing bundled target replacement, and shared-picker takeover. Full smoke suites pass; native visual verification remains pending.
 
 ## Phase 4 — Shared regression checks and documentation
 

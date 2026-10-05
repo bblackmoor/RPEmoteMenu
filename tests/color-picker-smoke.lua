@@ -103,3 +103,9 @@ info=open(); preview(info,0.1,0.2,0.3)
 db.SetProfileTheme('Default','Teal'); db.SetProfileTheme('Default','Default')
 restored=copy(color()); info.cancelFunc(); preview(info,1,0,0); same(color(),restored)
 print('color-picker smoke passed')
+
+
+info = open()
+assert(info.extraInfo.owner and info.extraInfo.target.name == db.GetActiveThemeName())
+assert(info.extraInfo.target.object == db.GetThemeSettings())
+addon.SettingsUI.CancelColorEdit()

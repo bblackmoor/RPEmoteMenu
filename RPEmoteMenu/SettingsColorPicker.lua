@@ -8,16 +8,16 @@ local function OwnsPicker(edit)
     return edit and ColorPickerFrame:GetExtraInfo() == edit
 end
 
-local function IsCurrentTheme(edit)
-    return Database.GetActiveThemeName() == edit.themeName
-        and Database.GetThemeSettings(edit.themeName) == edit.settings
+local function IsCurrentTarget(edit)
+    return Database.GetActiveThemeName() == edit.target.name
+        and Database.GetThemeSettings(edit.target.name) == edit.target.object
 end
 
 local function FinishEdit(edit, cancel)
     if not edit or activeEdit ~= edit then return false end
     activeEdit = nil -- Retire before rollback or native OnHide can reenter.
     if not OwnsPicker(edit) then return false end
-    if cancel and IsCurrentTheme(edit) then
+    if cancel and IsCurrentTarget(edit) then
         edit.apply({r = edit.original.r, g = edit.original.g, b = edit.original.b})
     end
     return true
@@ -34,8 +34,8 @@ function UI.OpenColorEditor(owner, getColor, applyColor)
     UI.CancelColorEdit()
     local color = getColor()
     local edit = {
-        owner = owner, themeName = Database.GetActiveThemeName(),
-        settings = Database.GetThemeSettings(), apply = applyColor,
+        owner = owner, target = {name = Database.GetActiveThemeName(),
+            object = Database.GetThemeSettings()}, apply = applyColor,
         original = {r = color.r, g = color.g, b = color.b}, opening = true
     }
     activeEdit = edit
@@ -49,7 +49,7 @@ function UI.OpenColorEditor(owner, getColor, applyColor)
         hasOpacity = false, extraInfo = edit,
         swatchFunc = function()
             if activeEdit == edit and OwnsPicker(edit)
-                and IsCurrentTheme(edit) and not edit.opening then
+                and IsCurrentTarget(edit) and not edit.opening then
                 local r, g, b = ColorPickerFrame:GetColorRGB()
                 edit.apply({r = r, g = g, b = b})
             end
@@ -62,3 +62,4 @@ end
 function UI.InstallColorEditorOwner(owner)
     owner:HookScript("OnHide", function() UI.CancelColorEdit(owner) end)
 end
+
