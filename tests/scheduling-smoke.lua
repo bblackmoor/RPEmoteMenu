@@ -1,5 +1,6 @@
 -- Real DF scheduler with deterministic native timers, including forced stale delivery.
 local native = dofile('tests/details-framework-ui-stubs.lua')
+dofile('tests/main-window-native.lua')
 local timers, errors = {}, {}
 C_Timer.NewTimer = function(delay, callback)
     local timer = {delay=delay, nativeCallback=callback}
@@ -14,8 +15,9 @@ function geterrorhandler() return function(message) errors[#errors+1]=message en
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 timers = {}
-local addon = {}
-for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','Scheduling.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do
+function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
+local addon = {VERSION='test',Settings={}}
+for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua','FontMedia.lua','Scheduling.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon)
 end
 local queue = addon.Scheduling
@@ -53,39 +55,42 @@ local df=LibStub('DetailsFramework-1.0'); local saved=df.Schedules.NewTimer
 df.Schedules.NewTimer=nil
 assert(not pcall(queue.NextTick, {}, function() end))
 df.Schedules.NewTimer=saved
--- Exercise actual tooltip ownership and timer cancellation without building UI.
-local seen={}
-local function Find(fn, target)
-    if seen[fn] then return end; seen[fn]=true
-    for i=1,100 do
-        local name,value=debug.getupvalue(fn,i); if not name then break end
-        if name==target then return value end
-        if type(value)=='function' then local found=Find(value,target); if found then return found end end
-    end
+-- Exercise real tooltip owners through their installed native hover events.
+addon.Database.InitializeDatabase()
+addon.Database.GetGlobalSettings().tooltipDelayMs=350
+addon.Database.GetCategory(2).name='Second'
+addon.MainWindow.CreateMainWindow()
+local owners={}
+for _, object in ipairs(native.objects) do
+    if object.categoryIndex and object:IsShown() and object:GetScript('OnEnter') then owners[#owners+1]=object end
 end
-local function FindInWindow(target)
-    seen={}
-    for _,fn in pairs(addon.MainWindow) do
-        if type(fn)=='function' then local found=Find(fn,target); if found then return found end end
-    end
-    error('Missing '..target)
-end
-local scheduleTooltip=FindInWindow('ScheduleTooltip')
-local cancelTooltip=FindInWindow('CancelTooltip')
-for i=1,30 do
-    if debug.getupvalue(scheduleTooltip,i)=='globalSettings' then
-        debug.setupvalue(scheduleTooltip,i,{tooltipDelayMs=350}); break
-    end
-end
-local owner=CreateFrame('Button'); owner:Show(); function owner:IsMouseOver() return true end
-local populated=0
-scheduleTooltip(owner,function() populated=populated+1 end)
+assert(#owners>=2)
+local owner, second=owners[1],owners[2]
+local function Enter(object) object:GetScript('OnEnter')(object) end
+local function Leave(object) object:GetScript('OnLeave')(object) end
+Enter(owner)
 local tooltipTimer=timers[#timers]; assert(tooltipTimer.delay==0.35)
-cancelTooltip(owner); assert(tooltipTimer.cancelled)
-Fire(tooltipTimer); assert(populated==0)
-scheduleTooltip(owner,function() populated=populated+1 end)
-local previous=timers[#timers]
-scheduleTooltip(owner,function() populated=populated+10 end)
-assert(previous.cancelled); Fire(previous); Fire(timers[#timers]); assert(populated==10)
+Leave(owner); assert(tooltipTimer.cancelled)
+Fire(tooltipTimer); assert(not GameTooltip:IsShown())
+Enter(owner); local previous=timers[#timers]
+Enter(second); local currentTooltip=timers[#timers]
+assert(previous.cancelled)
+Fire(previous); assert(not GameTooltip:IsShown())
+Fire(currentTooltip); assert(GameTooltip:IsShown() and GameTooltip:IsOwned(second))
+-- Leaving an obsolete owner cannot cancel its replacement's timer.
+Enter(second); local replacement=timers[#timers]
+Leave(owner); assert(not replacement.cancelled)
+Fire(replacement); assert(GameTooltip:IsOwned(second))
+Leave(second)
+Enter(owner); local hidden=timers[#timers]; owner:Hide()
+Fire(hidden); assert(not GameTooltip:IsShown())
+owner:Show(); Enter(owner); owner.mouseover=false
+Fire(timers[#timers]); assert(not GameTooltip:IsShown())
+owner.mouseover=true
+addon.Database.GetGlobalSettings().tooltipDelayMs=0
+local before=#timers
+Enter(owner); assert(#timers==before and GameTooltip:IsOwned(owner) and GameTooltip:IsShown())
+Leave(owner)
 assert(#errors==1, 'no unexpected callback errors')
 print('PASS real DF scheduling: coalescing, cancellation, stale delivery, reentrancy, errors, independent callbacks and tooltip ownership')
+

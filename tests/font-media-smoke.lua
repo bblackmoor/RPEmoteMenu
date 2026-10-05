@@ -1,6 +1,7 @@
 local native = dofile("tests/details-framework-ui-stubs.lua")
+local nativeMethods = dofile("tests/main-window-native.lua")
 -- Real embedded media libraries, database/serialization, selector and rendering paths.
-local addon={SettingsUI={FIELD_GAP=12},Settings={}}
+local addon={VERSION='test',SettingsUI={FIELD_GAP=12},Settings={}}
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
 strmatch=string.match
 function getfenv() return _G end
@@ -88,59 +89,61 @@ succeeds=false; attempts=0; realSchedule(); drain(); assert(attempts==7,'Retry c
 attempts=0; realSchedule(); succeeds=true; realSchedule(); local newAttempts=attempts
 drain(); assert(attempts==newAttempts,'Superseded timer refreshed the new Theme')
 attempts=0; realSchedule(true); assert(attempts==0); assert(nextTimer()==0); assert(attempts==1 and #timers==0)
--- Exercise actual pane-wide fallback and the automatic-width update boundary.
-local function upvalue(fn,name,value,replace)
- for i=1,60 do
-  local k,v=debug.getupvalue(fn,i); if k==name then if replace then debug.setupvalue(fn,i,value) end; return v end
-  if not k then break end
- end
- error('Missing upvalue '..name)
+-- Construct the actual window and control only native font results/measurement.
+-- A single label failure must put every category label and outline on fallback.
+function nativeMethods:SetFont(path,size,flags)
+ self.fontPath,self.fontSize,self.fontFlags=path,size,flags
+ return true
 end
-local failing=true
-local function fontString()
- local w={text='Label',size=12}
- function w:GetFont() return self.path,self.size,'' end
- function w:GetText() return self.text end
- function w:SetText(v) self.text=v end
- function w:SetTextColor() end
- function w:GetStringWidth() return #self.text*8 end
- function w:SetFont(path,size)
-  if failing and path=='Interface\\Fonts\\absent.ttf' then return false end
-  self.path,self.size=path,size; return true
- end
- return w
+function nativeMethods:GetFont()
+ return self.fontPath or STANDARD_TEXT_FONT,self.fontSize or 12,self.fontFlags or ''
 end
-local text=fontString(); local outline=fontString()
-local button={Text=text,TextOutline={outline},categoryIndex=1,SetHeight=function() end}
-local widthUpdates=0
-upvalue(realRefresh,'MainFrame',{},true)
-upvalue(realRefresh,'themeSettings',teal,true)
-upvalue(realRefresh,'categoryButtons',{button},true)
-upvalue(realRefresh,'buttonsPool',{},true)
-upvalue(realRefresh,'selectedCategoryIndex',1,true)
-local automaticWidth=upvalue(realRefresh,'ApplyAutomaticWidth')
-upvalue(realRefresh,'ApplyAutomaticWidth',function() widthUpdates=widthUpdates+1 end,true)
+function nativeMethods:GetStringWidth()
+ return #(self:GetText())*(self.fontPath=='Interface\\Fonts\\absent.ttf' and 18 or 6)
+end
+for _, category in ipairs(db.GetCategories()) do category.name='' end
+local first,second=db.GetCategory(1),db.GetCategory(2)
+first.name,second.name='Category One','Category Two'
+teal.categoryFont='Absent'
 addon.MainWindow.RefreshFontDisplays=realRefresh
-assert(not realRefresh(false)); assert(text.path==STANDARD_TEXT_FONT and outline.path==STANDARD_TEXT_FONT)
-failing=false; assert(realRefresh(false)); assert(text.path=='Interface\\Fonts\\absent.ttf')
-assert(widthUpdates==2 and teal.categoryFont=='Absent')
--- Actual font measurement changes calculated menu width when a font returns.
-local calculate=upvalue(automaticWidth,'CalculateColumnWidths')
-local measure=upvalue(calculate,'MeasureText')
-local measurement=fontString()
-function measurement:GetStringWidth()
- return #self.text*(self.path=='Interface\\Fonts\\absent.ttf' and 18 or 6)
+addon.MainWindow.CreateMainWindow()
+drain()
+local rows={}
+for _, object in ipairs(native.objects) do
+ if object.categoryIndex and object:IsShown() then rows[#rows+1]=object end
 end
-upvalue(measure,'WidthMeasurementText',measurement,true)
-local availableWidth=calculate()
+assert(#rows==2)
+local text=rows[2].Text
+local setFont=text.SetFont
+local failing=true
+function text:SetFont(path,size,flags)
+ if failing and path=='Interface\\Fonts\\absent.ttf' then return false end
+ return setFont(self,path,size,flags)
+end
+assert(not realRefresh(false))
+for _, row in ipairs(rows) do
+ assert(row.Text:GetFont()==STANDARD_TEXT_FONT)
+ for _, outline in ipairs(row.TextOutline) do assert(outline:GetFont()==STANDARD_TEXT_FONT) end
+end
+failing=false; assert(realRefresh(false))
+for _, row in ipairs(rows) do
+ assert(row.Text:GetFont()=='Interface\\Fonts\\absent.ttf')
+ for _, outline in ipairs(row.TextOutline) do assert(outline:GetFont()=='Interface\\Fonts\\absent.ttf') end
+end
+assert(teal.categoryFont=='Absent')
+-- Width is observed on the rendered frame, using real content and font selection.
+local frame=addon.MainWindow.GetFrame()
+local availableWidth=frame:GetWidth()
 media:HashTable('font').Absent=nil
-local fallbackWidth=calculate()
+realRefresh(false)
+local fallbackWidth=frame:GetWidth()
 assert(availableWidth>fallbackWidth,'Font return did not affect calculated width')
 media:Register('font','Absent','Interface\\Fonts\\absent.ttf')
-drain(); assert(calculate()==availableWidth and teal.categoryFont=='Absent')
+drain(); assert(frame:GetWidth()==availableWidth and teal.categoryFont=='Absent')
 
 -- Every loaded TOC script exists and compiles, including bundled dependencies.
 for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
  if line:match('%.lua$') then assert(loadfile('RPEmoteMenu/'..line)) end
 end
 print('PASS real font libraries, late providers, missing choices, overrides, serialization and bounded rendering retries')
+

@@ -1,15 +1,16 @@
 -- Real framework + database + geometry policy; only native UI/rendering is stubbed.
 -- Run from repository root: luatex --luaonly tests/behavior-smoke.lua
 local native = dofile('tests/details-framework-ui-stubs.lua')
+dofile('tests/main-window-native.lua')
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml') -- Construct before PLAYER_LOGIN.
 function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
-local addon = {Settings = {}, SettingsUI = {FIELD_GAP = 12}}
+local addon = {VERSION = 'test', Settings = {}, SettingsUI = {FIELD_GAP = 12}}
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
 Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
 local db = addon.Database
 db.InitializeDatabase()
-Load('Scheduling.lua'); Load('VisibleSlotOrder.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
+Load('FontMedia.lua'); Load('Scheduling.lua'); Load('VisibleSlotOrder.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
 local widgets, main = addon.SettingsWidgets, addon.MainWindow
 local controls = {Switch = {}, IntegerEntry = {}, Dropdown = {}, Button = {}}
 for kind, collection in pairs(controls) do
@@ -20,27 +21,11 @@ for kind, collection in pairs(controls) do
         return control
     end
 end
--- Exercise actual ClampWindowGeometry, ApplyWindowGeometry, CenterWindow and
--- ResetWindowPosition, replacing unrelated renderer operations/measurements.
-local function SetUpvalue(fn, name, value)
-    for index = 1, 60 do
-        local key = debug.getupvalue(fn, index)
-        if key == name then debug.setupvalue(fn, index, value); return end
-        if not key then break end
-    end
-    error('Missing runtime boundary: ' .. name)
-end
-local frame = CreateFrame('Frame', nil, UIParent)
+-- Construct the real window; geometry assertions observe public operations.
 UIParent:SetSize(1000, 800)
+main.CreateMainWindow()
 local geometry = main.ApplyWindowGeometry
-SetUpvalue(geometry, 'MainFrame', frame)
-SetUpvalue(geometry, 'profileSettings', db.GetProfileSettings())
-SetUpvalue(geometry, 'CalculateColumnWidths', function() return 400 end)
-SetUpvalue(geometry, 'GetCurrentFrameSize', function(w, h) return w, h end)
-SetUpvalue(geometry, 'SetInternalFrameSize', function(w, h) frame:SetSize(w, h) end)
-SetUpvalue(geometry, 'IsWindowBodyHidden', function() return false end)
-SetUpvalue(geometry, 'SetNormalResizeBounds', function() end)
-SetUpvalue(geometry, 'ApplyColumnLayout', function() end)
+local applyProfile = main.ApplyProfileSettings
 local calls = {fade = 0, minimize = 0, gear = 0, menu = 0, lock = 0, profile = 0, geometry = 0}
 main.ApplyWindowGeometry = function(...)
     calls.geometry = calls.geometry + 1
@@ -56,7 +41,7 @@ main.UpdateMenu = function() calls.menu = calls.menu + 1 end
 main.ApplyMovementLock = function() calls.lock = calls.lock + 1 end
 main.ApplyProfileSettings = function()
     calls.profile = calls.profile + 1
-    SetUpvalue(geometry, 'profileSettings', db.GetProfileSettings())
+    applyProfile()
 end
 Load('SettingsBehavior.lua')
 local container = addon.SettingsUI.CreateGeneralSettingsPanel()
@@ -213,3 +198,4 @@ scroll:GetScript('OnScrollRangeChanged')(scroll, 0, 0)
 assert(scroll:GetVerticalScroll() == 0)
 
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')
+

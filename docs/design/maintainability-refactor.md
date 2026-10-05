@@ -15,7 +15,7 @@ This version change does not imply a database or JSON schema change.
 | 3 | Consolidate repeated transfer-mode opening/setup while keeping mode-specific captions, callbacks and replacement rules explicit | Implemented in 2.1.231; in-game acceptance pending |
 | 4 | Centralize shared setting limits and enum definitions used by normalization, transfer validation and controls | Implemented in 2.1.232; in-game acceptance pending |
 | 5 | Share visible-slot record reordering between categories and emotes; retain selection and drag behavior in callers | Implemented in 2.1.233; in-game acceptance pending |
-| 6 | Reduce tests' dependence on private local names/upvalue replacement through explicit component contracts and integration boundaries | Planned |
+| 6 | Reduce tests' dependence on private local names/upvalue replacement through explicit component contracts and integration boundaries | Implemented in 2.1.234; in-game acceptance pending |
 
 Phase boundaries are intentional. Phase 2 keeps the opening methods' behavior
 and structure; Phase 3 addresses their duplication. Phase 4 shares metadata,
@@ -175,3 +175,41 @@ MainWindow with native frames stubbed and exercises every category/emote drag
 combination, category-selection identity, incomplete hidden emotes, no-op refresh
 policy and drag cleanup. Existing settings compaction and stale dialog tests
 remain intact. In-game drag/scroll acceptance remains pending. Phase 6 is planned.
+
+
+
+## Phase 6 implementation
+
+The four remaining private-state-dependent suites no longer discover local
+functions by name or mutate closure upvalues. No test uses debug.getupvalue or
+debug.setupvalue. Runtime addon code is unchanged; the existing public methods
+and the explicit component contracts from earlier phases provide the boundaries.
+
+- Behavior constructs the real database and window before exercising settings
+  controls. Public dispatch spies retain the existing action-count checks; the
+  real geometry and Profile rebinding methods retain persistence, clamp, reset,
+  centering and stale-input checks.
+- Window geometry constructs real category/emote rows and observes native frame
+  anchors, saved coordinates, icon sizes, gear visibility, borderless backdrops
+  and activation. Top/left changes preserve the window corner under both saved
+  anchor types. Same-orientation refresh preserves geometry. Existing explicit
+  WindowFade tests retain timer, hover, animation and cancellation coverage.
+- Scheduling triggers installed category hover/leave handlers on actual rows.
+  It retains forced stale timer delivery and adds replacement-owner protection,
+  hidden/nonhovered rejection and zero-delay presentation checks.
+- Font media constructs the window and supplies only native font application and
+  text measurement results. One category label failure checks pane-wide fallback
+  on all real category labels/outlines; recovery checks the rendered frame width.
+  Existing registration, overrides, transfer preservation and retry checks remain.
+
+main-window-native.lua shares the minimal native coordinate/rendering support
+used by these suites. It does not expose addon state or add production test hooks.
+The real database, window coordinator and embedded libraries remain loaded.
+Native drawing, security and client event timing remain outside the test doubles.
+
+All fourteen smoke suites pass. All TOC Lua scripts compile and the real framework
+XML loader is exercised by the integration suites. The six implementation phases
+are complete; in-game acceptance remains open for editor, transfer, geometry,
+fade/minimized modes, drag/scroll behavior, and standalone/shared-library loading.
+No saved-data migration, transfer-schema change, library change or UI redesign
+is included.

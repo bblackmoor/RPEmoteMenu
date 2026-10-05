@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.234
+
+- Complete maintainability Phase 6: replace private-upvalue inspection and mutation in the remaining behavior, geometry, scheduling and font suites with real window/widget integration.
+- Preserve geometry, Profile rebinding, pane-wide font fallback and retry coverage; exercise tooltip ownership through native hover events, including stale owners, hidden rows and immediate presentation.
+- Share minimal native window test support without adding production test hooks or changing addon behavior, saved data or transfer schema.
+- All fourteen smoke suites pass; all six implementation phases are complete, with in-game acceptance still pending.
+
 ## 2.1.231
 
 - Complete maintainability Phase 3: consolidate transfer-session setup, captions, text, scrolling, action state, focus and selection in one named helper.
@@ -231,4 +238,5 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
