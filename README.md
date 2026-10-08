@@ -95,7 +95,9 @@ The existing 10-category, 100-emote limit, default and targeted commands, charac
 
 The [shared settings conventions](docs/design/settings-conventions.md) describe module contracts, deliberate differences from Simple Nameplates, comparable regression coverage and pending native acceptance. The [standardization record](docs/design/addon-standardization.md) preserves all four completed code phases.
 
-Run all 17 local smoke suites from the repository root with LuaTeX:
+The [localization record](docs/design/localization.md) tracks completed code work and pending native acceptance. The [standard-emote picker plan](docs/design/standard-emote-picker.md) defines the proposed next feature and its stages.
+
+Run all local smoke suites from the repository root with LuaTeX:
 
 ```sh
 for test in tests/*-smoke.lua; do

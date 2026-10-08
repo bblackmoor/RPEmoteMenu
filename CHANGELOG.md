@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.256
+
+- Complete phase 0 of the standard-emote picker design: proposed editor interaction, draft insertion and overwrite behavior, locale/catalog boundaries, alias verification, and staged implementation/acceptance criteria.
+- Link the feature plan and localization acceptance record from the development documentation; remove the outdated smoke-suite count.
+- Documentation only; the dropdown is not implemented and native localization acceptance remains pending.
+
 ## 2.1.255
 
 - Complete automated phase-four localization acceptance: audit all 288 interface keys and test expanded Unicode text without shipping an unreviewed translation.
