@@ -21,6 +21,8 @@ Settings = {RegisterCanvasLayoutCategory=Register, RegisterAddOnCategory=functio
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 local addon = {VERSION='test'}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon) end
 for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do Load(name) end
 local db=addon.Database; db.InitializeDatabase()
@@ -500,4 +502,5 @@ end
 edit.HighlightText,edit.SetFocus=originalHighlight,originalFocus
 exchange:Hide()
 print('PASS all 64 transfer-mode transitions, callback/target cleanup, focus/selection and failed export session preservation')
+
 

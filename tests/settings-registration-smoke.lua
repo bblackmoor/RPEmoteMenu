@@ -1,5 +1,7 @@
 -- Registration preflight, retry, routing and duplicate protection.
 local addon = {MAX_CATEGORIES = 8, Database = {GetSettings = function() return {selectedCategory = 2} end}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Settings.lua"))("RPEmoteMenu", addon)
 local keys = {"About","Behavior","Profiles","Themes","Emotes","ImportExport"}
 local register = addon.Settings.RegisterSettingsPanels
@@ -59,3 +61,4 @@ assert(refreshes.Behavior == 1 and refreshes.Themes == 1 and refreshes.Profiles 
 assert(editors == nil, "ordinary page refresh does not invoke targeted editor refresh")
 addon.Settings.RefreshEditors(4); assert(editors == 4)
 print("PASS settings registration preflight, retry, order, routing and duplicate protection")
+

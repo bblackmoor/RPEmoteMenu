@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 
 addon.Settings = {}
 addon.SettingsUI = {FIELD_GAP = 12}
@@ -10,12 +11,12 @@ local MAX_CATEGORIES = addon.MAX_CATEGORIES
 local rootCategory
 local categories, panels = {}, {}
 local pageOrder = {
-    {key = "About", label = "About"},
-    {key = "Behavior", label = "Behavior"},
-    {key = "Profiles", label = "Profiles"},
-    {key = "Themes", label = "Themes"},
-    {key = "Emotes", label = "Emotes"},
-    {key = "ImportExport", label = "Import & Export"},
+    {key = "About", label = L.TAB_ABOUT},
+    {key = "Behavior", label = L.TAB_BEHAVIOR},
+    {key = "Profiles", label = L.TAB_PROFILES},
+    {key = "Themes", label = L.TAB_THEMES},
+    {key = "Emotes", label = L.TAB_EMOTES},
+    {key = "ImportExport", label = L.TAB_IMPORT_EXPORT},
 }
 
 function AddonSettings.RegisterSettingsPanels()
@@ -28,7 +29,7 @@ function AddonSettings.RegisterSettingsPanels()
     for _, page in ipairs(pageOrder) do
         panels[page.key] = addon.SettingsPanels[page.key]()
     end
-    rootCategory = Settings.RegisterCanvasLayoutCategory(panels.About, "RP Emote Menu")
+    rootCategory = Settings.RegisterCanvasLayoutCategory(panels.About, L.ADDON_NAME)
     categories.About = rootCategory
     Settings.RegisterAddOnCategory(rootCategory)
     for index = 2, #pageOrder do
@@ -79,4 +80,5 @@ AddonSettings.OpenEmotes = function(categoryIndex)
         AddonSettings.Open()
     end
 end
+
 

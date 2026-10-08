@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.252
+
+- Begin interface localization with an English fallback table, client-locale selection, settings navigation and About-page strings.
+- Preserve the supplied 299-entry standard-emote reference catalog in the English locale file for a future dropdown.
+- Document the remaining conversion phases and add locale fallback/navigation regression coverage.
+
 ## 2.1.251
 
 - Refresh menu fonts after display-size and UI-scale changes, including Alt-Tab window resizing; defer refresh until WoW applies the new scale.
@@ -268,6 +274,7 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
 
 

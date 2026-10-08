@@ -2,6 +2,8 @@
 -- A small WoW UI stub catches settings registration, module-order, and
 -- cross-panel wiring regressions. Real WoW layout still requires an in-game check.
 local addon = {VERSION = 'test'}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function loadModule(path)
     local chunk = assert(loadfile(path))
     chunk('RPEmoteMenu', addon)
@@ -308,8 +310,8 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
   end
 end
 assert(toc[1]=='Libs/LibStub/LibStub.lua' and toc[2]=='Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua'
- and toc[3]=='Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua' and toc[4]=='Defaults.lua'
- and toc[5]=='SettingDefinitions.lua' and toc[6]=='Scheduling.lua' and toc[7]=='FontMedia.lua' and toc[#toc]=='Core.lua')
+ and toc[3]=='Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua' and toc[4]=='Localization.lua' and toc[5]=='Locales/enUS.lua' and toc[6]=='Defaults.lua'
+ and toc[7]=='SettingDefinitions.lua' and toc[8]=='Scheduling.lua' and toc[9]=='FontMedia.lua' and toc[#toc]=='Core.lua')
 local openedSettings,openedAbout=0,0
 local originalOpen,originalAbout=addon.Settings.Open,addon.Settings.OpenAbout
 addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() end
@@ -345,4 +347,5 @@ assert(activationSettings.active and mainFrame:IsShown(),'Slash toggle did not s
 SlashCmdList.ELLEMOTE('')
 assert(not activationSettings.active and not mainFrame:IsShown(),'Slash toggle did not hide the menu')
 print('PASS settings registration, row positions, refresh, Theme actions, Emote drag, exchange, slash commands')
+
 

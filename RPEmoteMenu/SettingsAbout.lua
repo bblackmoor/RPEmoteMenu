@@ -1,12 +1,13 @@
 local _, addon = ...
+local L = addon.L
 local UI, Widgets = addon.SettingsUI, addon.SettingsWidgets
 local SOURCE_URL = "https://github.com/bblackmoor/rpemotemenu"
 
 local function CreateAboutPanel()
     local panel, content, layout = UI.CreateScrollablePanel("About")
     StaticPopupDialogs["RPEMOTEMENU_COPY_SOURCE"] = {
-        text = "Press Ctrl+C to copy the source URL.",
-        button1 = CLOSE or "Close",
+        text = L.COPY_SOURCE_PROMPT,
+        button1 = CLOSE or L.CLOSE,
         hasEditBox = true,
         maxLetters = 255,
         editBoxWidth = 340,
@@ -29,12 +30,12 @@ local function CreateAboutPanel()
         preferredIndex = 3
     }
 
-    UI.AddTitle(content, layout, "About")
+    UI.AddTitle(content, layout, L.TAB_ABOUT)
     UI.AddDescription(content, layout,
-        "A customizable roleplaying emote menu with Profiles, targeted commands, Profile sharing, and shared Themes for appearance. Each character selects a Profile; Profiles assign a Theme.")
+        L.ABOUT_DESCRIPTION)
     UI.AddDescription(content, layout,
-        "Version: " .. addon.VERSION .. "\nAuthor: Brandon Blackmoor\nCategory: Roleplay\nLicense: GPL-3.0")
-    UI.AddDescription(content, layout, "Source:")
+        string.format(L.ABOUT_METADATA, addon.VERSION))
+    UI.AddDescription(content, layout, L.SOURCE_LABEL)
     local sourceLink = Widgets.CreateLink(content, SOURCE_URL, function()
         StaticPopup_Show("RPEMOTEMENU_COPY_SOURCE", nil, nil, SOURCE_URL)
     end)
@@ -44,17 +45,15 @@ local function CreateAboutPanel()
     sourceFrame.text:SetNonSpaceWrap(true)
     sourceFrame.LayoutText = sourceFrame.text
     layout:Add(sourceFrame, 24, 16, 8, true)
-    UI.AddSection(content, layout, "Commands")
+    UI.AddSection(content, layout, L.COMMANDS_HEADING)
     UI.AddDescription(content, layout,
-        "/rpem — Toggle RP Emote Menu Active or Inactive\n" ..
-        "/rpem about — This page\n" ..
-        "/rpem config, /rpem options or /rpem settings — Addon settings")
-    UI.AddSection(content, layout, "Character-name tokens")
+        L.ABOUT_COMMANDS)
+    UI.AddSection(content, layout, L.TOKENS_HEADING)
     UI.AddDescription(content, layout,
-        "{target} — Target's name without the realm\n" ..
-        "{player} — Current character's name without the realm")
+        L.ABOUT_TOKENS)
     layout:Finish()
     return panel
 end
 
 addon.SettingsPanels.About = CreateAboutPanel
+

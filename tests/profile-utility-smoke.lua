@@ -32,6 +32,8 @@ Settings = {
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml') -- Use actual startup order, before PLAYER_LOGIN.
 local addon = {VERSION = 'test', MainWindow = {}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
 for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'Database.lua', 'Serialization.lua'}) do Load(name) end
 local db = addon.Database
@@ -332,3 +334,4 @@ do
     panel:GetScript("OnShow")(panel)
     assert(content:GetHeight() == wideHeight, "About shrinks again without stale height")
 end
+
