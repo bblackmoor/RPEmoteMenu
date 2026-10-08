@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.254
+
+- Complete phase three of interface localization: menu titles, empty states, tooltips, lock/settings hints, and emote-editor labels, help and status messages.
+- Measure the localized Add Category caption when calculating empty-sidebar width, matching the visible button.
+- Add translated menu/editor coverage for width measurement, literal user text and tokens, command dispatch, validation and stale editor targets.
+
 ## 2.1.253
 
 - Complete phase two of interface localization: remaining settings pages, dialogs, tooltips, result messages, validation, framework diagnostics and bundled-theme descriptions.

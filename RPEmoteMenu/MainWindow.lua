@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local definitions = addon.SettingDefinitions
 local limits = definitions.limits
 
@@ -290,7 +291,7 @@ local function CalculateColumnWidths()
 
     if widestCategory == 0 then
         widestCategory = MeasureText(
-            "Add Category",
+            L.MENU_ADD_CATEGORY,
             themeSettings.categoryFont,
             themeSettings.categoryFontSize
         )
@@ -534,8 +535,8 @@ ApplyTitleBarLayout = function()
         return
     end
 
-    local fullTitle = "RP Emote Menu " .. addon.VERSION
-    local shortTitle = "RP Emote Menu"
+    local fullTitle = string.format(L.UI_S_S, L.ADDON_NAME, addon.VERSION)
+    local shortTitle = L.ADDON_NAME
 
     TitleBar:ClearAllPoints()
     TitleText:ClearAllPoints()
@@ -1017,7 +1018,7 @@ local function PopulateEmoteTooltip(button, owner, editHint)
     GameTooltip:SetOwner(owner or button, "ANCHOR_RIGHT")
     GameTooltip:SetText(button.emoteLabel)
     GameTooltip:AddLine(
-        "Default: " .. button.defaultCommand,
+        string.format(L.MENU_DEFAULT_COMMAND, button.defaultCommand),
         0.9,
         0.9,
         0.9,
@@ -1026,7 +1027,7 @@ local function PopulateEmoteTooltip(button, owner, editHint)
 
     if button.targetedCommand and button.targetedCommand ~= "" then
         GameTooltip:AddLine(
-            "Targeted: " .. button.targetedCommand,
+            string.format(L.MENU_TARGETED_COMMAND, button.targetedCommand),
             0.75,
             0.85,
             1,
@@ -1093,7 +1094,7 @@ local function GetContainerButton()
     button.EditButton:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
         ScheduleTooltip(self, function()
-            return PopulateEmoteTooltip(button, self, "Click to edit")
+            return PopulateEmoteTooltip(button, self, L.MENU_CLICK_TO_EDIT)
         end)
     end)
     button.EditButton:SetScript("OnLeave", function(self)
@@ -1104,7 +1105,7 @@ local function GetContainerButton()
     button:SetScript("OnEnter", function(self)
         SetEmoteHovered(button, true)
         ScheduleTooltip(self, function()
-            return PopulateEmoteTooltip(button, self, "Right-click to edit")
+            return PopulateEmoteTooltip(button, self, L.MENU_RIGHT_CLICK_TO_EDIT)
         end)
     end)
     button:SetScript("OnLeave", function(self)
@@ -2043,7 +2044,7 @@ local function CreateTitleBar()
             or (IsTitleBarOnLeft() and TitleText:IsTruncated()) then
             ScheduleTooltip(self, function()
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText("RP Emote Menu " .. addon.VERSION)
+                GameTooltip:SetText(string.format(L.UI_S_S, L.ADDON_NAME, addon.VERSION))
             end)
         end
     end)
@@ -2053,7 +2054,7 @@ local function CreateTitleBar()
 
     TitleText = MainFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     TitleText:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 10, -10)
-    TitleText:SetText("RP Emote Menu " .. addon.VERSION)
+    TitleText:SetText(string.format(L.UI_S_S, L.ADDON_NAME, addon.VERSION))
     TitleText:SetTextColor(1, 1, 1, 1)
 
 
@@ -2125,7 +2126,7 @@ local function CreateCategorySidebar()
     CategoryEmptyLabel:SetPoint("TOPLEFT", CategorySidebar, "TOPLEFT", 7, -9)
     CategoryEmptyLabel:SetPoint("TOPRIGHT", CategorySidebar, "TOPRIGHT", -7, -9)
     CategoryEmptyLabel:SetJustifyH("LEFT")
-    CategoryEmptyLabel:SetText("No categories")
+    CategoryEmptyLabel:SetText(L.MENU_NO_CATEGORIES)
     CategoryEmptyLabel:Hide()
 
     CategoryEmptyButton = CreateFrame(
@@ -2136,7 +2137,7 @@ local function CreateCategorySidebar()
     )
     CategoryEmptyButton:SetSize(math.max(sidebarWidth - 14, 1), 22)
     CategoryEmptyButton:SetPoint("TOPLEFT", CategorySidebar, "TOPLEFT", 7, -28)
-    CategoryEmptyButton:SetText("Add Category")
+    CategoryEmptyButton:SetText(L.MENU_ADD_CATEGORY)
     CategoryEmptyButton:SetScript("OnClick", function()
         if addon.Settings and addon.Settings.OpenEmotes then
             addon.Settings.OpenEmotes()
@@ -2242,7 +2243,7 @@ local function CreateCategorySidebar()
             ScheduleTooltip(self, function()
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText(self.Text:GetText())
-                GameTooltip:AddLine("Right-click to edit", 1, 0.82, 0, false)
+                GameTooltip:AddLine(L.MENU_RIGHT_CLICK_TO_EDIT, 1, 0.82, 0, false)
             end)
         end)
         button:SetScript("OnLeave", function(self)
@@ -2289,7 +2290,7 @@ local function CreateEmoteArea()
     )
     EmoteEmptyButton:SetSize(math.max(emoteColumnWidth - 5, 1), 22)
     EmoteEmptyButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -2)
-    EmoteEmptyButton:SetText("Add Emote")
+    EmoteEmptyButton:SetText(L.UI_ADD_EMOTE)
     EmoteEmptyButton:SetScript("OnClick", function()
         if addon.Settings and addon.Settings.OpenEmotes then
             addon.Settings.OpenEmotes()
@@ -2361,11 +2362,11 @@ local function CreateTitleBarControls()
                 self,
                 IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
             )
-            GameTooltip:SetText(profileSettings.locked and "Window locked" or "Window unlocked")
+            GameTooltip:SetText(profileSettings.locked and L.MENU_WINDOW_LOCKED or L.MENU_WINDOW_UNLOCKED)
             GameTooltip:AddLine(
                 profileSettings.locked
-                    and "The window position and height are locked."
-                    or "The window can be moved and resized vertically.",
+                    and L.MENU_WINDOW_LOCKED_HELP
+                    or L.MENU_WINDOW_UNLOCKED_HELP,
                 1,
                 1,
                 1,
@@ -2401,7 +2402,7 @@ local function CreateTitleBarControls()
                 self,
                 IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
             )
-            GameTooltip:SetText("RP Emote Menu Settings")
+            GameTooltip:SetText(L.MENU_SETTINGS)
         end)
     end)
 
@@ -2604,3 +2605,4 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
+

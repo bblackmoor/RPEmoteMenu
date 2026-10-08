@@ -1,5 +1,6 @@
 -- Owns the emote editor's draft fields, validation and captured session target.
 local _, addon = ...
+local L = addon.L
 local Database = addon.Database
 local EmoteEditor = {}
 addon.EmoteEditor = EmoteEditor
@@ -8,7 +9,7 @@ local editorDialog
 local function CreateFields(dialog, Widgets)
     local title = Widgets.CreateDialogLabel(dialog, "", 16)
     title:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -16)
-    title:SetText("Edit Emote")
+    title:SetText(L.EDITOR_EDIT_EMOTE)
     dialog.Title = title
 
     local helpText = Widgets.CreateDialogLabel(dialog, "", 12)
@@ -16,10 +17,7 @@ local function CreateFields(dialog, Widgets)
     helpText:SetWidth(570)
     helpText:SetJustifyH("LEFT")
     helpText:SetText(
-        "{target} - Target's name without the realm.   " ..
-        "{player} - Current character's name without the realm.\n" ..
-        "Targeted Emote is used only when another unit is targeted. " ..
-        "An emote appears only when it has both a name and a default emote."
+        L.EDITOR_HELP
     )
     helpText:SetTextColor(0.8, 0.8, 0.8, 1)
 
@@ -40,9 +38,9 @@ local function CreateFields(dialog, Widgets)
         return editBox
     end
 
-    dialog.NameBox = CreateEditor("Emote Name", -112)
-    dialog.DefaultBox = CreateEditor("Default Emote", -152)
-    dialog.TargetedBox = CreateEditor("Targeted Emote (optional)", -192)
+    dialog.NameBox = CreateEditor(L.EDITOR_EMOTE_NAME, -112)
+    dialog.DefaultBox = CreateEditor(L.EDITOR_DEFAULT_EMOTE, -152)
+    dialog.TargetedBox = CreateEditor(L.EDITOR_TARGETED_EMOTE_OPTIONAL, -192)
 
     local status = Widgets.CreateDialogLabel(dialog, "", 12)
     status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 51)
@@ -54,13 +52,13 @@ local function CreateFields(dialog, Widgets)
     local saveButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
     saveButton:SetSize(110, 24)
     saveButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -138, 16)
-    saveButton:SetText("Save")
+    saveButton:SetText(L.EDITOR_SAVE)
     dialog.SaveButton = saveButton
 
     local cancelButton = Widgets.CreateDialogButton(dialog, "", 110, 24)
     cancelButton:SetSize(110, 24)
     cancelButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 16)
-    cancelButton:SetText(CANCEL or "Cancel")
+    cancelButton:SetText(CANCEL or L.UI_CANCEL)
     cancelButton:SetScript("OnClick", function() dialog:Hide() end)
 
 end
@@ -76,16 +74,16 @@ local function InstallSaveActions(dialog)
             and category.emotes[dialog.emoteIndex]
 
         if not emote or not Database.IsCurrentContentTarget(dialog.contentTarget) then
-            dialog.Status:SetText("The Profile or emote changed. Reopen the editor before saving.")
+            dialog.Status:SetText(L.EDITOR_TARGET_CHANGED)
             dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
             dialog.SaveButton:SetEnabled(false)
             return
         end
 
         for _, field in ipairs({
-            {dialog.NameBox, "emoteLabel", "Emote name"},
-            {dialog.DefaultBox, "command", "Default emote"},
-            {dialog.TargetedBox, "command", "Targeted emote"}
+            {dialog.NameBox, "emoteLabel", L.EDITOR_EMOTE_NAME_FIELD},
+            {dialog.DefaultBox, "command", L.EDITOR_DEFAULT_EMOTE_FIELD},
+            {dialog.TargetedBox, "command", L.EDITOR_TARGETED_EMOTE_FIELD}
         }) do
             local valid, errorMessage = Database.ValidateContentText(field[1]:GetText() or "", field[2], field[3])
             if not valid then
@@ -145,10 +143,10 @@ local function InstallSessionLifecycle(dialog)
         self.SaveButton:SetEnabled(editable)
         self.Status:SetTextColor(0.8, 0.8, 0.8, 1)
         self.Status:SetText(editable
-            and "Changes apply to the current profile."
-            or "The Default profile's emotes cannot be edited. Copy it to a custom profile first.")
+            and L.EDITOR_CHANGES_APPLY
+            or L.EDITOR_READ_ONLY_HELP)
         self.Title:SetText(
-            editable and (isNew and "Add Emote" or "Edit Emote") or "View Emote"
+            editable and (isNew and L.UI_ADD_EMOTE or L.EDITOR_EDIT_EMOTE) or L.EDITOR_VIEW_EMOTE
         )
         self:Show()
         self:Raise()
@@ -177,3 +175,4 @@ end
 function EmoteEditor.Open(categoryIndex, emoteIndex, isNew)
     GetDialog():Open(categoryIndex, emoteIndex, isNew)
 end
+
