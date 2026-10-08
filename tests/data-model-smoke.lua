@@ -1,5 +1,7 @@
 -- Run from the repository root: texlua --luaonly tests/data-model-smoke.lua
 local addon = {}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function loadModule(path)
     assert(loadfile(path))('RPEmoteMenu', addon)
 end
@@ -232,3 +234,4 @@ assert(not valid and message == 'Theme names cannot exceed 64 bytes.')
 assert(db.ValidateNewProfileName(string.rep('B',64)))
 assert(db.ValidateNewThemeName(string.rep('B',64)))
 print('PASS UTF-8 import collision names, numbered suffixes, exports and byte-limit messages')
+

@@ -17,6 +17,8 @@ LoadXML('Libs/DetailsFramework/load.xml')
 timers = {}
 function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
 local addon = {VERSION='test',Settings={}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua','FontMedia.lua','Scheduling.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon)
 end
@@ -93,4 +95,5 @@ Enter(owner); assert(#timers==before and GameTooltip:IsOwned(owner) and GameTool
 Leave(owner)
 assert(#errors==1, 'no unexpected callback errors')
 print('PASS real DF scheduling: coalescing, cancellation, stale delivery, reentrancy, errors, independent callbacks and tooltip ownership')
+
 

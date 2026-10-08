@@ -12,6 +12,8 @@ local addon={MAX_EMOTES=10,Database={
     if text=='bad' then return false,'Rejected input' end
     return true,'New Profile','Source','Missing Theme'
 end}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 for _,name in ipairs({'SettingsExchangeText.lua','SettingsExchangeActions.lua','SettingsExchangeLifecycle.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu',addon)
 end
@@ -76,3 +78,4 @@ dialog.mode='export'; dialog:Show()
 dialog.editBox:GetScript('OnEscapePressed')(dialog.editBox)
 assert(not dialog:IsShown())
 print('PASS explicit exchange component sizing, caret/resize, import errors/results, confirmation ownership and lifecycle cleanup')
+

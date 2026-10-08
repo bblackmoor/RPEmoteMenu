@@ -55,6 +55,8 @@ local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 local runtime = {VERSION = 'test', Settings = {}, Commands = {ExecuteEmoteCommand = function() end}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", runtime)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", runtime)
 for _, file in ipairs({'Defaults.lua','SettingDefinitions.lua','Scheduling.lua','FontMedia.lua',
     'BuiltInThemes.lua','Database.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
     'EmoteEditor.lua','MainWindow.lua'}) do
@@ -147,3 +149,4 @@ for source = 1, 3 do
     end
 end
 print('PASS real window category/emote drags: all source/gap pairs, selected identity, hidden records and cleanup/refresh policy')
+

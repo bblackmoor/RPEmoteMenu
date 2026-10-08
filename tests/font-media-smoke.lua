@@ -2,6 +2,8 @@ local native = dofile("tests/details-framework-ui-stubs.lua")
 local nativeMethods = dofile("tests/main-window-native.lua")
 -- Real embedded media libraries, database/serialization, selector and rendering paths.
 local addon={VERSION='test',SettingsUI={FIELD_GAP=12},Settings={}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
 strmatch=string.match
 function getfenv() return _G end
@@ -146,4 +148,5 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
  if line:match('%.lua$') then assert(loadfile('RPEmoteMenu/'..line)) end
 end
 print('PASS real font libraries, late providers, missing choices, overrides, serialization and bounded rendering retries')
+
 

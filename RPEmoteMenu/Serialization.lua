@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local definitions = addon.SettingDefinitions
 local limits = definitions.limits
 
@@ -47,12 +48,12 @@ local VALID_ANCHOR_POINTS = definitions.enums.anchorPoint.allowed
 
 local function ValidateObject(value, allowedFields, description)
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
-        return nil, description .. " must be an object."
+        return nil, string.format(L.UI_S_MUST_BE_AN_OBJECT, description)
     end
 
     for key in pairs(value) do
         if not allowedFields[key] then
-            return nil, description .. " contains an unsupported field: " .. tostring(key) .. "."
+            return nil, string.format(L.UI_S_CONTAINS_AN_UNSUPPORTED_FIELD_S, description, tostring(key))
         end
     end
 
@@ -62,10 +63,10 @@ end
 
 local function ValidateString(value, maximumLength, description)
     if type(value) ~= "string" then
-        return nil, description .. " must be a string."
+        return nil, string.format(L.UI_S_MUST_BE_A_STRING, description)
     end
     if #value > maximumLength then
-        return nil, description .. " exceeds " .. maximumLength .. " bytes."
+        return nil, string.format(L.UI_S_EXCEEDS_S_BYTES, description, maximumLength)
     end
     return value
 end
@@ -76,13 +77,13 @@ local function ValidateNumber(value, minimum, maximum, description, integer)
         or value ~= value
         or value == math.huge
         or value == -math.huge then
-        return nil, description .. " must be a number."
+        return nil, string.format(L.UI_S_MUST_BE_A_NUMBER, description)
     end
     if integer and value % 1 ~= 0 then
-        return nil, description .. " must be a whole number."
+        return nil, string.format(L.UI_S_MUST_BE_A_WHOLE_NUMBER, description)
     end
     if value < minimum or value > maximum then
-        return nil, description .. " must be between " .. minimum .. " and " .. maximum .. "."
+        return nil, string.format(L.UI_S_MUST_BE_BETWEEN_S_AND_S, description, minimum, maximum)
     end
     return value
 end
@@ -90,7 +91,7 @@ end
 
 local function ValidateEnum(value, allowed, description)
     if type(value) ~= "string" or not allowed[value] then
-        return nil, description .. " has an unsupported value."
+        return nil, string.format(L.UI_S_HAS_AN_UNSUPPORTED_VALUE, description)
     end
     return value
 end
@@ -100,7 +101,7 @@ local function ValidateName(value, maximumLength, description)
     local name, errorMessage = ValidateString(value, maximumLength, description)
     if not name then return nil, errorMessage end
     if strtrim(name) == "" then
-        return nil, description .. " cannot be empty."
+        return nil, string.format(L.UI_S_CANNOT_BE_EMPTY, description)
     end
     return name
 end
@@ -117,7 +118,7 @@ local function ValidateColor(value, description)
     local color = {}
     for _, component in ipairs({"r", "g", "b"}) do
         color[component], errorMessage = ValidateNumber(
-            value[component], 0, 1, description .. " " .. component, false
+            value[component], 0, 1, string.format(L.UI_S_S, description, component), false
         )
         if color[component] == nil then
             return nil, errorMessage
@@ -139,14 +140,14 @@ end
 
 
 local function ValidateEmote(value, index, prefix)
-    local description = (prefix or "Emote") .. " " .. index
+    local description = string.format(L.UI_S_S, prefix or L.UI_EMOTE, index)
     local valid, errorMessage = ValidateObject(value, EMOTE_FIELDS, description)
     if not valid then
         return nil, errorMessage
     end
 
     local label
-    label, errorMessage = ValidateString(value.label, MAX_LABEL_LENGTH, description .. " label")
+    label, errorMessage = ValidateString(value.label, MAX_LABEL_LENGTH, string.format(L.UI_S_LABEL, description))
     if not label then
         return nil, errorMessage
     end
@@ -155,7 +156,7 @@ local function ValidateEmote(value, index, prefix)
     defaultCommand, errorMessage = ValidateString(
         value.defaultCommand,
         MAX_COMMAND_LENGTH,
-        description .. " default command"
+        string.format(L.UI_S_DEFAULT_COMMAND, description)
     )
     if not defaultCommand then
         return nil, errorMessage
@@ -168,7 +169,7 @@ local function ValidateEmote(value, index, prefix)
         targetedCommand, errorMessage = ValidateString(
             targetedCommand,
             MAX_COMMAND_LENGTH,
-            description .. " targeted command"
+            string.format(L.UI_S_TARGETED_COMMAND, description)
         )
         if not targetedCommand then
             return nil, errorMessage
@@ -192,15 +193,15 @@ local function ValidateCategory(value, description, allowedFields)
     end
 
     local name
-    name, errorMessage = ValidateString(value.name, MAX_CATEGORY_NAME_LENGTH, description .. " name")
+    name, errorMessage = ValidateString(value.name, MAX_CATEGORY_NAME_LENGTH, string.format(L.UI_S_NAME, description))
     if not name then
         return nil, errorMessage
     end
     if not JSON.IsArray(value.emotes) then
-        return nil, description .. " emotes must be an array."
+        return nil, string.format(L.UI_S_EMOTES_MUST_BE_AN_ARRAY, description)
     end
     if #value.emotes > addon.MAX_EMOTES then
-        return nil, description .. " cannot contain more than " .. addon.MAX_EMOTES .. " emotes."
+        return nil, string.format(L.UI_S_CANNOT_CONTAIN_MORE_THAN_S_EMOTES, description, addon.MAX_EMOTES)
     end
 
     local category = {name = name, emotes = {}}
@@ -208,7 +209,7 @@ local function ValidateCategory(value, description, allowedFields)
         if index <= #value.emotes then
             local emote
             emote, errorMessage = ValidateEmote(
-                value.emotes[index], index, description .. " emote"
+                value.emotes[index], index, string.format(L.UI_S_EMOTE, description)
             )
             if not emote then
                 return nil, errorMessage
@@ -225,11 +226,10 @@ end
 
 local function ValidateCategories(value, description)
     if not JSON.IsArray(value) then
-        return nil, description .. " categories must be an array."
+        return nil, string.format(L.UI_S_CATEGORIES_MUST_BE_AN_ARRAY, description)
     end
     if #value == 0 or #value > addon.MAX_CATEGORIES then
-        return nil, description .. " must contain between 1 and "
-            .. addon.MAX_CATEGORIES .. " categories."
+        return nil, string.format(L.UI_S_MUST_CONTAIN_BETWEEN_1_AND_S_CATEGORIES, description, addon.MAX_CATEGORIES)
     end
 
     local categories = {}
@@ -237,7 +237,7 @@ local function ValidateCategories(value, description)
     for index = 1, addon.MAX_CATEGORIES do
         if index <= #value then
             categories[index], errorMessage = ValidateCategory(
-                value[index], description .. " category " .. index
+                value[index], string.format(L.UI_S_CATEGORY_S, description, index)
             )
             if not categories[index] then
                 return nil, errorMessage
@@ -340,12 +340,12 @@ local function ValidateProfile(value, description, allowedFields)
 
     local name
     name, errorMessage = ValidateName(
-        value.name, MAX_PROFILE_NAME_LENGTH, description .. " name"
+        value.name, MAX_PROFILE_NAME_LENGTH, string.format(L.UI_S_NAME, description)
     )
     if not name then return nil, errorMessage end
     local theme
     theme, errorMessage = ValidateName(
-        value.theme, MAX_THEME_NAME_LENGTH, description .. " theme"
+        value.theme, MAX_THEME_NAME_LENGTH, string.format(L.UI_S_THEME, description)
     )
     if not theme then return nil, errorMessage end
     local settings
@@ -365,7 +365,7 @@ local function ValidateTheme(value, description, allowedFields)
 
     local name
     name, errorMessage = ValidateName(
-        value.name, MAX_THEME_NAME_LENGTH, description .. " name"
+        value.name, MAX_THEME_NAME_LENGTH, string.format(L.UI_S_NAME, description)
     )
     if not name then return nil, errorMessage end
     local settings
@@ -451,18 +451,17 @@ end
 
 local function ValidateProfileArray(value)
     if not JSON.IsArray(value) or #value == 0 then
-        return nil, "Profiles must be a nonempty array."
+        return nil, L.UI_PROFILES_MUST_BE_A_NONEMPTY_ARRAY
     end
     local profiles, seen = {}, {}
     for index, source in ipairs(value) do
         local profile, errorMessage = ValidateProfile(
-            source, "Profile " .. index, PROFILE_FIELDS
+            source, string.format(L.UI_PROFILE_S, index), PROFILE_FIELDS
         )
         if not profile then return nil, errorMessage end
         local normalizedName = string.lower(profile.name)
         if seen[normalizedName] then
-            return nil, "The import contains more than one profile named "
-                .. profile.name .. "."
+            return nil, string.format(L.UI_THE_IMPORT_CONTAINS_MORE_THAN_ONE_PROFILE_NAMED_S, profile.name)
         end
         seen[normalizedName] = true
         profiles[#profiles + 1] = profile
@@ -473,18 +472,17 @@ end
 
 local function ValidateThemeArray(value)
     if not JSON.IsArray(value) or #value == 0 then
-        return nil, "Themes must be a nonempty array."
+        return nil, L.UI_THEMES_MUST_BE_A_NONEMPTY_ARRAY
     end
     local themes, seen = {}, {}
     for index, source in ipairs(value) do
         local theme, errorMessage = ValidateTheme(
-            source, "Theme " .. index, THEME_FIELDS
+            source, string.format(L.UI_THEME_S, index), THEME_FIELDS
         )
         if not theme then return nil, errorMessage end
         local normalizedName = string.lower(theme.name)
         if seen[normalizedName] then
-            return nil, "The import contains more than one theme named "
-                .. theme.name .. "."
+            return nil, string.format(L.UI_THE_IMPORT_CONTAINS_MORE_THAN_ONE_THEME_NAMED_S, theme.name)
         end
         seen[normalizedName] = true
         themes[#themes + 1] = theme
@@ -495,7 +493,7 @@ end
 
 function Serialization.ExportCategory(categoryIndex)
     if not IsValidCategoryIndex(categoryIndex) then
-        return nil, "Choose a valid category to export."
+        return nil, L.UI_CHOOSE_A_VALID_CATEGORY_TO_EXPORT
     end
     local result = ExportCategoryData(Database.GetCategory(categoryIndex))
     result.format = FORMAT_NAME
@@ -508,7 +506,7 @@ end
 function Serialization.ExportProfile(profileName)
     profileName = profileName or Database.GetActiveProfileName()
     local profile = Database.GetProfile(profileName)
-    if not profile then return nil, "That profile does not exist." end
+    if not profile then return nil, L.UI_THAT_PROFILE_DOES_NOT_EXIST end
 
     local result = ExportProfileData(profileName, profile)
     result.format = FORMAT_NAME
@@ -521,7 +519,7 @@ end
 function Serialization.ExportTheme(themeName)
     themeName = themeName or Database.GetActiveThemeName()
     local theme = Database.GetTheme(themeName)
-    if not theme then return nil, "That theme does not exist." end
+    if not theme then return nil, L.UI_THAT_THEME_DOES_NOT_EXIST end
 
     local result = ExportThemeData(themeName, theme)
     result.format = FORMAT_NAME
@@ -558,42 +556,42 @@ end
 
 function Serialization.Decode(text, expectedType)
     if type(text) ~= "string" or text == "" then
-        return nil, "Paste exported RP Emote Menu data."
+        return nil, L.UI_PASTE_EXPORTED_RP_EMOTE_MENU_DATA
     end
     if #text > MAX_DOCUMENT_BYTES then
-        return nil, "The imported data exceeds the maximum supported size."
+        return nil, L.UI_THE_IMPORTED_DATA_EXCEEDS_THE_MAXIMUM_SUPPORTED_SIZE
     end
 
     local value, errorMessage = JSON.Decode(text)
-    if not value then return nil, "Invalid JSON: " .. errorMessage end
+    if not value then return nil, string.format(L.UI_INVALID_JSON_S, errorMessage) end
     if type(value) ~= "table" or JSON.IsArray(value) or value == JSON.Null then
-        return nil, "Import data must be an object."
+        return nil, L.UI_IMPORT_DATA_MUST_BE_AN_OBJECT
     end
     if value.format ~= FORMAT_NAME then
-        return nil, "This data was not exported by RP Emote Menu."
+        return nil, L.UI_THIS_DATA_WAS_NOT_EXPORTED_BY_RP_EMOTE_MENU
     end
     if value.version ~= FORMAT_VERSION then
-        return nil, "This import format version is not supported."
+        return nil, L.UI_THIS_IMPORT_FORMAT_VERSION_IS_NOT_SUPPORTED
     end
 
     local actualType = value.type
     if actualType ~= "category" and actualType ~= "profile"
         and actualType ~= "theme" and actualType ~= "everything" then
-        return nil, "The import data has an unsupported type."
+        return nil, L.UI_THE_IMPORT_DATA_HAS_AN_UNSUPPORTED_TYPE
     end
     if expectedType and actualType ~= expectedType then
-        return nil, "This is " .. actualType .. " data, not " .. expectedType .. " data."
+        return nil, string.format(L.UI_THIS_IS_S_DATA_NOT_S_DATA, actualType, expectedType)
     end
 
     if actualType == "category" then
         local valid
         valid, errorMessage = ValidateObject(
-            value, CATEGORY_DOCUMENT_FIELDS, "Import data"
+            value, CATEGORY_DOCUMENT_FIELDS, L.UI_IMPORT_DATA
         )
         if not valid then return nil, errorMessage end
         local category
         category, errorMessage = ValidateCategory(
-            value, "Category", CATEGORY_DOCUMENT_FIELDS
+            value, L.UI_CATEGORY, CATEGORY_DOCUMENT_FIELDS
         )
         if not category then return nil, errorMessage end
         return {type = "category", name = category.name, category = category}
@@ -602,7 +600,7 @@ function Serialization.Decode(text, expectedType)
     if actualType == "profile" then
         local profile
         profile, errorMessage = ValidateProfile(
-            value, "Profile", PROFILE_DOCUMENT_FIELDS
+            value, L.UI_PROFILE, PROFILE_DOCUMENT_FIELDS
         )
         if not profile then return nil, errorMessage end
         profile.type = "profile"
@@ -612,7 +610,7 @@ function Serialization.Decode(text, expectedType)
     if actualType == "theme" then
         local theme
         theme, errorMessage = ValidateTheme(
-            value, "Theme", THEME_DOCUMENT_FIELDS
+            value, L.UI_THEME, THEME_DOCUMENT_FIELDS
         )
         if not theme then return nil, errorMessage end
         theme.type = "theme"
@@ -621,7 +619,7 @@ function Serialization.Decode(text, expectedType)
 
     local valid
     valid, errorMessage = ValidateObject(
-        value, EVERYTHING_DOCUMENT_FIELDS, "Import data"
+        value, EVERYTHING_DOCUMENT_FIELDS, L.UI_IMPORT_DATA
     )
     if not valid then return nil, errorMessage end
     local themes, themeError = ValidateThemeArray(value.themes)
@@ -634,13 +632,11 @@ function Serialization.Decode(text, expectedType)
     for _, profile in ipairs(profiles) do
         if profile.name == "Default" then hasDefaultProfile = true end
         if not exactThemeNames[profile.theme] then
-            return nil, "Profile " .. profile.name
-                .. " references a Theme missing from this export: "
-                .. profile.theme .. "."
+            return nil, string.format(L.UI_PROFILE_S_REFERENCES_A_THEME_MISSING_FROM_THIS_EXPORT_S, profile.name, profile.theme)
         end
     end
     if not exactThemeNames.Default or not hasDefaultProfile then
-        return nil, "Everything must include Default Profile and Default Theme."
+        return nil, L.UI_EVERYTHING_MUST_INCLUDE_DEFAULT_PROFILE_AND_DEFAULT_THEME
     end
     return {type = "everything", profiles = profiles, themes = themes}
 end
@@ -648,7 +644,7 @@ end
 
 function Serialization.ImportCategory(categoryIndex, text)
     if not IsValidCategoryIndex(categoryIndex) then
-        return false, "Choose a valid category to import."
+        return false, L.UI_CHOOSE_A_VALID_CATEGORY_TO_IMPORT
     end
     local imported, errorMessage = Serialization.Decode(text, "category")
     if not imported then return false, errorMessage end
@@ -697,3 +693,4 @@ end
 function Serialization.ImportAllProfiles(text)
     return Serialization.ImportEverything(text)
 end
+

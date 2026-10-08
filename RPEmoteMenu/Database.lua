@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local definitions = addon.SettingDefinitions
 local limits = definitions.limits
 
@@ -440,7 +441,7 @@ local settingsProxy = setmetatable({}, {
             return
         end
 
-        error("Unknown setting: " .. tostring(key))
+        error(string.format(L.UI_UNKNOWN_SETTING_S, tostring(key)))
     end
 })
 
@@ -480,7 +481,7 @@ end
 function Database.ValidateContentText(text, kind, label)
     local limit = addon.ContentTextLimits[kind]
     if type(text) ~= "string" or #text > limit then
-        return false, label .. " cannot exceed " .. limit .. " bytes."
+        return false, string.format(L.UI_S_CANNOT_EXCEED_S_BYTES, label, limit)
     end
     return true
 end
@@ -601,27 +602,27 @@ end
 
 local function ValidateNewProfileName(profileName, existingProfileName)
     if type(profileName) ~= "string" then
-        return nil, "Enter a profile name."
+        return nil, L.UI_ENTER_A_PROFILE_NAME
     end
 
     profileName = strtrim(profileName)
 
     if profileName == "" then
-        return nil, "Enter a profile name."
+        return nil, L.UI_ENTER_A_PROFILE_NAME
     end
     if #profileName > MAX_PROFILE_NAME_LENGTH then
-        return nil, "Profile names cannot exceed 64 bytes."
+        return nil, L.UI_PROFILE_NAMES_CANNOT_EXCEED_64_BYTES
     end
     if string.lower(profileName) == string.lower(DEFAULT_PROFILE_NAME) then
-        return nil, "Default is reserved and cannot be changed."
+        return nil, L.UI_DEFAULT_IS_RESERVED_AND_CANNOT_BE_CHANGED
     end
 
     local matchingProfile = FindProfileByName(profileName)
     if matchingProfile and matchingProfile ~= existingProfileName then
-        return nil, "A profile with that name already exists."
+        return nil, L.UI_A_PROFILE_WITH_THAT_NAME_ALREADY_EXISTS
     end
     if matchingProfile == existingProfileName and profileName == existingProfileName then
-        return nil, "Enter a different profile name."
+        return nil, L.UI_ENTER_A_DIFFERENT_PROFILE_NAME
     end
 
     return profileName
@@ -647,26 +648,26 @@ end
 
 local function ValidateNewThemeName(themeName, existingThemeName)
     if type(themeName) ~= "string" then
-        return nil, "Enter a theme name."
+        return nil, L.UI_ENTER_A_THEME_NAME_2
     end
 
     themeName = strtrim(themeName)
     if themeName == "" then
-        return nil, "Enter a theme name."
+        return nil, L.UI_ENTER_A_THEME_NAME_2
     end
     if #themeName > MAX_THEME_NAME_LENGTH then
-        return nil, "Theme names cannot exceed 64 bytes."
+        return nil, L.UI_THEME_NAMES_CANNOT_EXCEED_64_BYTES
     end
     if string.lower(themeName) == string.lower(DEFAULT_THEME_NAME) then
-        return nil, "Default is reserved and cannot be changed."
+        return nil, L.UI_DEFAULT_IS_RESERVED_AND_CANNOT_BE_CHANGED
     end
 
     local matchingTheme = FindThemeByName(themeName)
     if matchingTheme and matchingTheme ~= existingThemeName then
-        return nil, "A theme with that name already exists."
+        return nil, L.UI_A_THEME_WITH_THAT_NAME_ALREADY_EXISTS
     end
     if matchingTheme == existingThemeName and themeName == existingThemeName then
-        return nil, "Enter a different theme name."
+        return nil, L.UI_ENTER_A_DIFFERENT_THEME_NAME
     end
 
     return themeName
@@ -787,10 +788,10 @@ end
 
 function Database.GetThemeDescription(themeName)
     if themeName == DEFAULT_THEME_NAME then
-        return "Editable built-in fallback theme. Its name is reserved."
+        return L.UI_EDITABLE_BUILT_IN_FALLBACK_THEME_ITS_NAME_IS_RESERVED
     end
     local definition = builtInThemeByName[themeName]
-    return definition and definition.description or "Custom theme."
+    return definition and definition.description or L.UI_CUSTOM_THEME
 end
 
 
@@ -801,20 +802,20 @@ end
 
 function Database.GetProfileDescription(profileName)
     if profileName == DEFAULT_PROFILE_NAME then
-        return "Editable built-in fallback profile. Its name is reserved."
+        return L.UI_EDITABLE_BUILT_IN_FALLBACK_PROFILE_ITS_NAME_IS_RESERVED
     end
 
-    return "Custom profile."
+    return L.UI_CUSTOM_PROFILE
 end
 
 
 function Database.SetProfileTheme(profileName, themeName)
     local profile = Database.GetProfile(profileName)
     if type(profile) ~= "table" then
-        return false, "That profile does not exist."
+        return false, L.UI_THAT_PROFILE_DOES_NOT_EXIST
     end
     if not Database.GetTheme(themeName) then
-        return false, "That theme does not exist."
+        return false, L.UI_THAT_THEME_DOES_NOT_EXIST
     end
 
     CancelThemeColorEdit()
@@ -846,17 +847,17 @@ end
 
 function Database.CopyTheme(sourceThemeName, newThemeName)
     local source = Database.GetTheme(sourceThemeName)
-    if not source then return false, "The source theme does not exist." end
+    if not source then return false, L.UI_THE_SOURCE_THEME_DOES_NOT_EXIST end
     return Database.CreateTheme(newThemeName, source.settings)
 end
 
 
 function Database.RenameTheme(oldThemeName, newThemeName)
     if oldThemeName == DEFAULT_THEME_NAME then
-        return false, "The Default theme cannot be renamed."
+        return false, L.UI_THE_DEFAULT_THEME_CANNOT_BE_RENAMED
     end
     local theme = Database.GetTheme(oldThemeName)
-    if not theme then return false, "That theme does not exist." end
+    if not theme then return false, L.UI_THAT_THEME_DOES_NOT_EXIST end
 
     local validName, errorMessage = ValidateNewThemeName(newThemeName, oldThemeName)
     if not validName then return false, errorMessage end
@@ -880,15 +881,15 @@ end
 
 function Database.DeleteTheme(themeName, confirmedInUse)
     if themeName == DEFAULT_THEME_NAME then
-        return false, "The Default theme cannot be deleted."
+        return false, L.UI_THE_DEFAULT_THEME_CANNOT_BE_DELETED
     end
     if not Database.GetTheme(themeName) then
-        return false, "That theme does not exist."
+        return false, L.UI_THAT_THEME_DOES_NOT_EXIST
     end
 
     local users = Database.GetProfilesUsingTheme(themeName)
     if #users > 0 and confirmedInUse ~= true then
-        return false, "This theme is used by profiles.", users
+        return false, L.UI_THIS_THEME_IS_USED_BY_PROFILES, users
     end
 
     CancelThemeColorEdit()
@@ -916,7 +917,7 @@ local function ValidateThemeRestoreName(themeName)
     for existingName in pairs(RPEmoteMenuDB.themes) do
         if existingName ~= themeName
             and string.lower(existingName) == string.lower(themeName) then
-            return nil, 'Rename Theme "' .. existingName .. '" before restoring "' .. themeName .. '".'
+            return nil, string.format(L.UI_RENAME_THEME_S_BEFORE_RESTORING_S, existingName, themeName)
         end
     end
     return true
@@ -931,7 +932,7 @@ function Database.RestoreTheme(themeName)
         source = definition and definition.settings
     end
     if not source then
-        return false, "Only Default and bundled themes have factory settings."
+        return false, L.UI_ONLY_DEFAULT_AND_BUNDLED_THEMES_HAVE_FACTORY_SETTINGS
     end
 
     local valid, errorMessage = ValidateThemeRestoreName(themeName)
@@ -956,12 +957,12 @@ end
 function Database.SetActiveProfile(profileName)
     if type(profileName) ~= "string"
         or type(RPEmoteMenuDB.profiles[profileName]) ~= "table" then
-        return false, "That profile does not exist."
+        return false, L.UI_THAT_PROFILE_DOES_NOT_EXIST
     end
 
     local characterKey = Database.GetCharacterKey()
     if not characterKey then
-        return false, "The current character is not available yet."
+        return false, L.UI_THE_CURRENT_CHARACTER_IS_NOT_AVAILABLE_YET
     end
 
     CancelThemeColorEdit()
@@ -979,10 +980,10 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings, s
 
     local characterKey = Database.GetCharacterKey()
     if not characterKey then
-        return false, "The current character is not available yet."
+        return false, L.UI_THE_CURRENT_CHARACTER_IS_NOT_AVAILABLE_YET
     end
     if sourceThemeName ~= nil and not Database.GetTheme(sourceThemeName) then
-        return false, "The source theme does not exist."
+        return false, L.UI_THE_SOURCE_THEME_DOES_NOT_EXIST
     end
 
     CancelThemeColorEdit()
@@ -1007,7 +1008,7 @@ end
 function Database.CopyProfile(sourceProfileName, newProfileName)
     local source = RPEmoteMenuDB.profiles[sourceProfileName]
     if type(source) ~= "table" then
-        return false, "The source profile does not exist."
+        return false, L.UI_THE_SOURCE_PROFILE_DOES_NOT_EXIST
     end
 
     return Database.CreateProfile(
@@ -1018,12 +1019,12 @@ end
 
 function Database.RenameProfile(oldProfileName, newProfileName)
     if oldProfileName == DEFAULT_PROFILE_NAME then
-        return false, "The Default profile cannot be renamed."
+        return false, L.UI_THE_DEFAULT_PROFILE_CANNOT_BE_RENAMED
     end
 
     local profile = RPEmoteMenuDB.profiles[oldProfileName]
     if type(profile) ~= "table" then
-        return false, "That profile does not exist."
+        return false, L.UI_THAT_PROFILE_DOES_NOT_EXIST
     end
 
     local validName, errorMessage = ValidateNewProfileName(newProfileName, oldProfileName)
@@ -1048,10 +1049,10 @@ end
 
 function Database.DeleteProfile(profileName)
     if profileName == DEFAULT_PROFILE_NAME then
-        return false, "The Default profile cannot be deleted."
+        return false, L.UI_THE_DEFAULT_PROFILE_CANNOT_BE_DELETED
     end
     if type(RPEmoteMenuDB.profiles[profileName]) ~= "table" then
-        return false, "That profile does not exist."
+        return false, L.UI_THAT_PROFILE_DOES_NOT_EXIST
     end
 
     CancelThemeColorEdit()
@@ -1271,7 +1272,7 @@ end
 
 function Database.RestoreProfile(profileName)
     if profileName ~= DEFAULT_PROFILE_NAME then
-        return false, "Only the Default profile has factory settings."
+        return false, L.UI_ONLY_THE_DEFAULT_PROFILE_HAS_FACTORY_SETTINGS
     end
     CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
@@ -1333,13 +1334,13 @@ end
 
 function Database.DuplicateEmote(categoryIndex, emoteIndex)
     if not Database.CanEditActiveProfile() then
-        return false, "The Default profile's emotes cannot be edited."
+        return false, L.UI_THE_DEFAULT_PROFILE_S_EMOTES_CANNOT_BE_EDITED
     end
 
     local category = Database.GetCategory(categoryIndex)
     local source = category and category.emotes and category.emotes[emoteIndex]
     if not EmoteHasContent(source) then
-        return false, "That emote is empty."
+        return false, L.UI_THAT_EMOTE_IS_EMPTY
     end
 
     for destinationIndex = 1, MAX_EMOTES do
@@ -1353,19 +1354,19 @@ function Database.DuplicateEmote(categoryIndex, emoteIndex)
         end
     end
 
-    return false, "This category already has ten emotes."
+    return false, L.UI_THIS_CATEGORY_ALREADY_HAS_TEN_EMOTES
 end
 
 
 function Database.DuplicateCategory(categoryIndex)
     if not Database.CanEditActiveProfile() then
-        return false, "The Default profile's categories cannot be edited."
+        return false, L.UI_THE_DEFAULT_PROFILE_S_CATEGORIES_CANNOT_BE_EDITED
     end
 
     local categories = Database.GetCategories()
     local source = categories[categoryIndex]
     if type(source) ~= "table" then
-        return false, "That category does not exist."
+        return false, L.UI_THAT_CATEGORY_DOES_NOT_EXIST
     end
 
     local destinationIndex
@@ -1388,7 +1389,7 @@ function Database.DuplicateCategory(categoryIndex)
     end
 
     if not destinationIndex then
-        return false, "This profile already has ten categories."
+        return false, L.UI_THIS_PROFILE_ALREADY_HAS_TEN_CATEGORIES
     end
 
     local baseName = strtrim(NormalizeString(source.name))
@@ -1423,3 +1424,4 @@ function Database.DuplicateCategory(categoryIndex)
     categories[destinationIndex] = copy
     return true, destinationIndex
 end
+

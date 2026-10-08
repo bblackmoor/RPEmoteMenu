@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 local Serialization = addon.Serialization
@@ -63,7 +64,7 @@ local function CreateExchangeDialogFrame()
     local closeButton = Widgets.CreateDialogButton(dialog, "", 120, 24)
     closeButton:SetSize(110, 24)
     closeButton:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 14)
-    closeButton:SetText("Close")
+    closeButton:SetText(L.UI_CLOSE)
     closeButton:SetScript("OnClick", function()
         dialog:Hide()
     end)
@@ -86,7 +87,7 @@ local function InstallExchangeModes(dialog)
         dialog.onThemeImported = options.onThemeImported
         dialog.title:SetText(options.title)
         dialog.instructions:SetText(options.instructions)
-        dialog.actionButton:SetText(options.actionText or "Select All")
+        dialog.actionButton:SetText(options.actionText or L.UI_SELECT_ALL)
         dialog.SetStatus("")
         dialog.editBox:SetText(options.text or "")
         if options.mode == "export" then dialog.editBox:SetCursorPosition(0) end
@@ -107,8 +108,8 @@ local function InstallExchangeModes(dialog)
             mode = "export", dataType = "category",
             categoryIndex = categoryIndex,
             text = exported,
-            title = "Export Category " .. categoryIndex,
-            instructions = "Copy this JSON to share or save the category and its emotes.",
+            title = string.format(L.UI_EXPORT_CATEGORY_S, categoryIndex),
+            instructions = L.UI_COPY_THIS_JSON_TO_SHARE_OR_SAVE_THE_CATEGORY_AND,
         })
     end
 
@@ -117,9 +118,9 @@ local function InstallExchangeModes(dialog)
             mode = "import", dataType = "category",
             categoryIndex = categoryIndex,
             categoryTarget = Database.CaptureContentTarget(categoryIndex),
-            title = "Import Category " .. categoryIndex,
-            instructions = "Paste exported category JSON below. Importing replaces this category.",
-            actionText = "Import",
+            title = string.format(L.UI_IMPORT_CATEGORY_S, categoryIndex),
+            instructions = L.UI_PASTE_EXPORTED_CATEGORY_JSON_BELOW_IMPORTING_REPLACES_THIS_CATEGORY,
+            actionText = L.UI_IMPORT,
         })
     end
 
@@ -132,9 +133,8 @@ local function InstallExchangeModes(dialog)
         return OpenSession({
             mode = "export", dataType = "profile",
             text = exported,
-            title = "Export Profile: " .. profileName,
-            instructions = "Copy this JSON to save the Profile's settings, categories, "
-                .. "emotes, and Theme name. Export the Theme separately to share its appearance.",
+            title = string.format(L.UI_EXPORT_PROFILE_S, profileName),
+            instructions = L.UI_COPY_THIS_JSON_TO_SAVE_THE_PROFILE_S_SETTINGS_CATEGORIES,
         })
     end
 
@@ -142,11 +142,9 @@ local function InstallExchangeModes(dialog)
         return OpenSession({
             mode = "import", dataType = "profile",
             onProfileImported = onProfileImported,
-            title = "Import Profile",
-            instructions = "Paste exported profile JSON below. Importing adds a new profile without "
-                .. "changing the current profile or character assignments. A missing "
-                .. "Theme is reported and replaced with Default Theme.",
-            actionText = "Import Profile",
+            title = L.UI_IMPORT_PROFILE,
+            instructions = L.UI_PASTE_EXPORTED_PROFILE_JSON_BELOW_IMPORTING_ADDS_A_NEW_PROFILE,
+            actionText = L.UI_IMPORT_PROFILE,
         })
     end
 
@@ -156,8 +154,8 @@ local function InstallExchangeModes(dialog)
         return OpenSession({
             mode = "export", dataType = "theme",
             text = exported,
-            title = "Export Theme: " .. themeName,
-            instructions = "Copy this JSON to save this Theme's appearance. Export its Profiles separately.",
+            title = string.format(L.UI_EXPORT_THEME_S, themeName),
+            instructions = L.UI_COPY_THIS_JSON_TO_SAVE_THIS_THEME_S_APPEARANCE_EXPORT,
         })
     end
 
@@ -165,9 +163,9 @@ local function InstallExchangeModes(dialog)
         return OpenSession({
             mode = "import", dataType = "theme",
             onThemeImported = onThemeImported,
-            title = "Import Theme",
-            instructions = "Paste exported Theme JSON below. Importing adds a new Theme and assigns it to the active Profile.",
-            actionText = "Import Theme",
+            title = L.UI_IMPORT_THEME,
+            instructions = L.UI_PASTE_EXPORTED_THEME_JSON_BELOW_IMPORTING_ADDS_A_NEW_THEME,
+            actionText = L.UI_IMPORT_THEME,
         })
     end
 
@@ -180,20 +178,17 @@ local function InstallExchangeModes(dialog)
         return OpenSession({
             mode = "export", dataType = "everything",
             text = exported,
-            title = "Export Everything",
-            instructions = "Copy this JSON to save all Profiles, Themes, and their relationships. "
-                .. "Character assignments are not included.",
+            title = L.UI_EXPORT_EVERYTHING,
+            instructions = L.UI_COPY_THIS_JSON_TO_SAVE_ALL_PROFILES_THEMES_AND_THEIR,
         })
     end
 
     function dialog:OpenEverythingImport()
         return OpenSession({
             mode = "import", dataType = "everything",
-            title = "Import Everything",
-            instructions = "Paste an Everything export below. Importing adds Profiles and Themes "
-                .. "with unique names, preserving their links. It does not replace or "
-                .. "activate existing data or change character assignments.",
-            actionText = "Import Everything",
+            title = L.UI_IMPORT_EVERYTHING,
+            instructions = L.UI_PASTE_AN_EVERYTHING_EXPORT_BELOW_IMPORTING_ADDS_PROFILES_AND_THEMES,
+            actionText = L.UI_IMPORT_EVERYTHING,
         })
     end
 
@@ -220,4 +215,5 @@ UI.RefreshExchangeDialog = function()
         exchangeDialog:UpdateActionState()
     end
 end
+
 

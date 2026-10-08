@@ -26,6 +26,8 @@ function StaticPopup_Show(name, text, _, data) request = {name = name, text = te
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')
 local addon = {Settings = {}, SettingsUI = {FIELD_GAP = 12}, MainWindow = {}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
 for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'Database.lua', 'Serialization.lua'}) do Load(name) end
 local db, media = addon.Database, LibStub('LibSharedMedia-3.0')
@@ -459,4 +461,5 @@ assert(applies == callsBeforeDefault)
 local restoredCount = assert(db.RestoreBuiltInThemes())
 assert(restoredCount == #addon.BuiltInThemes + 1)
 print('PASS real Theme widgets, native choices, font providers and tooltip ownership, shared edits, picker lifecycle and reset scope')
+
 

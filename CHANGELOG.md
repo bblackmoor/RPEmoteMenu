@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.253
+
+- Complete phase two of interface localization: remaining settings pages, dialogs, tooltips, result messages, validation, framework diagnostics and bundled-theme descriptions.
+- Use complete translation templates for messages containing names, counts and validation limits; preserve stored enum values, names, generated copy/import names, command text and schema version 2.
+- Add synthetic-translation regression coverage for dropdown values, validation, theme identity and byte-for-byte identical exports.
+
 ## 2.1.252
 
 - Begin interface localization with an English fallback table, client-locale selection, settings navigation and About-page strings.

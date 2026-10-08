@@ -6,6 +6,8 @@ local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml') -- Construct before PLAYER_LOGIN.
 function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 local addon = {VERSION = 'test', Settings = {}, SettingsUI = {FIELD_GAP = 12}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
 Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
 local db = addon.Database
@@ -224,4 +226,5 @@ for _, point in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
     end
 end
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')
+
 

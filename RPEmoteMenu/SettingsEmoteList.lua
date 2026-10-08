@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 local MainWindow = addon.MainWindow
@@ -27,7 +28,7 @@ end
 local function CreateEmoteListLayout(panel, headingY, topY)
     local listHeading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     listHeading:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, headingY)
-    listHeading:SetText("Emotes in this category")
+    listHeading:SetText(L.UI_EMOTES_IN_THIS_CATEGORY)
 
     local countText = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     countText:SetPoint("LEFT", listHeading, "RIGHT", 10, 0)
@@ -38,11 +39,11 @@ local function CreateEmoteListLayout(panel, headingY, topY)
     listScrollFrame:SetPoint("BOTTOMRIGHT", panel, "BOTTOMRIGHT", -48, 18)
     listContent:SetSize(590, 1)
 
-    local addButton = Widgets.CreateButton(listContent, "Add Emote", nil, 110, 24)
+    local addButton = Widgets.CreateButton(listContent, L.UI_ADD_EMOTE, nil, 110, 24)
 
     local emptyText = listContent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     emptyText:SetPoint("TOPLEFT", listContent, "TOPLEFT", 10, -15)
-    emptyText:SetText("No emotes yet. Use Add Emote below.")
+    emptyText:SetText(L.UI_NO_EMOTES_YET_USE_ADD_EMOTE_BELOW)
     emptyText:SetTextColor(0.65, 0.65, 0.65, 1)
 
     return countText, listContent, addButton, emptyText
@@ -66,7 +67,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         local populated = GetPopulatedEmotes(getSelectedCategoryIndex())
         local editable = Database.CanEditActiveProfile()
 
-        countText:SetText("(" .. #populated .. " of " .. MAX_EMOTES .. ")")
+        countText:SetText(string.format(L.UI_S_OF_S, #populated, MAX_EMOTES))
         emptyText:SetShown(#populated == 0)
         addButton:SetEnabled(editable and #populated < MAX_EMOTES)
         local rowsHeight = #populated * 45
@@ -81,14 +82,14 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
                 local label = strtrim(entry.emote.label or "")
                 row.emoteIndex = entry.index
                 row.visiblePosition = rowIndex
-                row.Label:SetText(label ~= "" and label or "Unnamed emote")
+                row.Label:SetText(label ~= "" and label or L.UI_UNNAMED_EMOTE)
 
                 local summary = entry.emote.defaultCommand or ""
                 if strtrim(entry.emote.targetedCommand or "") ~= "" then
                     summary = summary .. "  |  " .. entry.emote.targetedCommand
                 end
                 row.Summary:SetText(summary)
-                row.EditButton:SetText(editable and "Edit" or "View")
+                row.EditButton:SetText(editable and L.UI_EDIT or L.UI_VIEW)
                 row.DuplicateButton:SetEnabled(editable and #populated < MAX_EMOTES)
                 row.DeleteButton:SetEnabled(editable)
                 row:Show()
@@ -106,7 +107,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         end
 
         if not Database.IsCurrentContentTarget(data and data.target) then
-            print("RP Emote Menu: The Profile or emote changed. Reopen the delete confirmation.")
+            print(L.UI_RP_EMOTE_MENU_THE_PROFILE_OR_EMOTE_CHANGED_REOPEN_THE)
             return
         end
         local category = Database.GetCategory(data.categoryIndex)
@@ -120,9 +121,9 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
     end
 
     StaticPopupDialogs["RPEMOTEMENU_DELETE_EMOTE"] = {
-        text = "Delete the emote %s?\n\nThis cannot be undone.",
-        button1 = DELETE or "Delete",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_DELETE_THE_EMOTE_S_THIS_CANNOT_BE_UNDONE,
+        button1 = DELETE or L.UI_DELETE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, data)
             DeleteEmote(data)
         end,
@@ -200,11 +201,11 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         row.Summary:SetWordWrap(false)
         row.Summary:SetTextColor(0.7, 0.7, 0.7, 1)
 
-        row.EditButton = Widgets.CreateButton(row, "Edit", nil, 52, 22)
+        row.EditButton = Widgets.CreateButton(row, L.UI_EDIT, nil, 52, 22)
         row.EditButton:SetPoint("RIGHT", row, "RIGHT", -154, 0)
-        row.DuplicateButton = Widgets.CreateButton(row, "Duplicate", nil, 76, 22)
+        row.DuplicateButton = Widgets.CreateButton(row, L.UI_DUPLICATE, nil, 76, 22)
         row.DuplicateButton:SetPoint("RIGHT", row, "RIGHT", -73, 0)
-        row.DeleteButton = Widgets.CreateButton(row, "Delete", nil, 62, 22)
+        row.DeleteButton = Widgets.CreateButton(row, L.UI_DELETE, nil, 62, 22)
         row.DeleteButton:SetPoint("RIGHT", row, "RIGHT", -5, 0)
         row:Hide()
         return row
@@ -235,7 +236,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
             if row.emoteIndex then
                 StaticPopup_Show(
                     "RPEMOTEMENU_DELETE_EMOTE",
-                    row.Label:GetText() or "this emote",
+                    row.Label:GetText() or L.UI_THIS_EMOTE,
                     nil,
                     {
                         categoryIndex = getSelectedCategoryIndex(),
@@ -277,4 +278,5 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
 
     return RefreshEmoteRows
 end
+
 

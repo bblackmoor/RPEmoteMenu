@@ -1,5 +1,6 @@
 -- Import execution, confirmation targets, action state and result messages.
 local _, addon = ...
+local L = addon.L
 local Database = addon.Database
 local Serialization = addon.Serialization
 local MAX_EMOTES = addon.MAX_EMOTES
@@ -52,7 +53,7 @@ function Actions.Install(dialog)
                 or Database.IsCurrentContentTarget(self.categoryTarget)
             actionButton:SetEnabled(hasText and validTarget)
             if not validTarget then
-                SetStatus("The Profile or category changed. Reopen Import before replacing content.", true)
+                SetStatus(L.UI_THE_PROFILE_OR_CATEGORY_CHANGED_REOPEN_IMPORT_BEFORE_REPLACING_CONTENT, true)
             end
         else
             actionButton:SetEnabled(true)
@@ -76,7 +77,7 @@ function Actions.Install(dialog)
             if dialog.mode ~= "import" or dialog.dataType ~= "category"
                 or target ~= dialog.categoryTarget
                 or not Database.IsCurrentContentTarget(target) then
-                SetStatus("The Profile or category changed. Reopen Import before replacing content.", true)
+                SetStatus(L.UI_THE_PROFILE_OR_CATEGORY_CHANGED_REOPEN_IMPORT_BEFORE_REPLACING_CONTENT, true)
                 dialog:UpdateActionState()
                 return
             end
@@ -107,30 +108,27 @@ function Actions.Install(dialog)
                 dialog.onProfileImported()
             end
 
-            local message = "Imported profile " .. sourceProfileName
-                .. " as " .. result .. "."
+            local message = string.format(L.UI_IMPORTED_PROFILE_S_AS_S, sourceProfileName, result)
             if detail then
-                message = message .. " Theme " .. detail
-                    .. " was unavailable; assigned Default Theme."
+                message = string.format(L.UI_IMPORTED_PROFILE_MISSING_THEME, sourceProfileName, result, detail)
             end
             SetStatus(message)
         elseif dataType == "theme" then
             if dialog.onThemeImported then
                 dialog.onThemeImported(result)
             end
-            SetStatus("Imported Theme " .. sourceProfileName .. " as " .. result .. ".")
+            SetStatus(string.format(L.UI_IMPORTED_THEME_S_AS_S, sourceProfileName, result))
         elseif dataType == "category" then
-            SetStatus("Imported category " .. result .. ".")
+            SetStatus(string.format(L.UI_IMPORTED_CATEGORY_S, result))
         else
-            SetStatus("Added " .. result .. " Profiles and "
-                .. detail .. " Themes.")
+            SetStatus(string.format(L.UI_ADDED_S_PROFILES_AND_S_THEMES, result, detail))
         end
     end
 
     StaticPopupDialogs["RPEMOTEMENU_IMPORT_OVER_CATEGORY"] = {
-        text = "Replace %s and all of its emotes with the imported category?\n\nThis cannot be undone.",
-        button1 = "Replace",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_REPLACE_S_AND_ALL_OF_ITS_EMOTES_WITH_THE_IMPORTED,
+        button1 = L.UI_REPLACE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, data)
             PerformImport(data.importText, "category", data.categoryIndex, data.target)
         end,
@@ -144,7 +142,7 @@ function Actions.Install(dialog)
         if dialog.mode == "export" then
             editBox:SetFocus()
             editBox:HighlightText()
-            SetStatus("Press Ctrl+C to copy the selected text.")
+            SetStatus(L.UI_PRESS_CTRL_C_TO_COPY_THE_SELECTED_TEXT)
             return
         end
 
@@ -158,7 +156,7 @@ function Actions.Install(dialog)
             and CategoryHasContent(Database.GetCategory(dialog.categoryIndex)) then
             StaticPopup_Show(
                 "RPEMOTEMENU_IMPORT_OVER_CATEGORY",
-                "Category " .. dialog.categoryIndex,
+                string.format(L.UI_CATEGORY_S, dialog.categoryIndex),
                 nil,
                 {
                     importText = importText,
@@ -174,3 +172,4 @@ function Actions.Install(dialog)
 
     dialog.SetStatus = SetStatus
 end
+

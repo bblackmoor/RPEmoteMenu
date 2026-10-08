@@ -3,6 +3,7 @@
 -- commit 044722657498da26ecbc74c05bfe7cd70ab5b8bc; editing/picker policy is ours.
 -- Construction is lazy; settings pages compose labels and bind data ownership.
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Widgets = {}
 addon.SettingsWidgets = Widgets
@@ -44,10 +45,10 @@ local requiredMethods = {"CreateSwitch", "CreateDropDown",
 -- table after this file loads. Converted pages require a compatible library.
 function Widgets.GetFramework()
     local framework = LibStub and LibStub:GetLibrary("DetailsFramework-1.0", true)
-    if not framework then return nil, "Details Framework is unavailable" end
+    if not framework then return nil, L.UI_DETAILS_FRAMEWORK_IS_UNAVAILABLE end
     for _, method in ipairs(requiredMethods) do
         if type(framework[method]) ~= "function" then
-            return nil, "Details Framework is missing " .. method
+            return nil, string.format(L.UI_DETAILS_FRAMEWORK_IS_MISSING_S, method)
         end
     end
     return framework
@@ -460,3 +461,4 @@ function Widgets.CreateIntegerEntry(parent, getValue, applyValue, options)
     end)
     return handle
 end
+

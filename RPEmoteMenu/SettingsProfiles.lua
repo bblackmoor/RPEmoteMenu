@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 local Widgets = addon.SettingsWidgets
@@ -22,21 +23,20 @@ local function CreateProfilesPanel()
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
-    heading:SetText("Profiles")
+    heading:SetText(L.UI_PROFILES)
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Profiles are shared account-wide; each character selects one. " ..
-        "Default can be edited and restored, but not renamed or deleted."
+        L.UI_PROFILES_ARE_SHARED_ACCOUNT_WIDE_EACH_CHARACTER_SELECTS_ONE_DEFAULT
     )
     description:SetTextColor(0.72, 0.72, 0.72)
 
     local currentProfileLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     currentProfileLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, profileLabelY)
-    currentProfileLabel:SetText("Selected profile")
+    currentProfileLabel:SetText(L.UI_SELECTED_PROFILE)
 
     local selector
 
@@ -65,7 +65,7 @@ local function CreateProfilesPanel()
 
     local themeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     themeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeLabelY)
-    themeLabel:SetText("Theme assigned to this Profile")
+    themeLabel:SetText(L.UI_THEME_ASSIGNED_TO_THIS_PROFILE)
 
     local function UpdateButtonState()
         local editable = Database.CanEditActiveProfile()
@@ -96,7 +96,7 @@ local function CreateProfilesPanel()
         return options
     end, function(name)
         local success, errorMessage = Database.SetActiveProfile(name)
-        if success then SetStatus("Using profile " .. name .. ".")
+        if success then SetStatus(string.format(L.UI_USING_PROFILE_S, name))
         else SetStatus(errorMessage, true); panel.Refresh() end
     end)
     selector:SetWidth(250)
@@ -110,13 +110,13 @@ local function CreateProfilesPanel()
         return options
     end, function(name)
         local success, errorMessage = Database.SetProfileTheme(Database.GetActiveProfileName(), name)
-        if success then SetStatus("Assigned " .. name .. " to this Profile.")
+        if success then SetStatus(string.format(L.UI_ASSIGNED_S_TO_THIS_PROFILE, name))
         else SetStatus(errorMessage, true); panel.Refresh() end
     end)
     themeSelector:SetWidth(250)
     themeSelector:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, themeSelectorY)
 
-    local restoreDefaultButton = Widgets.CreateButton(panel, "Restore Default", function()
+    local restoreDefaultButton = Widgets.CreateButton(panel, L.UI_RESTORE_DEFAULT, function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_DEFAULT_PROFILE", nil, nil,
             UI.CaptureProfileDialogTarget("Default"))
     end, 140, 24)
@@ -129,8 +129,7 @@ local function CreateProfilesPanel()
     profileNote:SetWidth(620)
     profileNote:SetJustifyH("LEFT")
     profileNote:SetText(
-        "Create starts with built-in emotes and the current Theme; Copy duplicates " ..
-        "the selected Profile and its Theme reference."
+        L.UI_CREATE_STARTS_WITH_BUILT_IN_EMOTES_AND_THE_CURRENT_THEME
     )
     profileNote:SetTextColor(0.8, 0.8, 0.8)
 
@@ -144,30 +143,30 @@ local function CreateProfilesPanel()
         })
     end
 
-    createButton = Widgets.CreateButton(panel, "Create", function() OpenNameDialog("create") end, 95, 24)
+    createButton = Widgets.CreateButton(panel, L.UI_CREATE, function() OpenNameDialog("create") end, 95, 24)
     createButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, actionsY)
-    copyButton = Widgets.CreateButton(panel, "Copy", function() OpenNameDialog("copy") end, 95, 24)
+    copyButton = Widgets.CreateButton(panel, L.UI_COPY, function() OpenNameDialog("copy") end, 95, 24)
     copyButton:SetPoint("LEFT", createButton, "RIGHT", 8, 0)
 
-    renameButton = Widgets.CreateButton(panel, "Rename", function()
+    renameButton = Widgets.CreateButton(panel, L.UI_RENAME, function()
         local name = Database.GetActiveProfileName()
         if not Database.CanRenameOrDeleteActiveProfile() then return end
         StaticPopup_Show("RPEMOTEMENU_RENAME_PROFILE", name, nil, UI.CaptureProfileDialogTarget(name))
     end, 95, 24)
     renameButton:SetPoint("LEFT", copyButton, "RIGHT", 8, 0)
 
-    deleteButton = Widgets.CreateButton(panel, "Delete", function()
+    deleteButton = Widgets.CreateButton(panel, L.UI_DELETE, function()
         local name = Database.GetActiveProfileName()
         if not Database.CanRenameOrDeleteActiveProfile() then return end
         StaticPopup_Show("RPEMOTEMENU_DELETE_PROFILE", name, nil, UI.CaptureProfileDialogTarget(name))
     end, 95, 24)
     deleteButton:SetPoint("LEFT", renameButton, "RIGHT", 8, 0)
 
-    exportProfileButton = Widgets.CreateButton(panel, "Export Profile", function()
+    exportProfileButton = Widgets.CreateButton(panel, L.UI_EXPORT_PROFILE, function()
         GetExchangeDialog():OpenProfileExport()
     end, 125, 24)
     exportProfileButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, exchangeY)
-    importProfileButton = Widgets.CreateButton(panel, "Import Profile", function()
+    importProfileButton = Widgets.CreateButton(panel, L.UI_IMPORT_PROFILE, function()
         GetExchangeDialog():OpenProfileImport(UpdateButtonState)
     end, 125, 24)
     importProfileButton:SetPoint("LEFT", exportProfileButton, "RIGHT", 8, 0)
@@ -192,4 +191,5 @@ end
 
 
 addon.SettingsPanels.Profiles = CreateProfilesPanel
+
 

@@ -1,11 +1,12 @@
 local _, addon = ...
+local L = addon.L
 
 -- Bundled Themes contain visual settings only. Database.lua fills omitted
 -- values from the Default Theme without changing their factory definitions.
 addon.BuiltInThemes = {
     {
         name = "Gilded Shadow",
-        description = "Black, gold, and cyan with a narrow, highly legible typeface.",
+        description = L.UI_BLACK_GOLD_AND_CYAN_WITH_A_NARROW_HIGHLY_LEGIBLE_TYPEFACE,
         settings = {
             categoryBackgroundColor = {r = 0, g = 0, b = 0},
             categoryFont = "Friz Quadrata",
@@ -24,7 +25,7 @@ addon.BuiltInThemes = {
     },
     {
         name = "Crimson Night",
-        description = "A clean black-and-crimson design with strong contrast.",
+        description = L.UI_A_CLEAN_BLACK_AND_CRIMSON_DESIGN_WITH_STRONG_CONTRAST,
         settings = {
             categoryBackgroundColor = {r = 0, g = 0, b = 0},
             categoryFont = "Arial Narrow",
@@ -44,7 +45,7 @@ addon.BuiltInThemes = {
     },
     {
         name = "Teal",
-        description = "Large teal text with a spacious, high-contrast layout.",
+        description = L.UI_LARGE_TEAL_TEXT_WITH_A_SPACIOUS_HIGH_CONTRAST_LAYOUT,
         settings = {
             categoryBackgroundColor = {r = 0.12, g = 0.12, b = 0.12},
             categoryFont = "Friz Quadrata",
@@ -63,7 +64,7 @@ addon.BuiltInThemes = {
     },
     {
         name = "High Contrast",
-        description = "A colorblind-friendly theme with bright text and a bold yellow selection.",
+        description = L.UI_A_COLORBLIND_FRIENDLY_THEME_WITH_BRIGHT_TEXT_AND_A_BOLD,
         settings = {
             categoryBackgroundColor = {r = 0.0627451, g = 0.0941176, b = 0.1254902},
             categoryFont = "Friz Quadrata",
@@ -82,7 +83,7 @@ addon.BuiltInThemes = {
     },
     {
         name = "Moonlight",
-        description = "A restrained blue-and-silver theme designed for easy reading.",
+        description = L.UI_A_RESTRAINED_BLUE_AND_SILVER_THEME_DESIGNED_FOR_EASY_READING,
         settings = {
             categoryBackgroundColor = {r = 0.04, g = 0.06, b = 0.12},
             categoryFont = "Friz Quadrata",
@@ -100,3 +101,4 @@ addon.BuiltInThemes = {
         }
     }
 }
+

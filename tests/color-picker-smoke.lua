@@ -1,5 +1,7 @@
 -- Real database mutations, DF swatches and the shared picker manager.
 local addon={SettingsUI={FIELD_GAP=12},Settings={},MainWindow={}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function loadModule(n) assert(loadfile('RPEmoteMenu/'..n))('RPEmoteMenu',addon) end
 function strtrim(v) return (v:gsub('^%s+',''):gsub('%s+$','')) end
 function UnitName() return 'Tester','Realm' end
@@ -135,3 +137,4 @@ assert(not db.CopyTheme(db.GetActiveThemeName(),db.GetActiveThemeName()))
 same(color(),{r=0.02,g=0.03,b=0.04}); assert(ColorPickerFrame.shown)
 info.cancelFunc(); same(color(),original); ColorPickerFrame:Hide()
 print('color-picker smoke passed')
+

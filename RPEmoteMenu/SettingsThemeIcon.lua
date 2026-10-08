@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 
 local UI = addon.SettingsUI
 local Database = addon.Database
@@ -45,7 +46,7 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
 
     local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    label:SetText("Icon color")
+    label:SetText(L.UI_ICON_COLOR)
 
     local button = Widgets.CreateColorPicker(parent, function()
         return GetSelectedSettings().minimizedIconColor
@@ -57,7 +58,7 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
         button:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y - 22)
     end
 
-    local resetButton = Widgets.CreateButton(parent, "Restore Yellow", function()
+    local resetButton = Widgets.CreateButton(parent, L.UI_RESTORE_YELLOW, function()
         UI.CancelColorEdit()
         SetColor(addon.DefaultThemeSettings.minimizedIconColor)
     end, 150, 24)
@@ -76,3 +77,4 @@ function UI.CreateThemeIconColorControls(parent, x, y, inline, getSelectedThemeN
     RefreshSwatch()
     return RefreshSwatch
 end
+

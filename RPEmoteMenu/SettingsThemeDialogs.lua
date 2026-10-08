@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 
@@ -21,7 +22,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
             and Database.GetTheme(target.name) == target.object then
             return true
         end
-        SetStatus("The Theme changed. Reopen the dialog before continuing.", true)
+        SetStatus(L.UI_THE_THEME_CHANGED_REOPEN_THE_DIALOG_BEFORE_CONTINUING, true)
         return false
     end
     local function GetEditBox(popup)
@@ -32,15 +33,15 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
     end
 
     StaticPopupDialogs["RPEMOTEMENU_THEME_NAME"] = {
-        text = "Enter a Theme name.", button1 = "Create", button2 = CANCEL or "Cancel",
+        text = L.UI_ENTER_A_THEME_NAME, button1 = L.UI_CREATE, button2 = CANCEL or L.UI_CANCEL,
         hasEditBox = true, maxLetters = addon.SettingDefinitions.nameLengths.theme, editBoxWidth = 260,
         OnShow = function(self, data)
             local box = GetEditBox(self)
             box:SetText(data.initial)
             box:SetFocus()
             box:HighlightText()
-            GetAcceptButton(self):SetText(data.action == "rename" and "Rename"
-                or data.action == "copy" and "Copy" or "Create")
+            GetAcceptButton(self):SetText(data.action == "rename" and L.UI_RENAME
+                or data.action == "copy" and L.UI_COPY or L.UI_CREATE)
         end,
         OnAccept = function(self, data)
             if data.action ~= "create" and not CheckTarget(data.target) then return end
@@ -55,7 +56,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
             end
             if success then
                 SelectTheme(result)
-                SetStatus("Theme " .. result .. " is ready.")
+                SetStatus(string.format(L.UI_THEME_S_IS_READY, result))
             else
                 SetStatus(result, true)
             end
@@ -69,12 +70,12 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_DELETE_THEME"] = {
-        text = "%s", button1 = DELETE or "Delete", button2 = CANCEL or "Cancel",
+        text = "%s", button1 = DELETE or L.UI_DELETE, button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, data)
             if not CheckTarget(data.target) then return end
             local users = Database.GetProfilesUsingTheme(data.name)
             if not data.profiles or #users ~= #data.profiles then
-                SetStatus("Profiles using this Theme changed. Reopen the deletion dialog to review them.", true)
+                SetStatus(L.UI_PROFILES_USING_THIS_THEME_CHANGED_REOPEN_THE_DELETION_DIALOG_TO, true)
                 return
             end
             local confirmedProfiles = {}
@@ -83,14 +84,14 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
             end
             for _, name in ipairs(users) do
                 if confirmedProfiles[name] ~= Database.GetProfile(name) then
-                    SetStatus("Profiles using this Theme changed. Reopen the deletion dialog to review them.", true)
+                    SetStatus(L.UI_PROFILES_USING_THIS_THEME_CHANGED_REOPEN_THE_DELETION_DIALOG_TO, true)
                     return
                 end
             end
             local success, result = Database.DeleteTheme(data.name, data.confirmed)
             if success then
                 SelectTheme(Database.GetActiveThemeName())
-                SetStatus("Deleted " .. data.name .. ".")
+                SetStatus(string.format(L.UI_DELETED_S, data.name))
             else
                 SetStatus(result, true)
             end
@@ -99,21 +100,21 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_THEME"] = {
-        text = "Restore %s to its factory appearance? Your edits to this Theme will be lost.",
-        button1 = "Restore", button2 = CANCEL or "Cancel",
+        text = L.UI_RESTORE_S_TO_ITS_FACTORY_APPEARANCE_YOUR_EDITS_TO_THIS,
+        button1 = L.UI_RESTORE, button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, target)
             if not CheckTarget(target) then return end
             local name = target.name
             local success, errorMessage = Database.RestoreTheme(name)
-            SetStatus(success and ("Restored " .. name .. ".") or errorMessage,
+            SetStatus(success and (string.format(L.UI_RESTORED_S, name)) or errorMessage,
                 not success)
         end,
         timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_BUNDLED_THEMES"] = {
-        text = "Restore Default Theme and all bundled Themes to factory appearance? Edited presets will be reset and missing ones recreated.",
-        button1 = "Restore", button2 = CANCEL or "Cancel",
+        text = L.UI_RESTORE_DEFAULT_THEME_AND_ALL_BUNDLED_THEMES_TO_FACTORY_APPEARANCE,
+        button1 = L.UI_RESTORE, button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, targets)
             -- Check every slot before restoring any, including intentionally missing presets.
             if not targets then
@@ -128,7 +129,7 @@ function UI.RegisterThemeDialogs(SelectTheme, SetStatus)
                 SetStatus(errorMessage, true)
                 return
             end
-            SetStatus("Restored " .. count .. " Themes, including Default.")
+            SetStatus(string.format(L.UI_RESTORED_S_THEMES_INCLUDING_DEFAULT, count))
         end,
         timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3
     }
@@ -141,13 +142,12 @@ function UI.ConfirmThemeDeletion(themeName)
     for _, name in ipairs(users) do
         profiles[#profiles + 1] = {name = name, object = Database.GetProfile(name)}
     end
-    local message = "Delete Theme " .. themeName .. "?"
+    local message = string.format(L.UI_DELETE_THEME_S, themeName)
     if #users > 0 then
-        message = message .. "\n\nProfiles using it: "
-            .. table.concat(users, ", ")
-            .. "\n\nThey will be assigned Default Theme."
+        message = string.format(L.UI_DELETE_USED_THEME, themeName, table.concat(users, ", "))
     end
     StaticPopup_Show("RPEMOTEMENU_DELETE_THEME", message, nil,
         {name = themeName, confirmed = #users > 0, profiles = profiles,
             target = UI.CaptureThemeDialogTarget(themeName)})
 end
+

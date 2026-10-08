@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local definitions = addon.SettingDefinitions
 local limits = definitions.limits
 local UI = addon.SettingsUI
@@ -53,7 +54,7 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
         local choices = {}
         for _, font in ipairs(addon.GetAvailableFonts(getSettings()[key])) do
             choices[#choices + 1] = {value = font.name,
-                label = font.unavailable and font.name .. " (unavailable)" or font.name,
+                label = font.unavailable and string.format(L.UI_S_UNAVAILABLE, font.name) or font.name,
                 font = font.path}
         end
         return choices
@@ -74,16 +75,16 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
         local available = addon.IsFontAvailable(name)
         self.MissingFontName = not available and name or nil
         self:InvalidateOptions()
-        self:SetValue(name, available and name or name .. " (unavailable)")
+        self:SetValue(name, available and name or string.format(L.UI_S_UNAVAILABLE, name))
         -- Menu rows preview fonts; the selected label must stay readable.
         self:SetLabelStyle(STANDARD_TEXT_FONT, 12, 1, available and 1 or 0.35, available and 1 or 0.35)
     end
     control:HookScript("OnEnter", function(frame)
         if not control.MissingFontName then return end
         GameTooltip:SetOwner(frame, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Font unavailable")
-        GameTooltip:AddLine(control.MissingFontName .. " is not registered by WoW or LibSharedMedia.", 1, 1, 1, true)
-        GameTooltip:AddLine("RP Emote Menu is displaying Friz Quadrata instead.", 0.8, 0.8, 0.8, true)
+        GameTooltip:SetText(L.UI_FONT_UNAVAILABLE)
+        GameTooltip:AddLine(string.format(L.UI_S_IS_NOT_REGISTERED_BY_WOW_OR_LIBSHAREDMEDIA, control.MissingFontName), 1, 1, 1, true)
+        GameTooltip:AddLine(L.UI_RP_EMOTE_MENU_IS_DISPLAYING_FRIZ_QUADRATA_INSTEAD, 0.8, 0.8, 0.8, true)
         GameTooltip:Show()
     end)
     control:HookScript("OnLeave", HideOwnedTooltip)
@@ -108,7 +109,7 @@ local function CreateThemeManagementControls(panel)
 
     local label = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     label:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, labelY)
-    label:SetText("Theme to edit")
+    label:SetText(L.UI_THEME_TO_EDIT)
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, descriptionY)
@@ -139,9 +140,7 @@ local function CreateThemeManagementControls(panel)
         selectedName = Database.GetActiveThemeName()
         selector:InvalidateOptions()
         selector:SetValue(selectedName, selectedName)
-        description:SetText((Database.IsBuiltInThemeName(selectedName)
-                and "Bundled Theme: " or "") .. Database.GetThemeDescription(selectedName)
-            .. " Used by this character.")
+        description:SetText(string.format(Database.IsBuiltInThemeName(selectedName) and L.UI_BUNDLED_THEME_S_USED_BY_THIS_CHARACTER or L.UI_S_USED_BY_THIS_CHARACTER, Database.GetThemeDescription(selectedName)))
         renameButton:SetEnabled(selectedName ~= "Default")
         deleteButton:SetEnabled(selectedName ~= "Default")
         restoreButton:SetEnabled(selectedName == "Default"
@@ -152,11 +151,11 @@ local function CreateThemeManagementControls(panel)
         local options = {}
         for _, name in ipairs(Database.GetThemeNames()) do
             options[#options + 1] = {value = name,
-                label = Database.IsBuiltInThemeName(name) and name .. " (Bundled)" or name}
+                label = Database.IsBuiltInThemeName(name) and string.format(L.UI_S_BUNDLED, name) or name}
         end
         for _, definition in ipairs(addon.BuiltInThemes) do
             if not Database.GetTheme(definition.name) then
-                options[#options + 1] = {label = "Recreate " .. definition.name, value = definition.name}
+                options[#options + 1] = {label = string.format(L.UI_RECREATE_S, definition.name), value = definition.name}
             end
         end
         return options
@@ -165,7 +164,7 @@ local function CreateThemeManagementControls(panel)
             local success, message = Database.RestoreTheme(name)
             if not success then SetStatus(message, true); Refresh(); return end
             SelectTheme(name)
-            SetStatus("Recreated " .. name .. ".")
+            SetStatus(string.format(L.UI_RECREATED_S, name))
         else
             SelectTheme(name)
         end
@@ -181,34 +180,34 @@ local function CreateThemeManagementControls(panel)
         return button
     end
 
-    Button("Create", 20, primaryY, 95, function()
+    Button(L.UI_CREATE, 20, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "create", initial = ""})
     end)
-    Button("Copy", 123, primaryY, 95, function()
+    Button(L.UI_COPY, 123, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "copy", source = selectedName, initial = selectedName .. " Copy",
                 target = UI.CaptureThemeDialogTarget(selectedName)})
     end)
-    renameButton = Button("Rename", 226, primaryY, 95, function()
+    renameButton = Button(L.UI_RENAME, 226, primaryY, 95, function()
         StaticPopup_Show("RPEMOTEMENU_THEME_NAME", nil, nil,
             {action = "rename", source = selectedName, initial = selectedName,
                 target = UI.CaptureThemeDialogTarget(selectedName)})
     end)
-    deleteButton = Button("Delete", 329, primaryY, 95, function()
+    deleteButton = Button(L.UI_DELETE, 329, primaryY, 95, function()
         UI.ConfirmThemeDeletion(selectedName)
     end)
-    restoreButton = Button("Restore Theme", 20, secondaryY, 125, function()
+    restoreButton = Button(L.UI_RESTORE_THEME, 20, secondaryY, 125, function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_THEME", selectedName, nil, UI.CaptureThemeDialogTarget(selectedName))
     end)
-    Button("Export Theme", 153, secondaryY, 125, function()
+    Button(L.UI_EXPORT_THEME, 153, secondaryY, 125, function()
         local success, errorMessage = GetExchangeDialog():OpenThemeExport(selectedName)
         if not success then SetStatus(errorMessage, true) end
     end)
-    Button("Import Theme", 286, secondaryY, 125, function()
+    Button(L.UI_IMPORT_THEME, 286, secondaryY, 125, function()
         GetExchangeDialog():OpenThemeImport(function(name) SelectTheme(name) end)
     end)
-    Button("Restore Bundled Themes", 20, restoreY, 190, function()
+    Button(L.UI_RESTORE_BUNDLED_THEMES, 20, restoreY, 190, function()
         StaticPopup_Show("RPEMOTEMENU_RESTORE_BUNDLED_THEMES", nil, nil,
             UI.CaptureBundledThemeDialogTargets())
     end)
@@ -234,7 +233,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         "GameFontNormal"
     )
     categoryPaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, paneY)
-    categoryPaneHeading:SetText("Category Pane")
+    categoryPaneHeading:SetText(L.UI_CATEGORY_PANE)
 
     local emotePaneHeading = editor:CreateFontString(
         nil,
@@ -242,7 +241,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         "GameFontNormal"
     )
     emotePaneHeading:SetPoint("TOPLEFT", editor, "TOPLEFT", 330, paneY)
-    emotePaneHeading:SetText("Emote Pane")
+    emotePaneHeading:SetText(L.UI_EMOTE_PANE)
 
     local columnDivider = editor:CreateTexture(nil, "ARTWORK")
     columnDivider:SetColorTexture(0.35, 0.35, 0.35, 0.45)
@@ -258,17 +257,17 @@ local function CreateThemeTypography(editor, state, controls, rows)
     fontLoadingNote:SetWidth(620)
     fontLoadingNote:SetJustifyH("LEFT")
     fontLoadingNote:SetText(
-        "Shared fonts update when their provider loads; unavailable fonts use Friz Quadrata."
+        L.UI_SHARED_FONTS_UPDATE_WHEN_THEIR_PROVIDER_LOADS_UNAVAILABLE_FONTS_USE
     )
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
     controls.categoryFont = CreateFontSetting(
-        editor, "Font", "categoryFont", 20, fontY,
+        editor, L.UI_FONT, "categoryFont", 20, fontY,
         state.GetSettings, state.Apply, 95
     )
 
     controls.categoryFontSize = CreateNumberSetting(
-        editor, "Font size", "categoryFontSize", 20, fontSizeY, limits.fontSize.min, limits.fontSize.max,
+        editor, L.UI_FONT_SIZE, "categoryFontSize", 20, fontSizeY, limits.fontSize.min, limits.fontSize.max,
         function() return state.GetSettings().categoryFontSize end,
         function(value)
             state.GetSettings().categoryFontSize = value
@@ -279,12 +278,12 @@ local function CreateThemeTypography(editor, state, controls, rows)
     controls.categoryFontSize:SetWidth(52)
 
     controls.emoteFont = CreateFontSetting(
-        editor, "Font", "emoteFont", 330, fontY,
+        editor, L.UI_FONT, "emoteFont", 330, fontY,
         state.GetSettings, state.Apply, 405
     )
 
     controls.emoteFontSize = CreateNumberSetting(
-        editor, "Font size", "emoteFontSize", 330, fontSizeY, limits.fontSize.min, limits.fontSize.max,
+        editor, L.UI_FONT_SIZE, "emoteFontSize", 330, fontSizeY, limits.fontSize.min, limits.fontSize.max,
         function() return state.GetSettings().emoteFontSize end,
         function(value)
             state.GetSettings().emoteFontSize = value
@@ -295,7 +294,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     controls.emoteFontSize:SetWidth(52)
 
     controls.categoryTextColor = CreateColorSetting(
-        editor, "Category text", "categoryTextColor", 20, textY,
+        editor, L.UI_CATEGORY_TEXT, "categoryTextColor", 20, textY,
         function() return state.GetSettings().categoryTextColor end,
         function(value)
             state.GetSettings().categoryTextColor = value
@@ -305,7 +304,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.selectedCategoryTextColor = CreateColorSetting(
-        editor, "Selected text", "selectedCategoryTextColor", 20, selectedY,
+        editor, L.UI_SELECTED_TEXT, "selectedCategoryTextColor", 20, selectedY,
         function() return state.GetSettings().selectedCategoryTextColor end,
         function(value)
             state.GetSettings().selectedCategoryTextColor = value
@@ -315,7 +314,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.emoteTextColor = CreateColorSetting(
-        editor, "Emote-label text", "emoteTextColor", 330, textY,
+        editor, L.UI_EMOTE_LABEL_TEXT, "emoteTextColor", 330, textY,
         function() return state.GetSettings().emoteTextColor end,
         function(value)
             state.GetSettings().emoteTextColor = value
@@ -326,7 +325,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
 
     controls.categoryHighlightColor = CreateColorSetting(
         editor,
-        "Selection color",
+        L.UI_SELECTION_COLOR,
         "categoryHighlightColor",
         20,
         selectionY,
@@ -339,7 +338,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.categoryBackgroundColor = CreateColorSetting(
-        editor, "Background", "categoryBackgroundColor", 20, backgroundY,
+        editor, L.UI_BACKGROUND, "categoryBackgroundColor", 20, backgroundY,
         function() return state.GetSettings().categoryBackgroundColor end,
         function(value)
             state.GetSettings().categoryBackgroundColor = value
@@ -349,7 +348,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
 
     controls.emoteBackgroundColor = CreateColorSetting(
-        editor, "Background", "emoteBackgroundColor", 330, selectedY,
+        editor, L.UI_BACKGROUND, "emoteBackgroundColor", 330, selectedY,
         function() return state.GetSettings().emoteBackgroundColor end,
         function(value)
             state.GetSettings().emoteBackgroundColor = value
@@ -371,12 +370,12 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
         "GameFontHighlight"
     )
     highlightEffectLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, effectY)
-    highlightEffectLabel:SetText("Selection effect")
+    highlightEffectLabel:SetText(L.UI_SELECTION_EFFECT)
 
     local highlightEffectSelector
 
     controls.categoryHighlightThickness = CreateNumberSetting(
-        editor, "Thickness", "categoryHighlightThickness", 330, effectY, limits.highlightThickness.min, limits.highlightThickness.max,
+        editor, L.UI_THICKNESS, "categoryHighlightThickness", 330, effectY, limits.highlightThickness.min, limits.highlightThickness.max,
         function() return state.GetSettings().categoryHighlightThickness end,
         function(value)
             state.GetSettings().categoryHighlightThickness = value
@@ -386,11 +385,11 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     )
 
     local highlightEffectLabels = {
-        background = "Background",
-        outline = "Outline",
-        underline = "Underline",
-        shadow = "Drop shadow",
-        separator = "Separator"
+        background = L.UI_BACKGROUND,
+        outline = L.UI_OUTLINE,
+        underline = L.UI_UNDERLINE,
+        shadow = L.UI_DROP_SHADOW,
+        separator = L.UI_SEPARATOR
     }
 
     local function RefreshHighlightControls()
@@ -427,11 +426,11 @@ end
 
 -- Opacity section: controls follow their visual grouping.
 local function CreateThemeOpacity(editor, state, controls, rows)
-    rows:Heading("Opacity", 28)
+    rows:Heading(L.UI_OPACITY, 28)
     local opacityY = rows:Next(42)
 
     controls.windowOpacity = CreateNumberSetting(
-        editor, "Menu opacity", "windowOpacity", 20, opacityY, limits.opacity.min * 100, limits.opacity.max * 100,
+        editor, L.UI_MENU_OPACITY, "windowOpacity", 20, opacityY, limits.opacity.min * 100, limits.opacity.max * 100,
         function() return state.GetSettings().windowOpacity * 100 end,
         function(value)
             state.GetSettings().windowOpacity = value / 100
@@ -442,20 +441,20 @@ local function CreateThemeOpacity(editor, state, controls, rows)
 
     local opacityVisibleNote = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     opacityVisibleNote:SetPoint("LEFT", controls.windowOpacity.SuffixLabel, "RIGHT", FIELD_GAP, 0)
-    opacityVisibleNote:SetText("(when visible)")
+    opacityVisibleNote:SetText(L.UI_WHEN_VISIBLE)
 
 end
 
 -- LayoutAndIcon section: controls follow their visual grouping.
 local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
-    rows:Heading("Layout", 28)
+    rows:Heading(L.UI_LAYOUT, 28)
     local titleY = rows:Next(42)
 
     local titleBarLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, titleY)
-    titleBarLabel:SetText("Title bar")
+    titleBarLabel:SetText(L.UI_TITLE_BAR_2)
 
-    local titleBarLabels = {TOP = "Top", LEFT = "Left"}
+    local titleBarLabels = {TOP = L.UI_TOP, LEFT = L.UI_LEFT}
     local titleBarSelector = Widgets.CreateDropdown(editor, function()
         local options = {}
         for _, position in ipairs(definitions.enums.titleBarPosition.values) do
@@ -471,7 +470,7 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
     titleBarSelector:GetFrame().settingKey = "titleBarPosition"
     controls.titleBarPosition = titleBarSelector
 
-    rows:Heading("Minimized Icon", 30)
+    rows:Heading(L.UI_MINIMIZED_ICON, 30)
 
     local refreshIconColor = UI.CreateThemeIconColorControls(
         editor, 20, rows:Next(), true, state.GetName
@@ -506,14 +505,14 @@ local function CreateThemesPanel()
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, -18)
-    heading:SetText("Themes")
+    heading:SetText(L.UI_THEMES)
 
     local description = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     description:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
     description:SetWidth(620)
     description:SetJustifyH("LEFT")
     description:SetText(
-        "Edit shared Themes here. Selecting a Theme assigns it to the active Profile."
+        L.UI_EDIT_SHARED_THEMES_HERE_SELECTING_A_THEME_ASSIGNS_IT_TO
     )
     description:SetTextColor(0.72, 0.72, 0.72)
 
@@ -577,4 +576,5 @@ end
 
 
 addon.SettingsPanels.Themes = CreateThemesPanel
+
 

@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 
@@ -12,7 +13,7 @@ function UI.RegisterProfileDialogs(SetStatus)
         if target and target.object and Database.GetProfile(target.name) == target.object then
             return true
         end
-        SetStatus("The Profile changed. Reopen the dialog before continuing.", true)
+        SetStatus(L.UI_THE_PROFILE_CHANGED_REOPEN_THE_DIALOG_BEFORE_CONTINUING, true)
         return false
     end
     local function GetEditBox(popup)
@@ -24,9 +25,9 @@ function UI.RegisterProfileDialogs(SetStatus)
     end
 
     StaticPopupDialogs["RPEMOTEMENU_NEW_PROFILE"] = {
-        text = "Enter a name for the new profile.",
-        button1 = "Create",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_ENTER_A_NAME_FOR_THE_NEW_PROFILE,
+        button1 = L.UI_CREATE,
+        button2 = CANCEL or L.UI_CANCEL,
         hasEditBox = true,
         maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
@@ -35,7 +36,7 @@ function UI.RegisterProfileDialogs(SetStatus)
             editBox:SetText(data.initial)
             editBox:SetFocus()
             editBox:HighlightText()
-            GetAcceptButton(self):SetText(data.action == "copy" and "Copy" or "Create")
+            GetAcceptButton(self):SetText(data.action == "copy" and L.UI_COPY or L.UI_CREATE)
             local valid = Database.ValidateNewProfileName(editBox:GetText())
             GetAcceptButton(self):SetEnabled(valid ~= nil)
         end,
@@ -49,8 +50,7 @@ function UI.RegisterProfileDialogs(SetStatus)
                 success, result = Database.CreateProfile(name)
             end
             if success then
-                SetStatus((data.action == "copy" and "Copied profile to "
-                    or "Created profile ") .. result .. ".")
+                SetStatus(string.format(data.action == "copy" and L.UI_COPIED_PROFILE_TO_S or L.UI_CREATED_PROFILE_S, result))
             else
                 SetStatus(result, true)
             end
@@ -71,13 +71,13 @@ function UI.RegisterProfileDialogs(SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_DEFAULT_PROFILE"] = {
-        text = "Restore Default Profile's original categories, emotes, window settings, and Default Theme assignment?\n\nChanges to Default Profile will be lost. Default Theme appearance will not change.",
-        button1 = "Restore",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_RESTORE_DEFAULT_PROFILE_S_ORIGINAL_CATEGORIES_EMOTES_WINDOW_SETTINGS_AND,
+        button1 = L.UI_RESTORE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, target)
             if not CheckTarget(target) then return end
             Database.RestoreDefaultProfile()
-            SetStatus("Restored the Default profile.")
+            SetStatus(L.UI_RESTORED_THE_DEFAULT_PROFILE)
         end,
         timeout = 0,
         whileDead = true,
@@ -86,8 +86,8 @@ function UI.RegisterProfileDialogs(SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_PROFILE_INFO"] = {
-        text = "Default can be edited and restored, but not renamed or deleted. Create starts with built-in emotes and the current Theme. Copy duplicates the selected Profile, including its Theme assignment.",
-        button1 = OKAY or "Okay",
+        text = L.UI_DEFAULT_CAN_BE_EDITED_AND_RESTORED_BUT_NOT_RENAMED_OR,
+        button1 = OKAY or L.UI_OKAY,
         timeout = 0,
         whileDead = true,
         hideOnEscape = true,
@@ -95,9 +95,9 @@ function UI.RegisterProfileDialogs(SetStatus)
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RENAME_PROFILE"] = {
-        text = 'Rename the profile "%s".',
-        button1 = "Rename",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_RENAME_THE_PROFILE_S,
+        button1 = L.UI_RENAME,
+        button2 = CANCEL or L.UI_CANCEL,
         hasEditBox = true,
         maxLetters = addon.SettingDefinitions.nameLengths.profile,
         editBoxWidth = 260,
@@ -117,7 +117,7 @@ function UI.RegisterProfileDialogs(SetStatus)
             )
 
             if success then
-                SetStatus("Renamed profile to " .. result .. ".")
+                SetStatus(string.format(L.UI_RENAMED_PROFILE_TO_S, result))
             else
                 SetStatus(result, true)
             end
@@ -154,16 +154,16 @@ function UI.RegisterProfileDialogs(SetStatus)
         local success, errorMessage = Database.DeleteProfile(profileName)
 
         if success then
-            SetStatus("Deleted profile " .. profileName .. ".")
+            SetStatus(string.format(L.UI_DELETED_PROFILE_S, profileName))
         else
             SetStatus(errorMessage, true)
         end
     end
 
     StaticPopupDialogs["RPEMOTEMENU_DELETE_PROFILE"] = {
-        text = 'Delete the profile "%s"?\n\nCharacters using it will return to Default.',
-        button1 = DELETE or "Delete",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_DELETE_THE_PROFILE_S_CHARACTERS_USING_IT_WILL_RETURN_TO,
+        button1 = DELETE or L.UI_DELETE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = DeleteProfile,
         timeout = 0,
         whileDead = true,
@@ -172,4 +172,5 @@ function UI.RegisterProfileDialogs(SetStatus)
     }
 
 end
+
 

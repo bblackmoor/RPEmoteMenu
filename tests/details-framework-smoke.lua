@@ -10,6 +10,8 @@ local df = LibStub:GetLibrary("DetailsFramework-1.0")
 assert(df.dversion == 762)
 for _, callback in ipairs(df.OnLoginSchedules) do callback() end
 local ns = {SettingsUI = {}}
+assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", ns)
+assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", ns)
 assert(loadfile(root .. "Scheduling.lua"))("RPEmoteMenu", ns)
 local originalUI = ns.SettingsUI
 assert(loadfile(root .. "SettingsWidgets.lua"))("RPEmoteMenu", ns)
@@ -309,3 +311,4 @@ local clicks = 0
  action:SetScript("OnClick", function() clicks = clicks + 1 end)
 Click(action); assert(clicks == 0, "DF mouse-up callback cannot also save")
 action:GetScript("OnClick")(action); assert(clicks == 1)
+

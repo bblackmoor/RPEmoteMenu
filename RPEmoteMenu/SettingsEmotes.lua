@@ -1,4 +1,5 @@
 local _, addon = ...
+local L = addon.L
 local UI = addon.SettingsUI
 local Database = addon.Database
 local MainWindow = addon.MainWindow
@@ -61,16 +62,16 @@ local function CreateEmotesPanel()
 
     local heading = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     heading:SetPoint("TOPLEFT", panel, "TOPLEFT", 24, headingY)
-    heading:SetText("Emotes")
+    heading:SetText(L.UI_EMOTES)
 
     local SelectCategory
     local function GetCategoryLabel(categoryIndex)
         local category = Database.GetCategory(categoryIndex)
         local categoryName = strtrim(category and category.name or "")
-        local label = "Category " .. categoryIndex
+        local label = string.format(L.UI_CATEGORY_S, categoryIndex)
 
         if categoryName ~= "" then
-            label = label .. ": " .. categoryName
+            label = string.format(L.UI_NAMED_CATEGORY, categoryIndex, categoryName)
         end
 
         return label
@@ -86,10 +87,10 @@ local function CreateEmotesPanel()
     selector:SetWidth(300)
     selector:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, selectorY)
 
-    local resetButton = Widgets.CreateButton(panel, "Restore Built-in Category", function()
+    local resetButton = Widgets.CreateButton(panel, L.UI_RESTORE_BUILT_IN_CATEGORY, function()
         StaticPopup_Show(
             "RPEMOTEMENU_RESTORE_CATEGORY",
-            "Category " .. selectedCategoryIndex,
+            string.format(L.UI_CATEGORY_S, selectedCategoryIndex),
             nil,
             {categoryIndex = selectedCategoryIndex,
                 target = Database.CaptureContentTarget(selectedCategoryIndex)}
@@ -97,14 +98,14 @@ local function CreateEmotesPanel()
     end, 190, 24)
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_CATEGORY"] = {
-        text = "Replace %s and all of its emotes with the built-in category?\n\nThis cannot be undone.",
-        button1 = "Restore",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_REPLACE_S_AND_ALL_OF_ITS_EMOTES_WITH_THE_BUILT,
+        button1 = L.UI_RESTORE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, data)
             if Database.IsCurrentContentTarget(data and data.target) then
                 Database.ResetCategoryToDefaults(data.categoryIndex)
             else
-                print("RP Emote Menu: The Profile or category changed. Reopen the restore confirmation.")
+                print(L.UI_RP_EMOTE_MENU_THE_PROFILE_OR_CATEGORY_CHANGED_REOPEN_THE)
             end
         end,
         timeout = 0,
@@ -114,16 +115,16 @@ local function CreateEmotesPanel()
     }
 
     StaticPopupDialogs["RPEMOTEMENU_RESTORE_ALL_CATEGORIES"] = {
-        text = "Replace every category and emote in the current profile with the built-in set?\n\nThis cannot be undone.",
-        button1 = "Restore",
-        button2 = CANCEL or "Cancel",
+        text = L.UI_REPLACE_EVERY_CATEGORY_AND_EMOTE_IN_THE_CURRENT_PROFILE_WITH,
+        button1 = L.UI_RESTORE,
+        button2 = CANCEL or L.UI_CANCEL,
         OnAccept = function(_, data)
             if not Database.IsCurrentContentTarget(data and data.target) then
-                print("RP Emote Menu: The Profile or categories changed. Reopen the restore confirmation.")
+                print(L.UI_RP_EMOTE_MENU_THE_PROFILE_OR_CATEGORIES_CHANGED_REOPEN_THE)
                 return
             end
             if Database.ResetAllCategoriesToDefaults() then
-                print("RP Emote Menu: Restored all built-in categories and emotes.")
+                print(L.UI_RP_EMOTE_MENU_RESTORED_ALL_BUILT_IN_CATEGORIES_AND_EMOTES)
             end
         end,
         timeout = 0,
@@ -133,14 +134,14 @@ local function CreateEmotesPanel()
     }
 
     resetAllCategoriesButton = Widgets.CreateButton(panel,
-        "Restore All Built-in Categories", function()
+        L.UI_RESTORE_ALL_BUILT_IN_CATEGORIES, function()
             StaticPopup_Show("RPEMOTEMENU_RESTORE_ALL_CATEGORIES", nil, nil,
                 {target = Database.CaptureContentTarget()})
         end, 240, 24)
     resetAllCategoriesButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 188, actionsY)
 
     local duplicateCategoryButton = Widgets.CreateButton(panel,
-        "Duplicate Category", function()
+        L.UI_DUPLICATE_CATEGORY, function()
             local success, result = Database.DuplicateCategory(selectedCategoryIndex)
             if success then
                 SelectCategory(result)
@@ -150,10 +151,10 @@ local function CreateEmotesPanel()
         end, 160, 24)
     duplicateCategoryButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, actionsY)
 
-    local importButton = Widgets.CreateButton(panel, "Import", function()
+    local importButton = Widgets.CreateButton(panel, L.UI_IMPORT, function()
         GetExchangeDialog():OpenImport(selectedCategoryIndex)
     end, 90, 24)
-    local exportButton = Widgets.CreateButton(panel, "Export", function()
+    local exportButton = Widgets.CreateButton(panel, L.UI_EXPORT, function()
         GetExchangeDialog():OpenExport(selectedCategoryIndex)
     end, 90, 24)
     exportButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, exchangeY)
@@ -166,11 +167,7 @@ local function CreateEmotesPanel()
     placeholderText:SetWidth(630)
     placeholderText:SetJustifyH("LEFT")
     placeholderText:SetText(
-        "Named categories appear in the sidebar; blank categories stay hidden.\n" ..
-        "{target} - Target's name without the realm.\n" ..
-        "{player} - Current character's name without the realm.\n" ..
-        "Targeted Command is used only when another unit is targeted.\n" ..
-        "Drag an emote row to reorder it. Import replaces this category."
+        L.UI_NAMED_CATEGORIES_APPEAR_IN_THE_SIDEBAR_BLANK_CATEGORIES_STAY_HIDDEN
     )
     placeholderText:SetTextColor(0.8, 0.8, 0.8)
 
@@ -178,7 +175,7 @@ local function CreateEmotesPanel()
     nameLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, nameY - 5)
     nameLabel:SetWidth(180)
     nameLabel:SetJustifyH("LEFT")
-    nameLabel:SetText("Category Name")
+    nameLabel:SetText(L.UI_CATEGORY_NAME)
     local nameStatus = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     nameStatus:SetPoint("TOPLEFT", panel, "TOPLEFT", 16 + 180 + FIELD_GAP, nameY - 25)
     nameStatus:SetWidth(420)
@@ -195,7 +192,7 @@ local function CreateEmotesPanel()
         end
     end, {width = 420, refreshAfterShow = true,
         validate = function(value)
-            return Database.ValidateContentText(value, "categoryName", "Category name")
+            return Database.ValidateContentText(value, "categoryName", L.UI_CATEGORY_NAME_2)
         end,
         onValidation = function(errorMessage) nameStatus:SetText(errorMessage or "") end,
         getOwner = function() return Database.GetCategory(selectedCategoryIndex) end})
@@ -264,5 +261,6 @@ end
 
 
 addon.SettingsPanels.Emotes = CreateEmotesPanel
+
 
 
