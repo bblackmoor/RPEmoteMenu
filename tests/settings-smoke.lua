@@ -310,7 +310,8 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
 end
 assert(toc[1]=='Libs/LibStub/LibStub.lua' and toc[2]=='Libs/CallbackHandler-1.0/CallbackHandler-1.0.lua'
  and toc[3]=='Libs/LibSharedMedia-3.0/LibSharedMedia-3.0.lua' and toc[4]=='Localization.lua' and toc[5]=='Locales/enUS.lua' and toc[6]=='Defaults.lua'
- and toc[7]=='SettingDefinitions.lua' and toc[8]=='Scheduling.lua' and toc[9]=='FontMedia.lua' and toc[#toc]=='Core.lua')
+ and toc[7]=='StandardEmoteCatalog.lua' and toc[8]=='SettingDefinitions.lua'
+ and toc[9]=='Scheduling.lua' and toc[10]=='FontMedia.lua' and toc[#toc]=='Core.lua')
 local openedSettings,openedAbout=0,0
 local originalOpen,originalAbout=addon.Settings.Open,addon.Settings.OpenAbout
 addon.Settings.Open=function() openedSettings=openedSettings+1; originalOpen() end

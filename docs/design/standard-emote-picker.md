@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Phase 0 (design) is complete in 2.1.256. This is a proposed feature plan, not a shipped dropdown. The four localization code phases are complete; native WoW layout/font acceptance remains pending. No additional translation is included.
+Phase 0 (design) is complete in 2.1.256; phase 1 (catalog model) is complete in 2.1.257. This is a proposed feature plan, not a shipped dropdown. The four localization code phases are complete; native WoW layout/font acceptance remains pending. No additional translation is included.
 
 The picker will help populate an existing emote-editor draft. It will use the supplied locale catalog, keep manual editing available, and leave saving, category limits, import/export schema and command execution under their existing owners. It will not execute an emote during selection.
 
@@ -58,7 +58,7 @@ Transient picker state belongs to the dialog. Clear selection, filter and previe
 | Phase | Work | Completion evidence |
 | --- | --- | --- |
 | 0 — Design | Inspect catalog, editor, locale and execution contracts; record proposed behavior and boundaries. | This document; no runtime behavior changes. |
-| 1 — Catalog model | Implement validation, stable choice identity, sorting/filtering and locale availability; define support verification policy. | Shape/error tests; unchanged source catalog; no mutation of saved data; documented verified/unverified alias status. |
+| 1 — Catalog model (complete in 2.1.257) | Implement validation, stable choice identity, sorting/filtering and locale availability; define support verification policy. | Shape/error tests; unchanged source catalog; no mutation of saved data; documented verified/unverified alias status. |
 | 2 — Editor interaction | Add selector, previews and explicit insertion with overwrite confirmation, read-only and stale-session guards. | Real-editor tests for draft mapping, confirmation, Cancel, reopen, Save, filtering and translated layout; serialization remains unchanged. |
 | 3 — Native acceptance | Verify representative aliases and variants, target/no-target/self-target behavior, list usability and layout in WoW. | Recorded native results; no claim of support for unchecked aliases or locales. |
 
@@ -69,3 +69,16 @@ Automated coverage must include malformed rows, duplicate aliases, deterministic
 Editor integration must cover empty and existing drafts, preserved labels, explicit command replacement, declined confirmation, read-only sessions, Profile changes, category/emote replacement, hide/reopen while confirmation is open, and translated/long previews. Save must continue rejecting over-limit fields without truncation, and Cancel must leave the database unchanged.
 
 Command checks must retain literal percent signs and `{player}`/`{target}` behavior for manually authored commands. Round-trip exports must contain only the existing emote fields and preserve manual command bytes. Native tests must distinguish reference preview wording from actual game output and record the tested client locale and build.
+
+
+## Phase-one model contract
+
+`StandardEmoteCatalog.lua` loads after Defaults and locale registration. It exposes `addon.StandardEmoteCatalog` and does not create SavedVariables, UI frames, execute commands or alter the command module. `Build(locale, rows, options)` returns a snapshot or a developer diagnostic on invalid input. Catalogs and rows must be dense arrays, each row must contain exactly three strings, and aliases must be unique lowercase ASCII letters/digits beginning with a letter. This grammar covers the supplied enUS data; supporting locale aliases outside it requires a reviewed extension. Empty catalogs are valid but contain no choices.
+
+Each choice contains `locale`, `alias`, `value` (`locale:alias`), `command`, resolved `token`, `defaultPreview`, `targetedPreview`, `supportStatus`, `selectable`, and optional `evidence`. Resolving the token mirrors the existing alias map plus uppercase fallback; this does not prove game support. `model:GetChoices(filter, verifiedOnly)` returns copied entries sorted by alias; filtering is case-insensitive plain substring matching on aliases, trims outer whitespace, and permits a leading slash. Filter text never becomes a Lua pattern. `model:Resolve(value)` returns a copied entry by exact stable identity. Mutating returned entries or later source/review data cannot change an existing snapshot.
+
+`GetForClient({clientBuild = "..."})` builds from the current locale's catalog, existing execution alias map and `Catalog.Verification[locale]`. Its state is `available`, `unavailable` or `invalid`; invalid includes a developer diagnostic. Availability means reference data is present and valid, not that commands are verified. There is no cross-locale catalog fallback or automatic client API discovery. All 299 enUS entries are initially **unverified**, and `GetChoices("", true)` therefore returns no selectable entries until native evidence is recorded.
+
+Verification records are developer-maintained runtime data, not user settings. `Catalog.Verification[locale][alias]` may contain `locale`, `clientBuild`, `token`, `status` (`verified` or `unsupported`), nonblank `evidence`, and `targetingChecked`. The locale, build and token must match the model. Verified entries additionally require `targetingChecked = true`, meaning native target/no-target/self-target checks were recorded. Unsupported entries remain unselectable. Missing, malformed or stale evidence produces unverified status. The caller must supply the actual native client build before enabling insertion; no build is guessed. No verification records ship in this phase.
+
+Phase two can implement browsing, previews and insertion guards using this model. Insertion must remain disabled for unverified/unsupported entries; native review is required to populate selectable entries. Native review may begin alongside UI implementation rather than waiting for the final acceptance stage. Shape tests, command-routing stubs and the presence of an alias in existing defaults are not native verification.

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.257
+
+- Complete phase one of the standard-emote picker: validate catalog rows, produce sorted/filterable choice snapshots, and retain stable locale/alias identities.
+- Keep previews and source catalogs isolated from caller edits, saved data and execution; use only the current client locale catalog.
+- Track unverified, verified and unsupported commands with evidence scoped to locale, client build and resolved token. No native verification records or picker UI ship yet.
+- Add catalog-model regression coverage for malformed rows, duplicate aliases, variants, filtering, locale availability and verification boundaries.
+
 ## 2.1.256
 
 - Complete phase 0 of the standard-emote picker design: proposed editor interaction, draft insertion and overwrite behavior, locale/catalog boundaries, alias verification, and staged implementation/acceptance criteria.
