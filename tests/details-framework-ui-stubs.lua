@@ -76,10 +76,13 @@ function methods:GetEffectiveScale() return 1 end
 function methods:GetScale() return 1 end
 function methods:GetFont() return STANDARD_TEXT_FONT,12,'' end
 function methods:GetText() return self.text or '' end
+function methods:SetFontString(value) self.fontString = value end
+function methods:GetFontString() return self.fontString end
 function methods:GetValue() return self.value or 0 end
 function methods:SetValue(v) local changed=v~=self.value; self.value=v; if changed and self.scripts.OnValueChanged then self.scripts.OnValueChanged(self,v) end end
 function methods:SetText(v)
     self.text = v
+    if self.fontString then self.fontString:SetText(v) end
     if self.scripts.OnTextChanged then self.scripts.OnTextChanged(self, false) end
 end
 function methods:SetFocus()
@@ -205,3 +208,4 @@ function methods:Raise() end
 function methods:SetMaxBytes(n) self.maxBytes=n end
 
 return {objects = objects}
+

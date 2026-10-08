@@ -417,6 +417,42 @@ function Widgets.CreateDialogButton(parent, text, width, height)
     return Widgets.GetFrame(widget)
 end
 
+-- Measure wrapped native text without its old height cap. Dialogs use this
+-- after each message change so translations cannot overlap adjacent controls.
+function Widgets.MeasureDialogLabel(label, width)
+    label:SetWidth(width)
+    label:SetWordWrap(true)
+    label:SetNonSpaceWrap(true)
+    label:SetHeight(0)
+    local height = math.max(16, label:GetStringHeight() + 2)
+    label:SetHeight(height)
+    return height
+end
+
+function Widgets.LayoutDialogButtons(dialog, primary, close)
+    local available = (dialog:GetWidth() - 48) / 2
+    local heights = {}
+    for index, button in ipairs({primary, close}) do
+        local text = button:GetFontString()
+        text:SetHeight(0)
+        text:SetWidth(available - 20)
+        text:SetWordWrap(true)
+        text:SetNonSpaceWrap(true)
+        local width = math.min(available, math.max(110, text:GetStringWidth() + 20))
+        text:SetWidth(width - 20)
+        heights[index] = math.max(24, text:GetStringHeight() + 10)
+        button:SetWidth(width)
+    end
+    local height = math.max(heights[1], heights[2])
+    primary:SetHeight(height)
+    close:SetHeight(height)
+    close:ClearAllPoints()
+    close:SetPoint("BOTTOMRIGHT", dialog, "BOTTOMRIGHT", -18, 16)
+    primary:ClearAllPoints()
+    primary:SetPoint("RIGHT", close, "LEFT", -12, 0)
+    return height
+end
+
 function Widgets.CreateDialog(name, width, height)
     local dialog = Framework():CreateSimplePanel(UIParent, width, height, "", name,
         {NoScripts = true, NoTitleBar = true, NoCloseButton = true})

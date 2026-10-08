@@ -20,6 +20,8 @@ local function CreateFields(dialog, Widgets)
         L.EDITOR_HELP
     )
     helpText:SetTextColor(0.8, 0.8, 0.8, 1)
+    dialog.HelpText = helpText
+    dialog.Fields = {}
 
     local function CreateEditor(labelText, y)
         local label = Widgets.CreateDialogLabel(dialog, "", 12)
@@ -35,6 +37,7 @@ local function CreateFields(dialog, Widgets)
         editBox:SetFont(STANDARD_TEXT_FONT, 12, "")
         editBox:SetTextColor(1, 1, 1, 1)
         editBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+        dialog.Fields[#dialog.Fields + 1] = {label = label, editBox = editBox}
         return editBox
     end
 
@@ -61,6 +64,29 @@ local function CreateFields(dialog, Widgets)
     cancelButton:SetText(CANCEL or L.UI_CANCEL)
     cancelButton:SetScript("OnClick", function() dialog:Hide() end)
 
+    function dialog:RefreshLayout()
+        local width = 570
+        local titleHeight = Widgets.MeasureDialogLabel(self.Title, width - 20)
+        local helpHeight = Widgets.MeasureDialogLabel(self.HelpText, width)
+        self.HelpText:ClearAllPoints()
+        self.HelpText:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(16 + titleHeight + 10))
+        local y = 16 + titleHeight + 10 + helpHeight + 18
+        for _, field in ipairs(self.Fields) do
+            local labelHeight = Widgets.MeasureDialogLabel(field.label, width)
+            field.label:ClearAllPoints()
+            field.label:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -y)
+            field.editBox:ClearAllPoints()
+            field.editBox:SetWidth(width)
+            field.editBox:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(y + labelHeight + 6))
+            y = y + labelHeight + 6 + 24 + 14
+        end
+        local statusHeight = Widgets.MeasureDialogLabel(self.Status, width)
+        local buttonHeight = Widgets.LayoutDialogButtons(self, saveButton, cancelButton)
+        self.Status:ClearAllPoints()
+        self.Status:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -y)
+        self:SetHeight(math.max(330, y + statusHeight + 14 + buttonHeight + 16))
+    end
+
 end
 
 local function InstallSaveActions(dialog)
@@ -77,6 +103,7 @@ local function InstallSaveActions(dialog)
             dialog.Status:SetText(L.EDITOR_TARGET_CHANGED)
             dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
             dialog.SaveButton:SetEnabled(false)
+            dialog:RefreshLayout()
             return
         end
 
@@ -89,6 +116,7 @@ local function InstallSaveActions(dialog)
             if not valid then
                 dialog.Status:SetText(errorMessage)
                 dialog.Status:SetTextColor(1, 0.35, 0.35, 1)
+                dialog:RefreshLayout()
                 return -- Keep every field intact and save nothing.
             end
         end
@@ -149,6 +177,7 @@ local function InstallSessionLifecycle(dialog)
             editable and (isNew and L.UI_ADD_EMOTE or L.EDITOR_EDIT_EMOTE) or L.EDITOR_VIEW_EMOTE
         )
         self:Show()
+        self:RefreshLayout()
         self:Raise()
     end
 

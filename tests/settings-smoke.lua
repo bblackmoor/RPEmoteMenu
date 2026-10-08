@@ -27,7 +27,6 @@ function Widget:SetupMenu(fn) self.menu = fn end
 function Widget:SetChecked(value) self.checked = value end
 function Widget:GetChecked() return self.checked end
 function Widget:GetID() return 1 end
-function Widget:GetFontString() return nil end
 function Widget:IsMouseOver() return self.mouseover == true end
 local LoadXML = dofile('tests/details-framework-loader.lua')
 LoadXML('Libs/DetailsFramework/load.xml')

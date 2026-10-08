@@ -69,6 +69,23 @@ local function CreateExchangeDialogFrame()
         dialog:Hide()
     end)
 
+    function dialog:RefreshLayout()
+        local titleHeight = Widgets.MeasureDialogLabel(self.title, 570)
+        local instructionHeight = Widgets.MeasureDialogLabel(self.instructions, 570)
+        self.instructions:ClearAllPoints()
+        self.instructions:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(16 + titleHeight + 10))
+        local top = 16 + titleHeight + 10 + instructionHeight + 14
+        local statusHeight = Widgets.MeasureDialogLabel(self.status, 570)
+        local buttonHeight = Widgets.LayoutDialogButtons(self, actionButton, closeButton)
+        local bottom = 16 + buttonHeight + 12 + statusHeight + 12
+        self.status:ClearAllPoints()
+        self.status:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", 18, 16 + buttonHeight + 12)
+        textBackground:ClearAllPoints()
+        textBackground:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -top)
+        textBackground:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -42, bottom)
+        self:SetHeight(math.max(470, top + 300 + bottom))
+    end
+
     dialog.scrollContent = scrollContent
     dialog.scrollFrame = scrollFrame
     return dialog
@@ -94,6 +111,7 @@ local function InstallExchangeModes(dialog)
         dialog.scrollFrame:SetVerticalScroll(0)
         dialog:UpdateActionState()
         dialog:Show()
+        dialog:RefreshLayout()
         dialog.editBox:SetFocus()
         if options.mode == "export" then dialog.editBox:HighlightText() end
         return true

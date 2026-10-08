@@ -44,6 +44,7 @@ function Actions.Install(dialog)
         else
             status:SetTextColor(0.35, 1, 0.45, 1)
         end
+        if dialog.RefreshLayout then dialog:RefreshLayout() end
     end
 
     function dialog:UpdateActionState()

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.255
+
+- Complete automated phase-four localization acceptance: audit all 288 interface keys and test expanded Unicode text without shipping an unreviewed translation.
+- Reject unknown translation keys, changed formatting arguments and lost command tokens; retain English fallback and expose rejection diagnostics.
+- Reflow emote-editor labels above their fields and measure dialog help, status text and action captions; preserve a usable import/export text viewport.
+- Add translation-contract and dialog-layout regression coverage. Native WoW rendering and non-Latin font acceptance remain pending.
+
 ## 2.1.254
 
 - Complete phase three of interface localization: menu titles, empty states, tooltips, lock/settings hints, and emote-editor labels, help and status messages.

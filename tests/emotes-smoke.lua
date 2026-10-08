@@ -5,7 +5,6 @@ local methods = getmetatable(UIParent).__index
 function methods:IsMouseOver() return self.mouseover == true end
 function methods:SetEnabled(value) if value then self:Enable() else self:Disable() end end
 function methods:GetID() return self.categoryID end
-function methods:GetFontString() return nil end
 function strtrim(v) return (v:gsub('^%s+', ''):gsub('%s+$', '')) end
 StaticPopupDialogs = {}; UISpecialFrames = {}
 local popup

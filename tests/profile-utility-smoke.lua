@@ -9,7 +9,6 @@ function methods:SetEnabled(value) if value then self:Enable() else self:Disable
 function methods:SetChecked(value) self.checked = value end
 function methods:GetChecked() return self.checked end
 function methods:GetID() return self.categoryID end
-function methods:GetFontString() return nil end
 function methods:IsMouseOver() return false end
 function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 StaticPopupDialogs = {}
