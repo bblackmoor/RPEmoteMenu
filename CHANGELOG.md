@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.1.258
+
+- Complete phase two of the standard-emote picker: add a filtered, scrolling alias dropdown and bounded untargeted/targeted reference previews to the shared emote editor.
+- Insert verified selections into drafts only, preserving existing labels and requiring confirmation before replacing command fields; Save and Cancel keep their existing behavior.
+- Guard insertion against read-only/stale targets, changed drafts/selections, retired sessions and revoked or stale verification evidence. Manual editing remains available when catalog data is missing or invalid.
+- Localize picker captions and add real-editor integration and expanded-layout coverage. All supplied aliases remain unverified, so browsing is available but insertion is disabled until native evidence is added.
+
 ## 2.1.257
 
 - Complete phase one of the standard-emote picker: validate catalog rows, produce sorted/filterable choice snapshots, and retain stable locale/alias identities.

@@ -71,6 +71,7 @@ local function CreateFields(dialog, Widgets)
         self.HelpText:ClearAllPoints()
         self.HelpText:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(16 + titleHeight + 10))
         local y = 16 + titleHeight + 10 + helpHeight + 18
+        if self.StandardPicker then y = self.StandardPicker:Layout(y, width) end
         for _, field in ipairs(self.Fields) do
             local labelHeight = Widgets.MeasureDialogLabel(field.label, width)
             field.label:ClearAllPoints()
@@ -177,12 +178,14 @@ local function InstallSessionLifecycle(dialog)
             editable and (isNew and L.UI_ADD_EMOTE or L.EDITOR_EDIT_EMOTE) or L.EDITOR_VIEW_EMOTE
         )
         self:Show()
+        self.StandardPicker:Open()
         self:RefreshLayout()
         self:Raise()
     end
 
     dialog:SetScript("OnHide", function(self)
         self.contentTarget = nil
+        self.StandardPicker:Close()
         for _, box in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
             box:ClearFocus()
         end
@@ -194,6 +197,7 @@ local function GetDialog()
         local Widgets = addon.SettingsWidgets
         local dialog = Widgets.CreateDialog("RPEmoteMenuEmoteEditorDialog", 610, 330)
         CreateFields(dialog, Widgets)
+        dialog.StandardPicker = addon.StandardEmotePicker.Install(dialog, Widgets)
         InstallSaveActions(dialog)
         InstallSessionLifecycle(dialog)
         editorDialog = dialog

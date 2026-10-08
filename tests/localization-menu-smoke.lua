@@ -3,6 +3,7 @@ local native = dofile("tests/details-framework-ui-stubs.lua")
 dofile("tests/main-window-native.lua")
 local methods = getmetatable(UIParent).__index
 function methods:SetEnabled(value) if value then self:Enable() else self:Disable() end end
+StaticPopupDialogs = {}
 local measured = {}
 function methods:GetStringWidth()
     measured[self:GetText() or ""] = true
@@ -27,9 +28,9 @@ local translated = {
     EDITOR_EMOTE_NAME_FIELD = "Emote-Name", EDITOR_TARGET_CHANGED = "Editor erneut öffnen.",
 }
 addon.Localization.Register("deDE", translated)
-for _, name in ipairs({"Defaults.lua", "SettingDefinitions.lua", "BuiltInThemes.lua",
+for _, name in ipairs({"Defaults.lua", "StandardEmoteCatalog.lua", "SettingDefinitions.lua", "BuiltInThemes.lua",
     "Database.lua", "Scheduling.lua", "FontMedia.lua", "VisibleSlotOrder.lua",
-    "WindowGeometry.lua", "WindowFade.lua", "EmoteEditor.lua", "MainWindow.lua",
+    "WindowGeometry.lua", "WindowFade.lua", "StandardEmotePicker.lua", "EmoteEditor.lua", "MainWindow.lua",
     "SettingsWidgets.lua", "SettingsControls.lua"}) do Load(name) end
 local db, main = addon.Database, addon.MainWindow
 db.InitializeDatabase()

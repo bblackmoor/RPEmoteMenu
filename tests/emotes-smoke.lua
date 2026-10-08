@@ -23,7 +23,7 @@ local addon = {VERSION='test'}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon) end
-for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','EmoteEditor.lua','MainWindow.lua'}) do Load(name) end
+for _, name in ipairs({'Scheduling.lua','Defaults.lua', 'StandardEmoteCatalog.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','StandardEmotePicker.lua', 'EmoteEditor.lua','MainWindow.lua'}) do Load(name) end
 local db=addon.Database; db.InitializeDatabase()
 local updates, selections = 0, 0
 addon.MainWindow.UpdateMenu=function() updates=updates+1 end

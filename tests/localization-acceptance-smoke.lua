@@ -32,7 +32,8 @@ end
 local file = assert(io.open('RPEmoteMenu/Locales/enUS.lua')); local english = file:read('*a'); file:close()
 local seen, count = {}, 0
 for key in english:gmatch('\n    ([A-Z_0-9]+) = ') do assert(not seen[key], 'Duplicate key: ' .. key); seen[key] = true; count = count + 1 end
-assert(count == 288)
+assert(count > 0)
+for key in pairs(localization.English) do assert(seen[key], key) end
 local pseudo = {}
 for key, value in pairs(localization.English) do pseudo[key] = '⟦長い翻訳 ' .. value .. ' расширенный текст⟧' end
 localization.Register('deDE', pseudo)
@@ -52,7 +53,7 @@ assert(L.MENU_DEFAULT_COMMAND == localization.English.MENU_DEFAULT_COMMAND)
 localization.Register('deDE', {MENU_DEFAULT_COMMAND = 'Invalid %999999s'})
 assert(L.MENU_DEFAULT_COMMAND == localization.English.MENU_DEFAULT_COMMAND)
 localization.Register('deDE', pseudo)
-for _, name in ipairs({'Defaults.lua', 'SettingDefinitions.lua', 'BuiltInThemes.lua', 'Database.lua', 'JSON.lua', 'Serialization.lua', 'Scheduling.lua', 'SettingsWidgets.lua', 'SettingsControls.lua', 'EmoteEditor.lua', 'SettingsExchangeText.lua', 'SettingsExchangeActions.lua', 'SettingsExchangeLifecycle.lua', 'SettingsExchange.lua'}) do Load(name) end
+for _, name in ipairs({'Defaults.lua', 'StandardEmoteCatalog.lua', 'SettingDefinitions.lua', 'BuiltInThemes.lua', 'Database.lua', 'JSON.lua', 'Serialization.lua', 'Scheduling.lua', 'SettingsWidgets.lua', 'SettingsControls.lua', 'StandardEmotePicker.lua', 'EmoteEditor.lua', 'SettingsExchangeText.lua', 'SettingsExchangeActions.lua', 'SettingsExchangeLifecycle.lua', 'SettingsExchange.lua'}) do Load(name) end
 addon.Database.InitializeDatabase()
 UIParent:SetSize(1000, 800)
 -- Deliberately expand help, labels, action captions and validation/status text.
@@ -60,7 +61,7 @@ local expanded = {}
 for _, key in ipairs({'EDITOR_HELP', 'EDITOR_EMOTE_NAME', 'EDITOR_DEFAULT_EMOTE', 'EDITOR_TARGETED_EMOTE_OPTIONAL', 'EDITOR_SAVE', 'UI_CLOSE', 'UI_SELECT_ALL', 'EDITOR_TARGET_CHANGED', 'UI_PRESS_CTRL_C_TO_COPY_THE_SELECTED_TEXT', 'UI_COPY_THIS_JSON_TO_SAVE_ALL_PROFILES_THEMES_AND_THEIR'}) do
     expanded[key] = pseudo[key] .. string.rep(' 長い説明 русский текст ', 5)
 end
-localization.Register('deDE', expanded)
+localization.Register('deDE', expanded, {{'wave', '長い説明 русский текст', 'Reference <target>'}})
 addon.EmoteEditor.Open(1, 1, false)
 local dialog
 for _, object in ipairs(native.objects) do if object.NameBox then dialog = object end end

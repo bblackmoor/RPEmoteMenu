@@ -48,6 +48,8 @@ Each emote has a **Default Command** and an optional **Targeted Command** used w
 
 For example, an emote labeled “Watches quietly” could use `/e watches quietly.` by default and `/e watches {target} quietly.` when targeting someone else. Built-in emotes such as `/wave` also work.
 
+The shared emote editor includes a **Standard emote** dropdown with an alias filter and untargeted/targeted reference previews. Preview wording comes from the supplied catalog and may differ from current game output. All catalog entries currently await native verification, so **Use selected emote** is disabled; manual command editing remains available. When verified entries are added, that action will fill the draft and require Save to apply it. Catalog browsing currently requires an enUS client.
+
 ## Profiles and Themes
 
 Profiles contain categories, emotes, the selected category, window position and height, lock state, fade and minimize settings, and a Theme reference. Each character selects a Profile independently. A new character uses **Default Profile**, which starts with **Default Theme**. Default Profile can be edited and restored, but cannot be renamed or deleted. Create and Copy select the resulting Profile for the current character; imported Profiles are added without selecting them.
@@ -95,7 +97,7 @@ The existing 10-category, 100-emote limit, default and targeted commands, charac
 
 The [shared settings conventions](docs/design/settings-conventions.md) describe module contracts, deliberate differences from Simple Nameplates, comparable regression coverage and pending native acceptance. The [standardization record](docs/design/addon-standardization.md) preserves all four completed code phases.
 
-The [localization record](docs/design/localization.md) tracks completed code work and pending native acceptance. The [standard-emote picker plan](docs/design/standard-emote-picker.md) defines the proposed next feature and its stages.
+The [localization record](docs/design/localization.md) tracks completed code work and pending native acceptance. The [standard-emote picker plan](docs/design/standard-emote-picker.md) tracks its implemented catalog/editor phases and pending native verification.
 
 Run all local smoke suites from the repository root with LuaTeX:
 

@@ -220,6 +220,7 @@ function Widgets.CreateDropdown(parent, optionsFunction, onChanged)
         self.widget.myvaluelabel = self.widget.label:GetText()
     end
     function handle:GetValue() return self.value end
+    function handle:SetMenuSize(width, height) self.widget:SetMenuSize(width, height) end
     function handle:SetLabel(text)
         self.widget.label:SetText(text)
         self.widget.myvaluelabel = text

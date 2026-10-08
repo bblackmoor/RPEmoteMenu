@@ -2,7 +2,7 @@
 ## Title: RP Emote Menu
 ## Notes: Custom roleplay emote menu with Profiles, shared Themes, targeted commands, and JSON sharing.
 ## Author: Brandon Blackmoor <bblackmoor@blackgate.net>
-## Version: 2.1.257
+## Version: 2.1.258
 ## IconTexture: Interface\\AddOns\\RPEmoteMenu\\Media\\icon
 ## OptionalDeps: LibSharedMedia-3.0, SharedMedia, LibDFramework-1.0
 ## SavedVariables: RPEmoteMenuDB
@@ -43,6 +43,7 @@ Commands.lua
 VisibleSlotOrder.lua
 WindowGeometry.lua
 WindowFade.lua
+StandardEmotePicker.lua
 EmoteEditor.lua
 MainWindow.lua
 Settings.lua
