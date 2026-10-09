@@ -48,7 +48,7 @@ Each emote has a **Default Command** and an optional **Targeted Command** used w
 
 For example, an emote labeled “Watches quietly” could use `/e watches quietly.` by default and `/e watches {target} quietly.` when targeting someone else. Built-in emotes such as `/wave` also work.
 
-The shared emote editor includes a **Standard emote** dropdown with an alias filter and untargeted/targeted reference previews. Preview wording comes from the supplied catalog and may differ from current game output. **Use selected emote** fills the draft, with confirmation before replacing existing commands; **Save** applies the change. Entries awaiting native verification can be inserted; their reference wording does not guarantee current game output. Entries recorded as unsupported for the current client build cannot be inserted. Catalog browsing currently requires an enUS client.
+The shared emote editor includes a **Standard emote** dropdown with an alias filter and untargeted/targeted reference previews. Preview wording comes from the supplied catalog and may differ from current game output. Selecting an alias immediately fills the name and default command and clears the targeted override; editing any of those three fields resets the selector to **Choose a standard emote** without discarding your text. **Save** applies the change. Entries awaiting native verification can be inserted; their reference wording does not guarantee current game output. Entries recorded as unsupported for the current client build cannot be inserted. Catalog browsing currently requires an enUS client.
 
 ## Profiles and Themes
 
@@ -118,3 +118,4 @@ Copyright © 2026 Brandon Blackmoor (<bblackmoor@blackgate.net>)
 Licensed under GPL-3.0 [https://www.gnu.org/licenses/gpl-3.0.en.html](https://www.gnu.org/licenses/gpl-3.0.en.html)  
 Release history: [CHANGELOG.md](CHANGELOG.md)  
 Source: [https://github.com/bblackmoor/RPEmoteMenu](https://github.com/bblackmoor/RPEmoteMenu)
+

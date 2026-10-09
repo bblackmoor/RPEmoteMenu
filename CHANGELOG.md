@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.260
+
+- Remove **Use selected emote** and its confirmation; selecting a standard emote immediately fills all three draft fields and shortens the editor layout.
+- Reset the selector and reference preview when the user edits any emote field, preserving their text. Save/Cancel and insertion guards remain in place.
+
 ## 2.1.259
 
 - Fix the standard-emote picker so unverified aliases such as `/wave` can populate editable drafts through **Use selected emote**.
@@ -319,6 +324,7 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
 
 

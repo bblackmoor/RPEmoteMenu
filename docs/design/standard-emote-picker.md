@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Phase 0 (design) is complete in 2.1.256; phase 1 (catalog model) is complete in 2.1.257; phase 2 (editor interaction) is complete in 2.1.258. Version 2.1.259 fixes draft insertion for unverified entries. The dropdown and reference previews now ship; native command verification remains pending. The four localization code phases are complete; native WoW layout/font acceptance remains pending. No additional translation is included.
+Phase 0 (design) is complete in 2.1.256; phase 1 (catalog model) is complete in 2.1.257; phase 2 (editor interaction) is complete in 2.1.258. Version 2.1.259 fixes draft insertion for unverified entries; 2.1.260 replaces the insertion button with automatic filling and resets selection on manual edits. The dropdown and reference previews now ship; native command verification remains pending. The four localization code phases are complete; native WoW layout/font acceptance remains pending. No additional translation is included.
 
 The picker will help populate an existing emote-editor draft. It will use the supplied locale catalog, keep manual editing available, and leave saving, category limits, import/export schema and command execution under their existing owners. It will not execute an emote during selection.
 
@@ -10,18 +10,18 @@ The picker will help populate an existing emote-editor draft. It will use the su
 
 Place a localized **Standard emote** selector above the editor's manual fields. Keep the unselected caption **Choose a standard emote**. Show slash aliases (for example, `/wave`) in alphabetical order, with a bounded scrolling list; add an alias filter if the existing dropdown cannot make 299 entries usable. Preserve separate alias variants initially rather than guessing synonym groups from similar preview text.
 
-Selecting an entry updates a read-only preview, without replacing the draft. Display the supplied untargeted and targeted descriptions with clear captions. They are reference wording, not guaranteed current client output. Keep `<target>` as a visible preview placeholder; do not convert it to `{target}`, a real unit name or executable text.
+Selecting an entry immediately fills the draft and updates a read-only preview. Display the supplied untargeted and targeted descriptions with clear captions. They are reference wording, not guaranteed current client output. Keep `<target>` as a visible preview placeholder; do not convert it to `{target}`, a real unit name or executable text.
 
-An explicit **Use selected emote** action applies the selection to the draft. Field mapping:
+Selection applies the standard emote directly, without a separate button or overwrite confirmation. Field mapping:
 
 | Field | Proposed result |
 | --- | --- |
-| Emote name | Keep a nonempty draft label; fill an empty label with the selected slash alias. |
+| Emote name | Set the selected slash alias, replacing the previous draft label. |
 | Default command | Set the exact selected slash alias, such as `/wave`. |
 | Targeted command | Clear the targeted override so it cannot replace the selected default with an unrelated command. |
 | Saved data | Change nothing until the editor's existing Save action succeeds. |
 
-If either command draft is nonempty, require an overwrite confirmation that identifies both command fields. Declining preserves every field. Confirmation must capture the editor session and selected entry, and recheck the Profile/category/emote target before applying. Cancel, Escape or closing the editor discards applied draft changes through the existing unsaved-draft behavior.
+Editing any of the three emote fields resets the selector to **Choose a standard emote** and returns the reference preview to its initial state without changing the user's text or the alias filter. Programmatic auto-fill and editor initialization do not trigger this reset. Cancel, Escape or closing the editor discards applied draft changes through the existing unsaved-draft behavior.
 
 This mapping is implemented in phase two. It deliberately uses a slash command instead of synthesizing a custom `/e` sentence from preview prose. Native target/no-target behavior must be verified before accepting the feature; if the chosen command requires a different routing contract, revise this plan and cover that change separately.
 
@@ -31,7 +31,7 @@ The source is `addon.Localization.StandardEmotes[clientLocale]`. The supplied en
 
 Interface text may fall back to English through `addon.L`. Command aliases must not silently fall back across locale boundaries: on a client without its own catalog, leave the manual fields available and explain that standard emotes are unavailable for that locale.
 
-Validate row shape, nonempty aliases, permitted alias syntax and uniqueness before building choices. Sorting must not mutate the catalog. A choice's identity is its exact locale and alias, not its list position or translated preview. A sorted/filtered list must retain that identity through selection and confirmation.
+Validate row shape, nonempty aliases, permitted alias syntax and uniqueness before building choices. Sorting must not mutate the catalog. A choice's identity is its exact locale and alias, not its list position or translated preview. A sorted/filtered list must retain that identity through filtering and selection.
 
 The catalog is user-supplied reference data, not proof that all aliases work in the current client. `Commands.ExecuteEmoteCommand` currently resolves a single slash alias through `addon.EmoteAliases`, then falls back to its uppercase token. Existing aliases and that fallback must remain intact. Catalog shape checks and the existing alias map do not establish native support. Phase 1 must define and document verification status for selectable entries; unsupported or unverified entries must not be advertised as validated commands.
 
@@ -42,14 +42,14 @@ The picker should initially be available only where a valid locale catalog exist
 | Component | Responsibility |
 | --- | --- |
 | New catalog model | Validate source rows; build sorted/filterable choices; retain alias/locale identity and support status. |
-| `EmoteEditor.lua` | Selection, preview and explicit draft insertion; target/read-only checks; clearing selection on each Open/Hide. |
+| `EmoteEditor.lua` | Selection, preview and automatic draft insertion; target/read-only checks; clearing selection on each Open/Hide. |
 | `SettingsWidgets.lua` | Reuse the existing dropdown/button styling; bounded list and filter behavior as needed. |
 | `Localization.lua` and locale files | Interface captions and locale-specific reference data. |
 | `Database.lua` | Existing text limits, edit permission and captured-target validation. |
 | `Commands.lua` | Existing execution routing; change only if independently required and verified. |
 | `Serialization.lua` | Existing label/default/targeted strings; no catalog index or picker state in exports. |
 
-Use the common editor opened by menu right-click or gear. Adding a separate inline picker to the settings emote list is outside the first release. In a read-only editor, previews may be browsed but insertion must be disabled. Recheck edit permission and captured target when inserting, confirming and saving.
+Use the common editor opened by menu right-click or gear. Adding a separate inline picker to the settings emote list is outside the first release. In a read-only editor, previews may be browsed but insertion must be disabled. Recheck edit permission and captured target when selecting and saving.
 
 Transient picker state belongs to the dialog. Clear selection, filter and preview on every new editor session; reopening must not inherit the previous emote's selection. Refresh the measured dialog layout after preview/filter/status changes. Keep the controls reachable at the intended UI scale; long previews must scroll rather than grow the dialog beyond the screen.
 
@@ -66,7 +66,7 @@ Transient picker state belongs to the dialog. Clear selection, filter and previe
 
 Automated coverage must include malformed rows, duplicate aliases, deterministic order, alias variants, empty/filter-no-results lists, missing locale catalogs and stable identity after filtering. Confirm that catalog access and preview never call the execution module.
 
-Editor integration must cover empty and existing drafts, preserved labels, explicit command replacement, declined confirmation, read-only sessions, Profile changes, category/emote replacement, hide/reopen while confirmation is open, and translated/long previews. Save must continue rejecting over-limit fields without truncation, and Cancel must leave the database unchanged.
+Editor integration must cover empty and existing drafts, automatic replacement of all three fields, selector reset after each manual field edit, read-only sessions, Profile changes, category/emote replacement, stale dropdown callbacks after hide/reopen, and translated/long previews. Save must continue rejecting over-limit fields without truncation, and Cancel must leave the database unchanged.
 
 Command checks must retain literal percent signs and `{player}`/`{target}` behavior for manually authored commands. Round-trip exports must contain only the existing emote fields and preserve manual command bytes. Native tests must distinguish reference preview wording from actual game output and record the tested client locale and build.
 
@@ -86,12 +86,13 @@ Phase two implements browsing, previews and insertion guards using this model. U
 
 ## Phase-two editor contract
 
-`StandardEmotePicker.lua` loads before EmoteEditor and constructs controls through SettingsWidgets when the shared editor is first opened. The alias dropdown uses a 240-unit scrolling menu and a plain substring filter. Every filter change clears selection and invalidates old dropdown callbacks. Selection changes only the reference preview; it never changes draft fields, SavedVariables or command execution. The preview has a fixed 72-unit scrollable viewport for available catalogs, including long or translated wording. Missing/invalid/empty catalogs collapse the browsing controls and retain manual fields.
+`StandardEmotePicker.lua` loads before EmoteEditor and constructs controls through SettingsWidgets when the shared editor is first opened. The alias dropdown uses a 240-unit scrolling menu and a plain substring filter. Every filter change clears selection and invalidates old dropdown callbacks. Selection updates the reference preview and immediately fills the name and default command with the selected slash alias, clearing the targeted override. No button or overwrite confirmation is required. SavedVariables and command execution remain unchanged until Save.
 
-The Use selected emote action is enabled for an unverified or verified entry in an editable, current editor session. The client build is read from the existing native `GetBuildInfo` interface to determine support status. Actual verification records are still empty in the shipped catalog. All 299 supplied entries can be browsed and inserted as drafts; the preview explains that actual game output may differ. Entries recorded as unsupported remain disabled. Manual commands continue working as before.
+The picker rebuilds the current client catalog before filling fields, then checks edit permission and the captured content target. Unverified and verified entries may populate editable drafts; known unsupported entries cannot. Missing, invalid or empty catalogs retain manual fields. Read-only sessions can browse previews without changing fields. Profile/category/emote replacement and retired dropdown callbacks cannot fill a stale draft.
 
-Insertion replaces the default command, clears the targeted override, fills only an empty label, and changes no saved data until Save succeeds. Existing command drafts require the localized overwrite confirmation. Acceptance checks its captured session, selection revision, exact draft values and captured content target, then rebuilds the current catalog to check locale/build/token evidence again. Read-only changes, Profile/category/emote replacement, hide/reopen, draft edits, reselection and newly recorded unsupported status reject the action. Stale verification evidence makes the entry unverified without preventing draft insertion. Canceling or hiding discards drafts through the existing editor lifecycle. Enter in the filter only clears focus; it does not Save or execute a command.
+User text changes in any of the three emote fields clear selection, invalidate old menu callbacks and reset the preview and draft status. The alias filter and all field text remain intact. Native text-change hooks preserve framework callbacks and distinguish user edits from programmatic filling. Every Open resets selection and filter; Close retires the picker session. Enter in the filter only clears focus.
 
-The integration suite exercises insertion without verification and uses explicit verification fixtures to check status and unsupported guards and does not establish native support. It covers filtering, old callbacks, unverified/unsupported entries, overwrite rejection, saved-data isolation, Save/Cancel, session retirement, Profile changes, content replacement, read-only sessions, revoked/build-stale evidence and long preview scrolling. The localization acceptance suite also supplies a synthetic locale catalog to check the expanded picker within the real editor layout.
+The preview has a fixed 72-unit scrollable viewport for available catalogs, including long or translated wording. The integration suite checks auto-fill, all three manual reset paths, filtering, stale callbacks, support/read-only/target guards, saved-data isolation, Save/Cancel and long preview scrolling. These fixtures do not establish native command support. The localization acceptance suite supplies a synthetic locale catalog to check the picker within the real editor layout.
 
 Phase three is native acceptance: inspect the dropdown/filter/preview at the intended UI scale and record actual aliases, target/no-target/self-target behavior and client build before adding verification records. Native localization/font acceptance also remains pending. The editor still measures the overall dialog height; extremely long surrounding translation copy or a small effective screen can exceed it and must be addressed during native acceptance rather than certified by the synthetic measurements.
+

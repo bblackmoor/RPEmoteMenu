@@ -36,63 +36,51 @@ local function Choose(alias)
     end
     error('Choice missing: '..alias)
 end
-local function Use() popup=nil; picker.UseButton.scripts.OnClick(); return popup end
-local function Accept(captured) StaticPopupDialogs[captured.name].OnAccept(nil,captured.data) end
+assert(picker.UseButton == nil and StaticPopupDialogs.RPEMOTEMENU_USE_STANDARD_EMOTE == nil)
 assert(#picker.Selector.widget.func()==299)
 local width,height=picker.Selector.widget:GetMenuSize(); assert(width==570 and height==240)
 Choose('wave')
 assert(picker.Preview:GetText():find('<target>',1,true))
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
-assert(picker.UseButton:IsEnabled())
-local unverifiedConfirmation=Use()
-assert(unverifiedConfirmation and unverifiedConfirmation.text=='/wave')
-assert(dialog.DefaultBox:GetText()==emote.defaultCommand)
--- Cancel preserves the saved commands; reopening and confirming inserts an unverified draft.
-dialog:Hide(); Open(); Choose('wave'); Accept(Use())
-assert(dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
-assert(dialog.NameBox:GetText()==emote.label)
-dialog:Hide(); Open()
+assert(dialog.NameBox:GetText()=='/wave' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
+assert(picker.Selector:GetValue()=='enUS:wave' and popup==nil)
 assert(addon.Serialization.ExportEverything()==originalExport and executions==0)
+-- Every manual field resets selection without changing the other draft fields.
+for _, box in ipairs({dialog.NameBox,dialog.DefaultBox,dialog.TargetedBox}) do
+    Choose('wave')
+    box:SetText('Manual %s {target}')
+    box.scripts.OnTextChanged(box,true)
+    assert(picker.Selector:GetValue()==nil and box:GetText()=='Manual %s {target}')
+    assert(picker.Preview:GetText()==addon.L.PICKER_BROWSE_HELP)
+    assert(dialog.Status:GetText()==addon.L.EDITOR_CHANGES_APPLY)
+end
+Choose('lol')
+assert(dialog.NameBox:GetText()=='/lol' and dialog.DefaultBox:GetText()=='/lol' and dialog.TargetedBox:GetText()=='')
+assert(picker.Selector:GetValue()=='enUS:lol')
+dialog:Hide(); Open()
+assert(dialog.NameBox:GetText()==emote.label and dialog.DefaultBox:GetText()==emote.defaultCommand)
+assert(picker.Selector:GetValue()==nil and addon.Serialization.ExportEverything()==originalExport)
 -- Filtering invalidates callbacks from an open menu, and uses literal aliases.
 local stale = picker.Selector.widget.func()[1]
 picker.FilterBox:SetText(' /WaVe ')
 assert(#picker.Selector.widget.func()==1 and picker.Selector:GetValue()==nil)
 stale.onclick(picker.Selector.widget,nil,stale.value)
-assert(picker.Selector:GetValue()==nil)
+assert(picker.Selector:GetValue()==nil and dialog.DefaultBox:GetText()==emote.defaultCommand)
 Choose('wave')
 picker.FilterBox:SetText('[')
 assert(#picker.Selector.widget.func()==0 and not picker.Selector.enabled)
 assert(picker.Preview:GetText()==addon.L.PICKER_NO_RESULTS)
+assert(dialog.DefaultBox:GetText()=='/wave')
 picker.FilterBox.scripts.OnEnterPressed(picker.FilterBox)
 assert(updates==0 and dialog:IsShown())
 picker.FilterBox:SetText('')
--- Verification fixtures check status and known-unsupported guards without claiming native acceptance.
 local function Review(token,status)
     return {locale='enUS',clientBuild='70000',token=token,status=status or 'verified',targetingChecked=true,evidence='Automated fixture only'}
 end
 catalog.Verification.enUS = {wave=Review('WAVE'),lol=Review('LAUGH'),agree=Review('AGREE','unsupported')}
-Open(); Choose('agree'); assert(not picker.UseButton:IsEnabled())
-Choose('wave'); assert(picker.UseButton:IsEnabled())
-local confirmation = Use()
-assert(confirmation and confirmation.text=='/wave')
-assert(dialog.DefaultBox:GetText()==emote.defaultCommand and addon.Serialization.ExportEverything()==originalExport)
--- Declining has no side effect; changing a draft retires that confirmation.
-dialog.DefaultBox:SetText('New manual draft %s')
-Accept(confirmation)
-assert(dialog.DefaultBox:GetText()=='New manual draft %s' and dialog.Status:GetText()==addon.L.PICKER_DRAFT_CHANGED)
-confirmation=Use(); Choose('lol'); Choose('wave'); Accept(confirmation)
-assert(dialog.DefaultBox:GetText()=='New manual draft %s')
-Choose('wave'); confirmation=Use(); Accept(confirmation)
-assert(dialog.NameBox:GetText()=='User label %s' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
-assert(addon.Serialization.ExportEverything()==originalExport)
-dialog:Hide(); assert(emote.defaultCommand==' /e {player} %s ')
-Open(); assert(picker.Selector:GetValue()==nil and picker.FilterBox:GetText()=='')
--- Empty drafts insert immediately and still require Save.
-dialog.NameBox:SetText(''); dialog.DefaultBox:SetText(''); dialog.TargetedBox:SetText('')
-Choose('wave'); assert(Use()==nil)
-assert(dialog.NameBox:GetText()=='/wave' and dialog.DefaultBox:GetText()=='/wave')
-assert(emote.defaultCommand==' /e {player} %s ')
-dialog.SaveButton.scripts.OnClick()
+Open(); Choose('agree')
+assert(dialog.DefaultBox:GetText()==emote.defaultCommand and dialog.Status:GetText()==addon.L.PICKER_CANNOT_INSERT)
+Choose('wave'); dialog.SaveButton.scripts.OnClick()
 assert(emote.label=='/wave' and emote.defaultCommand=='/wave' and emote.targetedCommand=='')
 assert(updates==1 and executions==0)
 local savedExport=assert(addon.Serialization.ExportProfile('Default'))
@@ -104,26 +92,29 @@ local function SerializedHasPickerState(value)
     end
 end
 assert(not SerializedHasPickerState(RPEmoteMenuDB))
--- Hide/reopen, profile changes, replacement and revoked/build-stale reviews.
-Open(); Choose('lol'); confirmation=Use(); dialog:Hide(); Open(); Accept(confirmation)
+-- Stale callbacks cannot populate hidden/read-only/replaced editor sessions.
+Open(); local retired=picker.Selector.widget.func()[1]; dialog:Hide()
+retired.onclick(picker.Selector.widget,nil,retired.value)
 assert(dialog.DefaultBox:GetText()=='/wave')
-Choose('wave'); confirmation=Use(); assert(db.CreateProfile('Other')); Accept(confirmation)
-assert(dialog.DefaultBox:GetText()=='/wave' and not picker.UseButton:IsEnabled())
-assert(db.SetActiveProfile('Default')); Open(); Choose('lol'); confirmation=Use()
+Open(); retired=picker.Selector.widget.func()[1]; dialog:Hide(); Open()
+retired.onclick(picker.Selector.widget,nil,retired.value)
+assert(picker.Selector:GetValue()==nil and dialog.DefaultBox:GetText()=='/wave')
+assert(db.CreateProfile('Other')); Choose('lol')
+assert(dialog.DefaultBox:GetText()=='/wave' and dialog.Status:GetText()==addon.L.EDITOR_TARGET_CHANGED)
+assert(db.SetActiveProfile('Default')); Open()
 local category=db.GetCategory(1); category.emotes[1]={label='Replacement',defaultCommand='/bow',targetedCommand=''}
-Accept(confirmation); assert(category.emotes[1].defaultCommand=='/bow')
+Choose('lol'); assert(dialog.DefaultBox:GetText()=='/wave' and category.emotes[1].defaultCommand=='/bow')
 category.emotes[1]=emote
-Open(); Choose('lol'); confirmation=Use(); catalog.Verification.enUS.lol.status='unsupported'; Accept(confirmation)
+Open(); catalog.Verification.enUS.lol.status='unsupported'; Choose('lol')
 assert(dialog.DefaultBox:GetText()=='/wave')
 catalog.Verification.enUS.lol.status='verified'
-Open(); Choose('lol'); confirmation=Use()
 local nativeBuild=GetBuildInfo; GetBuildInfo=function() return 'test','different-build' end
-Accept(confirmation); assert(dialog.DefaultBox:GetText()=='/lol')
+Open(); Choose('lol'); assert(dialog.DefaultBox:GetText()=='/lol')
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
 GetBuildInfo=nativeBuild
 local editable=db.CanEditActiveProfile; db.CanEditActiveProfile=function() return false end
-Open(); Choose('wave'); assert(picker.Selector.enabled and not picker.UseButton:IsEnabled()); Use()
-assert(dialog.DefaultBox:GetText()=='/wave'); db.CanEditActiveProfile=editable
+Open(); Choose('lol'); assert(picker.Selector.enabled and dialog.DefaultBox:GetText()=='/wave')
+db.CanEditActiveProfile=editable
 -- Long reference descriptions scroll inside the bounded preview viewport.
 for _, row in ipairs(addon.Localization.StandardEmotes.enUS) do
     if row[1]=='wave' then row[2]=string.rep('長い説明 %s ',150); row[3]='<target> unchanged' end
@@ -134,9 +125,10 @@ assert(dialog:GetHeight()<UIParent:GetHeight())
 assert(picker.Preview:GetText():find('%s',1,true) and picker.Preview:GetText():find('<target>',1,true))
 -- Missing/invalid/empty catalogs preserve manual editing.
 addon.Localization.locale='deDE'; Open()
-assert(not picker.Selector:GetFrame():IsShown() and not picker.UseButton:IsEnabled())
+assert(not picker.Selector:GetFrame():IsShown())
 assert(picker.Preview:GetText()==addon.L.PICKER_UNAVAILABLE and dialog.DefaultBox:IsEnabled())
 addon.Localization.StandardEmotes.deDE={{'/invalid','',''}}; Open(); assert(picker.Preview:GetText()==addon.L.PICKER_INVALID)
 addon.Localization.StandardEmotes.deDE={}; Open(); assert(picker.Preview:GetText()==addon.L.PICKER_EMPTY)
 assert(executions==0 and addon.Serialization.ExportProfile('Default')==savedExport)
-print('PASS real picker filtering/previews, draft-only insertion, confirmation/session/review guards, Save/Cancel and bounded layouts')
+print('PASS real picker filtering/previews, draft-only insertion, manual reset/session/review guards, Save/Cancel and bounded layouts')
+

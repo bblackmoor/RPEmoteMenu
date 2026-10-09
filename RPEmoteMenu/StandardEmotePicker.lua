@@ -15,7 +15,6 @@ function Picker.Install(dialog, Widgets)
     local picker = {frame = CreateFrame("Frame", nil, dialog)}
     local model, selected, session, filter = nil, nil, nil, ""
     local refreshing = false
-    local selectionRevision = 0
     local title = Widgets.CreateDialogLabel(picker.frame, L.PICKER_TITLE, 12)
     local filterLabel = Widgets.CreateDialogLabel(picker.frame, L.PICKER_FILTER, 12)
     local filterBox = Widgets.CreateDialogTextEntry(picker.frame, 430, 24)
@@ -26,8 +25,7 @@ function Picker.Install(dialog, Widgets)
     local preview = Widgets.CreateDialogLabel(content, "", 12)
     preview:SetJustifyH("LEFT")
     preview:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    local useButton = Widgets.CreateDialogButton(picker.frame, L.PICKER_USE, 190, 24)
-    picker.FilterBox, picker.Preview, picker.PreviewScroll, picker.UseButton = filterBox, preview, scroll, useButton
+    picker.FilterBox, picker.Preview, picker.PreviewScroll = filterBox, preview, scroll
 
     local function ShowStatus(text)
         dialog.Status:SetText(text)
@@ -59,7 +57,6 @@ function Picker.Install(dialog, Widgets)
         elseif model.count == 0 then preview:SetText(L.PICKER_EMPTY)
         elseif #model:GetChoices(filter) == 0 then preview:SetText(L.PICKER_NO_RESULTS)
         else preview:SetText(L.PICKER_BROWSE_HELP) end
-        useButton:SetEnabled(CanInsert(entry) == true)
         scroll:SetVerticalScroll(0)
         dialog:RefreshLayout()
     end
@@ -78,9 +75,20 @@ function Picker.Install(dialog, Widgets)
         end
         if not entry or not visible then return end
         selected = value
-        selectionRevision = selectionRevision + 1
         selector:SetValue(value, entry.command)
         SetPreview()
+        entry = FreshEntry()
+        if not CanInsert(entry) then
+            ShowStatus(Database.IsCurrentContentTarget(dialog.contentTarget)
+                and L.PICKER_CANNOT_INSERT or L.EDITOR_TARGET_CHANGED)
+            return
+        end
+        dialog.NameBox:SetText(entry.command)
+        dialog.DefaultBox:SetText(entry.command)
+        dialog.TargetedBox:SetText("")
+        dialog.Status:SetText(L.PICKER_INSERTED)
+        dialog.Status:SetTextColor(0.8, 0.8, 0.8, 1)
+        dialog:RefreshLayout()
     end)
     selector:SetMenuSize(570, 240)
     picker.Selector = selector
@@ -89,7 +97,6 @@ function Picker.Install(dialog, Widgets)
         if refreshing or not session then return end
         filter = filterBox:GetText() or ""
         selected = nil
-        selectionRevision = selectionRevision + 1
         selector:InvalidateOptions()
         selector:SetValue(nil, L.PICKER_CHOOSE)
         selector:SetEnabled(model ~= nil and #model:GetChoices(filter) > 0)
@@ -99,47 +106,19 @@ function Picker.Install(dialog, Widgets)
     -- Enter in the filter never saves the editor or executes the selection.
     filterBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
 
-    local function Draft()
-        return {dialog.NameBox:GetText() or "", dialog.DefaultBox:GetText() or "", dialog.TargetedBox:GetText() or ""}
+    -- Keep framework text-entry callbacks intact. Programmatic auto-fill and
+    -- editor initialization do not count as manual changes.
+    for _, box in ipairs({dialog.NameBox, dialog.DefaultBox, dialog.TargetedBox}) do
+        box:HookScript("OnTextChanged", function(_, byUser)
+            if not byUser or not session or not selected then return end
+            selected = nil
+            selector:InvalidateOptions()
+            selector:SetValue(nil, L.PICKER_CHOOSE)
+            dialog.Status:SetText(L.EDITOR_CHANGES_APPLY)
+            dialog.Status:SetTextColor(0.8, 0.8, 0.8, 1)
+            SetPreview()
+        end)
     end
-    local function Apply(captured)
-        if not session or captured.session ~= session or not dialog:IsShown() then return false end
-        if captured.value ~= selected or captured.revision ~= selectionRevision then
-            ShowStatus(L.PICKER_DRAFT_CHANGED); return false
-        end
-        local current = Draft()
-        for index = 1, 3 do
-            if current[index] ~= captured.draft[index] then ShowStatus(L.PICKER_DRAFT_CHANGED); return false end
-        end
-        local entry = FreshEntry()
-        if not CanInsert(entry) then
-            useButton:SetEnabled(false)
-            ShowStatus(Database.IsCurrentContentTarget(dialog.contentTarget)
-                and L.PICKER_CANNOT_INSERT or L.EDITOR_TARGET_CHANGED)
-            return false
-        end
-        if current[1] == "" then dialog.NameBox:SetText(entry.command) end
-        dialog.DefaultBox:SetText(entry.command)
-        dialog.TargetedBox:SetText("")
-        dialog.Status:SetText(L.PICKER_INSERTED)
-        dialog.Status:SetTextColor(0.8, 0.8, 0.8, 1)
-        dialog:RefreshLayout()
-        return true
-    end
-    StaticPopupDialogs.RPEMOTEMENU_USE_STANDARD_EMOTE = {
-        text = L.PICKER_REPLACE_COMMANDS, button1 = L.PICKER_REPLACE,
-        button2 = CANCEL or L.UI_CANCEL, timeout = 0, whileDead = true,
-        hideOnEscape = true, preferredIndex = 3,
-        OnAccept = function(_, captured) if captured then Apply(captured) end end,
-    }
-    useButton:SetScript("OnClick", function()
-        local entry = FreshEntry()
-        if not CanInsert(entry) then useButton:SetEnabled(false); return end
-        local captured = {session = session, value = selected, revision = selectionRevision, draft = Draft()}
-        if captured.draft[2] ~= "" or captured.draft[3] ~= "" then
-            StaticPopup_Show("RPEMOTEMENU_USE_STANDARD_EMOTE", entry.command, nil, captured)
-        else Apply(captured) end
-    end)
 
     function picker:Layout(y, width)
         self.frame:ClearAllPoints()
@@ -149,7 +128,7 @@ function Picker.Install(dialog, Widgets)
         local offset = Widgets.MeasureDialogLabel(title, width) + 6
         local available = model ~= nil and model.count > 0
         filterLabel:SetShown(available); filterBox:SetShown(available)
-        selector:GetFrame():SetShown(available); useButton:SetShown(available)
+        selector:GetFrame():SetShown(available)
         if available then
             local labelHeight = Widgets.MeasureDialogLabel(filterLabel, 120)
             filterLabel:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
@@ -166,13 +145,6 @@ function Picker.Install(dialog, Widgets)
         content:SetSize(width - 34, math.max(previewHeight, scroll:GetHeight()))
         scroll:RefreshViewport()
         offset = offset + scroll:GetHeight() + 6
-        if available then
-            local text = useButton:GetFontString()
-            local height = Widgets.MeasureDialogLabel(text, width - 20) + 10
-            useButton:SetSize(width, math.max(24, height))
-            useButton:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
-            offset = offset + useButton:GetHeight() + 8
-        end
         self.frame:SetHeight(offset)
         return y + offset + 14
     end
@@ -189,7 +161,6 @@ function Picker.Install(dialog, Widgets)
     function picker:Close()
         session, selected, model, filter = nil, nil, nil, ""
         selector:InvalidateOptions(); selector:SetEnabled(false)
-        useButton:SetEnabled(false)
         filterBox:ClearFocus()
         refreshing = true; filterBox:SetText(""); refreshing = false
         preview:SetText("")
@@ -197,3 +168,4 @@ function Picker.Install(dialog, Widgets)
     end
     return picker
 end
+
