@@ -29,6 +29,9 @@ Open()
 local dialog
 for _, object in ipairs(native.objects) do if object.NameBox then dialog=object end end
 local picker = dialog.StandardPicker
+assert(dialog.mouseEnabled, "editor shell consumes background clicks")
+assert(picker.Preview:GetText()=="" and not picker.PreviewScroll:IsShown(), "empty picker has no helper or reserved preview space")
+local compactHeight = dialog:GetHeight()
 local function Choose(alias)
     local choices = picker.Selector.widget.func()
     for _, option in ipairs(choices) do
@@ -40,6 +43,7 @@ assert(picker.UseButton == nil and StaticPopupDialogs.RPEMOTEMENU_USE_STANDARD_E
 assert(#picker.Selector.widget.func()==299)
 local width,height=picker.Selector.widget:GetMenuSize(); assert(width==570 and height==240)
 Choose('wave')
+assert(picker.PreviewScroll:IsShown() and dialog:GetHeight()>compactHeight, "selection reserves only its reference preview")
 assert(picker.Preview:GetText():find('<target>',1,true))
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
 assert(dialog.NameBox:GetText()=='/wave' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
@@ -51,7 +55,7 @@ for _, box in ipairs({dialog.NameBox,dialog.DefaultBox,dialog.TargetedBox}) do
     box:SetText('Manual %s {target}')
     box.scripts.OnTextChanged(box,true)
     assert(picker.Selector:GetValue()==nil and box:GetText()=='Manual %s {target}')
-    assert(picker.Preview:GetText()==addon.L.PICKER_BROWSE_HELP)
+    assert(picker.Preview:GetText()=="" and not picker.PreviewScroll:IsShown())
     assert(dialog.Status:GetText()==addon.L.EDITOR_CHANGES_APPLY)
 end
 Choose('lol')

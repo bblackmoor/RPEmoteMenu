@@ -458,6 +458,11 @@ function Widgets.CreateDialog(name, width, height)
     local dialog = Framework():CreateSimplePanel(UIParent, width, height, "", name,
         {NoScripts = true, NoTitleBar = true, NoCloseButton = true})
     dialog:SetFrameStrata("DIALOG")
+    -- NoScripts disables DF's input setup as well as its click-to-move policy.
+    -- The shell must still consume clicks over its background/empty space.
+    dialog:EnableMouse(true)
+    if dialog.SetPropagateMouseClicks then dialog:SetPropagateMouseClicks(false) end
+    if dialog.SetPropagateMouseMotion then dialog:SetPropagateMouseMotion(false) end
     dialog:SetClampedToScreen(true)
     dialog:RegisterForDrag("LeftButton")
     dialog:SetScript("OnDragStart", dialog.StartMoving)

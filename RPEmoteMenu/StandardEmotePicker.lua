@@ -56,7 +56,7 @@ function Picker.Install(dialog, Widgets)
             preview:SetText(picker.state == "invalid" and L.PICKER_INVALID or L.PICKER_UNAVAILABLE)
         elseif model.count == 0 then preview:SetText(L.PICKER_EMPTY)
         elseif #model:GetChoices(filter) == 0 then preview:SetText(L.PICKER_NO_RESULTS)
-        else preview:SetText(L.PICKER_BROWSE_HELP) end
+        else preview:SetText("") end
         scroll:SetVerticalScroll(0)
         dialog:RefreshLayout()
     end
@@ -139,14 +139,18 @@ function Picker.Install(dialog, Widgets)
             selector:SetWidth(width)
             offset = offset + 24 + 6
         end
-        scroll:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
-        scroll:SetSize(width, available and 72 or 40)
-        local previewHeight = Widgets.MeasureDialogLabel(preview, width - 34)
-        content:SetSize(width - 34, math.max(previewHeight, scroll:GetHeight()))
-        scroll:RefreshViewport()
-        offset = offset + scroll:GetHeight() + 6
+        local hasPreview = (preview:GetText() or "") ~= ""
+        scroll:SetShown(hasPreview)
+        if hasPreview then
+            scroll:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
+            local previewHeight = Widgets.MeasureDialogLabel(preview, width - 34)
+            scroll:SetSize(width, math.min(previewHeight, available and 72 or 40))
+            content:SetSize(width - 34, math.max(previewHeight, scroll:GetHeight()))
+            scroll:RefreshViewport()
+            offset = offset + scroll:GetHeight() + 6
+        end
         self.frame:SetHeight(offset)
-        return y + offset + 14
+        return y + offset + 6
     end
     function picker:Open()
         session, selected, filter = {}, nil, ""

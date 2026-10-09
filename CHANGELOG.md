@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.261
+
+- Enable mouse input on dialog shells so background clicks cannot reach the WoW settings page underneath. Preserve explicit drag and close behavior.
+- Remove the initial standard-emote helper text and its reserved preview space. Show a compact, bounded reference preview only when there is text to display.
+
 ## 2.1.260
 
 - Remove **Use selected emote** and its confirmation; selecting a standard emote immediately fills all three draft fields and shortens the editor layout.

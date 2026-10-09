@@ -302,6 +302,7 @@ end
 local shell = widgets.CreateDialog("RPEmoteMenuTestDialog", 610, 330)
 assert(shell:GetWidth() == 610 and shell:GetHeight() == 330)
 assert(shell.TitleBar and not shell.TitleBar:IsShown())
+assert(shell.mouseEnabled, "dialog background receives mouse clicks")
 assert(not shell:GetScript("OnMouseDown"), "DF click-to-move/right-click-close policy is disabled")
 local registrations = 0
 for _, name in ipairs(UISpecialFrames) do if name == "RPEmoteMenuTestDialog" then registrations = registrations + 1 end end
