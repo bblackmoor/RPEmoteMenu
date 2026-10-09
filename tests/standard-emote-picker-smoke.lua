@@ -43,8 +43,15 @@ local width,height=picker.Selector.widget:GetMenuSize(); assert(width==570 and h
 Choose('wave')
 assert(picker.Preview:GetText():find('<target>',1,true))
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
-assert(not picker.UseButton:IsEnabled())
-Use(); assert(dialog.DefaultBox:GetText()==emote.defaultCommand and popup==nil)
+assert(picker.UseButton:IsEnabled())
+local unverifiedConfirmation=Use()
+assert(unverifiedConfirmation and unverifiedConfirmation.text=='/wave')
+assert(dialog.DefaultBox:GetText()==emote.defaultCommand)
+-- Cancel preserves the saved commands; reopening and confirming inserts an unverified draft.
+dialog:Hide(); Open(); Choose('wave'); Accept(Use())
+assert(dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
+assert(dialog.NameBox:GetText()==emote.label)
+dialog:Hide(); Open()
 assert(addon.Serialization.ExportEverything()==originalExport and executions==0)
 -- Filtering invalidates callbacks from an open menu, and uses literal aliases.
 local stale = picker.Selector.widget.func()[1]
@@ -59,7 +66,7 @@ assert(picker.Preview:GetText()==addon.L.PICKER_NO_RESULTS)
 picker.FilterBox.scripts.OnEnterPressed(picker.FilterBox)
 assert(updates==0 and dialog:IsShown())
 picker.FilterBox:SetText('')
--- Verification fixtures enable insertion without claiming native acceptance.
+-- Verification fixtures check status and known-unsupported guards without claiming native acceptance.
 local function Review(token,status)
     return {locale='enUS',clientBuild='70000',token=token,status=status or 'verified',targetingChecked=true,evidence='Automated fixture only'}
 end
@@ -111,7 +118,8 @@ assert(dialog.DefaultBox:GetText()=='/wave')
 catalog.Verification.enUS.lol.status='verified'
 Open(); Choose('lol'); confirmation=Use()
 local nativeBuild=GetBuildInfo; GetBuildInfo=function() return 'test','different-build' end
-Accept(confirmation); assert(dialog.DefaultBox:GetText()=='/wave')
+Accept(confirmation); assert(dialog.DefaultBox:GetText()=='/lol')
+assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
 GetBuildInfo=nativeBuild
 local editable=db.CanEditActiveProfile; db.CanEditActiveProfile=function() return false end
 Open(); Choose('wave'); assert(picker.Selector.enabled and not picker.UseButton:IsEnabled()); Use()

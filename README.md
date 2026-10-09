@@ -48,7 +48,7 @@ Each emote has a **Default Command** and an optional **Targeted Command** used w
 
 For example, an emote labeled “Watches quietly” could use `/e watches quietly.` by default and `/e watches {target} quietly.` when targeting someone else. Built-in emotes such as `/wave` also work.
 
-The shared emote editor includes a **Standard emote** dropdown with an alias filter and untargeted/targeted reference previews. Preview wording comes from the supplied catalog and may differ from current game output. All catalog entries currently await native verification, so **Use selected emote** is disabled; manual command editing remains available. When verified entries are added, that action will fill the draft and require Save to apply it. Catalog browsing currently requires an enUS client.
+The shared emote editor includes a **Standard emote** dropdown with an alias filter and untargeted/targeted reference previews. Preview wording comes from the supplied catalog and may differ from current game output. **Use selected emote** fills the draft, with confirmation before replacing existing commands; **Save** applies the change. Entries awaiting native verification can be inserted; their reference wording does not guarantee current game output. Entries recorded as unsupported for the current client build cannot be inserted. Catalog browsing currently requires an enUS client.
 
 ## Profiles and Themes
 

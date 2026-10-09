@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.259
+
+- Fix the standard-emote picker so unverified aliases such as `/wave` can populate editable drafts through **Use selected emote**.
+- Keep overwrite confirmation, Save/Cancel behavior and known-unsupported/read-only/stale-editor guards. Verification remains informational for unverified entries, and previews explain that game output may differ.
+- Add regression coverage for unverified insertion and stale build evidence; retain verified-only catalog filtering.
+
 ## 2.1.258
 
 - Complete phase two of the standard-emote picker: add a filtered, scrolling alias dropdown and bounded untargeted/targeted reference previews to the shared emote editor.

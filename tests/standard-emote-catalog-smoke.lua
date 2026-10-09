@@ -21,7 +21,7 @@ assert(model and state == 'available' and model.count == 299)
 local choices = model:GetChoices()
 assert(#choices == 299 and #model:GetChoices('', true) == 0)
 for index, entry in ipairs(choices) do
-    assert(entry.supportStatus == 'unverified' and not entry.selectable)
+    assert(entry.supportStatus == 'unverified' and entry.selectable)
     assert(entry.value == 'enUS:' .. entry.alias and entry.command == '/' .. entry.alias)
     if index > 1 then assert(choices[index-1].alias < entry.alias) end
 end
@@ -55,13 +55,13 @@ local invalid = {
 for _, rows in ipairs(invalid) do local result, errorMessage = catalog.Build('enUS', rows); assert(not result and errorMessage) end
 assert(not catalog.Build('EN-US', {}))
 assert(not catalog.Build('enUS', {{'wave','',''}}, {aliases={wave='bad token'}}))
--- Native evidence must match locale/build/token and cover targeting before use.
+-- Native evidence must match locale/build/token and cover targeting before claiming verification.
 local review = {locale='enUS', clientBuild='test-build', token='WAVE', status='verified', targetingChecked=true, evidence='Native acceptance fixture'}
 local function Reviewed(record, build)
     return assert(catalog.Build('enUS', {{'wave','',''}}, {reviews={wave=record}, clientBuild=build or 'test-build'})):Resolve('enUS:wave')
 end
 assert(Reviewed(review).selectable and Reviewed(review).supportStatus == 'verified')
-assert(not Reviewed(review, 'different-build').selectable)
+assert(Reviewed(review, 'different-build').selectable and Reviewed(review, 'different-build').supportStatus == 'unverified')
 for _, field in ipairs({'locale','clientBuild','token','evidence','targetingChecked'}) do
     local bad = {}; for k,v in pairs(review) do bad[k]=v end; bad[field]=nil
     assert(Reviewed(bad).supportStatus == 'unverified', field)
@@ -74,7 +74,7 @@ review.status = 'verified'
 catalog.Verification.enUS = {wave=review}
 local reviewed = assert(catalog.GetForClient({clientBuild='test-build'}))
 assert(#reviewed:GetChoices('', true) == 1 and reviewed:GetChoices('', true)[1].value == 'enUS:wave')
-assert(not model:Resolve('enUS:wave').selectable, 'An existing snapshot must not change after later reviews')
+assert(model:Resolve('enUS:wave').supportStatus == 'unverified', 'An existing snapshot must not change after later reviews')
 local foreign = Load('deDE')
 local result, reason = foreign.StandardEmoteCatalog.GetForClient()
 assert(not result and reason == 'unavailable')

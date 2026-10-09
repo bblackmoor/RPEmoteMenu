@@ -66,7 +66,7 @@ function Catalog.Build(locale, rows, options)
             locale = locale, alias = alias, value = locale .. ":" .. alias,
             command = "/" .. alias, token = token,
             defaultPreview = row[2], targetedPreview = row[3],
-            supportStatus = status, selectable = status == "verified", evidence = evidence,
+            supportStatus = status, selectable = status ~= "unsupported", evidence = evidence,
         }
         entries[#entries + 1] = entry
         byValue[entry.value] = entry
@@ -80,7 +80,7 @@ function Catalog.Build(locale, rows, options)
         local query = (filter or ""):lower():gsub("^%s+", ""):gsub("%s+$", ""):gsub("^/", "")
         local result = {}
         for _, entry in ipairs(entries) do
-            if (not verifiedOnly or entry.selectable) and entry.alias:find(query, 1, true) then
+            if (not verifiedOnly or entry.supportStatus == "verified") and entry.alias:find(query, 1, true) then
                 result[#result + 1] = Copy(entry)
             end
         end
