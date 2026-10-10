@@ -75,12 +75,10 @@ function Catalog.Build(locale, rows, options)
     local model = {locale = locale, count = count}
 
     -- Callers receive copies, so a UI cannot alter the catalog or this snapshot.
-    function model:GetChoices(filter, verifiedOnly)
-        if filter ~= nil and type(filter) ~= "string" then return nil, "Invalid alias filter" end
-        local query = (filter or ""):lower():gsub("^%s+", ""):gsub("%s+$", ""):gsub("^/", "")
+    function model:GetChoices(verifiedOnly)
         local result = {}
         for _, entry in ipairs(entries) do
-            if (not verifiedOnly or entry.supportStatus == "verified") and entry.alias:find(query, 1, true) then
+            if not verifiedOnly or entry.supportStatus == "verified" then
                 result[#result + 1] = Copy(entry)
             end
         end

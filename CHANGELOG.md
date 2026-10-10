@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.262
+
+- Place the shortened Emote Name text box, **or**, and **Choose a standard emote** selector on one row in the shared emote editor. Keep reference previews beneath the row.
+- Remove the Standard emote heading, alias filter label/text box, filtering logic and unused locale strings; preserve autofill and manual-edit selection reset.
+
 ## 2.1.261
 
 - Enable mouse input on dialog shells so background clicks cannot reach the WoW settings page underneath. Preserve explicit drag and close behavior.

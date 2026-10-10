@@ -19,7 +19,7 @@ C_ChatInfo = {SendChatMessage = function() dispatched = dispatched + 1 end}
 local model, state = catalog.GetForClient()
 assert(model and state == 'available' and model.count == 299)
 local choices = model:GetChoices()
-assert(#choices == 299 and #model:GetChoices('', true) == 0)
+assert(#choices == 299 and #model:GetChoices(true) == 0)
 for index, entry in ipairs(choices) do
     assert(entry.supportStatus == 'unverified' and entry.selectable)
     assert(entry.value == 'enUS:' .. entry.alias and entry.command == '/' .. entry.alias)
@@ -30,10 +30,6 @@ assert(model:Resolve('enUS:ty').token == 'THANK')
 assert(model:Resolve('enUS:wave').token == 'WAVE')
 assert(model:Resolve('frFR:wave') == nil and model:Resolve(1) == nil)
 local wave = model:Resolve('enUS:wave')
-assert(model:GetChoices(' /WaVe ')[1].value == wave.value)
-assert(#model:GetChoices('[') == 0 and #model:GetChoices('%s') == 0)
-assert(#model:GetChoices('NoSuchAlias') == 0)
-assert(model:GetChoices(false) == nil)
 wave.alias, wave.defaultPreview = 'modified', 'modified'
 choices[1].value = 'modified'
 assert(model:Resolve('enUS:wave').alias == 'wave')
@@ -73,7 +69,7 @@ assert(Reviewed(review).supportStatus == 'unverified')
 review.status = 'verified'
 catalog.Verification.enUS = {wave=review}
 local reviewed = assert(catalog.GetForClient({clientBuild='test-build'}))
-assert(#reviewed:GetChoices('', true) == 1 and reviewed:GetChoices('', true)[1].value == 'enUS:wave')
+assert(#reviewed:GetChoices(true) == 1 and reviewed:GetChoices(true)[1].value == 'enUS:wave')
 assert(model:Resolve('enUS:wave').supportStatus == 'unverified', 'An existing snapshot must not change after later reviews')
 local foreign = Load('deDE')
 local result, reason = foreign.StandardEmoteCatalog.GetForClient()
@@ -86,4 +82,4 @@ local result, reason, detail = foreign.StandardEmoteCatalog.GetForClient()
 assert(not result and reason == 'invalid' and detail)
 for i,row in ipairs(source) do for j=1,3 do assert(row[j] == snapshot[i][j], 'Source catalog changed') end end
 assert(dispatched == 0 and RPEmoteMenuDB == nil, 'Catalog reads must not execute or create saved data')
-print('PASS catalog validation, sorting/filtering, identity/isolation, locale availability and build-scoped verification')
+print('PASS catalog validation, sorting, identity/isolation, locale availability and build-scoped verification')

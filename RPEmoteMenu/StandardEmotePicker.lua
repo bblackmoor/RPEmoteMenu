@@ -13,19 +13,14 @@ end
 function Picker.Install(dialog, Widgets)
     local Catalog, Database = addon.StandardEmoteCatalog, addon.Database
     local picker = {frame = CreateFrame("Frame", nil, dialog)}
-    local model, selected, session, filter = nil, nil, nil, ""
-    local refreshing = false
-    local title = Widgets.CreateDialogLabel(picker.frame, L.PICKER_TITLE, 12)
-    local filterLabel = Widgets.CreateDialogLabel(picker.frame, L.PICKER_FILTER, 12)
-    local filterBox = Widgets.CreateDialogTextEntry(picker.frame, 430, 24)
-    filterBox:SetAutoFocus(false)
-    filterBox:SetMaxBytes(128)
+    local model, selected, session = nil, nil, nil
+    local orLabel = Widgets.CreateDialogLabel(picker.frame, L.PICKER_OR, 12)
     local selector
     local scroll, content = Widgets.CreateCanvasScrollBox(picker.frame, {step = 20})
     local preview = Widgets.CreateDialogLabel(content, "", 12)
     preview:SetJustifyH("LEFT")
     preview:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
-    picker.FilterBox, picker.Preview, picker.PreviewScroll = filterBox, preview, scroll
+    picker.Preview, picker.PreviewScroll = preview, scroll
 
     local function ShowStatus(text)
         dialog.Status:SetText(text)
@@ -55,25 +50,20 @@ function Picker.Install(dialog, Widgets)
         elseif not model then
             preview:SetText(picker.state == "invalid" and L.PICKER_INVALID or L.PICKER_UNAVAILABLE)
         elseif model.count == 0 then preview:SetText(L.PICKER_EMPTY)
-        elseif #model:GetChoices(filter) == 0 then preview:SetText(L.PICKER_NO_RESULTS)
         else preview:SetText("") end
         scroll:SetVerticalScroll(0)
         dialog:RefreshLayout()
     end
     selector = Widgets.CreateDropdown(picker.frame, function()
         local choices = {}
-        for _, entry in ipairs(model and model:GetChoices(filter) or {}) do
+        for _, entry in ipairs(model and model:GetChoices() or {}) do
             choices[#choices + 1] = {label = entry.command, value = entry.value}
         end
         return choices
     end, function(value)
         if not session or not model then return end
         local entry = model:Resolve(value)
-        local visible = false
-        for _, choice in ipairs(model:GetChoices(filter)) do
-            if choice.value == value then visible = true; break end
-        end
-        if not entry or not visible then return end
+        if not entry then return end
         selected = value
         selector:SetValue(value, entry.command)
         SetPreview()
@@ -93,19 +83,6 @@ function Picker.Install(dialog, Widgets)
     selector:SetMenuSize(570, 240)
     picker.Selector = selector
 
-    filterBox:SetScript("OnTextChanged", function()
-        if refreshing or not session then return end
-        filter = filterBox:GetText() or ""
-        selected = nil
-        selector:InvalidateOptions()
-        selector:SetValue(nil, L.PICKER_CHOOSE)
-        selector:SetEnabled(model ~= nil and #model:GetChoices(filter) > 0)
-        SetPreview()
-    end)
-    filterBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
-    -- Enter in the filter never saves the editor or executes the selection.
-    filterBox:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
-
     -- Keep framework text-entry callbacks intact. Programmatic auto-fill and
     -- editor initialization do not count as manual changes.
     for _, box in ipairs({dialog.NameBox, dialog.DefaultBox, dialog.TargetedBox}) do
@@ -124,20 +101,20 @@ function Picker.Install(dialog, Widgets)
         self.frame:ClearAllPoints()
         self.frame:SetPoint("TOPLEFT", dialog, "TOPLEFT", 18, -y)
         self.frame:SetWidth(width)
-        title:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, 0)
-        local offset = Widgets.MeasureDialogLabel(title, width) + 6
         local available = model ~= nil and model.count > 0
-        filterLabel:SetShown(available); filterBox:SetShown(available)
+        orLabel:SetShown(available)
         selector:GetFrame():SetShown(available)
+        dialog.NameBox:SetWidth(available and 240 or width)
+        local offset = 24 + 6
         if available then
-            local labelHeight = Widgets.MeasureDialogLabel(filterLabel, 120)
-            filterLabel:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
-            filterBox:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 132, -offset)
-            filterBox:SetWidth(width - 132)
-            offset = offset + math.max(24, labelHeight) + 6
-            selector:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 0, -offset)
-            selector:SetWidth(width)
-            offset = offset + 24 + 6
+            local orWidth = 40
+            local labelHeight = Widgets.MeasureDialogLabel(orLabel, orWidth)
+            orLabel:ClearAllPoints()
+            orLabel:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 252, -4)
+            selector:ClearAllPoints()
+            selector:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 304, 0)
+            selector:SetWidth(width - 304)
+            offset = math.max(24, labelHeight + 4) + 6
         end
         local hasPreview = (preview:GetText() or "") ~= ""
         scroll:SetShown(hasPreview)
@@ -150,12 +127,11 @@ function Picker.Install(dialog, Widgets)
             offset = offset + scroll:GetHeight() + 6
         end
         self.frame:SetHeight(offset)
-        return y + offset + 6
+        return y + offset + 8
     end
     function picker:Open()
-        session, selected, filter = {}, nil, ""
+        session, selected = {}, nil
         model, self.state = Catalog.GetForClient({clientBuild = ClientBuild()})
-        refreshing = true; filterBox:SetText(""); refreshing = false
         selector:InvalidateOptions()
         selector:SetValue(nil, L.PICKER_CHOOSE)
         selector:SetEnabled(model ~= nil and model.count > 0)
@@ -163,10 +139,8 @@ function Picker.Install(dialog, Widgets)
         SetPreview()
     end
     function picker:Close()
-        session, selected, model, filter = nil, nil, nil, ""
+        session, selected, model = nil, nil, nil
         selector:InvalidateOptions(); selector:SetEnabled(false)
-        filterBox:ClearFocus()
-        refreshing = true; filterBox:SetText(""); refreshing = false
         preview:SetText("")
         self.frame:Hide()
     end

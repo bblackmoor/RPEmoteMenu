@@ -71,7 +71,6 @@ local function CreateFields(dialog, Widgets)
         self.HelpText:ClearAllPoints()
         self.HelpText:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(16 + titleHeight + 10))
         local y = 16 + titleHeight + 10 + helpHeight + 18
-        if self.StandardPicker then y = self.StandardPicker:Layout(y, width) end
         for _, field in ipairs(self.Fields) do
             local labelHeight = Widgets.MeasureDialogLabel(field.label, width)
             field.label:ClearAllPoints()
@@ -79,7 +78,12 @@ local function CreateFields(dialog, Widgets)
             field.editBox:ClearAllPoints()
             field.editBox:SetWidth(width)
             field.editBox:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(y + labelHeight + 6))
-            y = y + labelHeight + 6 + 24 + 14
+            local entryY = y + labelHeight + 6
+            if field.editBox == self.NameBox and self.StandardPicker then
+                y = self.StandardPicker:Layout(entryY, width)
+            else
+                y = entryY + 24 + 14
+            end
         end
         local statusHeight = Widgets.MeasureDialogLabel(self.Status, width)
         local buttonHeight = Widgets.LayoutDialogButtons(self, saveButton, cancelButton)

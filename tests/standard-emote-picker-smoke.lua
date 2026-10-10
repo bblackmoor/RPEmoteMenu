@@ -64,20 +64,6 @@ assert(picker.Selector:GetValue()=='enUS:lol')
 dialog:Hide(); Open()
 assert(dialog.NameBox:GetText()==emote.label and dialog.DefaultBox:GetText()==emote.defaultCommand)
 assert(picker.Selector:GetValue()==nil and addon.Serialization.ExportEverything()==originalExport)
--- Filtering invalidates callbacks from an open menu, and uses literal aliases.
-local stale = picker.Selector.widget.func()[1]
-picker.FilterBox:SetText(' /WaVe ')
-assert(#picker.Selector.widget.func()==1 and picker.Selector:GetValue()==nil)
-stale.onclick(picker.Selector.widget,nil,stale.value)
-assert(picker.Selector:GetValue()==nil and dialog.DefaultBox:GetText()==emote.defaultCommand)
-Choose('wave')
-picker.FilterBox:SetText('[')
-assert(#picker.Selector.widget.func()==0 and not picker.Selector.enabled)
-assert(picker.Preview:GetText()==addon.L.PICKER_NO_RESULTS)
-assert(dialog.DefaultBox:GetText()=='/wave')
-picker.FilterBox.scripts.OnEnterPressed(picker.FilterBox)
-assert(updates==0 and dialog:IsShown())
-picker.FilterBox:SetText('')
 local function Review(token,status)
     return {locale='enUS',clientBuild='70000',token=token,status=status or 'verified',targetingChecked=true,evidence='Automated fixture only'}
 end
@@ -134,5 +120,5 @@ assert(picker.Preview:GetText()==addon.L.PICKER_UNAVAILABLE and dialog.DefaultBo
 addon.Localization.StandardEmotes.deDE={{'/invalid','',''}}; Open(); assert(picker.Preview:GetText()==addon.L.PICKER_INVALID)
 addon.Localization.StandardEmotes.deDE={}; Open(); assert(picker.Preview:GetText()==addon.L.PICKER_EMPTY)
 assert(executions==0 and addon.Serialization.ExportProfile('Default')==savedExport)
-print('PASS real picker filtering/previews, draft-only insertion, manual reset/session/review guards, Save/Cancel and bounded layouts')
+print('PASS real picker inline selector/previews, draft-only insertion, manual reset/session/review guards, Save/Cancel and bounded layouts')
 

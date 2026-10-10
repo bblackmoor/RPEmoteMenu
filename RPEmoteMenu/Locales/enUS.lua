@@ -1,8 +1,7 @@
 -- English interface fallback and supplied standard-emote reference catalog.
 local _, addon = ...
 local strings = {
-    PICKER_TITLE = "Standard emote",
-    PICKER_FILTER = "Filter aliases",
+    PICKER_OR = "or",
     PICKER_CHOOSE = "Choose a standard emote",
     PICKER_REFERENCE_NOTE = "Reference wording; actual game output may differ.",
     PICKER_UNVERIFIED = "Reference wording; actual game output may differ.",
@@ -11,7 +10,6 @@ local strings = {
     PICKER_INVALID = "The standard-emote catalog is unavailable. Manual editing remains available.",
     PICKER_UNAVAILABLE = "Standard emotes are unavailable for this client locale. Manual editing remains available.",
     PICKER_EMPTY = "No standard emotes are available.",
-    PICKER_NO_RESULTS = "No aliases match this filter.",
     PICKER_CANNOT_INSERT = "This emote cannot be inserted into the current editor. Reopen the editor to refresh its availability.",
     PICKER_INSERTED = "The selected emote was inserted into the draft. Save to apply it.",
     ADDON_NAME = "RP Emote Menu",
