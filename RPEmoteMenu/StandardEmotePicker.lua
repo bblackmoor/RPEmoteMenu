@@ -15,6 +15,8 @@ function Picker.Install(dialog, Widgets)
     local picker = {frame = CreateFrame("Frame", nil, dialog)}
     local model, selected, session = nil, nil, nil
     local orLabel = Widgets.CreateDialogLabel(picker.frame, L.PICKER_OR, 12)
+    orLabel:SetJustifyH("CENTER")
+    orLabel:SetJustifyV("MIDDLE")
     local selector
     local scroll, content = Widgets.CreateCanvasScrollBox(picker.frame, {step = 20})
     local preview = Widgets.CreateDialogLabel(content, "", 12)
@@ -109,12 +111,14 @@ function Picker.Install(dialog, Widgets)
         if available then
             local orWidth = 40
             local labelHeight = Widgets.MeasureDialogLabel(orLabel, orWidth)
+            local rowHeight = math.max(24, labelHeight)
+            orLabel:SetHeight(rowHeight)
             orLabel:ClearAllPoints()
-            orLabel:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 252, -4)
+            orLabel:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 252, 0)
             selector:ClearAllPoints()
             selector:SetPoint("TOPLEFT", self.frame, "TOPLEFT", 304, 0)
             selector:SetWidth(width - 304)
-            offset = math.max(24, labelHeight + 4) + 6
+            offset = rowHeight + 6
         end
         local hasPreview = (preview:GetText() or "") ~= ""
         scroll:SetShown(hasPreview)

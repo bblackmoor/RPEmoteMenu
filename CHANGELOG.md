@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.263
+
+- Center **or** horizontally and vertically between the Emote Name input and standard-emote selector. The label contains no arrow.
+
 ## 2.1.262
 
 - Place the shortened Emote Name text box, **or**, and **Choose a standard emote** selector on one row in the shared emote editor. Keep reference previews beneath the row.
