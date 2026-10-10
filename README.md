@@ -4,15 +4,16 @@ RP Emote Menu is for World of Warcraft roleplayers who want their character's ge
 
 ## Features
 
-- Organize up to 100 emotes in 10 categories per Profile.
-- Give emotes separate default and targeted commands with character-name tokens.
+- Keep up to 100 emotes in 10 categories per Profile.
+- Combine standard emotes with your own gestures, dialogue, and other chat commands.
+- Give an emote different wording when another character is targeted.
+- Insert your character's name or your target's name into custom emotes.
 - Edit, duplicate, and drag categories and emotes into order.
-- Let each character select an account-wide Profile independently.
-- Share customizable Themes across Profiles, with six bundled presets.
-- Choose fonts, colors, selection effects, opacity, and top or left title-bar placement.
-- Fade the menu when inactive or minimize it to a title bar or icon.
-- Hide gear icons while keeping right-click editing available.
-- Import and export categories, Profiles, Themes, or all Profiles and Themes together.
+- Choose a different Profile for each character.
+- Customize fonts, colors, opacity, and title-bar placement, starting with six bundled Themes.
+- Fade or minimize the menu when you are not using it.
+- Hide the settings gears and keep right-click editing.
+- Export and import categories, Profiles, and Themes to share or back them up.
 
 ## Screenshots
 
@@ -29,86 +30,91 @@ RP Emote Menu is for World of Warcraft roleplayers who want their character's ge
 
 ## Installation
 
-Automatic release packaging is disabled for now. Download the repository using **Code → Download ZIP**, extract it, and copy the inner `RPEmoteMenu` folder (the one containing `RPEmoteMenu.toc`) to:
+1. On [GitHub](https://github.com/bblackmoor/RPEmoteMenu), choose **Code → Download ZIP**.
+2. Extract the ZIP and copy the inner `RPEmoteMenu` folder, containing `RPEmoteMenu.toc`, into your Retail AddOns folder.
+3. Enable **RP Emote Menu** at character selection.
+
+The installed file should be here:
 
 ```text
-World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/
+World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/RPEmoteMenu.toc
 ```
 
-Enable the addon at character selection if needed.
+The required libraries are included. Extra font addons are optional.
 
 ## Using the Menu
 
-- `/rpem` toggles the addon Active or Inactive; `/rpem config` opens settings. You can also open settings with the title-bar gear or by right-clicking the title bar.
-- Hover over a category to see its emotes. Click an emote to run its command. Drag categories or emotes to reorder them.
-- Right-click a category to edit it, or right-click an emote to edit its label and commands. The emote gear opens the same editor. **Hide setting gear icons** hides both the title-bar and emote gears without removing right-click editing.
-- An emote appears when it has a label and a default command. Categories with no name are hidden.
+Hover over a category to see its emotes, then click an emote to use it. Drag categories or emotes to change their order. Right-click a category or emote to edit it.
 
-Each emote has a **Default Command** and an optional **Targeted Command** used when another unit is targeted. Commands may contain `{target}` (target's name) or `{player}` (your character's name), without realm names. With no target or when targeting yourself, the default command is used.
+Open settings with `/rpem config`, the title-bar gear, or a right-click on the title bar. Use `/rpem` to hide or show the menu; this choice is remembered when you log in again. Settings remain available while the menu is hidden.
 
-For example, an emote labeled “Watches quietly” could use `/e watches quietly.` by default and `/e watches {target} quietly.` when targeting someone else. Built-in emotes such as `/wave` also work.
+### Adding an Emote
 
-The shared emote editor places a shortened **Emote Name** text box, **or**, and the **Choose a standard emote** dropdown on one row, with untargeted/targeted reference previews below. Preview wording comes from the supplied catalog and may differ from current game output. Selecting an alias immediately fills the name and default command and clears the targeted override; editing any of those three fields resets the selector to **Choose a standard emote** without discarding your text. The unselected picker has no helper text or reserved preview area; reference descriptions appear when an alias is selected. Dialog backgrounds consume clicks so they cannot activate settings underneath. **Save** applies the change. Entries awaiting native verification can be inserted; their reference wording does not guarantee current game output. Entries recorded as unsupported for the current client build cannot be inserted. Catalog browsing currently requires an enUS client.
+Give the emote a name and a **Default Command**, or select **Choose a standard emote** to fill them in. Standard emote names are formatted for readability: `/wave` becomes “Wave,” and `/covereyes` becomes “Cover eyes.” You can change the name and commands before clicking **Save**.
+
+The standard-emote picker currently supports English (enUS) clients. Its previews are reference text and may differ from the wording in the game. You can also enter commands yourself.
+
+An emote needs both a name and a default command to appear in the menu. Categories with no name are hidden.
+
+### Custom and Targeted Emotes
+
+Use a standard command such as `/wave`, or write your own emote with `/e`. An optional **Targeted Command** is used when you have someone else targeted. With no target, or when targeting yourself, the default command is used.
+
+For example:
+
+| Field | Text |
+| --- | --- |
+| Emote Name | Watches quietly |
+| Default Command | `/e watches quietly.` |
+| Targeted Command | `/e watches {target} quietly.` |
+
+Use `{target}` for your target's name and `{player}` for your character's name. Neither includes a realm name.
+
+Standard emotes and `/e` commands run immediately. Other commands open in the chat box for you to finish or send. A command ending in a double quotation mark also opens as an editable chat draft.
 
 ## Profiles and Themes
 
-Profiles contain categories, emotes, the selected category, window position and height, lock state, fade and minimize settings, and a Theme reference. Each character selects a Profile independently. A new character uses **Default Profile**, which starts with **Default Theme**. Default Profile can be edited and restored, but cannot be renamed or deleted. Create and Copy select the resulting Profile for the current character; imported Profiles are added without selecting them.
+A **Profile** holds your categories, emotes, and window settings. Profiles are shared across your account, and each character chooses which one to use. Give different characters their own selections, or let several use the same Profile. Changes to a shared Profile affect every character using it.
 
-Themes contain fonts, colors, selection effects, menu opacity, title-bar position, and minimized icon tint. The menu has no border. Multiple Profiles can share one Theme, and edits to a Theme affect all of them. Selecting a Theme in the **Themes** editor also assigns it to the current Profile; the two selections stay synchronized.
+A **Theme** controls the appearance. Several Profiles can use the same Theme, so you can keep their appearance consistent while giving them different emotes. Selecting a Theme to edit also applies it to the current Profile.
 
-Default Theme can be edited and restored, but cannot be renamed or deleted. The five editable bundled presets are **Crimson Night**, **Gilded Shadow**, **High Contrast**, **Moonlight**, and **Teal**. Restore individual Themes or use Restore Bundled Themes to restore Default Theme and all five presets from their factory definitions. Deleting a Theme used by Profiles requires confirmation and assigns those Profiles Default Theme.
+Start with **Default Theme**, **Crimson Night**, **Gilded Shadow**, **High Contrast**, **Moonlight**, or **Teal**, then adjust the fonts, colors, opacity, selection effects, and title-bar position. The bundled Themes are editable and can be restored.
 
-The **Behavior** screen holds global activation, tooltip-delay, and gear-visibility preferences. Window position, height, lock, fade, and minimization belong to the selected Profile. With fade enabled, the menu can dim in place or minimize to its title bar or icon when inactive; hovering restores it. Activating shows the full window at normal opacity, then starts the usual inactivity timer; deactivating hides the window and minimized icon. Activation is remembered across logins, and settings remain accessible while inactive. The icon size is adjustable. The minimized icon stays at the window's upper-left corner when the title bar moves between the top and left edges.
+New characters start with **Default Profile** and **Default Theme**. Both can be edited and restored, but cannot be renamed or deleted. If you delete a Theme used by a Profile, that Profile switches to Default Theme.
 
-Shared font support is included; extra fonts come from SharedMedia or other font-providing addons. The font selectors update when providers register fonts. If a saved font is unavailable, the menu uses Friz Quadrata while preserving the selection, including in imports and exports. It resumes using that font when its provider loads. Rendering retries are limited to failed attempts, and menu widths update with the font.
+### Making the Menu Fit
 
-## Importing and Exporting
+Set the window's position, height, and lock state in its Profile. You can have it fade when unused, or minimize to a title bar or icon; hovering restores it. Put the title bar at the top or left in the Theme settings.
 
-**Emotes** exports a category or replaces the selected category with an import. **Profiles** and **Themes** transfer one of each; **Import & Export** transfers Everything (all Profiles, Themes, and their links). Transfers use version 2 JSON. Global preferences and character-to-Profile assignments are excluded.
+The **Behavior** screen controls activation, tooltip delay, and gear visibility for the whole addon. Hiding the gears still lets you right-click to edit.
 
-Imports add Profiles and Themes without overwriting existing ones; name conflicts are resolved with new names. A standalone Profile whose Theme is unavailable uses Default Theme and reports the fallback. Invalid or unknown Profile and Theme settings are silently ignored and defaulted. Malformed categories, emotes, and other format versions are rejected without conversion. Category names and emote labels have a 128-byte limit; commands have a 4,096-byte limit. Editors reject longer values without saving or truncating the entered text.
+Additional fonts are available through SharedMedia or other font addons. If a selected font is unavailable, the menu uses Friz Quadrata until it becomes available again.
+
+## Sharing and Backups
+
+Export a category from **Emotes**, an individual Profile or Theme from its settings screen, or all Profiles and Themes from **Import & Export**. Copy the exported text to save a backup or share it.
+
+Importing Profiles and Themes adds them without overwriting existing ones. If a name is already in use, the imported item gets a new name. Imported Profiles are not selected automatically. Importing a category replaces the selected category.
+
+If an imported Profile's Theme is unavailable, it uses Default Theme. Exports do not include global Behavior settings or which Profile each character has selected.
+
+### Compatibility
+
+Imports accept the current version 2 format. Older formats and malformed emote data are rejected; unsupported Profile and Theme settings use their defaults.
+
+Saved settings from v1 and obsolete v2 layouts are not converted and may reset to defaults. Keep a backup before updating.
 
 ## Commands
 
 | Command | Action |
 | --- | --- |
-| `/rpem` | Toggle the addon Active or Inactive |
+| `/rpem` | Show or hide the menu |
+| `/rpem config` | Open settings |
 | `/rpem about` | Open the About page |
-| `/rpem config`, `/rpem options`, `/rpem settings` | Open settings |
 
-## Changes from v1 to v2
+`/rpem options` and `/rpem settings` also open settings.
 
-- Separate Profiles and Themes: Profiles hold categories, emotes, window position and height, selected category, locking, and fade/minimize behavior. Shared Themes hold appearance, so one Theme can style several Profiles.
-- Editable defaults and visual presets: Default Profile now allows category and emote editing and can be restored. Default Theme and five additional bundled Themes are editable and restorable; visual presets no longer create separate content Profiles.
-- Clearer settings ownership: Activation, tooltip delay, and gear visibility are global preferences. Each character still chooses its own account-wide Profile; new characters start with Default Profile and Default Theme.
-- Easier editing: Right-click categories and emotes to edit them, drag categories into order, and duplicate categories or emotes. One switch hides all settings gears, including emote gears on hover, while preserving right-click editing.
-- Cleaner settings screens: Dedicated Behavior, Profiles, Themes, Emotes, and Import & Export screens use sliding on/off switches, circled information links, consistent spacing, and clearer restore and deletion confirmations. The About page is also available through /rpem about.
-- More flexible presentation: Place the title bar above or beside the menu, with controls above the text on the left title bar. The minimized icon stays at the window's upper-left corner when orientation changes. Visible-menu opacity applies uniformly, and the menu always renders without borders.
-- Improved sharing: Export and import categories, individual Profiles, individual Themes, or all Profiles and Themes with their relationships. Imports preserve existing entries, rename conflicts, and use Default Theme when a standalone Profile references an unavailable Theme.
-- More predictable controls: Configure tooltip delay from 0 to 1,000 milliseconds, use clearer window locking and centering controls, and receive confirmations before destructive category and emote actions.
-
-**Upgrade compatibility**
-
-The current saved-data model intentionally does not migrate v1 or earlier v2 layouts. Obsolete saved-data schemas initialize with fresh defaults. Transfers accept only version 2 JSON; other format versions and malformed categories or emotes are rejected. Unknown or invalid Profile and Theme settings are silently ignored and replaced with defaults. Global preferences and character-to-Profile selections are not exported.
-
-The existing 10-category, 100-emote limit, default and targeted commands, character-name tokens, emote dragging, and per-character Profile selection remain available.
-
-## Development
-
-The [shared settings conventions](docs/design/settings-conventions.md) describe module contracts, deliberate differences from Simple Nameplates, comparable regression coverage and pending native acceptance. The [standardization record](docs/design/addon-standardization.md) preserves all four completed code phases.
-
-The [localization record](docs/design/localization.md) tracks completed code work and pending native acceptance. The [standard-emote picker plan](docs/design/standard-emote-picker.md) tracks its implemented catalog/editor phases and pending native verification.
-
-Run all local smoke suites from the repository root with LuaTeX:
-
-```sh
-for test in tests/*-smoke.lua; do
-    texlua "$test" || exit 1
-done
-git diff --check
-```
-
-Tests use actual bundled libraries and addon modules with native UI fixtures. Command tests load the real execution module and check routing, aliases, target selection, token replacement and editable chat drafts using WoW API stubs. They do not establish native rendering or client frame restrictions. See the shared conventions for the optional actual-addon picker coexistence check and the pending in-game checklist.
+See the [release history](CHANGELOG.md) for changes and the [developer documentation](docs/development.md) for implementation and testing notes.
 
 -----
 
