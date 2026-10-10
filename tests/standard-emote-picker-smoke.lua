@@ -46,9 +46,21 @@ Choose('wave')
 assert(picker.PreviewScroll:IsShown() and dialog:GetHeight()>compactHeight, "selection reserves only its reference preview")
 assert(picker.Preview:GetText():find('<target>',1,true))
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
-assert(dialog.NameBox:GetText()=='/wave' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
+assert(dialog.NameBox:GetText()=='Wave' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
 assert(picker.Selector:GetValue()=='enUS:wave' and popup==nil)
 assert(addon.Serialization.ExportEverything()==originalExport and executions==0)
+for alias, label in pairs({badfeeling='Bad feeling',coverears='Cover ears',crossarms='Cross arms',followme='Follow me',highfive='High five'}) do
+    Choose(alias)
+    assert(dialog.NameBox:GetText()==label and dialog.DefaultBox:GetText()=='/'..alias)
+    assert(picker.Selector:GetValue()=='enUS:'..alias and dialog.TargetedBox:GetText()=='')
+end
+-- The formatter also handles this spelling if it is supplied in a future catalog.
+local rows = addon.Localization.StandardEmotes.enUS
+rows[#rows+1] = {'covereyes','Cover eyes preview','Cover eyes targeted preview'}
+dialog:Hide(); Open(); Choose('covereyes')
+assert(dialog.NameBox:GetText()=='Cover eyes' and dialog.DefaultBox:GetText()=='/covereyes')
+rows[#rows] = nil
+dialog:Hide(); Open()
 -- Every manual field resets selection without changing the other draft fields.
 for _, box in ipairs({dialog.NameBox,dialog.DefaultBox,dialog.TargetedBox}) do
     Choose('wave')
@@ -59,7 +71,7 @@ for _, box in ipairs({dialog.NameBox,dialog.DefaultBox,dialog.TargetedBox}) do
     assert(dialog.Status:GetText()==addon.L.EDITOR_CHANGES_APPLY)
 end
 Choose('lol')
-assert(dialog.NameBox:GetText()=='/lol' and dialog.DefaultBox:GetText()=='/lol' and dialog.TargetedBox:GetText()=='')
+assert(dialog.NameBox:GetText()=='Lol' and dialog.DefaultBox:GetText()=='/lol' and dialog.TargetedBox:GetText()=='')
 assert(picker.Selector:GetValue()=='enUS:lol')
 dialog:Hide(); Open()
 assert(dialog.NameBox:GetText()==emote.label and dialog.DefaultBox:GetText()==emote.defaultCommand)
@@ -71,7 +83,7 @@ catalog.Verification.enUS = {wave=Review('WAVE'),lol=Review('LAUGH'),agree=Revie
 Open(); Choose('agree')
 assert(dialog.DefaultBox:GetText()==emote.defaultCommand and dialog.Status:GetText()==addon.L.PICKER_CANNOT_INSERT)
 Choose('wave'); dialog.SaveButton.scripts.OnClick()
-assert(emote.label=='/wave' and emote.defaultCommand=='/wave' and emote.targetedCommand=='')
+assert(emote.label=='Wave' and emote.defaultCommand=='/wave' and emote.targetedCommand=='')
 assert(updates==1 and executions==0)
 local savedExport=assert(addon.Serialization.ExportProfile('Default'))
 local function SerializedHasPickerState(value)
@@ -114,6 +126,13 @@ assert(picker.PreviewScroll:GetHeight()==72 and picker.PreviewScroll:GetVertical
 assert(dialog:GetHeight()<UIParent:GetHeight())
 assert(picker.Preview:GetText():find('%s',1,true) and picker.Preview:GetText():find('<target>',1,true))
 -- Missing/invalid/empty catalogs preserve manual editing.
+addon.Localization.locale='deDE'
+addon.Localization.StandardEmotes.deDE={{'badfeeling','Synthetic locale preview','Synthetic targeted preview'}}
+Open()
+local localizedChoice=picker.Selector.widget.func()[1]
+localizedChoice.onclick(picker.Selector.widget,nil,localizedChoice.value)
+assert(dialog.NameBox:GetText()=='Badfeeling' and dialog.DefaultBox:GetText()=='/badfeeling', 'English word boundaries stay locale-specific')
+addon.Localization.StandardEmotes.deDE=nil
 addon.Localization.locale='deDE'; Open()
 assert(not picker.Selector:GetFrame():IsShown())
 assert(picker.Preview:GetText()==addon.L.PICKER_UNAVAILABLE and dialog.DefaultBox:IsEnabled())
@@ -121,4 +140,5 @@ addon.Localization.StandardEmotes.deDE={{'/invalid','',''}}; Open(); assert(pick
 addon.Localization.StandardEmotes.deDE={}; Open(); assert(picker.Preview:GetText()==addon.L.PICKER_EMPTY)
 assert(executions==0 and addon.Serialization.ExportProfile('Default')==savedExport)
 print('PASS real picker inline selector/previews, draft-only insertion, manual reset/session/review guards, Save/Cancel and bounded layouts')
+
 

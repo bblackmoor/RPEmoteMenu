@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.264
+
+- Autofill Emote Name without the slash and with its first letter capitalized. Use a small English exception table for compound names such as **Bad feeling** and **Cover ears**, while retaining the exact slash command in the command field.
+
 ## 2.1.263
 
 - Center **or** horizontally and vertically between the Emote Name input and standard-emote selector. The label contains no arrow.
@@ -338,6 +342,7 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
 
 

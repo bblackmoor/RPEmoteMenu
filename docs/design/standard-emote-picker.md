@@ -16,7 +16,7 @@ Selection applies the standard emote directly, without a separate button or over
 
 | Field | Proposed result |
 | --- | --- |
-| Emote name | Set the selected slash alias, replacing the previous draft label. |
+| Emote name | Remove the slash and capitalize the first letter, replacing the previous draft label. A small enUS exception table spaces compound names, such as `/badfeeling` → `Bad feeling`. |
 | Default command | Set the exact selected slash alias, such as `/wave`. |
 | Targeted command | Clear the targeted override so it cannot replace the selected default with an unrelated command. |
 | Saved data | Change nothing until the editor's existing Save action succeeds. |
@@ -86,7 +86,7 @@ Phase two implements browsing, previews and insertion guards using this model. U
 
 ## Phase-two editor contract
 
-`StandardEmotePicker.lua` loads before EmoteEditor and constructs controls through SettingsWidgets when the shared editor is first opened. The alias dropdown uses a 240-unit scrolling menu and a plain substring filter. Every filter change clears selection and invalidates old dropdown callbacks. Selection updates the reference preview and immediately fills the name and default command with the selected slash alias, clearing the targeted override. No button or overwrite confirmation is required. SavedVariables and command execution remain unchanged until Save.
+`StandardEmotePicker.lua` loads before EmoteEditor and constructs controls through SettingsWidgets when the shared editor is first opened. The alias dropdown uses a 240-unit scrolling menu. Selection updates the reference preview and immediately fills the name with a capitalized, slash-free label and the default command with the exact selected slash alias, clearing the targeted override. Compound-name spacing uses a small enUS-only exception table; other locales retain their own aliases. No button or overwrite confirmation is required. SavedVariables and command execution remain unchanged until Save.
 
 The picker rebuilds the current client catalog before filling fields, then checks edit permission and the captured content target. Unverified and verified entries may populate editable drafts; known unsupported entries cannot. Missing, invalid or empty catalogs retain manual fields. Read-only sessions can browse previews without changing fields. Profile/category/emote replacement and retired dropdown callbacks cannot fill a stale draft.
 
@@ -95,4 +95,5 @@ User text changes in any of the three emote fields clear selection, invalidate o
 The preview has a fixed 72-unit scrollable viewport for available catalogs, including long or translated wording. The integration suite checks auto-fill, all three manual reset paths, stale callbacks, support/read-only/target guards, saved-data isolation, Save/Cancel and long preview scrolling. These fixtures do not establish native command support. The localization acceptance suite supplies a synthetic locale catalog to check the picker within the real editor layout.
 
 Phase three is native acceptance: inspect the dropdown/filter/preview at the intended UI scale and record actual aliases, target/no-target/self-target behavior and client build before adding verification records. Native localization/font acceptance also remains pending. The editor still measures the overall dialog height; extremely long surrounding translation copy or a small effective screen can exceed it and must be addressed during native acceptance rather than certified by the synthetic measurements.
+
 

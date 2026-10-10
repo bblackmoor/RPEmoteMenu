@@ -4,6 +4,23 @@ local L = addon.L
 local Picker = {}
 addon.StandardEmotePicker = Picker
 
+-- Explicit English word boundaries keep label formatting small and predictable.
+local EnglishCompoundNames = {
+    attacktarget = "Attack target", badfeeling = "Bad feeling",
+    coverears = "Cover ears", covereyes = "Cover eyes", crossarms = "Cross arms",
+    followme = "Follow me", forthealliance = "For the Alliance", forthehorde = "For the Horde",
+    golfclap = "Golf clap", healme = "Heal me", helpme = "Help me",
+    highfive = "High five", holdhand = "Hold hand", laydown = "Lay down", liedown = "Lie down",
+    mountspecial = "Mount special", nosepick = "Nose pick", openfire = "Open fire",
+    rolleyes = "Roll eyes", shakefist = "Shake fist",
+}
+
+local function EmoteName(entry)
+    local name = entry.alias
+    return (entry.locale == "enUS" and EnglishCompoundNames[name])
+        or (name:gsub("^%l", string.upper))
+end
+
 local function ClientBuild()
     if type(GetBuildInfo) ~= "function" then return nil end
     local _, build = GetBuildInfo()
@@ -75,7 +92,7 @@ function Picker.Install(dialog, Widgets)
                 and L.PICKER_CANNOT_INSERT or L.EDITOR_TARGET_CHANGED)
             return
         end
-        dialog.NameBox:SetText(entry.command)
+        dialog.NameBox:SetText(EmoteName(entry))
         dialog.DefaultBox:SetText(entry.command)
         dialog.TargetedBox:SetText("")
         dialog.Status:SetText(L.PICKER_INSERTED)
@@ -150,4 +167,5 @@ function Picker.Install(dialog, Widgets)
     end
     return picker
 end
+
 
