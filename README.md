@@ -1,6 +1,6 @@
 # RP Emote Menu
 
-RP Emote Menu organizes roleplay commands in a movable World of Warcraft menu. Each account-wide Profile holds up to 10 categories with 10 emotes each; each character chooses its own Profile. Shared Themes control the menu's appearance.
+RP Emote Menu is for World of Warcraft roleplayers who want their character's gestures, habits, and favorite lines a click away. Blizzard's emote list gives you the standard emotes; this menu lets you put the ones you actually use alongside your own, organized into categories that make sense to you. Give each character a different selection, use different wording when addressing someone, and make the menu fit your interface. Less hunting through a list, less typing the same thing again, more time roleplaying.
 
 ## Features
 
