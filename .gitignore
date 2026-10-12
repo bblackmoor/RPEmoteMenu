@@ -1,5 +1,7 @@
 # Generated release packages
 dist/
+.release/
+__pycache__/
 RPEmoteMenu-v2-demo.mp4
 RPEmoteMenu.zip
 *.zip

@@ -3,49 +3,20 @@
 set -eu
 
 repo_root=$(git rev-parse --show-toplevel)
-toc="$repo_root/RPEmoteMenu/RPEmoteMenu.toc"
+cd "$repo_root"
 
-if [ ! -f "$toc" ]; then
-    echo "Error: $toc not found."
-    exit 1
-fi
+run_python() {
+    if command -v py >/dev/null 2>&1 && py -3 -c 'import sys; sys.exit(sys.version_info.major != 3)' >/dev/null 2>&1; then
+        py -3 "$@"
+    elif command -v python3 >/dev/null 2>&1 && python3 -c 'import sys; sys.exit(sys.version_info.major != 3)' >/dev/null 2>&1; then
+        python3 "$@"
+    elif command -v python >/dev/null 2>&1 && python -c 'import sys; sys.exit(sys.version_info.major != 3)' >/dev/null 2>&1; then
+        python "$@"
+    else
+        echo 'Install Python 3 and make py, python3 or python available to Git.' >&2
+        return 1
+    fi
+}
 
-if ! grep -q '^## Version:' "$toc"; then
-    echo "Error: No version entry found in $toc."
-    exit 1
-fi
-
-commit_count=$(git rev-list --count HEAD 2>/dev/null || printf '0')
-build=$((commit_count + 1))
-
-sed -i "s/^## Version:.*/## Version: 2.0.$build/" "$toc"
-
-git add "$toc"
-
-echo "Updated addon version to 2.0.$build"
-
-
-# Build a local, installable package for the version being committed. The
-# package is intentionally ignored by Git so it cannot affect the commit/build
-# number that names it.
-dist_dir="$repo_root/dist"
-zip_path="$dist_dir/RPEmoteMenu-2.0.$build.zip"
-mkdir -p "$dist_dir"
-rm -f "$zip_path"
-
-if command -v powershell.exe >/dev/null 2>&1 && command -v cygpath >/dev/null 2>&1; then
-    addon_win=$(cygpath -w "$repo_root/RPEmoteMenu")
-    zip_win=$(cygpath -w "$zip_path")
-    powershell.exe -NoProfile -NonInteractive -Command \
-        "Compress-Archive -LiteralPath '$addon_win' -DestinationPath '$zip_win' -CompressionLevel Optimal -Force"
-elif command -v zip >/dev/null 2>&1; then
-    (
-        cd "$repo_root"
-        zip -qr "$zip_path" RPEmoteMenu
-    )
-else
-    echo "Warning: Neither PowerShell Compress-Archive nor zip is available; release package was not created." >&2
-    exit 0
-fi
-
-echo "Created release package: dist/RPEmoteMenu-2.0.$build.zip"
+run_python scripts/validate_release.py --prepare-staged
+run_python scripts/validate_release.py --staged

@@ -48,4 +48,6 @@ Transfers exclude global preferences and character-to-Profile assignments. Name 
 
 ## Release Documentation
 
+See [Packaging and releases](releasing.md) for the one-time hook and CurseForge token setup, automatic build numbering, verified ZIP builds, version-tag publication, and failure recovery.
+
 The [changelog](../CHANGELOG.md) and [v2.0.209 release notes](releases/2.0.209.md) retain release history. User installation instructions are in the [README](../README.md).

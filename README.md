@@ -30,8 +30,8 @@ RP Emote Menu is for World of Warcraft roleplayers who want their character's ge
 
 ## Installation
 
-1. On [GitHub](https://github.com/bblackmoor/RPEmoteMenu), choose **Code → Download ZIP**.
-2. Extract the ZIP and copy the inner `RPEmoteMenu` folder, containing `RPEmoteMenu.toc`, into your Retail AddOns folder.
+1. Download an installable ZIP from [GitHub Releases](https://github.com/bblackmoor/RPEmoteMenu/releases), or install through [CurseForge](https://www.curseforge.com/wow/addons/rpg-emote-menu).
+2. Extract the ZIP and copy the `RPEmoteMenu` folder, containing `RPEmoteMenu.toc`, into your Retail AddOns folder.
 3. Enable **RP Emote Menu** at character selection.
 
 The installed file should be here:
@@ -41,6 +41,8 @@ World of Warcraft/_retail_/Interface/AddOns/RPEmoteMenu/RPEmoteMenu.toc
 ```
 
 The required libraries are included. Extra font addons are optional.
+
+Development ZIPs are available as artifacts in [GitHub Actions](https://github.com/bblackmoor/RPEmoteMenu/actions). Each artifact contains an installable ZIP and its release notes. If you use **Code → Download ZIP**, copy the inner `RPEmoteMenu` folder from that source archive.
 
 ## Using the Menu
 

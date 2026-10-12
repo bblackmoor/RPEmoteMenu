@@ -1,4 +1,8 @@
-# Changelog
+## 2.1.321 — 2026-10-12
+
+- Keep the `2.1` version series and automatically prepare matching build numbers and changelog entries from staged changes, including on Windows.
+- Build and verify installable ZIPs with pinned libraries in GitHub Actions. Publish the same verified ZIP to GitHub Releases and CurseForge project 1669358 when a matching version tag is pushed.
+- Add release checks, upload regression coverage, and complete release and recovery instructions. Preserve all earlier release notes.
 
 ## 2.1.264
 
