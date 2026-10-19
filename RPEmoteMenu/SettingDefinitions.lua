@@ -5,7 +5,7 @@ local _, addon = ...
 local definitions = {
     limits = {
         tooltipDelayMs = {min = 0, max = 1000},
-        height = {min = 150, max = 630},
+        height = {min = 100, max = 630},
         position = {min = -100000, max = 100000},
         minimizedIconSize = {min = addon.MIN_MINIMIZED_ICON_SIZE, max = addon.MAX_MINIMIZED_ICON_SIZE},
         selectedCategory = {min = 1, max = addon.MAX_CATEGORIES},

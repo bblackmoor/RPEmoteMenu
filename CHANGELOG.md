@@ -1,3 +1,7 @@
+## 2.1.324 — 2026-10-19
+
+- Lower the minimum expanded window height from 150 to 100 pixels.
+
 ## 2.1.323 — 2026-10-19
 
 - Add Right and Bottom title-bar positions. Right-side text faces outward with its top to the right; bottom text stays upright. Move the gear and pin with the title bar.

@@ -156,7 +156,7 @@ assert(profile.height == 630 and height:GetText() == '630' and profile.point == 
 local frame = main.GetFrame()
 assert(frame:GetLeft() == (UIParent:GetWidth()-frame:GetWidth())/2
     and frame:GetTop() == (UIParent:GetHeight()+630)/2, 'height edit moved centered window')
-Enter(height, '1'); assert(profile.height == 150)
+Enter(height, '1'); assert(profile.height == 100)
 Switch(lock); assert(profile.locked and calls.lock == 1)
 profile.selectedCategory = 2
 local content, theme = db.GetCategories(), db.GetActiveThemeName()
