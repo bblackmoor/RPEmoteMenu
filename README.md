@@ -42,7 +42,7 @@ Start World of Warcraft and enable the addon at character selection. RP Emote Me
 
 ## Using the Menu
 
-Hover over a category to see its emotes, then click an emote to use it. Drag categories or emotes to change their order. Right-click a category or emote to edit it.
+Hover over a category to see its emotes, then click an emote to use it. Click the small chevron between the panes to hide or show categories. Hiding them narrows the window while keeping the selected category’s emotes visible; each Profile remembers this choice. Drag categories or emotes to change their order. Right-click a category or emote to edit it.
 
 Open settings with `/rpem config`, the title-bar gear, or a right-click on the title bar. Use `/rpem` to hide or show the menu; this choice is remembered when you log in again. Settings remain available while the menu is hidden.
 

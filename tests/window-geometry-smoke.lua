@@ -72,6 +72,57 @@ assert(pin.point[2] == titleBar and gear.point[2] == pin)
 assert(sidebar.points.TOPLEFT[5] == -6 and sidebar.points.BOTTOMLEFT[5] == 42)
 assert(emoteScroll.points.TOPLEFT[5] == -10 and emoteScroll.points.BOTTOMRIGHT[5] == 42)
 Orientation('TOP')
+-- Chevron presentation, stable emotes/geometry, and collapse behavior on every edge.
+local toggle
+for _, object in ipairs(native.objects) do
+    if object.Strokes then toggle = object end
+end
+assert(toggle and toggle:GetWidth() == 18 and toggle:GetHeight() == 24)
+local globalSettings = db.GetGlobalSettings()
+globalSettings.tooltipDelayMs = 0
+toggle:GetScript('OnEnter')(toggle)
+assert(toggle:GetAlpha() == 1 and GameTooltip:GetText() == addon.L.MENU_HIDE_CATEGORIES)
+toggle:GetScript('OnLeave')(toggle)
+assert(toggle:GetAlpha() == 0.5)
+for _, position in ipairs({'TOP', 'LEFT', 'RIGHT', 'BOTTOM'}) do
+    theme.titleBarPosition = position
+    profile.point, profile.relativePoint = 'CENTER', 'CENTER'
+    profile.x, profile.y, profile.height = 0, 0, 100
+    profile.fadeEnabled, profile.minimizeMode, profile.locked = false, 'NONE', true
+    main.ApplyProfileSettings()
+    local width, left, top = frame:GetWidth(), frame:GetLeft(), frame:GetTop()
+    local emoteWidth, selected = emote:GetWidth(), profile.selectedCategory
+    local emoteLabel = emote.Text:GetText()
+    local categoryWidth = sidebar:GetWidth()
+    toggle:GetScript('OnClick')(toggle)
+    assert(profile.hideCategoryPane and not sidebar:IsShown() and toggle:IsShown())
+    assert(frame:GetWidth() == width - categoryWidth and frame:GetHeight() == 100)
+    assert(frame:GetLeft() == left and frame:GetTop() == top, 'toggle moved the window corner')
+    assert(profile.selectedCategory == selected and emote.Text:GetText() == emoteLabel)
+    assert(emote:GetWidth() == emoteWidth, 'toggle resized the emote column')
+    local titleInset = position == 'LEFT' and 32 or 0
+    assert(emoteScroll.points.TOPLEFT[4] == titleInset + 28)
+    assert(toggle.Strokes[1].rotation == -math.pi / 4)
+    toggle:GetScript('OnEnter')(toggle)
+    assert(GameTooltip:GetText() == addon.L.MENU_SHOW_CATEGORIES)
+    toggle:GetScript('OnLeave')(toggle)
+    for _, mode in ipairs({'TITLE_BAR', 'ICON'}) do
+        profile.fadeEnabled, profile.minimizeMode = true, mode
+        main.ApplyProfileSettings()
+        assert(not toggle:IsShown() and not sidebar:IsShown())
+        main.ApplyActivation()
+        assert(toggle:IsShown() and not sidebar:IsShown() and profile.hideCategoryPane)
+    end
+    profile.fadeEnabled, profile.minimizeMode = false, 'NONE'
+    main.ApplyProfileSettings()
+    toggle:GetScript('OnClick')(toggle)
+    assert(not profile.hideCategoryPane and sidebar:IsShown())
+    assert(frame:GetWidth() == width and emote:GetWidth() == emoteWidth)
+    assert(toggle.Strokes[1].rotation == math.pi / 4)
+end
+profile.height, profile.locked = 200, false
+globalSettings.tooltipDelayMs = addon.DefaultGlobalSettings.tooltipDelayMs
+Orientation('TOP')
 profile.point,profile.relativePoint,profile.x,profile.y='CENTER','CENTER',0,100
 main.ApplyProfileSettings()
 Orientation('LEFT'); assert(profile.x==16 and profile.y==100)

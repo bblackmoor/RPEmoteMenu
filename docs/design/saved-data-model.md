@@ -39,6 +39,7 @@ The expected Profile settings include:
 - `minimizeMode`
 - `minimizedIconSize`
 - `selectedCategory`
+- `hideCategoryPane`
 - `point`
 - `relativePoint`
 - `x`

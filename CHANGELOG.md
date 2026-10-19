@@ -1,3 +1,9 @@
+## 2.1.325 — 2026-10-19
+
+- Add a small divider chevron to hide or show the category pane. Use the Theme’s category text color at half opacity, brighten on hover, and show Hide categories / Show categories tooltips.
+- Narrow the window when categories are hidden while preserving the selected category, emote column width, and window corner. Remember the choice per Profile, including reloads and transfers.
+- Support all four title-bar positions and hide the chevron with the minimized window body.
+
 ## 2.1.324 — 2026-10-19
 
 - Lower the minimum expanded window height from 150 to 100 pixels.

@@ -48,6 +48,8 @@ local TitleBar
 local TitleText
 local MinimizedIconButton
 local CategorySidebar
+local CategoryPaneToggle
+local categoryToggleWidth = 18
 local EmoteBackgroundTop
 local EmoteBackgroundBottom
 local EmoteBackgroundLeft
@@ -164,8 +166,12 @@ end
 
 local function ScheduleWindowAutoHide() GetWindowFade().ScheduleAutoHide() end
 
+local function GetCategoryPaneWidth()
+    return (profileSettings.hideCategoryPane and 0 or sidebarWidth) + categoryToggleWidth
+end
+
 local function GetContentWidth()
-    return sidebarWidth + emoteColumnWidth + columnChromeWidth
+    return GetCategoryPaneWidth() + emoteColumnWidth + columnChromeWidth
 end
 
 local function GetExpandedWidth()
@@ -316,16 +322,16 @@ local function CalculateColumnWidths()
         maximumEmoteColumnWidth
     )
 
-    local width = GetContentWidth()
+    -- Keep the emote column the same width when categories are toggled.
+    local width = sidebarWidth + categoryToggleWidth + emoteColumnWidth + columnChromeWidth
     if width < minimumUsableWidth then
         emoteColumnWidth = math.min(
             maximumEmoteColumnWidth,
             emoteColumnWidth + minimumUsableWidth - width
         )
-        width = GetContentWidth()
     end
 
-    return width + (IsTitleBarVertical() and leftTitleBarWidth or 0)
+    return GetContentWidth() + (IsTitleBarVertical() and leftTitleBarWidth or 0)
 end
 
 local FinishWindowInteraction
@@ -592,12 +598,24 @@ ApplyTitleBarLayout = function()
     end
 end
 
+local function UpdateCategoryPaneToggle()
+    if not CategoryPaneToggle then return end
+    local color = themeSettings.categoryTextColor
+    local direction = profileSettings.hideCategoryPane and -1 or 1
+    for index, stroke in ipairs(CategoryPaneToggle.Strokes) do
+        stroke:SetRotation(direction * (index == 1 and 1 or -1) * math.pi / 4)
+        stroke:SetVertexColor(color.r, color.g, color.b)
+    end
+    CategoryPaneToggle:SetAlpha(CategoryPaneToggle.hovered and 1 or 0.5)
+end
+
 ApplyColumnLayout = function()
     if not MainFrame or not CategorySidebar or not CategoryScrollChild
         or not ScrollFrame or not ScrollChild then
         return
     end
 
+    CategorySidebar:SetShown(not IsWindowBodyHidden() and not profileSettings.hideCategoryPane)
     CategorySidebar:SetWidth(sidebarWidth)
     CategoryScrollChild:SetWidth(sidebarWidth - 7)
     if CategoryEmptyButton then
@@ -646,10 +664,11 @@ ApplyColumnLayout = function()
 
     EmoteBackgroundLeft:ClearAllPoints()
     EmoteBackgroundLeft:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 0, categoryTop)
-    EmoteBackgroundLeft:SetPoint("BOTTOMRIGHT", CategorySidebar, "BOTTOMLEFT")
+    EmoteBackgroundLeft:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMLEFT", leftInset + 5, contentBottom)
 
     EmoteBackgroundRight:ClearAllPoints()
-    EmoteBackgroundRight:SetPoint("TOPLEFT", CategorySidebar, "TOPRIGHT")
+    EmoteBackgroundRight:SetPoint("TOPLEFT", MainFrame, "TOPLEFT",
+        leftInset + 5 + (profileSettings.hideCategoryPane and 0 or sidebarWidth), categoryTop)
     EmoteBackgroundRight:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", 0, contentBottom)
 
     ScrollFrame:ClearAllPoints()
@@ -657,7 +676,7 @@ ApplyColumnLayout = function()
         "TOPLEFT",
         MainFrame,
         "TOPLEFT",
-        leftInset + sidebarWidth + 10,
+        leftInset + GetCategoryPaneWidth() + 10,
         emoteTop
     )
     ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25 - rightInset, contentBottom)
@@ -671,6 +690,14 @@ ApplyColumnLayout = function()
         button:SetWidth(math.max(emoteColumnWidth - 5, 1))
     end
 
+    if CategoryPaneToggle then
+        CategoryPaneToggle:ClearAllPoints()
+        CategoryPaneToggle:SetPoint("CENTER", MainFrame, "TOPLEFT",
+            leftInset + 5 + GetCategoryPaneWidth() - categoryToggleWidth / 2,
+            (categoryTop + contentBottom - MainFrame:GetHeight()) / 2)
+        CategoryPaneToggle:SetShown(not IsWindowBodyHidden())
+        UpdateCategoryPaneToggle()
+    end
     if ResizeGrip then
         ResizeGrip:ClearAllPoints()
         ResizeGrip:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT",
@@ -970,6 +997,7 @@ function MainWindow.ApplyAppearance()
         )
     end
 
+    UpdateCategoryPaneToggle()
     MainWindow.RefreshFontDisplays()
     MainWindow.ApplyFadeSettings()
 end
@@ -2429,6 +2457,59 @@ local function CreateTitleBarControls()
 
 end
 
+local function CreateCategoryPaneToggle()
+    CategoryPaneToggle = CreateFrame("Button", nil, MainFrame)
+    CategoryPaneToggle:SetSize(categoryToggleWidth, 24)
+    CategoryPaneToggle:SetFrameLevel(MainFrame:GetFrameLevel() + 2)
+    CategoryPaneToggle:RegisterForClicks("LeftButtonUp")
+    CategoryPaneToggle.Strokes = {}
+    for index = 1, 2 do
+        local stroke = CategoryPaneToggle:CreateTexture(nil, "ARTWORK")
+        stroke:SetColorTexture(1, 1, 1, 1)
+        -- Two one-pixel strokes form a roughly 12px-tall chevron.
+        stroke:SetSize(8, 1)
+        stroke:SetPoint("CENTER", CategoryPaneToggle, "CENTER", 0, index == 1 and 3 or -3)
+        CategoryPaneToggle.Strokes[index] = stroke
+    end
+    CategoryPaneToggle:SetScript("OnClick", function()
+        FinishWindowInteraction()
+        MainWindow.NotifyActivity()
+        local left, top = MainFrame:GetLeft(), MainFrame:GetTop()
+        profileSettings.hideCategoryPane = not profileSettings.hideCategoryPane
+        local width = CalculateColumnWidths()
+        local x, y = addon.WindowGeometry.GetAnchorOffsets(left, top, {
+            point = profileSettings.point, relativePoint = profileSettings.relativePoint,
+            width = width, height = profileSettings.height,
+            screenWidth = UIParent:GetWidth(), screenHeight = UIParent:GetHeight(),
+        })
+        MainWindow.ApplyWindowGeometry(x, y, nil, profileSettings.height, true)
+        MainWindow.UpdateMenu()
+        CategoryPaneToggle.hovered = CategoryPaneToggle:IsMouseOver()
+        UpdateCategoryPaneToggle()
+    end)
+    CategoryPaneToggle:SetScript("OnEnter", function(self)
+        self.hovered = true
+        MainWindow.NotifyActivity()
+        UpdateCategoryPaneToggle()
+        ScheduleTooltip(self, function()
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetText(profileSettings.hideCategoryPane
+                and L.MENU_SHOW_CATEGORIES or L.MENU_HIDE_CATEGORIES)
+        end)
+    end)
+    CategoryPaneToggle:SetScript("OnLeave", function(self)
+        self.hovered = false
+        UpdateCategoryPaneToggle()
+        CancelTooltip(self)
+        ScheduleInactiveFade()
+        ScheduleWindowAutoHide()
+    end)
+    CategoryPaneToggle:SetScript("OnHide", function(self)
+        self.hovered = false
+        CancelTooltip(self)
+    end)
+end
+
 local function CreateResizeGrip()
     ResizeGrip = CreateFrame("Button", nil, MainFrame)
     ResizeGrip:SetSize(18, 18)
@@ -2536,6 +2617,7 @@ function MainWindow.CreateMainWindow()
     CreateCategorySidebar()
     CreateEmoteArea()
     CreateTitleBarControls()
+    CreateCategoryPaneToggle()
     CreateResizeGrip()
     InstallWindowScripts()
     FinishMainWindowCreation()

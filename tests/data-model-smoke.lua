@@ -26,6 +26,19 @@ local json = addon.JSON
 local function decodeDocument(document, expectedType)
     return serialization.Decode(json.Encode(document, true), expectedType)
 end
+assert(db.GetProfileSettings().hideCategoryPane == false)
+for _, hidden in ipairs({true, false}) do
+    db.GetProfileSettings().hideCategoryPane = hidden
+    db.InitializeDatabase()
+    assert(db.GetProfileSettings().hideCategoryPane == hidden)
+    local exported = assert(json.Decode(assert(serialization.ExportProfile())))
+    assert(exported.settings.hideCategoryPane == hidden)
+    assert(assert(decodeDocument(exported, 'profile')).settings.hideCategoryPane == hidden)
+    exported.settings.hideCategoryPane = 'invalid'
+    assert(assert(decodeDocument(exported, 'profile')).settings.hideCategoryPane == false)
+    exported.settings.hideCategoryPane = nil
+    assert(assert(decodeDocument(exported, 'profile')).settings.hideCategoryPane == false)
+end
 local categoryExport = assert(json.Decode(assert(serialization.ExportCategory(1))))
 local profileExport = assert(json.Decode(assert(serialization.ExportProfile())))
 local themeExport = assert(json.Decode(assert(serialization.ExportTheme('Teal'))))

@@ -32,7 +32,7 @@ Category names and emote labels have a 128-byte limit; commands have a 4,096-byt
 
 ## Settings and Rendering Behavior
 
-Profiles own categories, emotes, selected category, window position and height, locking, fade and minimization, and a Theme reference. Themes own fonts, colors, selection effects, opacity, title-bar placement, and minimized icon tint. Global Behavior settings own activation, tooltip delay, and gear visibility.
+Profiles own categories, emotes, selected category, window position and height, locking, fade and minimization, and a Theme reference. Themes own fonts, colors, selection effects, opacity, title-bar placement, and minimized icon tint. Global Behavior settings own activation, tooltip delay, and gear visibility. Profiles also own `hideCategoryPane` (default false), preserved by copying, reloading, and transfers. The divider chevron uses the category text color at half opacity, brightens on hover, and has an 18 × 24 pixel click area. Hiding categories retains an 18-pixel toggle strip, the selected category, and the emote column width. The control hides with the window body during minimization.
 
 Creating or copying a Profile selects it; importing a Profile does not. The Theme editor selection and active Profile's Theme reference stay synchronized.
 

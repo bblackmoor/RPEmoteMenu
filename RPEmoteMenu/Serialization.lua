@@ -269,7 +269,7 @@ local function ValidateProfileSettings(value)
     value = SettingsObject(value)
     local settings = {}
 
-    for _, key in ipairs({"locked", "fadeEnabled"}) do
+    for _, key in ipairs({"locked", "fadeEnabled", "hideCategoryPane"}) do
         if type(value[key]) == "boolean" then
             settings[key] = value[key]
         end
