@@ -42,6 +42,36 @@ local leftSidebarX, leftEmoteX = sidebar.points.TOPLEFT[4], emoteScroll.points.T
 Orientation('TOP')
 assert(sidebar.points.TOPLEFT[5]==-36 and emoteScroll.points.TOPLEFT[5]==-40)
 assert(leftSidebarX-sidebar.points.TOPLEFT[4]==32 and leftEmoteX-emoteScroll.points.TOPLEFT[4]==32)
+-- New edges reserve content space, relocate controls, and use the requested rotation.
+local title, titleBar, pin, gear
+for _, object in ipairs(native.objects) do
+    if object.kind == 'FontString' and object.rotation ~= nil then title = object end
+end
+assert(title)
+for _, object in ipairs(native.objects) do
+    if object.titleTextShortened ~= nil then titleBar = object end
+end
+for _, object in ipairs(native.objects) do
+    if object.Icon and object.point and object.point[2] == titleBar then pin = object end
+end
+for _, object in ipairs(native.objects) do
+    if object ~= pin and object.point and object.point[2] == pin then gear = object end
+end
+assert(titleBar and pin and gear)
+local horizontalWidth = frame:GetWidth()
+Orientation('RIGHT')
+assert(frame:GetWidth() == horizontalWidth + 32)
+assert(title.rotation == -math.pi / 2 and titleBar.points.TOPRIGHT[2] == frame)
+assert(pin.point[2] == titleBar and gear.point[2] == pin)
+assert(sidebar.points.TOPLEFT[4] == 5 and sidebar.points.TOPLEFT[5] == -6)
+assert(emoteScroll.points.BOTTOMRIGHT[4] == -57 and emoteScroll.points.BOTTOMRIGHT[5] == 10)
+Orientation('BOTTOM')
+assert(frame:GetWidth() == horizontalWidth and title.rotation == 0)
+assert(titleBar.points.BOTTOMLEFT[2] == frame and titleBar.points.BOTTOMRIGHT[2] == frame)
+assert(pin.point[2] == titleBar and gear.point[2] == pin)
+assert(sidebar.points.TOPLEFT[5] == -6 and sidebar.points.BOTTOMLEFT[5] == 42)
+assert(emoteScroll.points.TOPLEFT[5] == -10 and emoteScroll.points.BOTTOMRIGHT[5] == 42)
+Orientation('TOP')
 profile.point,profile.relativePoint,profile.x,profile.y='CENTER','CENTER',0,100
 main.ApplyProfileSettings()
 Orientation('LEFT'); assert(profile.x==16 and profile.y==100)
@@ -101,7 +131,7 @@ frame:Show(); assert(icon:IsShown() and showEvents==3)
 profile.height=310
 for _, mode in ipairs({'ICON','TITLE_BAR'}) do
     profile.minimizeMode=mode
-    for _, position in ipairs({'TOP','LEFT'}) do
+    for _, position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
         theme.titleBarPosition=position
         main.ApplyProfileSettings()
         assert(profile.height==310)
@@ -144,7 +174,7 @@ for _, mode in ipairs({'NONE','ICON','TITLE_BAR'}) do
             main.ApplyProfileSettings()
             assert(profile.x==-75 and profile.y==-40, 'restoration lost signed offsets')
             local left,top=frame:GetLeft(),frame:GetTop()
-            for _, position in ipairs({'LEFT','TOP'}) do
+            for _, position in ipairs({'LEFT','RIGHT','BOTTOM','TOP'}) do
                 theme.titleBarPosition=position; main.ApplyThemeSettings()
                 -- Stored integer offsets can round half-pixel center anchors.
                 assert(math.abs(frame:GetLeft()-left)<=1 and math.abs(frame:GetTop()-top)<=1,
@@ -170,7 +200,7 @@ db.InitializeDatabase(); profile=db.GetProfileSettings(); main.ApplyProfileSetti
 assert(profile.x==-75 and profile.y==-40)
 -- Native dragging owns live movement; Lua must not reset its anchor on update.
 profile.fadeEnabled=false; profile.minimizeMode='NONE'; profile.locked=false
-for _, position in ipairs({'TOP','LEFT'}) do
+for _, position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
     theme.titleBarPosition=position
     profile.point,profile.relativePoint='CENTER','CENTER'
     profile.x,profile.y,profile.height=0,0,200
@@ -203,7 +233,7 @@ frame:GetScript('OnDragStart')(frame); assert(frame.moving)
 frame:Hide(); assert(not frame.moving, 'hidden window retained native movement')
 -- Interrupted gestures finish against the old Profile before settings rebind.
 frame:Show()
-for _, position in ipairs({'TOP','LEFT'}) do
+for _, position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
     theme=db.GetThemeSettings(); theme.titleBarPosition=position
     for _, gesture in ipairs({'drag','resize'}) do
         profile=db.GetProfileSettings()
@@ -260,7 +290,7 @@ assert(not frame.sizing and profile.height==335)
 frame:SetHeight(355)
 assert(profile.height==335, 'Theme application left resizing persistence active')
 -- Explicit layout actions supersede gestures and survive their stale callbacks.
-for _, position in ipairs({'TOP','LEFT'}) do
+for _, position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
     theme.titleBarPosition=position
     for _, gesture in ipairs({'drag','resize'}) do
         for _, action in ipairs({'center','reset','exact'}) do
@@ -305,7 +335,7 @@ end
 -- Leaving while dragging/resizing cannot fade or collapse the window; activity
 -- cancels preexisting timers, and inactivity resumes after the gesture finishes.
 local originalAfter=C_Timer.After
-for _, position in ipairs({'TOP','LEFT'}) do
+for _, position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
     theme.titleBarPosition=position
     for _, mode in ipairs({'NONE','TITLE_BAR','ICON'}) do
         for _, gesture in ipairs({'drag','resize'}) do
@@ -356,7 +386,7 @@ for _,object in ipairs(native.objects) do
     if object.kind=='FontString' and object.rotation~=nil then title=object end
 end
 assert(title, 'title font missing')
-for _,position in ipairs({'TOP','LEFT'}) do
+for _,position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
     for _,mode in ipairs({'NONE','TITLE','ICON'}) do
         theme.titleBarPosition=position
         profile.fadeEnabled=mode~='NONE'; profile.minimizeMode=mode

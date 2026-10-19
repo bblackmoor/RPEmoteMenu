@@ -24,7 +24,7 @@ local definitions = {
     },
     enums = {
         minimizeMode = {values = {"NONE", "TITLE_BAR", "ICON"}},
-        titleBarPosition = {values = {"TOP", "LEFT"}},
+        titleBarPosition = {values = {"TOP", "LEFT", "RIGHT", "BOTTOM"}},
         categoryHighlightEffect = {values = {"background", "outline", "separator", "underline", "shadow"}},
         anchorPoint = {values = {"TOPLEFT", "TOP", "TOPRIGHT", "LEFT", "CENTER", "RIGHT", "BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}}
     }

@@ -36,7 +36,7 @@ end
 
 function Geometry.GetFrameSize(width, height, options)
     if not options.hidden or options.minimizeMode == "NONE" then return width, height end
-    if options.titleBarOnLeft then
+    if options.titleBarVertical then
         if options.minimizeMode == "ICON" then return width, height end
         return options.leftTitleBarWidth, height
     end

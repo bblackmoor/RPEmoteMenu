@@ -1,3 +1,8 @@
+## 2.1.323 — 2026-10-19
+
+- Add Right and Bottom title-bar positions. Right-side text faces outward with its top to the right; bottom text stays upright. Move the gear and pin with the title bar.
+- Reserve space for each title-bar edge, keep the resize grip clear of it, and support the new positions in saved Themes, imports, and minimized displays.
+
 ## 2.1.321 — 2026-10-12
 
 - Keep the `2.1` version series and automatically prepare matching build numbers and changelog entries from staged changes, including on Windows.

@@ -127,6 +127,11 @@ local function IsTitleBarOnLeft()
     return themeSettings and themeSettings.titleBarPosition == "LEFT"
 end
 
+local function IsTitleBarVertical()
+    return themeSettings and (themeSettings.titleBarPosition == "LEFT"
+        or themeSettings.titleBarPosition == "RIGHT")
+end
+
 local function GetMinimizeMode()
     return profileSettings and profileSettings.minimizeMode or "NONE"
 end
@@ -164,14 +169,14 @@ local function GetContentWidth()
 end
 
 local function GetExpandedWidth()
-    return GetContentWidth() + (IsTitleBarOnLeft() and leftTitleBarWidth or 0)
+    return GetContentWidth() + (IsTitleBarVertical() and leftTitleBarWidth or 0)
 end
 
 local function GetCurrentFrameSize(width, height)
     return addon.WindowGeometry.GetFrameSize(width or GetExpandedWidth(),
         height or profileSettings.height, {
             hidden = isWindowAutoHidden, minimizeMode = GetMinimizeMode(),
-            titleBarOnLeft = IsTitleBarOnLeft(), leftTitleBarWidth = leftTitleBarWidth,
+            titleBarVertical = IsTitleBarVertical(), leftTitleBarWidth = leftTitleBarWidth,
             titleBarThickness = titleBarThickness,
         })
 end
@@ -320,7 +325,7 @@ local function CalculateColumnWidths()
         width = GetContentWidth()
     end
 
-    return width + (IsTitleBarOnLeft() and leftTitleBarWidth or 0)
+    return width + (IsTitleBarVertical() and leftTitleBarWidth or 0)
 end
 
 local FinishWindowInteraction
@@ -544,9 +549,10 @@ ApplyTitleBarLayout = function()
     SettingsBtn:ClearAllPoints()
     TitleText:SetWordWrap(false)
 
-    if IsTitleBarOnLeft() then
-        TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
-        TitleBar:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
+    if IsTitleBarVertical() then
+        local side = IsTitleBarOnLeft() and "LEFT" or "RIGHT"
+        TitleBar:SetPoint("TOP" .. side, MainFrame, "TOP" .. side)
+        TitleBar:SetPoint("BOTTOM" .. side, MainFrame, "BOTTOM" .. side)
         TitleBar:SetWidth(leftTitleBarWidth)
 
         -- The 20px pin with a 6px inset shares the icon's 16px center.
@@ -557,7 +563,7 @@ ApplyTitleBarLayout = function()
         -- Reserve the top 60 pixels for controls and a gap before the text.
         -- The remaining title region has a six-pixel bottom margin.
         local availableLength = math.max(MainFrame:GetHeight() - 66, 1)
-        TitleText:SetRotation(math.rad(90))
+        TitleText:SetRotation(math.rad(IsTitleBarOnLeft() and 90 or -90))
         TitleText:SetSize(availableLength, 20)
         TitleText:SetPoint("CENTER", TitleBar, "CENTER", 0, -27)
         TitleText:SetText(fullTitle)
@@ -570,8 +576,9 @@ ApplyTitleBarLayout = function()
             TitleText:SetText(shortTitle)
         end
     else
-        TitleBar:SetPoint("TOPLEFT", MainFrame, "TOPLEFT")
-        TitleBar:SetPoint("TOPRIGHT", MainFrame, "TOPRIGHT")
+        local edge = themeSettings.titleBarPosition == "BOTTOM" and "BOTTOM" or "TOP"
+        TitleBar:SetPoint(edge .. "LEFT", MainFrame, edge .. "LEFT")
+        TitleBar:SetPoint(edge .. "RIGHT", MainFrame, edge .. "RIGHT")
         TitleBar:SetHeight(titleBarThickness)
 
         PinBtn:SetPoint("TOPRIGHT", TitleBar, "TOPRIGHT", -5, -5)
@@ -602,8 +609,12 @@ ApplyColumnLayout = function()
     end
 
     local leftInset = IsTitleBarOnLeft() and leftTitleBarWidth or 0
-    local categoryTop = IsTitleBarOnLeft() and -6 or -36
-    local emoteTop = IsTitleBarOnLeft() and -10 or -40
+    local rightInset = themeSettings.titleBarPosition == "RIGHT" and leftTitleBarWidth or 0
+    local topInset = themeSettings.titleBarPosition == "TOP" and (titleBarThickness - 2) or 0
+    local bottomInset = themeSettings.titleBarPosition == "BOTTOM" and titleBarThickness or 0
+    local categoryTop = -6 - topInset
+    local emoteTop = -10 - topInset
+    local contentBottom = 10 + bottomInset
 
     CategorySidebar:ClearAllPoints()
     CategorySidebar:SetPoint(
@@ -618,7 +629,7 @@ ApplyColumnLayout = function()
         MainFrame,
         "BOTTOMLEFT",
         leftInset + 5,
-        10
+        contentBottom
     )
 
     -- The category background fills the sidebar. Fill only the remaining
@@ -631,7 +642,7 @@ ApplyColumnLayout = function()
     EmoteBackgroundBottom:ClearAllPoints()
     EmoteBackgroundBottom:SetPoint("BOTTOMLEFT", MainFrame, "BOTTOMLEFT")
     EmoteBackgroundBottom:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT")
-    EmoteBackgroundBottom:SetHeight(10)
+    EmoteBackgroundBottom:SetHeight(contentBottom)
 
     EmoteBackgroundLeft:ClearAllPoints()
     EmoteBackgroundLeft:SetPoint("TOPLEFT", MainFrame, "TOPLEFT", 0, categoryTop)
@@ -639,7 +650,7 @@ ApplyColumnLayout = function()
 
     EmoteBackgroundRight:ClearAllPoints()
     EmoteBackgroundRight:SetPoint("TOPLEFT", CategorySidebar, "TOPRIGHT")
-    EmoteBackgroundRight:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", 0, 10)
+    EmoteBackgroundRight:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", 0, contentBottom)
 
     ScrollFrame:ClearAllPoints()
     ScrollFrame:SetPoint(
@@ -649,7 +660,7 @@ ApplyColumnLayout = function()
         leftInset + sidebarWidth + 10,
         emoteTop
     )
-    ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25, 10)
+    ScrollFrame:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT", -25 - rightInset, contentBottom)
 
     ScrollChild:SetWidth(emoteColumnWidth)
     if EmoteEmptyButton then
@@ -660,6 +671,11 @@ ApplyColumnLayout = function()
         button:SetWidth(math.max(emoteColumnWidth - 5, 1))
     end
 
+    if ResizeGrip then
+        ResizeGrip:ClearAllPoints()
+        ResizeGrip:SetPoint("BOTTOMRIGHT", MainFrame, "BOTTOMRIGHT",
+            -2 - rightInset, 2 + bottomInset)
+    end
     ApplyTitleBarLayout()
 
     RefreshGeneralWindowFields()
@@ -1803,7 +1819,7 @@ local function ApplyMinimizedIconAnchor()
         return
     end
 
-    -- Both bars meet at the frame's upper-left corner. Centering the icon
+    -- Use the frame's upper-left corner for every title-bar position. Centering the icon
     -- there keeps it fixed through an orientation change at any icon size.
     MinimizedIconButton:ClearAllPoints()
     MinimizedIconButton:SetPoint("CENTER", MainFrame, "TOPLEFT", 16, -16)
@@ -1914,9 +1930,9 @@ end
 function MainWindow.ApplyTitleBarPosition(
     preserveSavedPosition, preserveProfileGeometry
 )
-    themeSettings.titleBarPosition = themeSettings.titleBarPosition == "LEFT"
-        and "LEFT"
-        or "TOP"
+    if not definitions.enums.titleBarPosition.allowed[themeSettings.titleBarPosition] then
+        themeSettings.titleBarPosition = themeDefaults.titleBarPosition
+    end
 
     local x, y = profileSettings.x, profileSettings.y
     if not preserveSavedPosition and appliedTitleBarPosition
@@ -2041,7 +2057,7 @@ local function CreateTitleBar()
     end)
     TitleBar:SetScript("OnEnter", function(self)
         if self.titleTextShortened
-            or (IsTitleBarOnLeft() and TitleText:IsTruncated()) then
+            or (IsTitleBarVertical() and TitleText:IsTruncated()) then
             ScheduleTooltip(self, function()
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:SetText(string.format(L.UI_S_S, L.ADDON_NAME, addon.VERSION))
@@ -2360,7 +2376,7 @@ local function CreateTitleBarControls()
         ScheduleTooltip(self, function()
             GameTooltip:SetOwner(
                 self,
-                IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+                IsTitleBarVertical() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
             )
             GameTooltip:SetText(profileSettings.locked and L.MENU_WINDOW_LOCKED or L.MENU_WINDOW_UNLOCKED)
             GameTooltip:AddLine(
@@ -2400,7 +2416,7 @@ local function CreateTitleBarControls()
         ScheduleTooltip(self, function()
             GameTooltip:SetOwner(
                 self,
-                IsTitleBarOnLeft() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
+                IsTitleBarVertical() and "ANCHOR_RIGHT" or "ANCHOR_BOTTOM"
             )
             GameTooltip:SetText(L.MENU_SETTINGS)
         end)

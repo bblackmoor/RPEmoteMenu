@@ -14,7 +14,7 @@ for _, mode in ipairs({'NONE','TITLE_BAR','ICON'}) do
     for _, left in ipairs({false,true}) do
         for _, hidden in ipairs({false,true}) do
             local width,height=geometry.GetFrameSize(400,300,{hidden=hidden,
-                minimizeMode=mode,titleBarOnLeft=left,leftTitleBarWidth=32,titleBarThickness=32})
+                minimizeMode=mode,titleBarVertical=left,leftTitleBarWidth=32,titleBarThickness=32})
             local expectedWidth,expectedHeight=400,300
             if hidden and mode~='NONE' then
                 if not left then expectedHeight=32 elseif mode~='ICON' then expectedWidth=32 end

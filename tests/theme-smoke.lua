@@ -202,8 +202,11 @@ assert(teal.categoryFontSize == 23 and teal.categoryTextColor.r == 0.3 and not C
 -- Geometry mutations stay runtime-owned; this suite checks the callback boundary.
 panel.Refresh(); before = applies
 local profileSettings, x = db.GetProfileSettings(), db.GetProfileSettings().x
-Select(controls.titleBarPosition, 'LEFT')
-assert(teal.titleBarPosition == 'LEFT' and applies == before + 1 and profileSettings.x == x)
+for _, position in ipairs({'LEFT', 'RIGHT', 'BOTTOM', 'TOP'}) do
+    before = applies
+    Select(controls.titleBarPosition, position)
+    assert(teal.titleBarPosition == position and applies == before + 1 and profileSettings.x == x)
+end
 -- Captured name/deletion/restore targets and shared factory reset scope.
 Click(buttons.Copy); local copy = request; Select(management, 'Default'); Accept(copy, 'Custom')
 assert(db.GetActiveThemeName() == 'Custom' and db.GetThemeSettings().categoryFontSize == 23)

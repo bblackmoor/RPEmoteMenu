@@ -454,7 +454,7 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
     titleBarLabel:SetPoint("TOPLEFT", editor, "TOPLEFT", 20, titleY)
     titleBarLabel:SetText(L.UI_TITLE_BAR_2)
 
-    local titleBarLabels = {TOP = L.UI_TOP, LEFT = L.UI_LEFT}
+    local titleBarLabels = {TOP = L.UI_TOP, LEFT = L.UI_LEFT, RIGHT = L.UI_RIGHT, BOTTOM = L.UI_BOTTOM}
     local titleBarSelector = Widgets.CreateDropdown(editor, function()
         local options = {}
         for _, position in ipairs(definitions.enums.titleBarPosition.values) do

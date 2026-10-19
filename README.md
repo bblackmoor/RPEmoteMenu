@@ -82,7 +82,7 @@ New characters start with **Default Profile** and **Default Theme**. Both can be
 
 ### Making the Menu Fit
 
-Set the window's position, height, and lock state in its Profile. You can have it fade when unused, or minimize to a title bar or icon; hovering restores it. Put the title bar at the top or left in the Theme settings.
+Set the window's position, height, and lock state in its Profile. You can have it fade when unused, or minimize to a title bar or icon; hovering restores it. Put the title bar at the top, left, right, or bottom in the Theme settings. Right-side title text has its top facing right; bottom title text stays upright. The gear and pin move with the title bar.
 
 The **Behavior** screen controls activation, tooltip delay, and gear visibility for the whole addon. Hiding the gears still lets you right-click to edit.
 

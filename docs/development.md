@@ -36,7 +36,7 @@ Profiles own categories, emotes, selected category, window position and height, 
 
 Creating or copying a Profile selects it; importing a Profile does not. The Theme editor selection and active Profile's Theme reference stay synchronized.
 
-Activation shows the full window at normal opacity and starts the inactivity timer. Deactivation hides the window and minimized icon. The minimized icon remains at the upper-left corner when the title bar changes orientation.
+Activation shows the full window at normal opacity and starts the inactivity timer. Deactivation hides the window and minimized icon. Title bars support Top, Left, Right, and Bottom. Left text rotates 90 degrees, right text rotates -90 degrees (its top faces right), and horizontal text stays upright. Pin and gear controls use the title bar as their anchor; the resize grip stays clear of the bar. Vertical positions reserve column width and collapse to a narrow bar; horizontal positions collapse to a short bar. The minimized icon remains at the upper-left corner when the title bar changes orientation.
 
 Font selectors refresh when providers register fonts. An unavailable saved font falls back to Friz Quadrata without discarding the saved selection, including during transfers. Rendering retries are limited to failed attempts; widths update with the font.
 

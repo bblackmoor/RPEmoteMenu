@@ -64,6 +64,15 @@ assert(importedTheme.settings.windowOpacity == addon.DefaultThemeSettings.window
 assert(importedTheme.settings.borderColor == nil and importedTheme.settings.borderStyle == nil)
 assert(importedTheme.settings.titleBarPosition == addon.DefaultThemeSettings.titleBarPosition)
 assert(importedTheme.settings.unrecognized == nil)
+for _, position in ipairs({'RIGHT', 'BOTTOM'}) do
+    themeExport.settings.titleBarPosition = position
+    assert(assert(decodeDocument(themeExport, 'theme')).settings.titleBarPosition == position)
+    db.GetThemeSettings().titleBarPosition = position
+    db.InitializeDatabase()
+    assert(db.GetThemeSettings().titleBarPosition == position)
+    local roundTrip = assert(json.Decode(assert(serialization.ExportTheme(db.GetActiveThemeName()))))
+    assert(roundTrip.settings.titleBarPosition == position)
+end
 everythingExport.profiles[1].settings.fadeDelay = -1
 everythingExport.themes[1].settings.categoryFontSize = 18
 local importedEverything = assert(decodeDocument(everythingExport, 'everything'))
@@ -131,7 +140,7 @@ for _, enum in pairs(definitions.enums) do
 end
 assert(table.concat(definitions.enums.categoryHighlightEffect.values, ',') == 'background,outline,separator,underline,shadow')
 assert(table.concat(definitions.enums.minimizeMode.values, ',') == 'NONE,TITLE_BAR,ICON')
-assert(table.concat(definitions.enums.titleBarPosition.values, ',') == 'TOP,LEFT')
+assert(table.concat(definitions.enums.titleBarPosition.values, ',') == 'TOP,LEFT,RIGHT,BOTTOM')
 local function CheckLimit(copy, export, kind, key, limit, default, integer)
     for _, value in ipairs({limit.min, limit.max}) do
         assert(copy({[key] = value})[key] == value)
