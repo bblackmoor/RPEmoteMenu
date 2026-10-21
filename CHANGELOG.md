@@ -1,3 +1,7 @@
+## 2.2.326 — 2026-10-20
+
+- Start the 2.2 version series, retaining commit-count build numbers.
+
 ## 2.1.325 — 2026-10-19
 
 - Add a small divider chevron to hide or show the category pane. Use the Theme’s category text color at half opacity, brighten on hover, and show Hide categories / Show categories tooltips.

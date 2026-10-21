@@ -109,7 +109,7 @@ the documented whitespace normalization.
 ## Prepare matching build metadata
 
 Build numbers normally use the next commit count from a full-history checkout.
-The current version series is `2.1.<build>`; ordinary commits retain `2.1` and
+The current version series is `2.2.<build>`; ordinary commits retain `2.2` and
 change the third number. The former hook's hard-coded `2.0` version and local
 ZIP generation have been replaced by this preparation and the Actions build.
 Enable the local hook once, from the repository folder:
