@@ -1,3 +1,10 @@
+## 2.2.327 — 2026-10-21
+
+- Release the 2.2 series with title bars on all four edges. Right-side title text faces outward; bottom text stays upright, and the gear and pin move with the title bar.
+- Hide or show the category pane with the small divider chevron. Each Profile remembers the choice while keeping the selected category and emote column width.
+- Allow the expanded menu to be as short as 100 pixels.
+- Correct the LibStub packaging commit pin to the available upstream revision matching the bundled source.
+
 ## 2.2.326 — 2026-10-20
 
 - Start the 2.2 version series, retaining commit-count build numbers.
