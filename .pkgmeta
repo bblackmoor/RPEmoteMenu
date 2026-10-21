@@ -44,6 +44,7 @@ ignore:
   - RPEmoteMenu/Libs/*/*.tests.lua
   - RPEmoteMenu/Libs/*/.checkout
   - RPEmoteMenu/Libs/DetailsFramework/definitions.lua
+  - RPEmoteMenu/Libs/LibStub/UPSTREAM_REVISION
   - RPEmoteMenu/Libs/LibStub/CHANGELOG.txt
   - RPEmoteMenu/Libs/CallbackHandler-1.0/CallbackHandler-1.0.xml
 
