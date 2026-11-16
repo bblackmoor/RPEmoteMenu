@@ -1,3 +1,8 @@
+## 2.2.331 — 2026-11-16
+
+- Fix Send-enabled speech and other chat commands staying in the edit box: populate the text before submitting and consume WoW's pending text update so sent messages do not return as drafts.
+- Cover the reported `/s says, "Oh, there you are."` example, existing chat drafts, targeted commands, and deferred chat updates in command regression tests.
+
 ## 2.2.330 — 2026-11-16
 
 - Add a Send on/off switch to the right of each command box in the emote editor, with an info popup explaining immediate sending and editable chat drafts.

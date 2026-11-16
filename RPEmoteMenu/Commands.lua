@@ -30,6 +30,16 @@ local function HasOtherTarget()
     return UnitExists("target") and not UnitIsUnit("target", "player")
 end
 
+-- OpenChat defers SetText until the edit box's next OnUpdate. A Send click
+-- must consume that pending text now, or it submits stale/empty text and the
+-- next update restores the unsent draft after ClearChat.
+local function PrepareChatText(editBox, command)
+    editBox.setText = 0
+    editBox.text = nil
+    editBox.desiredCursorPosition = nil
+    editBox:SetText(command)
+end
+
 function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, defaultSend, targetedSend)
     local command = defaultCommand
     local send = addon.GetCommandSend(defaultSend, command)
@@ -67,6 +77,7 @@ function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, def
     if ChatFrameUtil and ChatFrameUtil.OpenChat then
         local editBox = ChatFrameUtil.OpenChat(command, DEFAULT_CHAT_FRAME)
         if editBox then
+            PrepareChatText(editBox, command)
             editBox:SendText(1)
             editBox:ClearChat()
         end
@@ -74,6 +85,7 @@ function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, def
         ChatFrame_OpenChat(command, DEFAULT_CHAT_FRAME)
         local editBox = ChatEdit_GetActiveWindow()
         if editBox then
+            PrepareChatText(editBox, command)
             ChatEdit_SendText(editBox, 1)
             ChatEdit_DeactivateChat(editBox)
         end

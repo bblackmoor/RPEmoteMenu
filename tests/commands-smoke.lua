@@ -91,25 +91,61 @@ expect('/e waits.', '/wave', 'emote', 'WAVE', false, true)
 selfTarget = true
 expect('/wave', '/e waves.', 'chat', '/wave', false, true)
 selfTarget, targetExists = false, false
--- Retail's parser sends other command types through the current mixin API.
-local parsed, cleared, opened
-local editBox = {SendText=function(_, history) assert(history == 1); parsed=parsed+1 end,
-    ClearChat=function() cleared=cleared+1 end}
-ChatFrameUtil = {OpenChat=function(text, frame)
-    assert(frame == DEFAULT_CHAT_FRAME); opened=text; return editBox
-end}
-parsed, cleared = 0, 0
-addon.Commands.ExecuteEmoteCommand('/say Hello, {player}.', nil, true)
-assert(opened == '/say Hello, Tester.' and parsed == 1 and cleared == 1)
+-- Model Blizzard's deferred OpenChat text, rather than assuming it is ready.
+local parsed, cleared, opened, sent = 0, 0, nil, {}
+local editBox = {value = ''}
+function editBox:SetText(text) self.value = text end
+function editBox:OnUpdate()
+    if self.setText == 1 then
+        self:SetText(self.text)
+        self.setText = 0
+    end
+end
+function editBox:SendText(history)
+    assert(history == 1)
+    parsed = parsed + 1
+    sent[#sent + 1] = self.value
+end
+function editBox:ClearChat()
+    cleared = cleared + 1
+    self.value = ''
+end
+local function DeferredOpen(text, frame)
+    assert(frame == DEFAULT_CHAT_FRAME)
+    opened = text
+    editBox.text, editBox.setText = text, 1
+    return editBox
+end
+ChatFrameUtil = {OpenChat = DeferredOpen}
+local example = '/s says, "Oh, there you are."'
+addon.Commands.ExecuteEmoteCommand(example, nil, true)
+assert(sent[1] == example and parsed == 1 and cleared == 1)
+editBox:OnUpdate()
+assert(editBox.value == '' and editBox.setText == 0, 'Sent text must not return as a draft')
+-- Off retains the normal next-update draft and sends nothing.
 addon.Commands.ExecuteEmoteCommand('/say Draft', nil, false)
 assert(opened == '/say Draft' and parsed == 1 and cleared == 1)
+editBox:OnUpdate(); assert(editBox.value == '/say Draft')
+-- On must replace a previously open draft, without submitting that draft.
+addon.Commands.ExecuteEmoteCommand('/say Hello, {player}.', nil, true)
+assert(sent[2] == '/say Hello, Tester.' and parsed == 2 and cleared == 2)
+editBox:OnUpdate(); assert(editBox.value == '')
 addon.Commands.ExecuteEmoteCommand('A complete message', nil, true)
-assert(opened == 'A complete message' and parsed == 2 and cleared == 2)
--- Legacy client fallback submits and closes the same active edit box.
+assert(sent[3] == 'A complete message' and parsed == 3 and cleared == 3)
+editBox:OnUpdate(); assert(editBox.value == '')
+-- The independently enabled targeted command follows the same submission path.
+targetExists = true
+addon.Commands.ExecuteEmoteCommand('/e waits.', '/s Hello, {target}.', false, true)
+assert(sent[4] == '/s Hello, Friend.' and parsed == 4 and cleared == 4)
+editBox:OnUpdate(); assert(editBox.value == '')
+targetExists = false
+-- Legacy OpenChat also defers text; flush it before its global send API.
 ChatFrameUtil = nil
+ChatFrame_OpenChat = DeferredOpen
 function ChatEdit_GetActiveWindow() return editBox end
 function ChatEdit_SendText(box, history) assert(box == editBox); box:SendText(history) end
-function ChatEdit_DeactivateChat(box) assert(box == editBox); cleared=cleared+1 end
-addon.Commands.ExecuteEmoteCommand('/say Legacy', nil, true)
-assert(parsed == 3 and cleared == 3)
-print('PASS independent Send overrides, Retail chat parsing and legacy fallback')
+function ChatEdit_DeactivateChat(box) assert(box == editBox); box:ClearChat() end
+addon.Commands.ExecuteEmoteCommand(example, nil, true)
+assert(sent[5] == example and parsed == 5 and cleared == 5)
+editBox:OnUpdate(); assert(editBox.value == '' and editBox.setText == 0)
+print('PASS independent Send overrides and deferred chat text in Retail/legacy APIs')
