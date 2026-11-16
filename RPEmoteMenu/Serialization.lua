@@ -39,7 +39,7 @@ local EVERYTHING_DOCUMENT_FIELDS = {
     format = true, version = true, type = true, profiles = true, themes = true
 }
 local CATEGORY_FIELDS = {name = true, emotes = true}
-local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true}
+local EMOTE_FIELDS = {label = true, defaultCommand = true, targetedCommand = true, defaultSend = true, targetedSend = true}
 local COLOR_SETTING_KEYS = definitions.colorKeys
 local VALID_CATEGORY_HIGHLIGHT_EFFECTS = definitions.enums.categoryHighlightEffect.allowed
 local VALID_TITLE_BAR_POSITIONS = definitions.enums.titleBarPosition.allowed
@@ -135,7 +135,7 @@ end
 
 
 local function BlankEmote()
-    return {label = "", defaultCommand = "", targetedCommand = ""}
+    return {label = "", defaultCommand = "", targetedCommand = "", defaultSend = false, targetedSend = false}
 end
 
 
@@ -176,10 +176,17 @@ local function ValidateEmote(value, index, prefix)
         end
     end
 
+    for _, key in ipairs({"defaultSend", "targetedSend"}) do
+        if value[key] ~= nil and type(value[key]) ~= "boolean" then
+            return nil, description .. ": " .. key .. " " .. L.EDITOR_SEND_MUST_BE_BOOLEAN
+        end
+    end
     return {
         label = label,
         defaultCommand = defaultCommand,
-        targetedCommand = targetedCommand
+        targetedCommand = targetedCommand,
+        defaultSend = addon.GetCommandSend(value.defaultSend, defaultCommand),
+        targetedSend = addon.GetCommandSend(value.targetedSend, targetedCommand)
     }
 end
 
@@ -389,7 +396,9 @@ local function ExportCategoryData(category)
 
     for index = 1, lastPopulated do
         local source = category.emotes[index]
-        local emote = {label = source.label, defaultCommand = source.defaultCommand}
+        local emote = {label = source.label, defaultCommand = source.defaultCommand,
+            defaultSend = addon.GetCommandSend(source.defaultSend, source.defaultCommand),
+            targetedSend = addon.GetCommandSend(source.targetedSend, source.targetedCommand)}
         if source.targetedCommand ~= "" then
             emote.targetedCommand = source.targetedCommand
         end

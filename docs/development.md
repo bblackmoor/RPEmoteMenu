@@ -24,7 +24,7 @@ Tests use bundled libraries and addon modules with UI fixtures. Command tests lo
 
 ## Editor and Catalog Behavior
 
-Selecting a standard emote fills the display name and default command and clears the targeted override. Display names omit the slash, capitalize the first letter, and use an explicit table for English compound names. Manual changes to any of the three fields reset the selector without discarding the draft. Save applies the change.
+Selecting a standard emote fills the display name and default command and clears the targeted override. Display names omit the slash, capitalize the first letter, and use an explicit table for English compound names. Manual changes to any of the three fields reset the selector without discarding the draft. Save applies the change. Each command box has a **Send** switch on its right and an info popup. On sends immediately; Off leaves the command in chat for editing. Default and targeted commands store independent choices. New commands use their old routing defaults until the switch is explicitly changed; selecting a standard emote sets its default command to Send On.
 
 Previews come from the reference catalog and do not guarantee current game output. Unverified entries can be inserted; entries recorded as unsupported for the current client build cannot. Catalog browsing currently requires enUS. An unselected picker has no reserved preview area. Dialog backgrounds consume clicks.
 
@@ -42,7 +42,7 @@ Font selectors refresh when providers register fonts. An unavailable saved font 
 
 ## Data Compatibility
 
-The saved-data model does not migrate v1 or obsolete v2 schemas; obsolete schemas initialize with defaults. Transfers accept version 2 JSON. Unknown or invalid Profile and Theme settings are ignored and defaulted. Other format versions and malformed categories or emotes are rejected without conversion.
+The saved-data model does not migrate v1 or obsolete v2 schemas; obsolete schemas initialize with defaults. Transfers accept version 2 JSON. Emotes store boolean `defaultSend` and `targetedSend` fields. Loading saved Profiles and importing older version 2 exports fills missing flags independently: slash-only emotes and complete `/e` commands default to On, while commands ending in a quotation mark and other commands default to Off. Normalization writes these flags into SavedVariables without changing the schema version or resetting Profiles. Explicit false values survive loading, duplication, and transfers. Unknown or invalid Profile and Theme settings are ignored and defaulted. Other format versions and malformed categories or emotes are rejected without conversion.
 
 Transfers exclude global preferences and character-to-Profile assignments. Name conflicts produce new names. A standalone Profile with an unavailable Theme uses Default Theme and reports the fallback.
 

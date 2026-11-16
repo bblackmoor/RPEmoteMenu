@@ -15,7 +15,7 @@ function strtrim(value) return (value:gsub("^%s+", ""):gsub("%s+$", "")) end
 GetLocale = function() return "deDE" end
 local executed
 local addon = {VERSION = "test", Settings = {}, SettingsUI = {FIELD_GAP = 12}, Commands = {
-    ExecuteEmoteCommand = function(default, targeted) executed = {default, targeted} end,
+    ExecuteEmoteCommand = function(default, targeted, defaultSend, targetedSend) executed = {default, targeted, defaultSend, targetedSend} end,
 }}
 local function Load(name) assert(loadfile("RPEmoteMenu/" .. name))("RPEmoteMenu", addon) end
 Load("Localization.lua"); Load("Locales/enUS.lua")
@@ -58,6 +58,7 @@ assert(emptyLabel:GetParent():GetWidth() == expectedWidth)
 categories[1].name = "User category %s"
 local emote = categories[1].emotes[1]
 emote.label, emote.defaultCommand, emote.targetedCommand = "User label %s", " /e {player} %s ", " /e {target} "
+emote.defaultSend, emote.targetedSend = false, true
 db.GetGlobalSettings().tooltipDelayMs = 0
 main.UpdateMenu()
 local button
@@ -74,6 +75,7 @@ assert(lines[2] == "Ziel: " .. emote.targetedCommand)
 assert(lines[3] == translated.MENU_RIGHT_CLICK_TO_EDIT)
 button.scripts.OnClick(button, "LeftButton")
 assert(executed[1] == emote.defaultCommand and executed[2] == emote.targetedCommand)
+assert(executed[3] == false and executed[4] == true)
 
 addon.EmoteEditor.Open(1, 1, false)
 local dialog

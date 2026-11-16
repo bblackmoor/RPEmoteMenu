@@ -503,3 +503,37 @@ exchange:Hide()
 print('PASS all 64 transfer-mode transitions, callback/target cleanup, focus/selection and failed export session preservation')
 
 
+
+-- Send switches stay beside their command boxes and save only with the draft.
+local function Toggle(control) local frame=control:GetFrame(); frame.scripts.OnClick(frame,'LeftButton') end
+assert(db.SetActiveProfile('Default')); Select(1)
+local c = db.GetCategory(1)
+c.emotes[1] = {label='Send test',defaultCommand='/wave',targetedCommand='/e asks, "',defaultSend=true,targetedSend=false}
+addon.EmoteEditor.Open(1,1,false)
+assert(dialog.DefaultSend:GetChecked() and not dialog.TargetedSend:GetChecked())
+for _, field in ipairs({dialog.Fields[2],dialog.Fields[3]}) do
+    assert(field.sendLabel:GetText() == 'Send')
+    assert(field.editBox:GetWidth() == 480)
+    assert(field.sendSwitch:GetFrame().point[4] > field.editBox.point[4] + field.editBox:GetWidth())
+end
+Toggle(dialog.DefaultSend); Toggle(dialog.TargetedSend)
+assert(c.emotes[1].defaultSend == true and c.emotes[1].targetedSend == false)
+dialog:Hide(); addon.EmoteEditor.Open(1,1,false)
+assert(dialog.DefaultSend:GetChecked() and not dialog.TargetedSend:GetChecked())
+Toggle(dialog.DefaultSend); Toggle(dialog.TargetedSend); dialog.SaveButton.scripts.OnClick()
+assert(c.emotes[1].defaultSend == false and c.emotes[1].targetedSend == true)
+addon.EmoteEditor.Open(1,1,false)
+assert(not dialog.DefaultSend:GetChecked() and dialog.TargetedSend:GetChecked())
+dialog.Fields[2].info.scripts.OnClick()
+assert(popup.name == 'RPEMOTEMENU_SEND_INFO' and StaticPopupDialogs[popup.name].text == addon.L.EDITOR_SEND_INFO)
+-- New commands pick defaults until the user explicitly chooses a switch value.
+c.emotes[2] = {label='',defaultCommand='',targetedCommand=''}
+addon.EmoteEditor.Open(1,2,true)
+dialog.DefaultBox:SetText('/wave'); assert(dialog.DefaultSend:GetChecked())
+Toggle(dialog.DefaultSend); dialog.DefaultBox:SetText('/cheer')
+assert(not dialog.DefaultSend:GetChecked())
+dialog.TargetedBox:SetText('/e asks, "'); assert(not dialog.TargetedSend:GetChecked())
+dialog.TargetedBox:SetText('/e waves.'); assert(dialog.TargetedSend:GetChecked())
+dialog.SaveButton.scripts.OnClick()
+assert(c.emotes[2].defaultSend == false and c.emotes[2].targetedSend == true)
+print('PASS Send editor placement, Save/Cancel, help popup and new-command defaults')

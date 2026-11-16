@@ -30,17 +30,23 @@ local function HasOtherTarget()
     return UnitExists("target") and not UnitIsUnit("target", "player")
 end
 
-function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
+function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, defaultSend, targetedSend)
     local command = defaultCommand
+    local send = addon.GetCommandSend(defaultSend, command)
 
     if HasOtherTarget() and targetedCommand and targetedCommand ~= "" then
         command = targetedCommand
+        send = addon.GetCommandSend(targetedSend, command)
     end
 
     command = ReplaceCommandTokens(command)
 
-    if string.sub(command, -1) == '"' then
-        ChatFrame_OpenChat(command, DEFAULT_CHAT_FRAME)
+    if not send then
+        if ChatFrameUtil and ChatFrameUtil.OpenChat then
+            ChatFrameUtil.OpenChat(command, DEFAULT_CHAT_FRAME)
+        else
+            ChatFrame_OpenChat(command, DEFAULT_CHAT_FRAME)
+        end
         return
     end
 
@@ -57,5 +63,19 @@ function addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
         return
     end
 
-    ChatFrame_OpenChat(command, DEFAULT_CHAT_FRAME)
+    -- Use Blizzard's chat parser for other slash commands and plain chat text.
+    if ChatFrameUtil and ChatFrameUtil.OpenChat then
+        local editBox = ChatFrameUtil.OpenChat(command, DEFAULT_CHAT_FRAME)
+        if editBox then
+            editBox:SendText(1)
+            editBox:ClearChat()
+        end
+    else
+        ChatFrame_OpenChat(command, DEFAULT_CHAT_FRAME)
+        local editBox = ChatEdit_GetActiveWindow()
+        if editBox then
+            ChatEdit_SendText(editBox, 1)
+            ChatEdit_DeactivateChat(editBox)
+        end
+    end
 end

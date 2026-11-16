@@ -48,7 +48,7 @@ Open settings with `/rpem config`, the title-bar gear, or a right-click on the t
 
 ### Adding an Emote
 
-Give the emote a name and a **Default Command**, or select **Choose a standard emote** to fill them in. Standard emote names are formatted for readability: `/wave` becomes “Wave,” and `/covereyes` becomes “Cover eyes.” You can change the name and commands before clicking **Save**.
+Give the emote a name and a **Default Command**, or select **Choose a standard emote** to fill them in. Standard emote names are formatted for readability: `/wave` becomes “Wave,” and `/covereyes` becomes “Cover eyes.” You can change the name and commands before clicking **Save**. Each command box has a **Send** toggle on its right; click the **i** beside its label for help.
 
 The standard-emote picker currently supports English (enUS) clients. Its previews are reference text and may differ from the wording in the game. You can also enter commands yourself.
 
@@ -68,7 +68,7 @@ For example:
 
 Use `{target}` for your target's name and `{player}` for your character's name. Neither includes a realm name.
 
-Standard emotes and `/e` commands run immediately. Other commands open in the chat box for you to finish or send. A command ending in a double quotation mark also opens as an editable chat draft.
+With **Send** on, clicking the emote sends that command immediately. With **Send** off, it opens in the chat box for you to edit and press Enter. Default and targeted commands remember their own settings. Existing emotes keep their previous behavior: standard emotes and complete `/e` commands send immediately; other commands and commands ending in a double quotation mark open as editable chat drafts. Missing settings are filled in automatically when Profiles load or older exports are imported.
 
 ## Profiles and Themes
 

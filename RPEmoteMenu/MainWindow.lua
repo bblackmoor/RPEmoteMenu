@@ -1807,7 +1807,7 @@ function MainWindow.UpdateMenu()
                 MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
                 return
             end
-            addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
+            addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, emote.defaultSend, emote.targetedSend)
             if profileSettings.fadeEnabled and UsesMinimizedDisplay() then
                 SetWindowAutoHidden(true)
             end

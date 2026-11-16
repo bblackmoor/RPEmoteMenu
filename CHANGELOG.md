@@ -1,3 +1,9 @@
+## 2.2.330 — 2026-11-16
+
+- Add a Send on/off switch to the right of each command box in the emote editor, with an info popup explaining immediate sending and editable chat drafts.
+- Save independent Send choices for default and targeted commands, preserving them through copying and JSON sharing.
+- Automatically fill missing Send settings using each command's previous behavior, preserving existing Profiles and mixed send/draft emotes.
+
 ## 2.2.329 — 2026-10-21
 
 - Release the 2.2 series with title bars on all four edges. Right-side title text faces outward; bottom text stays upright, and the gear and pin move with the title bar.

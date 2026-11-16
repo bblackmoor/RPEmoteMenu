@@ -114,7 +114,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
         category.emotes[data.emoteIndex] = {
             label = "",
             defaultCommand = "",
-            targetedCommand = ""
+            targetedCommand = "", defaultSend = false, targetedSend = false
         }
         MainWindow.UpdateMenu()
         RefreshEmoteRows()
@@ -167,7 +167,7 @@ function UI.CreateEmoteList(panel, getSelectedCategoryIndex, headingY, topY)
             category.emotes[index] = records[index] or {
                 label = "",
                 defaultCommand = "",
-                targetedCommand = ""
+                targetedCommand = "", defaultSend = false, targetedSend = false
             }
         end
 

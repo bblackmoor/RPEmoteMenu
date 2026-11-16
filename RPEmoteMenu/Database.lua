@@ -74,7 +74,9 @@ local function CopyDefaultCategories()
             category.emotes[emoteIndex] = {
                 label = NormalizeString(source and source[1]),
                 defaultCommand = NormalizeString(source and source[2]),
-                targetedCommand = NormalizeString(source and source[3])
+                targetedCommand = NormalizeString(source and source[3]),
+                defaultSend = addon.GetDefaultCommandSend(source and source[2]),
+                targetedSend = addon.GetDefaultCommandSend(source and source[3])
             }
         end
 
@@ -110,6 +112,8 @@ local function NormalizeCategories(categories)
             emote.label = NormalizeString(emote.label)
             emote.defaultCommand = NormalizeString(emote.defaultCommand)
             emote.targetedCommand = NormalizeString(emote.targetedCommand)
+            emote.defaultSend = addon.GetCommandSend(emote.defaultSend, emote.defaultCommand)
+            emote.targetedSend = addon.GetCommandSend(emote.targetedSend, emote.targetedCommand)
         end
     end
 
@@ -136,7 +140,9 @@ local function CopyCategories(sourceCategories)
             category.emotes[emoteIndex] = {
                 label = NormalizeString(source and source.label),
                 defaultCommand = NormalizeString(source and source.defaultCommand),
-                targetedCommand = NormalizeString(source and source.targetedCommand)
+                targetedCommand = NormalizeString(source and source.targetedCommand),
+                defaultSend = addon.GetCommandSend(source and source.defaultSend, source and source.defaultCommand),
+                targetedSend = addon.GetCommandSend(source and source.targetedSend, source and source.targetedCommand)
             }
         end
 
@@ -1348,7 +1354,9 @@ function Database.DuplicateEmote(categoryIndex, emoteIndex)
             category.emotes[destinationIndex] = {
                 label = NormalizeString(source.label),
                 defaultCommand = NormalizeString(source.defaultCommand),
-                targetedCommand = NormalizeString(source.targetedCommand)
+                targetedCommand = NormalizeString(source.targetedCommand),
+                defaultSend = addon.GetCommandSend(source.defaultSend, source.defaultCommand),
+                targetedSend = addon.GetCommandSend(source.targetedSend, source.targetedCommand)
             }
             return true, destinationIndex
         end
@@ -1417,7 +1425,9 @@ function Database.DuplicateCategory(categoryIndex)
         copy.emotes[emoteIndex] = {
             label = NormalizeString(sourceEmote and sourceEmote.label),
             defaultCommand = NormalizeString(sourceEmote and sourceEmote.defaultCommand),
-            targetedCommand = NormalizeString(sourceEmote and sourceEmote.targetedCommand)
+            targetedCommand = NormalizeString(sourceEmote and sourceEmote.targetedCommand),
+            defaultSend = addon.GetCommandSend(sourceEmote and sourceEmote.defaultSend, sourceEmote and sourceEmote.defaultCommand),
+            targetedSend = addon.GetCommandSend(sourceEmote and sourceEmote.targetedSend, sourceEmote and sourceEmote.targetedCommand)
         }
     end
 

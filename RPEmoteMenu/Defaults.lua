@@ -23,6 +23,19 @@ local _, addon = ...
 -- is sent and are therefore easier to use consistently in custom emotes.
 
 -- Shared byte limits keep native editors and JSON transfers compatible.
+-- Missing Send flags inherit the command routing used before per-command toggles.
+function addon.GetDefaultCommandSend(command)
+    command = type(command) == "string" and command or ""
+    if string.sub(command, -1) == '"' then return false end
+    return string.match(command, "^/e%s+(.+)$") ~= nil
+        or string.match(command, "^/(%S+)$") ~= nil
+end
+
+function addon.GetCommandSend(value, command)
+    if type(value) == "boolean" then return value end
+    return addon.GetDefaultCommandSend(command)
+end
+
 addon.ContentTextLimits = {categoryName = 128, emoteLabel = 128, command = 4096}
 
 addon.DefaultSections = {

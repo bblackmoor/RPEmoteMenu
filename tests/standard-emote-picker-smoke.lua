@@ -23,6 +23,7 @@ UIParent:SetSize(1000,800)
 local db, catalog = addon.Database, addon.StandardEmoteCatalog
 local emote = db.GetCategory(1).emotes[1]
 emote.label, emote.defaultCommand, emote.targetedCommand = 'User label %s',' /e {player} %s ',' /e {target} '
+emote.defaultSend, emote.targetedSend = false, true
 local originalExport = assert(addon.Serialization.ExportEverything())
 local function Open() addon.EmoteEditor.Open(1,1,false) end
 Open()
@@ -46,6 +47,7 @@ Choose('wave')
 assert(picker.PreviewScroll:IsShown() and dialog:GetHeight()>compactHeight, "selection reserves only its reference preview")
 assert(picker.Preview:GetText():find('<target>',1,true))
 assert(picker.Preview:GetText():find(addon.L.PICKER_UNVERIFIED,1,true))
+assert(dialog.DefaultSend:GetChecked() and not dialog.TargetedSend:GetChecked())
 assert(dialog.NameBox:GetText()=='Wave' and dialog.DefaultBox:GetText()=='/wave' and dialog.TargetedBox:GetText()=='')
 assert(picker.Selector:GetValue()=='enUS:wave' and popup==nil)
 assert(addon.Serialization.ExportEverything()==originalExport and executions==0)
@@ -85,6 +87,7 @@ assert(dialog.DefaultBox:GetText()==emote.defaultCommand and dialog.Status:GetTe
 Choose('wave'); dialog.SaveButton.scripts.OnClick()
 assert(emote.label=='Wave' and emote.defaultCommand=='/wave' and emote.targetedCommand=='')
 assert(updates==1 and executions==0)
+assert(emote.defaultSend == true and emote.targetedSend == false)
 local savedExport=assert(addon.Serialization.ExportProfile('Default'))
 local function SerializedHasPickerState(value)
     if type(value)~='table' then return false end

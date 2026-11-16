@@ -22,9 +22,9 @@ function ChatFrame_OpenChat(text, frame)
 end
 assert(loadfile('RPEmoteMenu/Commands.lua'))('RPEmoteMenu', addon)
 
-local function expect(defaultCommand, targetedCommand, kind, text)
+local function expect(defaultCommand, targetedCommand, kind, text, defaultSend, targetedSend)
     calls = {}
-    addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand)
+    addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, defaultSend, targetedSend)
     assert(#calls == 1, 'A click must dispatch exactly one action')
     local call = calls[1]
     assert(call.kind == kind, 'Wrong command route: ' .. call.kind)
@@ -79,3 +79,37 @@ expect('/e  watches quietly.', nil, 'send', 'watches quietly.')
 expect('/e watches "quietly".', nil, 'send', 'watches "quietly".')
 expect('/e watches quietly.  ', nil, 'send', 'watches quietly.  ')
 print('PASS real command routing, aliases, target selection, tokens and editable chat drafts')
+
+-- Explicit flags override routing, including the trailing-quote draft heuristic.
+targetExists, selfTarget = false, false
+expect('/wave', nil, 'chat', '/wave', false)
+expect('/e waves.', nil, 'chat', '/e waves.', false)
+expect('/e says, "', nil, 'send', 'says, "', true)
+targetExists = true
+expect('/wave', '/e asks {target}, "', 'chat', '/e asks Friend, "', true, false)
+expect('/e waits.', '/wave', 'emote', 'WAVE', false, true)
+selfTarget = true
+expect('/wave', '/e waves.', 'chat', '/wave', false, true)
+selfTarget, targetExists = false, false
+-- Retail's parser sends other command types through the current mixin API.
+local parsed, cleared, opened
+local editBox = {SendText=function(_, history) assert(history == 1); parsed=parsed+1 end,
+    ClearChat=function() cleared=cleared+1 end}
+ChatFrameUtil = {OpenChat=function(text, frame)
+    assert(frame == DEFAULT_CHAT_FRAME); opened=text; return editBox
+end}
+parsed, cleared = 0, 0
+addon.Commands.ExecuteEmoteCommand('/say Hello, {player}.', nil, true)
+assert(opened == '/say Hello, Tester.' and parsed == 1 and cleared == 1)
+addon.Commands.ExecuteEmoteCommand('/say Draft', nil, false)
+assert(opened == '/say Draft' and parsed == 1 and cleared == 1)
+addon.Commands.ExecuteEmoteCommand('A complete message', nil, true)
+assert(opened == 'A complete message' and parsed == 2 and cleared == 2)
+-- Legacy client fallback submits and closes the same active edit box.
+ChatFrameUtil = nil
+function ChatEdit_GetActiveWindow() return editBox end
+function ChatEdit_SendText(box, history) assert(box == editBox); box:SendText(history) end
+function ChatEdit_DeactivateChat(box) assert(box == editBox); cleared=cleared+1 end
+addon.Commands.ExecuteEmoteCommand('/say Legacy', nil, true)
+assert(parsed == 3 and cleared == 3)
+print('PASS independent Send overrides, Retail chat parsing and legacy fallback')

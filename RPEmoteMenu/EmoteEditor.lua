@@ -45,6 +45,25 @@ local function CreateFields(dialog, Widgets)
     dialog.DefaultBox = CreateEditor(L.EDITOR_DEFAULT_EMOTE, -152)
     dialog.TargetedBox = CreateEditor(L.EDITOR_TARGETED_EMOTE_OPTIONAL, -192)
 
+    StaticPopupDialogs.RPEMOTEMENU_SEND_INFO = {
+        text = L.EDITOR_SEND_INFO, button1 = OKAY or L.UI_OKAY,
+        timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
+    }
+    for _, field in ipairs({dialog.Fields[2], dialog.Fields[3]}) do
+        field.sendLabel = Widgets.CreateDialogLabel(dialog, L.EDITOR_SEND, 12)
+        field.sendSwitch = Widgets.CreateSwitch(dialog, function()
+            field.autoSend = false
+        end)
+        field.info = addon.SettingsUI.CreateInfoLink(dialog, field.sendLabel, "RPEMOTEMENU_SEND_INFO")
+        field.editBox:HookScript("OnTextChanged", function(box)
+            if field.autoSend then
+                field.sendSwitch:SetChecked(addon.GetDefaultCommandSend(box:GetText()))
+            end
+        end)
+    end
+    dialog.DefaultSend = dialog.Fields[2].sendSwitch
+    dialog.TargetedSend = dialog.Fields[3].sendSwitch
+
     local status = Widgets.CreateDialogLabel(dialog, "", 12)
     status:SetPoint("BOTTOMLEFT", dialog, "BOTTOMLEFT", 18, 51)
     status:SetWidth(420)
@@ -76,7 +95,14 @@ local function CreateFields(dialog, Widgets)
             field.label:ClearAllPoints()
             field.label:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -y)
             field.editBox:ClearAllPoints()
-            field.editBox:SetWidth(width)
+            local sendWidth = field.sendSwitch and math.max(72, field.sendLabel:GetStringWidth() + field.info:GetWidth() + 12)
+            field.editBox:SetWidth(sendWidth and width - sendWidth - 18 or width)
+            if field.sendSwitch then
+                field.sendLabel:ClearAllPoints()
+                field.sendLabel:SetPoint("TOPLEFT", self, "TOPLEFT", 18 + width - sendWidth, -y)
+                field.sendSwitch:GetFrame():ClearAllPoints()
+                field.sendSwitch:SetPoint("TOPLEFT", self, "TOPLEFT", 18 + width - sendWidth, -(y + labelHeight + 8))
+            end
             field.editBox:SetPoint("TOPLEFT", self, "TOPLEFT", 18, -(y + labelHeight + 6))
             local entryY = y + labelHeight + 6
             if field.editBox == self.NameBox and self.StandardPicker then
@@ -129,6 +155,8 @@ local function InstallSaveActions(dialog)
         emote.label = dialog.NameBox:GetText() or ""
         emote.defaultCommand = dialog.DefaultBox:GetText() or ""
         emote.targetedCommand = dialog.TargetedBox:GetText() or ""
+        emote.defaultSend = dialog.DefaultSend:GetChecked()
+        emote.targetedSend = dialog.TargetedSend:GetChecked()
 
         addon.MainWindow.UpdateMenu()
         if addon.Settings and addon.Settings.RefreshEditors then
@@ -158,11 +186,19 @@ local function InstallSessionLifecycle(dialog)
         self.categoryIndex = categoryIndex
         self.emoteIndex = emoteIndex
         self.contentTarget = Database.CaptureContentTarget(categoryIndex, emoteIndex)
+        self.Fields[2].autoSend = false
+        self.Fields[3].autoSend = false
         self.NameBox:SetText(emote.label or "")
         self.DefaultBox:SetText(emote.defaultCommand or "")
         self.TargetedBox:SetText(emote.targetedCommand or "")
 
+        self.DefaultSend:SetChecked(addon.GetCommandSend(emote.defaultSend, emote.defaultCommand))
+        self.TargetedSend:SetChecked(addon.GetCommandSend(emote.targetedSend, emote.targetedCommand))
+        self.Fields[2].autoSend = isNew == true
+        self.Fields[3].autoSend = isNew == true
         local editable = Database.CanEditActiveProfile()
+        self.DefaultSend:SetEnabled(editable)
+        self.TargetedSend:SetEnabled(editable)
         for _, editBox in ipairs({self.NameBox, self.DefaultBox, self.TargetedBox}) do
             if editable then
                 editBox:Enable()

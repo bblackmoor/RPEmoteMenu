@@ -257,3 +257,38 @@ assert(db.ValidateNewProfileName(string.rep('B',64)))
 assert(db.ValidateNewThemeName(string.rep('B',64)))
 print('PASS UTF-8 import collision names, numbered suffixes, exports and byte-limit messages')
 
+
+-- Upgrade absent per-command Send flags in every Profile, independently.
+assert(db.SetActiveProfile('Default'))
+assert(db.CreateProfile('Send settings'))
+local emotes = db.GetCategory(1).emotes
+emotes[1] = {label='Mixed',defaultCommand='/wave',targetedCommand='/e asks {target}, "'}
+emotes[2] = {label='Custom',defaultCommand='/e waits.',targetedCommand='/say Hello'}
+emotes[3] = {label='Explicit',defaultCommand='/wave',targetedCommand='/e asks, "',defaultSend=false,targetedSend=true}
+assert(db.SetActiveProfile('Default'))
+db.InitializeDatabase()
+assert(emotes[1].defaultSend == true and emotes[1].targetedSend == false)
+assert(emotes[2].defaultSend == true and emotes[2].targetedSend == false)
+assert(emotes[3].defaultSend == false and emotes[3].targetedSend == true)
+assert(db.SetActiveProfile('Send settings'))
+local exported = assert(json.Decode(assert(serialization.ExportCategory(1))))
+local roundtrip = assert(decodeDocument(exported, 'category'))
+assert(roundtrip.category.emotes[3].defaultSend == false and roundtrip.category.emotes[3].targetedSend == true)
+exported.emotes[1].defaultSend, exported.emotes[1].targetedSend = nil, nil
+local oldImport = assert(decodeDocument(exported, 'category'))
+assert(oldImport.category.emotes[1].defaultSend == true and oldImport.category.emotes[1].targetedSend == false)
+exported.emotes[1].defaultSend = 'false'
+assert(not decodeDocument(exported, 'category'))
+emotes[10] = {label='',defaultCommand='',targetedCommand='',defaultSend=false,targetedSend=false}
+local ok, duplicate = db.DuplicateEmote(1,3)
+assert(ok and emotes[duplicate].defaultSend == false and emotes[duplicate].targetedSend == true)
+-- Empty a category to make room for category duplication.
+local categories = db.GetCategories()
+categories[10] = {name='',emotes={}}
+local ok, copyIndex = db.DuplicateCategory(1)
+assert(ok and categories[copyIndex].emotes[3].defaultSend == false and categories[copyIndex].emotes[3].targetedSend == true)
+assert(db.CopyProfile('Send settings', 'Copied Send settings'))
+assert(db.GetCategory(1).emotes[3].defaultSend == false and db.GetCategory(1).emotes[3].targetedSend == true)
+db.InitializeDatabase()
+assert(db.GetCategory(1).emotes[3].defaultSend == false and db.GetCategory(1).emotes[3].targetedSend == true)
+print('PASS per-command Send migration, reload, strict JSON transfer and duplication')
