@@ -181,7 +181,7 @@ addon.DefaultProfileSettings = {
     y = 0,
     height = 250,
     fadeEnabled = false,
-    fadeDelay = 5,
+    fadeDelay = 3,
     inactiveOpacity = 0.5
 }
 
