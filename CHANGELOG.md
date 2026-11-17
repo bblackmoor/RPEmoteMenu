@@ -1,3 +1,7 @@
+## 2.2.335 — 2026-11-17
+
+- Fix the disabled fade-control regression test to verify the saved delay stays unchanged instead of assuming the old five-second default.
+
 ## 2.2.332 — 2026-11-17
 
 - Change the default inactivity fade delay from 5 to 3 seconds for new profiles and missing settings.
