@@ -1,3 +1,8 @@
+## 2.2.332 — 2026-11-17
+
+- Change the default inactivity fade delay from 5 to 3 seconds for new profiles and missing settings.
+- Preserve each existing profile's saved fade delay, including customized timeouts; no migration or overwrite.
+
 ## 2.2.331 — 2026-11-16
 
 - Fix Send-enabled speech and other chat commands staying in the edit box: populate the text before submitting and consume WoW's pending text update so sent messages do not return as drafts.
