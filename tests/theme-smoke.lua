@@ -33,7 +33,11 @@ for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua',
 local db, media = addon.Database, LibStub('LibSharedMedia-3.0')
 db.InitializeDatabase()
 local applies, fontUpdates, iconUpdates = 0, 0, 0
-addon.MainWindow.ApplyThemeSettings = function() applies = applies + 1 end
+local lastAppliedSetting
+addon.MainWindow.ApplyThemeSettings = function(key)
+    applies = applies + 1
+    lastAppliedSetting = key
+end
 addon.MainWindow.ScheduleFontRefreshes = function() fontUpdates = fontUpdates + 1 end
 addon.MainWindow.ApplyProfileSettings = function() end
 addon.MinimizedIconColor = {Apply = function() iconUpdates = iconUpdates + 1 end}
@@ -124,6 +128,7 @@ assert(controls.emoteFont.MissingFontName == 'Other Absent', 'font selectors rem
 media:SetGlobal('font', 'Absent'); Drain()
 assert(default.categoryFont == 'Absent' and addon.Serialization.ExportTheme() == exported)
 Select(controls.emoteFont, 'Absent')
+assert(lastAppliedSetting == 'emoteFont')
 assert(default.emoteFont == 'Absent' and applies == before + 1)
 media:HashTable('font').Absent = nil
 panel.RefreshFontControls()
@@ -151,7 +156,9 @@ assert(db.GetActiveThemeName() == 'Teal' and management:GetValue() == 'Teal')
 assert(db.CreateProfile('Shared')); assert(db.GetActiveThemeName() == 'Teal')
 Enter(controls.categoryFontSize, '99'); Enter(controls.emoteFontSize, '1')
 assert(teal.categoryFontSize == 24 and teal.emoteFontSize == 8)
+assert(lastAppliedSetting == 'emoteFontSize')
 Select(controls.categoryHighlightEffect, 'outline')
+assert(lastAppliedSetting == 'categoryHighlightEffect')
 assert(controls.categoryHighlightThickness.frame:IsShown() and controls.categoryHighlightThickness.Label:IsShown())
 Enter(controls.categoryHighlightThickness, '99'); assert(teal.categoryHighlightThickness == 6)
 Type(controls.categoryHighlightThickness, '2'); before = applies
@@ -164,6 +171,7 @@ for _, effect in ipairs({'underline', 'separator', 'background'}) do
 end
 Enter(controls.windowOpacity, '1'); assert(teal.windowOpacity == 0.1)
 Enter(controls.windowOpacity, '150'); assert(teal.windowOpacity == 1)
+assert(lastAppliedSetting == 'windowOpacity')
 Event(controls.categoryFontSize, 'OnMouseWheel', -1); assert(teal.categoryFontSize == 23)
 Type(controls.categoryFontSize, '12'); Event(controls.categoryFontSize, 'OnEscapePressed'); assert(teal.categoryFontSize == 23)
 Enter(controls.categoryFontSize, 'invalid'); assert(teal.categoryFontSize == 23)
@@ -184,6 +192,7 @@ Preview(edit, 0.1, 0.2, 0.3); assert(teal.categoryTextColor.r == 0.1)
 edit.cancelFunc(); assert(teal.categoryTextColor.r == initial.r)
 Click(color); edit = ColorPickerFrame.info; Preview(edit, 0.3, 0.4, 0.5); ColorPickerFrame:Hide()
 edit.cancelFunc(); assert(teal.categoryTextColor.r == 0.3)
+assert(lastAppliedSetting == 'categoryTextColor')
 Click(color); local stale = ColorPickerFrame.info; Preview(stale, 0.7, 0.8, 0.9)
 Select(management, 'Default'); Preview(stale, 1, 0, 0); stale.cancelFunc()
 assert(teal.categoryTextColor.r == 0.3 and db.GetThemeSettings().categoryTextColor.r == default.categoryTextColor.r)
@@ -205,6 +214,7 @@ local profileSettings, x = db.GetProfileSettings(), db.GetProfileSettings().x
 for _, position in ipairs({'LEFT', 'RIGHT', 'BOTTOM', 'TOP'}) do
     before = applies
     Select(controls.titleBarPosition, position)
+    assert(lastAppliedSetting == 'titleBarPosition')
     assert(teal.titleBarPosition == position and applies == before + 1 and profileSettings.x == x)
 end
 -- Captured name/deletion/restore targets and shared factory reset scope.

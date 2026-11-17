@@ -61,7 +61,7 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
     end, function(name)
         getSettings()[key] = name
         control:RefreshValue()
-        onChange()
+        onChange(key)
     end)
     control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
         controlX and y + 5 or y - 26)
@@ -271,7 +271,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().categoryFontSize end,
         function(value)
             state.GetSettings().categoryFontSize = value
-            state.Apply()
+            state.Apply("categoryFontSize")
         end,
         "px", 160
     )
@@ -287,7 +287,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().emoteFontSize end,
         function(value)
             state.GetSettings().emoteFontSize = value
-            state.Apply()
+            state.Apply("emoteFontSize")
         end,
         "px", 470
     )
@@ -298,7 +298,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().categoryTextColor end,
         function(value)
             state.GetSettings().categoryTextColor = value
-            state.Apply()
+            state.Apply("categoryTextColor")
         end,
         160
     )
@@ -308,7 +308,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().selectedCategoryTextColor end,
         function(value)
             state.GetSettings().selectedCategoryTextColor = value
-            state.Apply()
+            state.Apply("selectedCategoryTextColor")
         end,
         160
     )
@@ -318,7 +318,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().emoteTextColor end,
         function(value)
             state.GetSettings().emoteTextColor = value
-            state.Apply()
+            state.Apply("emoteTextColor")
         end,
         470
     )
@@ -332,7 +332,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().categoryHighlightColor end,
         function(value)
             state.GetSettings().categoryHighlightColor = value
-            state.Apply()
+            state.Apply("categoryHighlightColor")
         end,
         160
     )
@@ -342,7 +342,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().categoryBackgroundColor end,
         function(value)
             state.GetSettings().categoryBackgroundColor = value
-            state.Apply()
+            state.Apply("categoryBackgroundColor")
         end,
         160
     )
@@ -352,7 +352,7 @@ local function CreateThemeTypography(editor, state, controls, rows)
         function() return state.GetSettings().emoteBackgroundColor end,
         function(value)
             state.GetSettings().emoteBackgroundColor = value
-            state.Apply()
+            state.Apply("emoteBackgroundColor")
         end,
         470
     )
@@ -379,7 +379,7 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
         function() return state.GetSettings().categoryHighlightThickness end,
         function(value)
             state.GetSettings().categoryHighlightThickness = value
-            state.Apply()
+            state.Apply("categoryHighlightThickness")
         end,
         "px"
     )
@@ -414,7 +414,7 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     end, function(effect)
         state.GetSettings().categoryHighlightEffect = effect
         RefreshHighlightControls()
-        state.Apply()
+        state.Apply("categoryHighlightEffect")
     end)
     highlightEffectSelector:SetWidth(135)
     highlightEffectSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, effectY + 5)
@@ -434,7 +434,7 @@ local function CreateThemeOpacity(editor, state, controls, rows)
         function() return state.GetSettings().windowOpacity * 100 end,
         function(value)
             state.GetSettings().windowOpacity = value / 100
-            state.Apply()
+            state.Apply("windowOpacity")
         end,
         "%", 160
     )
@@ -463,7 +463,7 @@ local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
         return options
     end, function(position)
         state.GetSettings().titleBarPosition = position
-        state.Apply()
+        state.Apply("titleBarPosition")
     end)
     titleBarSelector:SetWidth(150)
     titleBarSelector:SetPoint("TOPLEFT", editor, "TOPLEFT", 160, titleY + 5)
@@ -497,9 +497,9 @@ local function CreateThemesPanel()
     local controls = {}
     local themeName = Database.GetActiveThemeName()
     local themeSettings = Database.GetThemeSettings(themeName)
-    local function ApplyIfActive()
+    local function ApplyIfActive(changedSetting)
         if themeName == Database.GetActiveThemeName() then
-            MainWindow.ApplyThemeSettings()
+            MainWindow.ApplyThemeSettings(changedSetting)
         end
     end
 

@@ -1,3 +1,10 @@
+## 2.2.336 — 2026-11-17
+
+- Consolidate window refreshes so full Profile and Theme changes build the menu once, and typography changes measure column labels once per pass.
+- Update colors, selection effects, opacity and title-bar geometry without rebuilding unrelated content; color edits retain scrolling and inactivity deadlines.
+- Retire obsolete font retries after successful rendering while preserving display/provider refreshes and bounded fallback retries.
+- Document the six-phase readability plan and add regression checks for refresh work, settings dispatch and stable scrolling.
+
 ## 2.2.335 — 2026-11-17
 
 - Fix the disabled fade-control regression test to verify the saved delay stays unchanged instead of assuming the old five-second default.

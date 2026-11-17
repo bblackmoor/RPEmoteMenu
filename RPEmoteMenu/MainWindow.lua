@@ -830,7 +830,7 @@ function MainWindow.RefreshFontDisplays(updateLayout)
     -- Build and position every required button before applying fonts. Otherwise
     -- a newly created final label can miss the pane-wide consistency pass.
     if updateLayout ~= false then
-        MainWindow.UpdateMenu()
+        MainWindow.UpdateMenu({updateWidth = false})
     end
 
     for _, button in ipairs(categoryButtons) do
@@ -969,7 +969,7 @@ local function ApplyMainFrameBackdrop()
     )
 end
 
-function MainWindow.ApplyAppearance()
+local function ApplyThemeBackgrounds()
     if not MainFrame then
         return
     end
@@ -998,7 +998,24 @@ function MainWindow.ApplyAppearance()
     end
 
     UpdateCategoryPaneToggle()
-    MainWindow.RefreshFontDisplays()
+end
+
+local ApplyThemeColors
+
+local function RefreshTypography()
+    -- Retire retries from the previous font request, including when this pass
+    -- succeeds immediately. Display/provider events retain their deferred queue.
+    addon.Scheduling.Cancel(scheduleKeys.font)
+    fontRefreshGeneration = fontRefreshGeneration + 1
+    if not MainWindow.RefreshFontDisplays() then
+        MainWindow.ScheduleFontRefreshes(true)
+    end
+end
+
+function MainWindow.ApplyAppearance()
+    if not MainFrame then return end
+    RefreshTypography()
+    ApplyThemeColors()
     MainWindow.ApplyFadeSettings()
 end
 
@@ -1724,10 +1741,13 @@ local function UpdateScrollIndicators()
     end
 end
 
-function MainWindow.UpdateMenu()
+function MainWindow.UpdateMenu(options)
     CancelTooltip()
     MainWindow.NotifyActivity()
-    ApplyAutomaticWidth()
+    -- Typography lays out once after fonts have been applied to all new rows.
+    if not options or options.updateWidth ~= false then
+        ApplyAutomaticWidth()
+    end
 
     for _, button in ipairs(categoryButtons) do
         button:SetScript("OnUpdate", nil)
@@ -1831,6 +1851,25 @@ function MainWindow.UpdateMenu()
     ScheduleInactiveFade()
 end
 
+-- Color/effect edits preserve rows, scroll offsets, fonts and fade deadlines.
+ApplyThemeColors = function()
+    ApplyThemeBackgrounds()
+    for _, button in ipairs(categoryButtons) do
+        local selected = button.categoryIndex == selectedCategoryIndex
+        local color = selected and themeSettings.selectedCategoryTextColor
+            or themeSettings.categoryTextColor
+        button.Text:SetTextColor(color.r, color.g, color.b, 1)
+        MainWindow.ApplyCategoryHighlight(button, selected)
+    end
+    local color = themeSettings.emoteTextColor
+    for _, button in ipairs(buttonsPool) do
+        button.Text:SetTextColor(color.r, color.g, color.b, 1)
+        ApplyEmoteHoverHighlight(button)
+    end
+    ScrollTopIndicator:SetColorTexture(color.r, color.g, color.b, 1)
+    ScrollBottomIndicator:SetColorTexture(color.r, color.g, color.b, 1)
+end
+
 -- WINDOW AUTO-HIDE
 local function AnchorFrameByTopLeft()
     local left = MainFrame:GetLeft()
@@ -1853,7 +1892,7 @@ local function ApplyMinimizedIconAnchor()
     MinimizedIconButton:SetPoint("CENTER", MainFrame, "TOPLEFT", 16, -16)
 end
 
-local function UpdateWindowBodyVisibility()
+local function UpdateWindowBodyVisibility(options)
     -- Keep the upper-left corner fixed while the hidden frame collapses toward
     -- whichever edge owns the title bar.
     AnchorFrameByTopLeft()
@@ -1924,7 +1963,9 @@ local function UpdateWindowBodyVisibility()
         EmoteBackgroundBottom:Show()
         EmoteBackgroundLeft:Show()
         EmoteBackgroundRight:Show()
-        MainWindow.UpdateMenu()
+        if not options or options.updateMenu ~= false then
+            MainWindow.UpdateMenu()
+        end
         addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
     end
 
@@ -1956,7 +1997,7 @@ function MainWindow.ApplyMinimizeToIconSettings()
 end
 
 function MainWindow.ApplyTitleBarPosition(
-    preserveSavedPosition, preserveProfileGeometry
+    preserveSavedPosition, preserveProfileGeometry, options
 )
     if not definitions.enums.titleBarPosition.allowed[themeSettings.titleBarPosition] then
         themeSettings.titleBarPosition = themeDefaults.titleBarPosition
@@ -1987,7 +2028,7 @@ function MainWindow.ApplyTitleBarPosition(
     )
     appliedTitleBarPosition = themeSettings.titleBarPosition
     ApplyMinimizedIconAnchor()
-    UpdateWindowBodyVisibility()
+    UpdateWindowBodyVisibility(options)
 end
 
 SetWindowAutoHidden = function(hidden)
@@ -2642,18 +2683,37 @@ function MainWindow.ApplyActivation()
     end
 end
 
-function MainWindow.ApplyThemeSettings()
+local colorSettingKeys = {}
+for _, key in ipairs(definitions.colorKeys) do colorSettingKeys[key] = true end
+colorSettingKeys.categoryHighlightEffect = true
+colorSettingKeys.categoryHighlightThickness = true
+
+-- A missing/unknown key means a complete Theme replacement. Editors may pass
+-- the one setting they changed so unrelated rendering remains untouched.
+function MainWindow.ApplyThemeSettings(changedSetting)
     FinishWindowInteraction()
     -- A Theme change keeps the current Profile and its selected category.
     themeSettings = Database.GetThemeSettings()
     if not MainFrame then return end
 
+    if changedSetting and colorSettingKeys[changedSetting] then
+        ApplyThemeColors()
+        return
+    elseif changedSetting == "windowOpacity" then
+        MainWindow.ApplyFadeSettings()
+        return
+    elseif changedSetting == "categoryFont" or changedSetting == "emoteFont"
+        or changedSetting == "categoryFontSize" or changedSetting == "emoteFontSize" then
+        RefreshTypography()
+        return
+    end
+
     local positionChanged = appliedTitleBarPosition
         and appliedTitleBarPosition ~= themeSettings.titleBarPosition
-    MainWindow.ApplyTitleBarPosition(not positionChanged, not positionChanged)
-    MainWindow.ApplyAppearance()
-    MainWindow.UpdateMenu()
-    MainWindow.ScheduleFontRefreshes(true)
+    MainWindow.ApplyTitleBarPosition(not positionChanged, not positionChanged, {updateMenu = false})
+    if changedSetting ~= "titleBarPosition" then
+        MainWindow.ApplyAppearance()
+    end
 end
 
 function MainWindow.ApplyProfileSettings()
@@ -2672,17 +2732,14 @@ function MainWindow.ApplyProfileSettings()
     isWindowAutoHidden = profileSettings.fadeEnabled and UsesMinimizedDisplay()
 
     -- Apply Theme layout before restoring the saved Profile geometry.
-    MainWindow.ApplyTitleBarPosition(true)
+    MainWindow.ApplyTitleBarPosition(true, nil, {updateMenu = false})
     RestoreWindowSize()
     RestoreWindowPosition()
     MainWindow.ApplyMovementLock()
     MainWindow.ApplySettingsGearVisibility()
-    MainWindow.ApplyAppearance()
     UpdatePinButton()
-
-    UpdateWindowBodyVisibility()
-    MainWindow.UpdateMenu()
-    MainWindow.ScheduleFontRefreshes(true)
+    UpdateWindowBodyVisibility({updateMenu = false})
+    MainWindow.ApplyAppearance()
 end
 
 function MainWindow.SetSelectedCategory(categoryIndex)
