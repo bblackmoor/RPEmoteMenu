@@ -72,9 +72,9 @@ local categoryButtons = {}
 local buttonsPool = {}
 local menuView = {}
 local GetMenuRenderer
-local categoryDropIndicator
+local categoryDragTarget
 local categoryDragState
-local emoteDropIndicator
+local emoteDragTarget
 local emoteDragState
 local isWindowAutoHidden = false
 local SetWindowAutoHidden
@@ -861,83 +861,21 @@ local function GetVisibleCategories()
 end
 
 local function HideCategoryDropIndicator()
-    if categoryDropIndicator then
-        categoryDropIndicator:Hide()
-    end
-end
-
-local function ShowCategoryDropIndicator(button, insertBefore)
-    if not categoryDropIndicator then
-        categoryDropIndicator = CategoryScrollChild:CreateTexture(nil, "OVERLAY")
-        categoryDropIndicator:SetHeight(2)
-    end
-
-    local color = themeSettings.categoryHighlightColor
-    categoryDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
-    categoryDropIndicator:ClearAllPoints()
-    categoryDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
-    categoryDropIndicator:SetPoint("RIGHT", button, "RIGHT", -2, 0)
-
-    if insertBefore then
-        categoryDropIndicator:SetPoint("BOTTOM", button, "TOP", 0, 1)
-    else
-        categoryDropIndicator:SetPoint("TOP", button, "BOTTOM", 0, -1)
-    end
-
-    categoryDropIndicator:Show()
+    if categoryDragTarget then categoryDragTarget.Hide() end
 end
 
 local function UpdateCategoryDragTarget(_, elapsed)
-    if not categoryDragState then
-        return
-    end
+    categoryDragTarget.Update(categoryDragState, elapsed)
+end
 
-    local cursorX, cursorY = GetCursorPosition()
-    local scale = UIParent:GetEffectiveScale()
-    cursorX = cursorX / scale
-    cursorY = cursorY / scale
-
-    local scrollTop = CategoryScrollFrame:GetTop()
-    local scrollBottom = CategoryScrollFrame:GetBottom()
-    local maximumScroll = math.max(
-        CategoryScrollChild:GetHeight() - CategoryScrollFrame:GetHeight(),
-        0
+local function CreateDragTargets()
+    local function GetHighlightColor() return themeSettings.categoryHighlightColor end
+    categoryDragTarget = addon.MenuDrag.Create(
+        CategoryScrollFrame, CategoryScrollChild, categoryButtons, GetHighlightColor
     )
-    local currentScroll = CategoryScrollFrame:GetVerticalScroll() or 0
-    local scrollSpeed = 140 * (elapsed or 0)
-
-    if scrollTop and cursorY > scrollTop - 14 and currentScroll > 0 then
-        CategoryScrollFrame:SetVerticalScroll(
-            math.max(0, currentScroll - scrollSpeed)
-        )
-    elseif scrollBottom
-        and cursorY < scrollBottom + 14
-        and currentScroll < maximumScroll then
-        CategoryScrollFrame:SetVerticalScroll(
-            math.min(maximumScroll, currentScroll + scrollSpeed)
-        )
-    end
-
-    categoryDragState.targetButton = nil
-    categoryDragState.insertBefore = nil
-
-    for _, button in ipairs(categoryButtons) do
-        if button:IsShown() and button.visiblePosition then
-            local left, right = button:GetLeft(), button:GetRight()
-            local top, bottom = button:GetTop(), button:GetBottom()
-
-            if left and right and top and bottom
-                and cursorX >= left and cursorX <= right
-                and cursorY <= top and cursorY >= bottom then
-                categoryDragState.targetButton = button
-                categoryDragState.insertBefore = cursorY >= ((top + bottom) / 2)
-                ShowCategoryDropIndicator(button, categoryDragState.insertBefore)
-                return
-            end
-        end
-    end
-
-    HideCategoryDropIndicator()
+    emoteDragTarget = addon.MenuDrag.Create(
+        ScrollFrame, ScrollChild, buttonsPool, GetHighlightColor
+    )
 end
 
 local function ReorderVisibleCategories(sourcePosition, insertionPosition)
@@ -1019,80 +957,11 @@ local function StopCategoryDrag(button)
 end
 
 local function HideEmoteDropIndicator()
-    if emoteDropIndicator then
-        emoteDropIndicator:Hide()
-    end
-end
-
-local function ShowEmoteDropIndicator(button, insertBefore)
-    if not emoteDropIndicator then
-        emoteDropIndicator = ScrollChild:CreateTexture(nil, "OVERLAY")
-        emoteDropIndicator:SetHeight(2)
-    end
-
-    local color = themeSettings.categoryHighlightColor
-    emoteDropIndicator:SetColorTexture(color.r, color.g, color.b, 1)
-    emoteDropIndicator:ClearAllPoints()
-    emoteDropIndicator:SetPoint("LEFT", button, "LEFT", 2, 0)
-    emoteDropIndicator:SetPoint("RIGHT", button, "RIGHT", -2, 0)
-
-    if insertBefore then
-        emoteDropIndicator:SetPoint("BOTTOM", button, "TOP", 0, 1)
-    else
-        emoteDropIndicator:SetPoint("TOP", button, "BOTTOM", 0, -1)
-    end
-
-    emoteDropIndicator:Show()
+    if emoteDragTarget then emoteDragTarget.Hide() end
 end
 
 local function UpdateEmoteDragTarget(_, elapsed)
-    if not emoteDragState then
-        return
-    end
-
-    local cursorX, cursorY = GetCursorPosition()
-    local scale = UIParent:GetEffectiveScale()
-    cursorX = cursorX / scale
-    cursorY = cursorY / scale
-
-    -- Keep all ten possible rows reachable in a short window.
-    local scrollTop = ScrollFrame:GetTop()
-    local scrollBottom = ScrollFrame:GetBottom()
-    local maximumScroll = math.max(
-        ScrollChild:GetHeight() - ScrollFrame:GetHeight(),
-        0
-    )
-    local currentScroll = ScrollFrame:GetVerticalScroll() or 0
-    local scrollSpeed = 140 * (elapsed or 0)
-
-    if scrollTop and cursorY > scrollTop - 14 and currentScroll > 0 then
-        ScrollFrame:SetVerticalScroll(math.max(0, currentScroll - scrollSpeed))
-    elseif scrollBottom
-        and cursorY < scrollBottom + 14
-        and currentScroll < maximumScroll then
-        ScrollFrame:SetVerticalScroll(math.min(maximumScroll, currentScroll + scrollSpeed))
-    end
-
-    emoteDragState.targetButton = nil
-    emoteDragState.insertBefore = nil
-
-    for _, button in ipairs(buttonsPool) do
-        if button:IsShown() and button.visiblePosition then
-            local left, right = button:GetLeft(), button:GetRight()
-            local top, bottom = button:GetTop(), button:GetBottom()
-
-            if left and right and top and bottom
-                and cursorX >= left and cursorX <= right
-                and cursorY <= top and cursorY >= bottom then
-                emoteDragState.targetButton = button
-                emoteDragState.insertBefore = cursorY >= ((top + bottom) / 2)
-                ShowEmoteDropIndicator(button, emoteDragState.insertBefore)
-                return
-            end
-        end
-    end
-
-    HideEmoteDropIndicator()
+    emoteDragTarget.Update(emoteDragState, elapsed)
 end
 
 local function ReorderVisibleEmotes(categoryIndex, sourcePosition, insertionPosition)
@@ -1971,6 +1840,7 @@ function MainWindow.CreateMainWindow()
     CreateMinimizedIcon()
     CreateCategorySidebar()
     CreateEmoteArea()
+    CreateDragTargets()
     CreateTitleBarControls()
     CreateCategoryPaneToggle()
     CreateResizeGrip()

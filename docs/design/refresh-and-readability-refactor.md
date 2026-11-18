@@ -10,7 +10,7 @@ consume another phase's scope.
 | 1 | Consolidate refresh flow; distinguish content, typography, colors and geometry | Implemented; automated checks pass, in-game acceptance pending |
 | 2 | Extract typography, fallback/retries and measurement from MainWindow | Implemented; automated checks pass, in-game acceptance pending |
 | 3 | Extract category/emote rendering; install stable handlers reading current row bindings | Implemented; automated checks pass, in-game acceptance pending |
-| 4 | Share drag cursor conversion, edge scrolling, hit testing and drop indicators | Planned |
+| 4 | Share drag cursor conversion, edge scrolling, hit testing and drop indicators | Implemented; automated checks pass, in-game acceptance pending |
 | 5 | Extract database normalization/copying, use explicit settings ownership and separate presentation coordination | Planned |
 | 6 | Simplify repeated settings-control construction with small helpers and named options | Planned |
 
@@ -108,3 +108,26 @@ Profile replacement using real database/window modules. Existing suites continue
 to cover reorder, tooltip ownership, font changes, geometry and selective refresh.
 In-game acceptance remains pending for category hover, editing, both Send choices,
 drag/drop, gear visibility and switching Profiles/Themes.
+
+
+## Phase 4
+
+MenuDrag shares cursor conversion, edge scrolling, row hit testing and lazy drop
+indicator rendering between the category and emote panes. Each pane has its own
+controller and indicator; the row pools remain live references and a color getter
+reads the current Theme. Scrolling runs before hit testing, preserving the existing
+140-pixel-per-second speed, 14-pixel edge zones, inclusive row boundaries and
+midpoint insertion rule.
+
+MainWindow still owns drag start/stop, permission checks, drag state, selected
+category identity, visible-slot reorder policy, scroll restoration, editor refresh
+and post-drop click suppression. Settings list ordering retains its distinct
+compacting policy. No saved-data, transfer or gesture behavior changes are intended.
+
+The direct component suite verifies scaled coordinates, row edges and midpoint,
+hidden/unbound rows, missing geometry, scroll thresholds and clamping, geometry
+after scrolling, current colors and independent reusable indicators. Existing
+integration tests exercise every source/gap pair for both window panes, hidden
+record preservation, selection and refresh behavior. In-game acceptance remains
+pending: drag through both edges of short panes, reorder at different UI scales,
+switch Profiles during a drag, and verify the drop indicator and suppressed click.

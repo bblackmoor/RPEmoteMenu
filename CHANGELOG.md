@@ -1,3 +1,9 @@
+## 2.2.340 — 2026-11-18
+
+- Complete refactor Phase 4: share category and emote drag cursor scaling, edge scrolling, hit testing and drop indicators through MenuDrag.
+- Preserve visible-slot ordering, selected category identity, scroll restoration and post-drag click suppression.
+- Add focused checks for scaled hit boundaries, scrolling thresholds and limits, current Theme colors and independent pane indicators.
+
 ## 2.2.339 — 2026-11-18
 
 - Remove trailing blank lines introduced during Phase 3 source preparation so GitHub's whitespace validation passes.

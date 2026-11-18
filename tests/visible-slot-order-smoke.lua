@@ -59,7 +59,7 @@ assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", runtime)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", runtime)
 for _, file in ipairs({'Defaults.lua','SettingDefinitions.lua','Scheduling.lua','FontMedia.lua',
     'BuiltInThemes.lua','Database.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
-    'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MainWindow.lua'}) do
+    'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MenuDrag.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..file))('RPEmoteMenu', runtime)
 end
 runtime.Database.InitializeDatabase()
@@ -149,3 +149,24 @@ for source = 1, 3 do
     end
 end
 print('PASS real window category/emote drags: all source/gap pairs, selected identity, hidden records and cleanup/refresh policy')
+
+-- Rebinding a Profile cancels either pane's drag before pooled rows are reused.
+for _, categoryRows in ipairs({true, false}) do
+    local rows = LayoutRows(categoryRows)
+    local source, target = rows[1], rows[3]
+    cursorX, cursorY = target:GetLeft() + 10, target:GetBottom() + 1
+    source:GetScript('OnDragStart')(source)
+    assert(source:GetScript('OnUpdate') and source:GetAlpha() == 0.45)
+    assert(db.CopyProfile(db.GetActiveProfileName(), categoryRows and 'Category drag switch' or 'Emote drag switch'))
+    assert(source:GetScript('OnUpdate') == nil and source:GetAlpha() == 1)
+    local categories = db.GetCategories()
+    local firstCategory, lastCategory = categories[2], categories[7]
+    local emotes = categories[2].emotes
+    local firstEmote, lastEmote = emotes[2], emotes[7]
+    local beforeRefresh = refreshes
+    source:GetScript('OnDragStop')(source)
+    assert(categories[2] == firstCategory and categories[7] == lastCategory)
+    assert(emotes[2] == firstEmote and emotes[7] == lastEmote)
+    assert(refreshes == beforeRefresh, 'cancelled drag refreshed or reordered the replacement Profile')
+end
+print('PASS category/emote drag cancellation across Profile changes and stale drag-stop delivery')
