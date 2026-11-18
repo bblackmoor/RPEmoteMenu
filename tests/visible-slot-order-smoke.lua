@@ -59,7 +59,7 @@ assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", runtime)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", runtime)
 for _, file in ipairs({'Defaults.lua','SettingDefinitions.lua','Scheduling.lua','FontMedia.lua',
     'BuiltInThemes.lua','Database.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
-    'EmoteEditor.lua','MainWindow.lua'}) do
+    'EmoteEditor.lua','WindowTypography.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..file))('RPEmoteMenu', runtime)
 end
 runtime.Database.InitializeDatabase()

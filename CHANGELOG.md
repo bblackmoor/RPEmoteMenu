@@ -1,3 +1,9 @@
+## 2.2.337 — 2026-11-17
+
+- Complete refactor Phase 2: extract font application, fallback, text measurement and bounded retry scheduling into WindowTypography.
+- Keep MainWindow responsible for rendering order and geometry, preserving current font behavior, saved settings and public refresh entry points.
+- Add direct component checks for fallback measurement, font/text preservation, width bounds and independent retry cancellation.
+
 ## 2.2.336 — 2026-11-17
 
 - Consolidate window refreshes so full Profile and Theme changes build the menu once, and typography changes measure column labels once per pass.

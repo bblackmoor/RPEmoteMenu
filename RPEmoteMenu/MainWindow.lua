@@ -6,7 +6,11 @@ local limits = definitions.limits
 addon.MainWindow = {}
 
 local MainWindow = addon.MainWindow
-local scheduleKeys = {tooltip = {}, font = {}, scroll = {}, pin = {}}
+local scheduleKeys = {tooltip = {}, scroll = {}, pin = {}}
+local Typography = addon.WindowTypography
+local fontRefreshQueue = Typography.CreateRefreshQueue(function()
+    return MainWindow.RefreshFontDisplays(false)
+end)
 local Database = addon.Database
 local globalDefaults = addon.DefaultGlobalSettings
 local profileDefaults = addon.DefaultProfileSettings
@@ -31,13 +35,10 @@ end
 local titleBarThickness = 32
 local leftTitleBarWidth = 32
 local columnChromeWidth = addon.COLUMN_CHROME_WIDTH
-local minimumUsableWidth = 220
 local minimumHeight = limits.height.min
 local maximumHeight = limits.height.max
 local minimumSidebarWidth = addon.MIN_SIDEBAR_WIDTH
-local maximumSidebarWidth = addon.MAX_SIDEBAR_WIDTH
 local minimumEmoteColumnWidth = addon.MIN_EMOTE_COLUMN_WIDTH
-local maximumEmoteColumnWidth = addon.MAX_EMOTE_COLUMN_WIDTH
 local sidebarWidth = minimumSidebarWidth
 local emoteColumnWidth = minimumEmoteColumnWidth
 local categoryButtonHeight = 24
@@ -77,7 +78,6 @@ local isWindowAutoHidden = false
 local SetWindowAutoHidden
 local isApplyingColumnSize = false
 local isUserResizing = false
-local fontRefreshGeneration = 0
 local isWindowMoving = false
 local appliedTitleBarPosition
 local tooltipGeneration = 0
@@ -230,107 +230,15 @@ local function RefreshGeneralWindowFields()
     end
 end
 
-local function ClampColumnWidth(value, minimum, maximum)
-    value = math.ceil(tonumber(value) or minimum)
-    return math.max(minimum, math.min(maximum, value))
-end
-
-local function MeasureText(text, fontName, fontSize)
-    if not WidthMeasurementText or type(text) ~= "string" or text == "" then
-        return 0
-    end
-
-    local fontPath = addon.GetFontPath(fontName)
-    -- A display/UI-scale change can leave cached glyph metrics at the old
-    -- scale. Changing size first makes SetFont rebuild them before measuring.
-    WidthMeasurementText:SetFont(fontPath, fontSize + 1, "")
-    if not WidthMeasurementText:SetFont(fontPath, fontSize, "") then
-        WidthMeasurementText:SetFont(STANDARD_TEXT_FONT, fontSize, "")
-    end
-    WidthMeasurementText:SetText(text)
-
-    local width = WidthMeasurementText.GetUnboundedStringWidth
-        and WidthMeasurementText:GetUnboundedStringWidth()
-        or WidthMeasurementText:GetStringWidth()
-
-    if width <= 0 and fontPath ~= STANDARD_TEXT_FONT then
-        WidthMeasurementText:SetFont(STANDARD_TEXT_FONT, fontSize, "")
-        WidthMeasurementText:SetText(text)
-        width = WidthMeasurementText.GetUnboundedStringWidth
-            and WidthMeasurementText:GetUnboundedStringWidth()
-            or WidthMeasurementText:GetStringWidth()
-    end
-
-    return math.max(width or 0, 0)
-end
-
 local ApplyColumnLayout
 local ApplyAutomaticWidth
 local ApplyTitleBarLayout
 
 local function CalculateColumnWidths()
-    local widestCategory = 0
-    local widestEmote = 0
-
-    for _, category in ipairs(Database.GetCategories()) do
-        local categoryName = Trim(category.name)
-        if categoryName ~= "" then
-            widestCategory = math.max(
-                widestCategory,
-                MeasureText(
-                    categoryName,
-                    themeSettings.categoryFont,
-                    themeSettings.categoryFontSize
-                )
-            )
-        end
-
-        for _, emote in ipairs(category.emotes or {}) do
-            local label = Trim(emote.label)
-            if label ~= "" then
-                widestEmote = math.max(
-                    widestEmote,
-                    MeasureText(
-                        label,
-                        themeSettings.emoteFont,
-                        themeSettings.emoteFontSize
-                    )
-                )
-            end
-        end
-    end
-
-    if widestCategory == 0 then
-        widestCategory = MeasureText(
-            L.MENU_ADD_CATEGORY,
-            themeSettings.categoryFont,
-            themeSettings.categoryFontSize
-        )
-    end
-
-    -- Category text uses 11 pixels inside its button plus 7 pixels of sidebar
-    -- chrome. Emotes reserve room for their edit button, text padding, and an
-    -- eight-pixel gap between the label and gear.
-    sidebarWidth = ClampColumnWidth(
-        widestCategory + 18,
-        minimumSidebarWidth,
-        maximumSidebarWidth
+    sidebarWidth, emoteColumnWidth = Typography.MeasureColumns(
+        WidthMeasurementText, Database.GetCategories(), themeSettings,
+        categoryToggleWidth + columnChromeWidth
     )
-    emoteColumnWidth = ClampColumnWidth(
-        widestEmote + 39,
-        minimumEmoteColumnWidth,
-        maximumEmoteColumnWidth
-    )
-
-    -- Keep the emote column the same width when categories are toggled.
-    local width = sidebarWidth + categoryToggleWidth + emoteColumnWidth + columnChromeWidth
-    if width < minimumUsableWidth then
-        emoteColumnWidth = math.min(
-            maximumEmoteColumnWidth,
-            emoteColumnWidth + minimumUsableWidth - width
-        )
-    end
-
     return GetContentWidth() + (IsTitleBarVertical() and leftTitleBarWidth or 0)
 end
 
@@ -758,41 +666,6 @@ function MainWindow.ApplySettingsGearVisibility()
     end
 end
 
-local function ApplyFont(fontString, fontName, size, color, forceRefresh)
-    local _, currentSize, fontFlags = fontString:GetFont()
-    local fontFile = addon.GetFontPath(fontName)
-    local currentText = forceRefresh and fontString:GetText()
-
-    if forceRefresh and currentSize == size then
-        local refreshSize = size < 24 and size + 1 or size - 1
-        fontString:SetFont(fontFile, refreshSize, fontFlags or "")
-    end
-
-    local applied = fontString:SetFont(fontFile, size, fontFlags or "")
-
-    if not applied then
-        fontString:SetFont(STANDARD_TEXT_FONT, size, fontFlags or "")
-    end
-
-    if forceRefresh and currentText then
-        fontString:SetText("")
-        fontString:SetText(currentText)
-    end
-
-    if applied
-        and currentText
-        and currentText ~= ""
-        and fontString:GetStringWidth() <= 0 then
-        applied = false
-        fontString:SetFont(STANDARD_TEXT_FONT, size, fontFlags or "")
-        fontString:SetText("")
-        fontString:SetText(currentText)
-    end
-
-    fontString:SetTextColor(color.r, color.g, color.b, 1)
-    return applied
-end
-
 
 local function SetWindowOpacity(targetOpacity, duration, onFinished)
     GetWindowFade().SetOpacity(targetOpacity, duration, onFinished)
@@ -808,24 +681,12 @@ function MainWindow.RefreshFontDisplays(updateLayout)
         return false
     end
 
-    local categoryApplied = true
-    local emoteApplied = true
-    -- Template fonts need the same cache invalidation as the Theme fonts.
-    -- Keep their original font, size, flags and color.
-    local function RefreshTemplateFont(text)
-        if not text then return end
-        local file, size, flags = text:GetFont()
-        if not file or not size then return end
-        text:SetFont(file, size + 1, flags or "")
-        text:SetFont(file, size, flags or "")
-    end
-    RefreshTemplateFont(TitleText)
-    RefreshTemplateFont(CategoryEmptyLabel)
+    Typography.RefreshTemplateFont(TitleText)
+    Typography.RefreshTemplateFont(CategoryEmptyLabel)
     for _, button in ipairs({CategoryEmptyButton, EmoteEmptyButton}) do
-        if button.GetFontString then RefreshTemplateFont(button:GetFontString()) end
+        if button.GetFontString then Typography.RefreshTemplateFont(button:GetFontString()) end
     end
-    categoryButtonHeight = math.max(24, themeSettings.categoryFontSize + 10)
-    emoteButtonHeight = math.max(20, themeSettings.emoteFontSize + 8)
+    categoryButtonHeight, emoteButtonHeight = Typography.GetRowHeights(themeSettings)
 
     -- Build and position every required button before applying fonts. Otherwise
     -- a newly created final label can miss the pane-wide consistency pass.
@@ -833,83 +694,9 @@ function MainWindow.RefreshFontDisplays(updateLayout)
         MainWindow.UpdateMenu({updateWidth = false})
     end
 
-    for _, button in ipairs(categoryButtons) do
-        button:SetHeight(categoryButtonHeight)
-        local textColor = button.categoryIndex == selectedCategoryIndex
-            and themeSettings.selectedCategoryTextColor
-            or themeSettings.categoryTextColor
-
-        if not ApplyFont(
-            button.Text,
-            themeSettings.categoryFont,
-            themeSettings.categoryFontSize,
-            textColor,
-            true
-        ) then
-            categoryApplied = false
-        end
-
-        for _, outlineText in ipairs(button.TextOutline) do
-            if not ApplyFont(
-                outlineText,
-                themeSettings.categoryFont,
-                themeSettings.categoryFontSize,
-                themeSettings.categoryHighlightColor,
-                true
-            ) then
-                categoryApplied = false
-            end
-        end
-    end
-
-    if not categoryApplied then
-        for _, button in ipairs(categoryButtons) do
-            local textColor = button.categoryIndex == selectedCategoryIndex
-                and themeSettings.selectedCategoryTextColor
-                or themeSettings.categoryTextColor
-            ApplyFont(
-                button.Text,
-                themeDefaults.categoryFont,
-                themeSettings.categoryFontSize,
-                textColor,
-                true
-            )
-            for _, outlineText in ipairs(button.TextOutline) do
-                ApplyFont(
-                    outlineText,
-                    themeDefaults.categoryFont,
-                    themeSettings.categoryFontSize,
-                    themeSettings.categoryHighlightColor,
-                    true
-                )
-            end
-        end
-    end
-
-    for _, button in ipairs(buttonsPool) do
-        button:SetHeight(emoteButtonHeight)
-        if not ApplyFont(
-            button.Text,
-            themeSettings.emoteFont,
-            themeSettings.emoteFontSize,
-            themeSettings.emoteTextColor,
-            true
-        ) then
-            emoteApplied = false
-        end
-    end
-
-    if not emoteApplied then
-        for _, button in ipairs(buttonsPool) do
-            ApplyFont(
-                button.Text,
-                themeDefaults.emoteFont,
-                themeSettings.emoteFontSize,
-                themeSettings.emoteTextColor,
-                true
-            )
-        end
-    end
+    local applied = Typography.ApplyRows(
+        categoryButtons, buttonsPool, themeSettings, selectedCategoryIndex
+    )
 
     local emoteColor = themeSettings.emoteTextColor
     if ScrollTopIndicator then
@@ -929,31 +716,16 @@ function MainWindow.RefreshFontDisplays(updateLayout)
 
     ApplyAutomaticWidth()
 
-    return categoryApplied and emoteApplied
+    return applied
 end
 
 function MainWindow.RefreshFont()
     return MainWindow.RefreshFontDisplays()
 end
 
--- Registration handles late providers. Retry only when actual text rendering
--- fails, and stop on success or when a newer Theme/font request supersedes it.
+-- Keep the public entry point used by font providers and display events.
 function MainWindow.ScheduleFontRefreshes(skipImmediateRefresh)
-    addon.Scheduling.Cancel(scheduleKeys.font)
-    fontRefreshGeneration = fontRefreshGeneration + 1
-    local requestedGeneration = fontRefreshGeneration
-    local retryDelays = {0.25, 0.75, 2, 5, 10, 12} -- At most thirty seconds.
-    local function Attempt(retry)
-        if requestedGeneration ~= fontRefreshGeneration then return end
-        if MainWindow.RefreshFontDisplays(false) then return end
-        local delay = retryDelays[retry]
-        if delay then addon.Scheduling.Replace(scheduleKeys.font, delay, function() Attempt(retry + 1) end) end
-    end
-    if skipImmediateRefresh then
-        addon.Scheduling.Replace(scheduleKeys.font, 0, function() Attempt(1) end)
-    else
-        Attempt(1)
-    end
+    fontRefreshQueue.Schedule(skipImmediateRefresh)
 end
 
 local function ApplyMainFrameBackdrop()
@@ -1005,8 +777,7 @@ local ApplyThemeColors
 local function RefreshTypography()
     -- Retire retries from the previous font request, including when this pass
     -- succeeds immediately. Display/provider events retain their deferred queue.
-    addon.Scheduling.Cancel(scheduleKeys.font)
-    fontRefreshGeneration = fontRefreshGeneration + 1
+    fontRefreshQueue.Cancel()
     if not MainWindow.RefreshFontDisplays() then
         MainWindow.ScheduleFontRefreshes(true)
     end
@@ -1177,7 +948,7 @@ local function GetContainerButton()
     button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
     button.Text:SetJustifyH("LEFT")
     button.Text:SetWordWrap(false)
-    ApplyFont(
+    Typography.ApplyFont(
         button.Text,
         themeSettings.emoteFont,
         themeSettings.emoteFontSize,
@@ -2308,7 +2079,7 @@ local function CreateCategorySidebar()
             button.defaultShadowG,
             button.defaultShadowB,
             button.defaultShadowA = button.Text:GetShadowColor()
-        ApplyFont(
+        Typography.ApplyFont(
             button.Text,
             themeSettings.categoryFont,
             themeSettings.categoryFontSize,

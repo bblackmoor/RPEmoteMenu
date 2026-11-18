@@ -30,7 +30,7 @@ local translated = {
 addon.Localization.Register("deDE", translated)
 for _, name in ipairs({"Defaults.lua", "StandardEmoteCatalog.lua", "SettingDefinitions.lua", "BuiltInThemes.lua",
     "Database.lua", "Scheduling.lua", "FontMedia.lua", "VisibleSlotOrder.lua",
-    "WindowGeometry.lua", "WindowFade.lua", "StandardEmotePicker.lua", "EmoteEditor.lua", "MainWindow.lua",
+    "WindowGeometry.lua", "WindowFade.lua", "StandardEmotePicker.lua", "EmoteEditor.lua", "WindowTypography.lua", "MainWindow.lua",
     "SettingsWidgets.lua", "SettingsControls.lua"}) do Load(name) end
 local db, main = addon.Database, addon.MainWindow
 db.InitializeDatabase()
