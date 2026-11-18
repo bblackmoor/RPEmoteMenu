@@ -10,45 +10,9 @@ local GetExchangeDialog = UI.GetExchangeDialog
 local Widgets = addon.SettingsWidgets
 local FIELD_GAP = UI.FIELD_GAP
 
--- Theme-local labels and rows compose the shared widget adapters.
-local function CreateLabel(parent, text, x, y)
-    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    label:SetText(text)
-    return label
-end
-
-local function CreateNumberSetting(parent, text, key, x, y, minimum, maximum,
-    getValue, applyValue, suffix, controlX)
-    local label = CreateLabel(parent, text, x, y)
-    local control = Widgets.CreateIntegerEntry(parent, getValue, applyValue, {
-        width = 70, minimum = minimum, maximum = maximum,
-        getOwner = Database.GetThemeSettings,
-    })
-    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
-        controlX and y + 4 or y - 26)
-    control:GetFrame().settingKey = key
-    control.Label = label
-    if suffix then
-        local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        caption:SetPoint("LEFT", control:GetFrame(), "RIGHT", FIELD_GAP, 0)
-        caption:SetText(suffix)
-        control.SuffixLabel = caption
-    end
-    return control
-end
-
-local function CreateColorSetting(parent, text, key, x, y, getValue, applyValue, controlX)
-    CreateLabel(parent, text, x, y)
-    local control = Widgets.CreateColorPicker(parent, getValue, applyValue)
-    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
-        controlX and y + 4 or y - 26)
-    control:GetFrame().settingKey = key
-    return control
-end
-
-local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange, controlX)
-    CreateLabel(parent, text, x, y)
+local function CreateFontSetting(parent, options)
+    local key, getSettings, onChange = options.key, options.getSettings, options.onChange
+    UI.CreateSettingLabel(parent, options)
     local control
     control = Widgets.CreateDropdown(parent, function()
         local choices = {}
@@ -63,8 +27,7 @@ local function CreateFontSetting(parent, text, key, x, y, getSettings, onChange,
         control:RefreshValue()
         onChange(key)
     end)
-    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX or x,
-        controlX and y + 5 or y - 26)
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT", options.controlX, options.y + 5)
     control:GetFrame().settingKey = key
     local function HideOwnedTooltip()
         if GameTooltip:IsOwned(control:GetFrame()) then GameTooltip:Hide() end
@@ -261,101 +224,137 @@ local function CreateThemeTypography(editor, state, controls, rows)
     )
     fontLoadingNote:SetTextColor(0.7, 0.7, 0.7)
 
-    controls.categoryFont = CreateFontSetting(
-        editor, L.UI_FONT, "categoryFont", 20, fontY,
-        state.GetSettings, state.Apply, 95
-    )
+    controls.categoryFont = CreateFontSetting(editor, {
+        label = L.UI_FONT,
+        key = "categoryFont",
+        x = 20, y = fontY,
+        getSettings = state.GetSettings,
+        onChange = state.Apply,
+        controlX = 95,
+    })
 
-    controls.categoryFontSize = CreateNumberSetting(
-        editor, L.UI_FONT_SIZE, "categoryFontSize", 20, fontSizeY, limits.fontSize.min, limits.fontSize.max,
-        function() return state.GetSettings().categoryFontSize end,
-        function(value)
+    controls.categoryFontSize = UI.CreateNumberSetting(editor, {
+        label = L.UI_FONT_SIZE,
+        key = "categoryFontSize",
+        x = 20, y = fontSizeY,
+        minimum = limits.fontSize.min, maximum = limits.fontSize.max,
+        getValue = function() return state.GetSettings().categoryFontSize end,
+        applyValue = function(value)
             state.GetSettings().categoryFontSize = value
             state.Apply("categoryFontSize")
         end,
-        "px", 160
-    )
+        suffix = "px",
+        controlX = 160,
+        getOwner = Database.GetThemeSettings,
+        width = 70,
+        controlOffsetY = 4,
+    })
     controls.categoryFontSize:SetWidth(52)
 
-    controls.emoteFont = CreateFontSetting(
-        editor, L.UI_FONT, "emoteFont", 330, fontY,
-        state.GetSettings, state.Apply, 405
-    )
+    controls.emoteFont = CreateFontSetting(editor, {
+        label = L.UI_FONT,
+        key = "emoteFont",
+        x = 330, y = fontY,
+        getSettings = state.GetSettings,
+        onChange = state.Apply,
+        controlX = 405,
+    })
 
-    controls.emoteFontSize = CreateNumberSetting(
-        editor, L.UI_FONT_SIZE, "emoteFontSize", 330, fontSizeY, limits.fontSize.min, limits.fontSize.max,
-        function() return state.GetSettings().emoteFontSize end,
-        function(value)
+    controls.emoteFontSize = UI.CreateNumberSetting(editor, {
+        label = L.UI_FONT_SIZE,
+        key = "emoteFontSize",
+        x = 330, y = fontSizeY,
+        minimum = limits.fontSize.min, maximum = limits.fontSize.max,
+        getValue = function() return state.GetSettings().emoteFontSize end,
+        applyValue = function(value)
             state.GetSettings().emoteFontSize = value
             state.Apply("emoteFontSize")
         end,
-        "px", 470
-    )
+        suffix = "px",
+        controlX = 470,
+        getOwner = Database.GetThemeSettings,
+        width = 70,
+        controlOffsetY = 4,
+    })
     controls.emoteFontSize:SetWidth(52)
 
-    controls.categoryTextColor = CreateColorSetting(
-        editor, L.UI_CATEGORY_TEXT, "categoryTextColor", 20, textY,
-        function() return state.GetSettings().categoryTextColor end,
-        function(value)
+    controls.categoryTextColor = UI.CreateColorSetting(editor, {
+        label = L.UI_CATEGORY_TEXT,
+        key = "categoryTextColor",
+        x = 20, y = textY,
+        getValue = function() return state.GetSettings().categoryTextColor end,
+        applyValue = function(value)
             state.GetSettings().categoryTextColor = value
             state.Apply("categoryTextColor")
         end,
-        160
-    )
+        controlX = 160,
+        controlOffsetY = 4,
+    })
 
-    controls.selectedCategoryTextColor = CreateColorSetting(
-        editor, L.UI_SELECTED_TEXT, "selectedCategoryTextColor", 20, selectedY,
-        function() return state.GetSettings().selectedCategoryTextColor end,
-        function(value)
+    controls.selectedCategoryTextColor = UI.CreateColorSetting(editor, {
+        label = L.UI_SELECTED_TEXT,
+        key = "selectedCategoryTextColor",
+        x = 20, y = selectedY,
+        getValue = function() return state.GetSettings().selectedCategoryTextColor end,
+        applyValue = function(value)
             state.GetSettings().selectedCategoryTextColor = value
             state.Apply("selectedCategoryTextColor")
         end,
-        160
-    )
+        controlX = 160,
+        controlOffsetY = 4,
+    })
 
-    controls.emoteTextColor = CreateColorSetting(
-        editor, L.UI_EMOTE_LABEL_TEXT, "emoteTextColor", 330, textY,
-        function() return state.GetSettings().emoteTextColor end,
-        function(value)
+    controls.emoteTextColor = UI.CreateColorSetting(editor, {
+        label = L.UI_EMOTE_LABEL_TEXT,
+        key = "emoteTextColor",
+        x = 330, y = textY,
+        getValue = function() return state.GetSettings().emoteTextColor end,
+        applyValue = function(value)
             state.GetSettings().emoteTextColor = value
             state.Apply("emoteTextColor")
         end,
-        470
-    )
+        controlX = 470,
+        controlOffsetY = 4,
+    })
 
-    controls.categoryHighlightColor = CreateColorSetting(
-        editor,
-        L.UI_SELECTION_COLOR,
-        "categoryHighlightColor",
-        20,
-        selectionY,
-        function() return state.GetSettings().categoryHighlightColor end,
-        function(value)
+    controls.categoryHighlightColor = UI.CreateColorSetting(editor, {
+        label = L.UI_SELECTION_COLOR,
+        key = "categoryHighlightColor",
+        x = 20, y = selectionY,
+        getValue = function() return state.GetSettings().categoryHighlightColor end,
+        applyValue = function(value)
             state.GetSettings().categoryHighlightColor = value
             state.Apply("categoryHighlightColor")
         end,
-        160
-    )
+        controlX = 160,
+        controlOffsetY = 4,
+    })
 
-    controls.categoryBackgroundColor = CreateColorSetting(
-        editor, L.UI_BACKGROUND, "categoryBackgroundColor", 20, backgroundY,
-        function() return state.GetSettings().categoryBackgroundColor end,
-        function(value)
+    controls.categoryBackgroundColor = UI.CreateColorSetting(editor, {
+        label = L.UI_BACKGROUND,
+        key = "categoryBackgroundColor",
+        x = 20, y = backgroundY,
+        getValue = function() return state.GetSettings().categoryBackgroundColor end,
+        applyValue = function(value)
             state.GetSettings().categoryBackgroundColor = value
             state.Apply("categoryBackgroundColor")
         end,
-        160
-    )
+        controlX = 160,
+        controlOffsetY = 4,
+    })
 
-    controls.emoteBackgroundColor = CreateColorSetting(
-        editor, L.UI_BACKGROUND, "emoteBackgroundColor", 330, selectedY,
-        function() return state.GetSettings().emoteBackgroundColor end,
-        function(value)
+    controls.emoteBackgroundColor = UI.CreateColorSetting(editor, {
+        label = L.UI_BACKGROUND,
+        key = "emoteBackgroundColor",
+        x = 330, y = selectedY,
+        getValue = function() return state.GetSettings().emoteBackgroundColor end,
+        applyValue = function(value)
             state.GetSettings().emoteBackgroundColor = value
             state.Apply("emoteBackgroundColor")
         end,
-        470
-    )
+        controlX = 470,
+        controlOffsetY = 4,
+    })
 
 
 
@@ -374,15 +373,21 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
 
     local highlightEffectSelector
 
-    controls.categoryHighlightThickness = CreateNumberSetting(
-        editor, L.UI_THICKNESS, "categoryHighlightThickness", 330, effectY, limits.highlightThickness.min, limits.highlightThickness.max,
-        function() return state.GetSettings().categoryHighlightThickness end,
-        function(value)
+    controls.categoryHighlightThickness = UI.CreateNumberSetting(editor, {
+        label = L.UI_THICKNESS,
+        key = "categoryHighlightThickness",
+        x = 330, y = effectY,
+        minimum = limits.highlightThickness.min, maximum = limits.highlightThickness.max,
+        getValue = function() return state.GetSettings().categoryHighlightThickness end,
+        applyValue = function(value)
             state.GetSettings().categoryHighlightThickness = value
             state.Apply("categoryHighlightThickness")
         end,
-        "px"
-    )
+        suffix = "px",
+        getOwner = Database.GetThemeSettings,
+        width = 70,
+        controlOffsetY = -26,
+    })
 
     local highlightEffectLabels = {
         background = L.UI_BACKGROUND,
@@ -429,15 +434,22 @@ local function CreateThemeOpacity(editor, state, controls, rows)
     rows:Heading(L.UI_OPACITY, 28)
     local opacityY = rows:Next(42)
 
-    controls.windowOpacity = CreateNumberSetting(
-        editor, L.UI_MENU_OPACITY, "windowOpacity", 20, opacityY, limits.opacity.min * 100, limits.opacity.max * 100,
-        function() return state.GetSettings().windowOpacity * 100 end,
-        function(value)
+    controls.windowOpacity = UI.CreateNumberSetting(editor, {
+        label = L.UI_MENU_OPACITY,
+        key = "windowOpacity",
+        x = 20, y = opacityY,
+        minimum = limits.opacity.min * 100, maximum = limits.opacity.max * 100,
+        getValue = function() return state.GetSettings().windowOpacity * 100 end,
+        applyValue = function(value)
             state.GetSettings().windowOpacity = value / 100
             state.Apply("windowOpacity")
         end,
-        "%", 160
-    )
+        suffix = "%",
+        controlX = 160,
+        getOwner = Database.GetThemeSettings,
+        width = 70,
+        controlOffsetY = 4,
+    })
 
     local opacityVisibleNote = editor:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     opacityVisibleNote:SetPoint("LEFT", controls.windowOpacity.SuffixLabel, "RIGHT", FIELD_GAP, 0)

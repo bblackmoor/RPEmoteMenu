@@ -12,7 +12,7 @@ consume another phase's scope.
 | 3 | Extract category/emote rendering; install stable handlers reading current row bindings | Implemented; automated checks pass, in-game acceptance pending |
 | 4 | Share drag cursor conversion, edge scrolling, hit testing and drop indicators | Implemented; automated checks pass, in-game acceptance pending |
 | 5 | Extract database normalization/copying, use explicit settings ownership and separate presentation coordination | Implemented; automated checks pass, in-game acceptance pending |
-| 6 | Simplify repeated settings-control construction with small helpers and named options | Planned |
+| 6 | Simplify repeated settings-control construction with small helpers and named options | Implemented; automated checks pass, in-game acceptance pending |
 
 ## Baseline repair
 
@@ -161,3 +161,27 @@ failed mutations, inactive Theme changes, batched imports and fallback view hook
 Existing data, serialization, Behavior, Theme, Profile and dialog suites continue
 to validate integration. In-game acceptance remains pending for Profile/Theme
 switches during edits or color previews, global resets, imports and category resets.
+
+
+## Phase 6
+
+SettingsControls now composes labeled integer, switch and color controls using
+small helpers over SettingsWidgets. Behavior and Theme call sites use named layout,
+bounds, getter/setter, suffix and owner options. Panel callbacks still own unit
+conversion, persistence, dependencies and runtime refresh decisions. Font controls
+retain their specialized provider and tooltip logic in Themes, with named options
+for their layout and binding.
+
+Coordinates, widths, row heights, suffix spacing, signed-position input and numeric
+bounds remain unchanged. A relative controlOffsetY allows a row cursor to advance
+only once per control. Integer editing, cancellation and owner validation remain
+in SettingsWidgets; color sessions remain in SettingsColorPicker. No new widget
+framework, saved settings, defaults or transfer changes are introduced.
+
+The settings-controls suite checks named placement, single row advancement, silent
+construction/refresh, bounds, signed values, owner changes and disabled drafts with
+real widget adapters. Existing Behavior and Theme suites verify control positions,
+dependencies, Profile/Theme changes, provider refreshes and color picker lifecycle.
+All six phases are implemented. In-game acceptance remains pending for the earlier
+checklists and the Behavior/Theme controls, especially focus loss, Escape, disabling
+controls during edits, font menus and color preview/cancel.

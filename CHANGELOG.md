@@ -1,3 +1,9 @@
+## 2.2.342 — 2026-11-18
+
+- Complete refactor Phase 6: share labeled numeric, switch and color control composition between Behavior and Themes.
+- Replace positional control arguments with named layout, bounds, callback and ownership options while retaining existing positions and edit lifecycles.
+- Add regression checks for row advancement, layout offsets, silent refreshes, signed input, numeric limits and stale-owner/disabled edits.
+
 ## 2.2.341 — 2026-11-18
 
 - Complete refactor Phase 5: extract saved-data normalization and shared copy helpers into DatabaseNormalization, and UI refresh coordination into DatabasePresentation.

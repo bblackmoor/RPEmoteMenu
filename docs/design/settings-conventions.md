@@ -19,6 +19,14 @@ Current conventions for RP Emote Menu and Simple Nameplates after the four stand
 
 SettingsControls owns layout, SettingsWidgets owns widget rendering, SettingsColorPicker owns native picker sessions, and SettingsProfileDialogs owns profile confirmations. The `.toc` is authoritative for startup order. Factories resolve their helpers after all modules load. Registration preflight prevents missing APIs/factories from producing partial pages; repeated registration leaves existing categories intact.
 
+SettingsControls provides CreateSettingLabel, CreateIntegerControl,
+CreateNumberSetting, CreateSwitchSetting and CreateColorSetting. Each takes a
+parent and named options: x/y, optional controlX/controlOffsetY, label/key, and
+getValue/applyValue. Numeric options also include width, minimum/maximum,
+allowNegative and getOwner; labeled numbers can add a suffix. Callers specify the
+settings owner explicitly and retain unit conversion and update policy. Helpers
+compose the existing adapters without introducing another edit lifecycle.
+
 About uses a large heading, muted description, Version/Author/Category/License metadata, copyable Source, Commands and domain-specific reference sections. Text and source-link hit areas reflow on resize and show. Other pages retain practical control arrangements and domain-specific widths. Applicable rows follow label, control, reset, info.
 
 ## Behavior deliberately retained

@@ -28,6 +28,59 @@ function UI.CreateRows(parent, x, startY, rowHeight)
     return rows
 end
 
+-- Named layout and binding options keep panel policy visible at each call site.
+function UI.CreateSettingLabel(parent, options)
+    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    label:SetPoint("TOPLEFT", parent, "TOPLEFT", options.x, options.y)
+    label:SetText(options.label)
+    return label
+end
+
+local function PlaceSettingControl(parent, control, options)
+    control:SetPoint("TOPLEFT", parent, "TOPLEFT",
+        options.controlX or options.x, options.y + (options.controlOffsetY or 0))
+    control:GetFrame().settingKey = options.key
+    return control
+end
+
+function UI.CreateIntegerControl(parent, options)
+    local control = addon.SettingsWidgets.CreateIntegerEntry(
+        parent, options.getValue, options.applyValue, options
+    )
+    return PlaceSettingControl(parent, control, options)
+end
+
+function UI.CreateNumberSetting(parent, options)
+    local label = UI.CreateSettingLabel(parent, options)
+    local control = UI.CreateIntegerControl(parent, options)
+    control.Label = label
+    if options.suffix then
+        local suffix = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        suffix:SetPoint("LEFT", control:GetFrame(), "RIGHT", FIELD_GAP, 0)
+        suffix:SetText(options.suffix)
+        control.SuffixLabel = suffix
+    end
+    return control
+end
+
+function UI.CreateSwitchSetting(parent, options)
+    local label = UI.CreateSettingLabel(parent, options)
+    local control = addon.SettingsWidgets.CreateSwitch(parent, options.applyValue)
+    PlaceSettingControl(parent, control, options)
+    control.Label = label
+    function control:RefreshValue() self:SetChecked(options.getValue()) end
+    control:RefreshValue()
+    return control
+end
+
+function UI.CreateColorSetting(parent, options)
+    local label = UI.CreateSettingLabel(parent, options)
+    local control = addon.SettingsWidgets.CreateColorPicker(parent, options.getValue, options.applyValue)
+    PlaceSettingControl(parent, control, options)
+    control.Label = label
+    return control
+end
+
 local function CreateInfoLink(parent, anchor, dialogName)
     local link = CreateFrame("Button", nil, parent)
     link:SetPoint("LEFT", anchor, "RIGHT", FIELD_GAP, 0)

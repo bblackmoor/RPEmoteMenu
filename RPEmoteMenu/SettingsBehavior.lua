@@ -9,54 +9,19 @@ local MainWindow = addon.MainWindow
 local FIELD_GAP = UI.FIELD_GAP
 local Widgets = addon.SettingsWidgets
 
--- Behavior-local labels and rows compose the shared widget adapters.
-local function CreateSwitch(parent, label, y, getValue, setValue, controlX)
-    local caption = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    caption:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, y)
-    caption:SetText(label)
-    local control = Widgets.CreateSwitch(parent, setValue)
-    control:SetPoint("TOPLEFT", parent, "TOPLEFT", controlX, y + 4)
-    function control:RefreshValue() self:SetChecked(getValue()) end
-    control:RefreshValue()
-    return control
-end
-
-local function CreateIntegerEditBox(parent, x, y, width, getValue, applyValue,
-    allowNegative, minimum, maximum, getOwner)
-    local control = Widgets.CreateIntegerEntry(parent, getValue, applyValue, {
-        width = width, allowNegative = allowNegative,
-        minimum = minimum, maximum = maximum,
-        getOwner = getOwner or Database.GetProfileSettings,
-    })
-    control:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    return control
-end
-
-local function CreateNumberSetting(parent, labelText, settingKey, x, y,
-    minimum, maximum, getValue, applyValue, suffix, controlX, getOwner)
-    local label = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    label:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
-    label:SetText(labelText)
-    local control = CreateIntegerEditBox(parent, controlX, y + 4, 70,
-        getValue, applyValue, false, minimum, maximum, getOwner)
-    control.Label = label
-    control:GetFrame().settingKey = settingKey
-    if suffix then
-        local suffixLabel = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        suffixLabel:SetPoint("LEFT", control:GetFrame(), "RIGHT", FIELD_GAP, 0)
-        suffixLabel:SetText(suffix)
-        control.SuffixLabel = suffixLabel
-    end
-    return control
-end
-
 -- Startup and interaction settings.
 local function CreateStartupSection(panel, switches, rows)
     rows:Heading(L.UI_STARTUP_INTERACTION)
 
-    local activeSwitch = CreateSwitch(panel, L.UI_ENABLE_RP_EMOTE_MENU, rows:Next(),
-        function() return Database.GetGlobalSettings().active end,
-        Database.SetActive, 255)
+    local activeSwitch = UI.CreateSwitchSetting(panel, {
+        label = L.UI_ENABLE_RP_EMOTE_MENU,
+        y = rows:Next(),
+        getValue = function() return Database.GetGlobalSettings().active end,
+        applyValue = Database.SetActive,
+        controlX = 255,
+        x = 20,
+        controlOffsetY = 4,
+    })
     -- Match Simple Nameplates' switch plus Active/Inactive status presentation.
     local activeStatus = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
     activeStatus:SetPoint("LEFT", activeSwitch:GetFrame(), "RIGHT", 8, 0)
@@ -69,23 +34,35 @@ local function CreateStartupSection(panel, switches, rows)
     activeSwitch:RefreshValue()
     switches[#switches + 1] = activeSwitch
 
-    local tooltipDelayBox = CreateNumberSetting(
-        panel, string.format(L.UI_TOOLTIP_DELAY_D_D,
+    local tooltipDelayBox = UI.CreateNumberSetting(panel, {
+        label = string.format(L.UI_TOOLTIP_DELAY_D_D,
             limits.tooltipDelayMs.min, limits.tooltipDelayMs.max),
-        "tooltipDelayMs", 20, rows:Next(),
-        limits.tooltipDelayMs.min, limits.tooltipDelayMs.max,
-        function() return Database.GetGlobalSettings().tooltipDelayMs end,
-        function(value) Database.GetGlobalSettings().tooltipDelayMs = value end,
-        "ms", 255, Database.GetGlobalSettings
-    )
+        key = "tooltipDelayMs",
+        x = 20, y = rows:Next(),
+        minimum = limits.tooltipDelayMs.min, maximum = limits.tooltipDelayMs.max,
+        getValue = function() return Database.GetGlobalSettings().tooltipDelayMs end,
+        applyValue = function(value) Database.GetGlobalSettings().tooltipDelayMs = value end,
+        suffix = "ms",
+        controlX = 255,
+        getOwner = Database.GetGlobalSettings,
+        width = 70,
+        controlOffsetY = 4,
+        allowNegative = false,
+    })
 
-    local hideSettingsSwitch = CreateSwitch(panel, L.UI_HIDE_SETTING_GEAR_ICONS, rows:Next(),
-        function() return Database.GetGlobalSettings().hideSettingsGear end,
-        function(value)
+    local hideSettingsSwitch = UI.CreateSwitchSetting(panel, {
+        label = L.UI_HIDE_SETTING_GEAR_ICONS,
+        y = rows:Next(),
+        getValue = function() return Database.GetGlobalSettings().hideSettingsGear end,
+        applyValue = function(value)
             Database.GetGlobalSettings().hideSettingsGear = value
             MainWindow.ApplySettingsGearVisibility()
             MainWindow.UpdateMenu()
-        end, 255)
+        end,
+        controlX = 255,
+        x = 20,
+        controlOffsetY = 4,
+    })
     switches[#switches + 1] = hideSettingsSwitch
 
     local gearNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
@@ -102,36 +79,58 @@ local function CreateInactivitySection(panel, switches, rows)
 
     local RefreshInactiveControls
     local RefreshIconControls
-    local fadeSwitch = CreateSwitch(panel, L.UI_FADE_THE_MENU_WHEN_INACTIVE, rows:Next(),
-        function() return Database.GetProfileSettings().fadeEnabled end,
-        function(value)
+    local fadeSwitch = UI.CreateSwitchSetting(panel, {
+        label = L.UI_FADE_THE_MENU_WHEN_INACTIVE,
+        y = rows:Next(),
+        getValue = function() return Database.GetProfileSettings().fadeEnabled end,
+        applyValue = function(value)
             Database.GetProfileSettings().fadeEnabled = value
             MainWindow.ApplyFadeSettings()
             if RefreshInactiveControls then
                 RefreshInactiveControls()
             end
-        end, 255)
+        end,
+        controlX = 255,
+        x = 20,
+        controlOffsetY = 4,
+    })
     switches[#switches + 1] = fadeSwitch
 
-    local fadeDelayBox = CreateNumberSetting(
-        panel, L.UI_FADE_AFTER, "fadeDelay", 20, rows:Next(), limits.fadeDelay.min, limits.fadeDelay.max,
-        function() return Database.GetProfileSettings().fadeDelay end,
-        function(value)
+    local fadeDelayBox = UI.CreateNumberSetting(panel, {
+        label = L.UI_FADE_AFTER,
+        key = "fadeDelay",
+        x = 20, y = rows:Next(),
+        minimum = limits.fadeDelay.min, maximum = limits.fadeDelay.max,
+        getValue = function() return Database.GetProfileSettings().fadeDelay end,
+        applyValue = function(value)
             Database.GetProfileSettings().fadeDelay = value
             MainWindow.ApplyFadeSettings()
         end,
-        "seconds", 255
-    )
+        suffix = "seconds",
+        controlX = 255,
+        getOwner = Database.GetProfileSettings,
+        width = 70,
+        controlOffsetY = 4,
+        allowNegative = false,
+    })
 
-    local inactiveOpacityBox = CreateNumberSetting(
-        panel, L.UI_INACTIVE_OPACITY, "inactiveOpacity", 20, rows:Next(), limits.opacity.min * 100, limits.opacity.max * 100,
-        function() return Database.GetProfileSettings().inactiveOpacity * 100 end,
-        function(value)
+    local inactiveOpacityBox = UI.CreateNumberSetting(panel, {
+        label = L.UI_INACTIVE_OPACITY,
+        key = "inactiveOpacity",
+        x = 20, y = rows:Next(),
+        minimum = limits.opacity.min * 100, maximum = limits.opacity.max * 100,
+        getValue = function() return Database.GetProfileSettings().inactiveOpacity * 100 end,
+        applyValue = function(value)
             Database.GetProfileSettings().inactiveOpacity = value / 100
             MainWindow.ApplyFadeSettings()
         end,
-        "%", 255
-    )
+        suffix = "%",
+        controlX = 255,
+        getOwner = Database.GetProfileSettings,
+        width = 70,
+        controlOffsetY = 4,
+        allowNegative = false,
+    })
 
     local minimizeY = rows:Next()
     local minimizeLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -158,15 +157,18 @@ local function CreateInactivitySection(panel, switches, rows)
     iconSizeLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, iconSizeY)
     iconSizeLabel:SetText(L.UI_MINIMIZED_ICON_SIZE)
 
-    local iconSizeBox = CreateIntegerEditBox(
-        panel, 255, iconSizeY + 4, 70,
-        function() return Database.GetProfileSettings().minimizedIconSize end,
-        function(value)
+    local iconSizeBox = UI.CreateIntegerControl(panel, {
+        x = 255, y = iconSizeY + 4,
+        width = 70,
+        getValue = function() return Database.GetProfileSettings().minimizedIconSize end,
+        applyValue = function(value)
             Database.GetProfileSettings().minimizedIconSize = value
             MainWindow.ApplyMinimizeToIconSettings()
         end,
-        false, limits.minimizedIconSize.min, limits.minimizedIconSize.max
-    )
+        allowNegative = false,
+        minimum = limits.minimizedIconSize.min, maximum = limits.minimizedIconSize.max,
+        getOwner = Database.GetProfileSettings,
+    })
 
     local iconSizeRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     iconSizeRange:SetPoint("LEFT", iconSizeBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
@@ -220,10 +222,11 @@ local function CreateLayoutSection(panel, switches, rows)
     positionLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, positionY)
     positionLabel:SetText(L.UI_EXACT_POSITION_ADVANCED)
 
-    local positionXBox = CreateIntegerEditBox(
-        panel, 255, positionY + 4, 80,
-        function() return Database.GetProfileSettings().x end,
-        function(value)
+    local positionXBox = UI.CreateIntegerControl(panel, {
+        x = 255, y = positionY + 4,
+        width = 80,
+        getValue = function() return Database.GetProfileSettings().x end,
+        applyValue = function(value)
             MainWindow.ApplyWindowGeometry(
                 value,
                 Database.GetProfileSettings().y,
@@ -232,13 +235,15 @@ local function CreateLayoutSection(panel, switches, rows)
                 true
             )
         end,
-        true
-    )
+        allowNegative = true,
+        getOwner = Database.GetProfileSettings,
+    })
 
-    local positionYBox = CreateIntegerEditBox(
-        panel, 405, positionY + 4, 80,
-        function() return Database.GetProfileSettings().y end,
-        function(value)
+    local positionYBox = UI.CreateIntegerControl(panel, {
+        x = 405, y = positionY + 4,
+        width = 80,
+        getValue = function() return Database.GetProfileSettings().y end,
+        applyValue = function(value)
             MainWindow.ApplyWindowGeometry(
                 Database.GetProfileSettings().x,
                 value,
@@ -247,8 +252,9 @@ local function CreateLayoutSection(panel, switches, rows)
                 true
             )
         end,
-        true
-    )
+        allowNegative = true,
+        getOwner = Database.GetProfileSettings,
+    })
 
     local xLabel = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     xLabel:SetPoint("RIGHT", positionXBox:GetFrame(), "LEFT", -FIELD_GAP, 0)
@@ -263,10 +269,11 @@ local function CreateLayoutSection(panel, switches, rows)
     heightLabel:SetPoint("TOPLEFT", panel, "TOPLEFT", 20, heightY)
     heightLabel:SetText(L.UI_WINDOW_HEIGHT)
 
-    local heightBox = CreateIntegerEditBox(
-        panel, 255, heightY + 4, 80,
-        function() return Database.GetProfileSettings().height end,
-        function(value)
+    local heightBox = UI.CreateIntegerControl(panel, {
+        x = 255, y = heightY + 4,
+        width = 80,
+        getValue = function() return Database.GetProfileSettings().height end,
+        applyValue = function(value)
             MainWindow.ApplyWindowGeometry(
                 Database.GetProfileSettings().x,
                 Database.GetProfileSettings().y,
@@ -275,19 +282,27 @@ local function CreateLayoutSection(panel, switches, rows)
                 true -- x/y remain offsets for the saved anchor.
             )
         end,
-        false, limits.height.min, limits.height.max
-    )
+        allowNegative = false,
+        minimum = limits.height.min, maximum = limits.height.max,
+        getOwner = Database.GetProfileSettings,
+    })
 
     local heightRange = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     heightRange:SetPoint("LEFT", heightBox:GetFrame(), "RIGHT", FIELD_GAP, 0)
     heightRange:SetText(string.format(L.UI_D_D_PX, limits.height.min, limits.height.max))
 
-    local lockSwitch = CreateSwitch(panel, L.UI_LOCK_WINDOW, rows:Next(),
-        function() return Database.GetProfileSettings().locked end,
-        function(value)
+    local lockSwitch = UI.CreateSwitchSetting(panel, {
+        label = L.UI_LOCK_WINDOW,
+        y = rows:Next(),
+        getValue = function() return Database.GetProfileSettings().locked end,
+        applyValue = function(value)
             Database.GetProfileSettings().locked = value
             MainWindow.ApplyMovementLock()
-        end, 255)
+        end,
+        controlX = 255,
+        x = 20,
+        controlOffsetY = 4,
+    })
     switches[#switches + 1] = lockSwitch
 
     local widthNote = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")

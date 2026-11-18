@@ -169,8 +169,11 @@ local previousPopup=popup; Click(rows[1].DeleteButton); Click(buttons['Restore B
 assert(rows[1].EditButton.widget.text=='View')
 db.CanEditActiveProfile=canEdit; panel.RefreshEditors()
 assert(rows[1].EditButton.widget.text=='Edit')
-for _, helper in ipairs({'CreateSwitch','CreateLabeledEditBox','CreateIntegerEditBox','CreateNumberSetting','CreateColorSetting','CreateFontSetting'}) do assert(addon.SettingsUI[helper]==nil) end
+for _, helper in ipairs({'CreateSwitch','CreateLabeledEditBox','CreateIntegerEditBox','CreateFontSetting'}) do assert(addon.SettingsUI[helper]==nil) end
 assert(addon.SettingsUI.CreateRows and addon.SettingsUI.CreateInfoLink)
+for _, helper in ipairs({'CreateSettingLabel','CreateIntegerControl','CreateNumberSetting','CreateSwitchSetting','CreateColorSetting'}) do
+    assert(type(addon.SettingsUI[helper]) == 'function')
+end
 
 
 -- Pending native editor operations never write to a different saved record.
