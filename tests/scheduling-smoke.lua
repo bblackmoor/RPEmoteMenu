@@ -95,6 +95,3 @@ Enter(owner); assert(#timers==before and GameTooltip:IsOwned(owner) and GameTool
 Leave(owner)
 assert(#errors==1, 'no unexpected callback errors')
 print('PASS real DF scheduling: coalescing, cancellation, stale delivery, reentrancy, errors, independent callbacks and tooltip ownership')
-
-
-

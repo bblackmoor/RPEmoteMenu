@@ -537,4 +537,3 @@ dialog.TargetedBox:SetText('/e waves.'); assert(dialog.TargetedSend:GetChecked()
 dialog.SaveButton.scripts.OnClick()
 assert(c.emotes[2].defaultSend == false and c.emotes[2].targetedSend == true)
 print('PASS Send editor placement, Save/Cancel, help popup and new-command defaults')
-

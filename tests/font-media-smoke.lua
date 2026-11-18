@@ -148,6 +148,3 @@ for line in io.lines('RPEmoteMenu/RPEmoteMenu.toc') do
  if line:match('%.lua$') then assert(loadfile('RPEmoteMenu/'..line)) end
 end
 print('PASS real font libraries, late providers, missing choices, overrides, serialization and bounded rendering retries')
-
-
-

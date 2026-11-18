@@ -467,5 +467,3 @@ for _,position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
 end
 methods.SetFont,methods.GetFont=oldSetFont,oldGetFont
 print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, inactivity guards, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
-
-

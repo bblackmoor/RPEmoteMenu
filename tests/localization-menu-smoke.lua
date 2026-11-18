@@ -96,4 +96,3 @@ categories[1].emotes[1] = {label = "Replacement", defaultCommand = "/wave", targ
 dialog.SaveButton.scripts.OnClick()
 assert(dialog.Status:GetText() == translated.EDITOR_TARGET_CHANGED and not dialog.SaveButton:IsEnabled())
 print("PASS translated menu sizing/tooltips/editor and unchanged user content, command routing and stale-target guards")
-

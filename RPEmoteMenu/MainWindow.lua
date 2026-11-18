@@ -2074,5 +2074,3 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
-
-

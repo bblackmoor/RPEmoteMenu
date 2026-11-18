@@ -227,6 +227,3 @@ for _, point in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
     end
 end
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')
-
-
-

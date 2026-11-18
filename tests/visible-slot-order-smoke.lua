@@ -149,5 +149,3 @@ for source = 1, 3 do
     end
 end
 print('PASS real window category/emote drags: all source/gap pairs, selected identity, hidden records and cleanup/refresh policy')
-
-

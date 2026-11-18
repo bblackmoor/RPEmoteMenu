@@ -112,4 +112,3 @@ for _, position in ipairs({'LEFT', 'RIGHT', 'BOTTOM', 'TOP'}) do
     assert(emote:GetScript('OnClick') == handler and emoteScroll:GetVerticalScroll() == 17)
 end
 print('PASS selective Theme refresh, single content rebuild, one typography measurement pass and stable scroll/handlers')
-

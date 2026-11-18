@@ -1,3 +1,7 @@
+## 2.2.339 — 2026-11-18
+
+- Remove trailing blank lines introduced during Phase 3 source preparation so GitHub's whitespace validation passes.
+
 ## 2.2.338 — 2026-11-18
 
 - Complete refactor Phase 3: move category and emote row construction, bindings and rendering into MenuRenderer.
@@ -426,10 +430,3 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
-
-
-
-
-
-
-
