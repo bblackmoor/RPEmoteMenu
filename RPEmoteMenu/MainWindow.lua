@@ -1110,6 +1110,17 @@ GetMenuRenderer = function()
     return menuRenderer
 end
 
+local function CancelRowDrags()
+    for _, state in pairs({category = categoryDragState, emote = emoteDragState}) do
+        state.sourceButton:SetScript("OnUpdate", nil)
+        state.sourceButton:SetAlpha(1)
+    end
+    categoryDragState = nil
+    emoteDragState = nil
+    HideCategoryDropIndicator()
+    HideEmoteDropIndicator()
+end
+
 function MainWindow.UpdateMenu(options)
     CancelTooltip()
     MainWindow.NotifyActivity()
@@ -1202,6 +1213,7 @@ local function UpdateWindowBodyVisibility(options)
     )
 
     if IsWindowBodyHidden() then
+        CancelRowDrags()
         local hiddenOpacity = math.min(
             profileSettings.inactiveOpacity,
             themeSettings.windowOpacity
@@ -1779,6 +1791,7 @@ local function InstallWindowScripts()
         ScheduleWindowAutoHide()
     end)
     MainFrame:HookScript("OnHide", function()
+        CancelRowDrags()
         FinishWindowInteraction()
         CancelTooltip()
         MinimizedIconButton:Hide()

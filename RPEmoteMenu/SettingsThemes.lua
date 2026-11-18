@@ -179,7 +179,6 @@ local function CreateThemeManagementControls(panel)
     return {Refresh = Refresh}
 end
 
--- Typography section: controls follow their visual grouping.
 local function CreateThemeTypography(editor, state, controls, rows)
     local fontNoteY = rows:Next(28)
     local paneY = rows:Next(28)
@@ -357,10 +356,8 @@ local function CreateThemeTypography(editor, state, controls, rows)
     })
 
 
-
 end
 
--- SelectionEffects section: controls follow their visual grouping.
 local function CreateThemeSelectionEffects(editor, state, controls, rows)
     local effectY = rows:Next(54)
     local highlightEffectLabel = editor:CreateFontString(
@@ -429,7 +426,6 @@ local function CreateThemeSelectionEffects(editor, state, controls, rows)
     return RefreshHighlightControls
 end
 
--- Opacity section: controls follow their visual grouping.
 local function CreateThemeOpacity(editor, state, controls, rows)
     rows:Heading(L.UI_OPACITY, 28)
     local opacityY = rows:Next(42)
@@ -457,7 +453,6 @@ local function CreateThemeOpacity(editor, state, controls, rows)
 
 end
 
--- LayoutAndIcon section: controls follow their visual grouping.
 local function CreateThemeLayoutAndIcon(editor, state, controls, rows)
     rows:Heading(L.UI_LAYOUT, 28)
     local titleY = rows:Next(42)

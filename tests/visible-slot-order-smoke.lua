@@ -170,3 +170,23 @@ for _, categoryRows in ipairs({true, false}) do
     assert(refreshes == beforeRefresh, 'cancelled drag refreshed or reordered the replacement Profile')
 end
 print('PASS category/emote drag cancellation across Profile changes and stale drag-stop delivery')
+
+-- Hiding the window cancels both panes without applying a pending drop.
+for _, categoryRows in ipairs({true, false}) do
+    RPEmoteMenu:Show()
+    local rows = LayoutRows(categoryRows)
+    local source, target = rows[1], rows[3]
+    cursorX, cursorY = target:GetLeft() + 10, target:GetBottom() + 1
+    source:GetScript('OnDragStart')(source)
+    assert(source:GetScript('OnUpdate') and source:GetAlpha() == 0.45)
+    local categories = db.GetCategories()
+    local firstCategory = categories[2]
+    local firstEmote = firstCategory.emotes[2]
+    local beforeRefresh = refreshes
+    RPEmoteMenu:Hide()
+    assert(source:GetScript('OnUpdate') == nil and source:GetAlpha() == 1)
+    source:GetScript('OnDragStop')(source)
+    assert(categories[2] == firstCategory and firstCategory.emotes[2] == firstEmote)
+    assert(refreshes == beforeRefresh)
+end
+print('PASS hidden window cancels category/emote drags and ignores stale drops')

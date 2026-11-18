@@ -154,11 +154,13 @@ local settingsProxy = setmetatable({}, {
         end
         if profileSettingLookup[key] then
             local profile = Database.GetActiveProfile()
-            return profile and profile.settings[key] or profileDefaults[key]
+            if profile and profile.settings[key] ~= nil then return profile.settings[key] end
+            return profileDefaults[key]
         end
         if themeSettingLookup[key] then
             local theme = GetProfileTheme(Database.GetActiveProfile())
-            return theme and theme.settings[key] or themeDefaults[key]
+            if theme and theme.settings[key] ~= nil then return theme.settings[key] end
+            return themeDefaults[key]
         end
     end,
     __newindex = function(_, key, value)
@@ -860,7 +862,7 @@ end
 
 
 function Database.InitializeDatabase()
-    -- The former Global/Profile hybrid is intentionally not migrated.
+    -- Unsupported saved-data schemas are reset to the current defaults.
     if type(RPEmoteMenuDB) ~= "table"
         or RPEmoteMenuDB.schemaVersion ~= SCHEMA_VERSION then
         RPEmoteMenuDB = {

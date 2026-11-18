@@ -1,3 +1,10 @@
+## 2.2.343 — 2026-11-18
+
+- Cancel category and emote drags when the window hides or collapses, restoring row opacity and ignoring stale drop events.
+- Preserve explicit false values in the compatibility settings view and verify that it follows the active Profile.
+- Remove redundant Themes section comments and clarify the current saved-schema reset policy.
+- Add regression checks for hidden-window drag cancellation and compatibility settings reads.
+
 ## 2.2.342 — 2026-11-18
 
 - Complete refactor Phase 6: share labeled numeric, switch and color control composition between Behavior and Themes.

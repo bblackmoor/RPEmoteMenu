@@ -50,6 +50,20 @@ assert(db.GetProfileSettings().selectedCategory == 1)
 assert(db.ResetCategoryToDefaults(1))
 assert(db.CreateProfile('Second'))
 assert(db.SetActiveProfile('First'))
+-- The compatibility view follows current owners and preserves explicit false.
+local proxy = db.GetSettings()
+local oldDefault = addon.DefaultProfileSettings.fadeEnabled
+addon.DefaultProfileSettings.fadeEnabled = true
+proxy.fadeEnabled = false
+assert(proxy.fadeEnabled == false)
+assert(db.GetProfileSettings().fadeEnabled == false)
+assert(db.SetActiveProfile('Second'))
+proxy.fadeEnabled = true
+assert(proxy.fadeEnabled == true)
+assert(db.SetActiveProfile('First'))
+assert(proxy.fadeEnabled == false)
+addon.DefaultProfileSettings.fadeEnabled = oldDefault
+
 local order = {}
 local function Record(name) order[#order+1]=name end
 local function Expect(expected)
