@@ -7,7 +7,7 @@ function strtrim(value) return (value:gsub('^%s+', ''):gsub('%s+$', '')) end
 local addon = {VERSION='test', Settings={}}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
-for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua',
+for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','DatabaseNormalization.lua','DatabasePresentation.lua','Database.lua',
     'Scheduling.lua','FontMedia.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
     'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MenuDrag.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu',addon)

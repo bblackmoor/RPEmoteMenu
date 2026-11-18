@@ -659,12 +659,7 @@ function Serialization.ImportCategory(categoryIndex, text)
     if not imported then return false, errorMessage end
 
     Database.GetCategories()[categoryIndex] = imported.category
-    if addon.Settings and addon.Settings.RefreshEditors then
-        addon.Settings.RefreshEditors(categoryIndex)
-    end
-    if addon.MainWindow and addon.MainWindow.UpdateMenu then
-        addon.MainWindow.UpdateMenu()
-    end
+    addon.DatabasePresentation.RefreshCategories(categoryIndex)
     return true, imported.name
 end
 

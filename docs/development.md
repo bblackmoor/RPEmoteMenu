@@ -2,7 +2,7 @@
 
 ## Design and Architecture
 
-- [Refresh and readability refactor](design/refresh-and-readability-refactor.md): current six-phase plan and verification through Phase 4.
+- [Refresh and readability refactor](design/refresh-and-readability-refactor.md): current six-phase plan and verification through Phase 5.
 
 - [Settings conventions](design/settings-conventions.md): module contracts, deliberate differences from Simple Nameplates, regression coverage, and native acceptance checks.
 - [Addon standardization](design/addon-standardization.md): the completed settings standardization work.

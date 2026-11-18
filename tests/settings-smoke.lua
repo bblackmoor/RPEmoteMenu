@@ -40,7 +40,8 @@ local merged=setmetatable({}, {
   __newindex=function(_,k,v) addon.DefaultSettings[k]=v end
 })
 local DB={}
-function DB.GetSettings() return merged end
+function DB.GetProfileSettings() return merged end
+function DB.GetGlobalSettings() return merged end
 function DB.GetActiveProfileName() return activeProfile end
 function DB.GetActiveThemeName() return profiles[activeProfile].theme end
 function DB.GetTheme(name) return themes[name] end

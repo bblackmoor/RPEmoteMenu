@@ -12,6 +12,8 @@ loadModule('RPEmoteMenu/Defaults.lua')
 loadModule('RPEmoteMenu/SettingDefinitions.lua')
 loadModule('RPEmoteMenu/BuiltInThemes.lua')
 loadModule('RPEmoteMenu/JSON.lua')
+loadModule('RPEmoteMenu/DatabaseNormalization.lua')
+loadModule('RPEmoteMenu/DatabasePresentation.lua')
 loadModule('RPEmoteMenu/Database.lua')
 loadModule('RPEmoteMenu/Serialization.lua')
 local db = addon.Database

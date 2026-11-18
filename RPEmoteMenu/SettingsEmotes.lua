@@ -41,7 +41,6 @@ local function HasEmptyCategorySlot(selectedCategoryIndex)
 end
 
 local function CreateEmotesPanel()
-    local settings = Database.GetSettings()
     local panel = CreateFrame("Frame")
     local rows = UI.CreateRows(panel, 16, -16, 32)
     local headingY = rows:Next()
@@ -52,7 +51,7 @@ local function CreateEmotesPanel()
     local nameY = rows:Next(39)
     local listHeadingY = rows:Next(30)
     local listTopY = rows:Next()
-    local selectedCategoryIndex = settings.selectedCategory
+    local selectedCategoryIndex = Database.GetProfileSettings().selectedCategory
 
     if type(selectedCategoryIndex) ~= "number"
         or selectedCategoryIndex < 1

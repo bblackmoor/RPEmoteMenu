@@ -17,7 +17,7 @@ ChatFrame_OpenChat = function() executions = executions + 1 end
 C_ChatInfo = {SendChatMessage = function() executions = executions + 1 end}
 local addon = {VERSION='test', SettingsUI={FIELD_GAP=12}, Settings={}, MainWindow={UpdateMenu=function() updates=updates+1 end}}
 local function Load(name) assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu',addon) end
-for _, name in ipairs({'Localization.lua','Locales/enUS.lua','Defaults.lua','StandardEmoteCatalog.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua','JSON.lua','Serialization.lua','Scheduling.lua','SettingsWidgets.lua','SettingsControls.lua','StandardEmotePicker.lua','EmoteEditor.lua'}) do Load(name) end
+for _, name in ipairs({'Localization.lua','Locales/enUS.lua','Defaults.lua','StandardEmoteCatalog.lua','SettingDefinitions.lua','BuiltInThemes.lua','DatabaseNormalization.lua','DatabasePresentation.lua','Database.lua','JSON.lua','Serialization.lua','Scheduling.lua','SettingsWidgets.lua','SettingsControls.lua','StandardEmotePicker.lua','EmoteEditor.lua'}) do Load(name) end
 addon.Database.InitializeDatabase()
 UIParent:SetSize(1000,800)
 local db, catalog = addon.Database, addon.StandardEmoteCatalog

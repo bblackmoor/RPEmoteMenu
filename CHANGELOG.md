@@ -1,3 +1,9 @@
+## 2.2.341 — 2026-11-18
+
+- Complete refactor Phase 5: extract saved-data normalization and shared copy helpers into DatabaseNormalization, and UI refresh coordination into DatabasePresentation.
+- Use explicit Global and Profile settings access in the Behavior and Emotes panels, resolving current owners after Profile changes and global resets.
+- Preserve saved-data and transfer formats, independent Send choices, preview cancellation order and batched import refreshes; add focused copy and presentation regression checks.
+
 ## 2.2.340 — 2026-11-18
 
 - Complete refactor Phase 4: share category and emote drag cursor scaling, edge scrolling, hit testing and drop indicators through MenuDrag.

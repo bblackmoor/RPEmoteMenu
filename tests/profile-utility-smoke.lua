@@ -34,7 +34,7 @@ local addon = {VERSION = 'test', MainWindow = {}}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
-for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'Database.lua', 'Serialization.lua'}) do Load(name) end
+for _, name in ipairs({'Scheduling.lua','Defaults.lua','SettingDefinitions.lua', 'FontMedia.lua', 'BuiltInThemes.lua', 'JSON.lua', 'DatabaseNormalization.lua','DatabasePresentation.lua','Database.lua', 'Serialization.lua'}) do Load(name) end
 local db = addon.Database
 db.InitializeDatabase()
 local runtimeCalls = 0

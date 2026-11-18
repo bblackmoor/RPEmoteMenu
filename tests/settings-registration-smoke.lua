@@ -1,5 +1,5 @@
 -- Registration preflight, retry, routing and duplicate protection.
-local addon = {MAX_CATEGORIES = 8, Database = {GetSettings = function() return {selectedCategory = 2} end}}
+local addon = {MAX_CATEGORIES = 8, Database = {GetProfileSettings = function() return {selectedCategory = 2} end}}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Settings.lua"))("RPEmoteMenu", addon)

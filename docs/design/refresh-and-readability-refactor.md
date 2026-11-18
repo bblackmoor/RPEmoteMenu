@@ -11,7 +11,7 @@ consume another phase's scope.
 | 2 | Extract typography, fallback/retries and measurement from MainWindow | Implemented; automated checks pass, in-game acceptance pending |
 | 3 | Extract category/emote rendering; install stable handlers reading current row bindings | Implemented; automated checks pass, in-game acceptance pending |
 | 4 | Share drag cursor conversion, edge scrolling, hit testing and drop indicators | Implemented; automated checks pass, in-game acceptance pending |
-| 5 | Extract database normalization/copying, use explicit settings ownership and separate presentation coordination | Planned |
+| 5 | Extract database normalization/copying, use explicit settings ownership and separate presentation coordination | Implemented; automated checks pass, in-game acceptance pending |
 | 6 | Simplify repeated settings-control construction with small helpers and named options | Planned |
 
 ## Baseline repair
@@ -131,3 +131,33 @@ integration tests exercise every source/gap pair for both window panes, hidden
 record preservation, selection and refresh behavior. In-game acceptance remains
 pending: drag through both edges of short panes, reorder at different UI scales,
 switch Profiles during a drag, and verify the drop indicator and suppressed click.
+
+
+## Phase 5
+
+DatabaseNormalization owns saved-value repair and copying, including shared emote
+and category copiers. Saved category normalization still repairs records in place
+so pending dialog identity guards remain meaningful. Copies allocate independent
+records and colors, preserving explicit false Send flags and missing-flag defaults.
+Database retains schema initialization, live record access, validation, CRUD and
+mutation ordering. Schema 15 and transfer format 2 remain unchanged; strict import
+validation remains in Serialization before normalized copies are made.
+
+DatabasePresentation owns preview cancellation and Profile, Theme, activation,
+settings and category refresh routing. Database calls it at the original mutation
+boundaries; it resolves views when dispatched so headless operations and late view
+registration work. Category imports use the same category refresh path. Resetting
+all categories explicitly resets the Profile's selected category, then synchronizes
+the menu selection. Batch imports still refresh once without selecting imports.
+
+Behavior callbacks read the current Global or Profile owner explicitly, including
+after Profile changes and global reset. Settings registration and the Emotes panel
+use Profile settings for selected category. The mixed GetSettings proxy remains
+as a compatibility entry point, with no internal production callers.
+
+The database component suite covers copy isolation, identity preservation, Send
+flags, settings ownership, headless resets, cancellation/mutation/refresh order,
+failed mutations, inactive Theme changes, batched imports and fallback view hooks.
+Existing data, serialization, Behavior, Theme, Profile and dialog suites continue
+to validate integration. In-game acceptance remains pending for Profile/Theme
+switches during edits or color previews, global resets, imports and category resets.

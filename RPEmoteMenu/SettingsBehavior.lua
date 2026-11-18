@@ -6,7 +6,6 @@ local UI = addon.SettingsUI
 local AddonSettings = addon.Settings
 local Database = addon.Database
 local MainWindow = addon.MainWindow
-local settings
 local FIELD_GAP = UI.FIELD_GAP
 local Widgets = addon.SettingsWidgets
 
@@ -56,7 +55,7 @@ local function CreateStartupSection(panel, switches, rows)
     rows:Heading(L.UI_STARTUP_INTERACTION)
 
     local activeSwitch = CreateSwitch(panel, L.UI_ENABLE_RP_EMOTE_MENU, rows:Next(),
-        function() return settings.active end,
+        function() return Database.GetGlobalSettings().active end,
         Database.SetActive, 255)
     -- Match Simple Nameplates' switch plus Active/Inactive status presentation.
     local activeStatus = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
@@ -64,8 +63,8 @@ local function CreateStartupSection(panel, switches, rows)
     activeStatus:SetWidth(56)
     activeStatus:SetJustifyH("LEFT")
     function activeSwitch:RefreshValue()
-        self:SetChecked(settings.active)
-        activeStatus:SetText(settings.active and L.UI_ACTIVE or L.UI_INACTIVE)
+        self:SetChecked(Database.GetGlobalSettings().active)
+        activeStatus:SetText(Database.GetGlobalSettings().active and L.UI_ACTIVE or L.UI_INACTIVE)
     end
     activeSwitch:RefreshValue()
     switches[#switches + 1] = activeSwitch
@@ -75,15 +74,15 @@ local function CreateStartupSection(panel, switches, rows)
             limits.tooltipDelayMs.min, limits.tooltipDelayMs.max),
         "tooltipDelayMs", 20, rows:Next(),
         limits.tooltipDelayMs.min, limits.tooltipDelayMs.max,
-        function() return settings.tooltipDelayMs end,
-        function(value) settings.tooltipDelayMs = value end,
+        function() return Database.GetGlobalSettings().tooltipDelayMs end,
+        function(value) Database.GetGlobalSettings().tooltipDelayMs = value end,
         "ms", 255, Database.GetGlobalSettings
     )
 
     local hideSettingsSwitch = CreateSwitch(panel, L.UI_HIDE_SETTING_GEAR_ICONS, rows:Next(),
-        function() return settings.hideSettingsGear end,
+        function() return Database.GetGlobalSettings().hideSettingsGear end,
         function(value)
-            settings.hideSettingsGear = value
+            Database.GetGlobalSettings().hideSettingsGear = value
             MainWindow.ApplySettingsGearVisibility()
             MainWindow.UpdateMenu()
         end, 255)
@@ -104,9 +103,9 @@ local function CreateInactivitySection(panel, switches, rows)
     local RefreshInactiveControls
     local RefreshIconControls
     local fadeSwitch = CreateSwitch(panel, L.UI_FADE_THE_MENU_WHEN_INACTIVE, rows:Next(),
-        function() return settings.fadeEnabled end,
+        function() return Database.GetProfileSettings().fadeEnabled end,
         function(value)
-            settings.fadeEnabled = value
+            Database.GetProfileSettings().fadeEnabled = value
             MainWindow.ApplyFadeSettings()
             if RefreshInactiveControls then
                 RefreshInactiveControls()
@@ -116,9 +115,9 @@ local function CreateInactivitySection(panel, switches, rows)
 
     local fadeDelayBox = CreateNumberSetting(
         panel, L.UI_FADE_AFTER, "fadeDelay", 20, rows:Next(), limits.fadeDelay.min, limits.fadeDelay.max,
-        function() return settings.fadeDelay end,
+        function() return Database.GetProfileSettings().fadeDelay end,
         function(value)
-            settings.fadeDelay = value
+            Database.GetProfileSettings().fadeDelay = value
             MainWindow.ApplyFadeSettings()
         end,
         "seconds", 255
@@ -126,9 +125,9 @@ local function CreateInactivitySection(panel, switches, rows)
 
     local inactiveOpacityBox = CreateNumberSetting(
         panel, L.UI_INACTIVE_OPACITY, "inactiveOpacity", 20, rows:Next(), limits.opacity.min * 100, limits.opacity.max * 100,
-        function() return settings.inactiveOpacity * 100 end,
+        function() return Database.GetProfileSettings().inactiveOpacity * 100 end,
         function(value)
-            settings.inactiveOpacity = value / 100
+            Database.GetProfileSettings().inactiveOpacity = value / 100
             MainWindow.ApplyFadeSettings()
         end,
         "%", 255
@@ -147,7 +146,7 @@ local function CreateInactivitySection(panel, switches, rows)
         end
         return options
     end, function(mode)
-        settings.minimizeMode = mode
+        Database.GetProfileSettings().minimizeMode = mode
         MainWindow.ApplyMinimizeToIconSettings()
         if RefreshIconControls then RefreshIconControls() end
     end)
@@ -161,9 +160,9 @@ local function CreateInactivitySection(panel, switches, rows)
 
     local iconSizeBox = CreateIntegerEditBox(
         panel, 255, iconSizeY + 4, 70,
-        function() return settings.minimizedIconSize end,
+        function() return Database.GetProfileSettings().minimizedIconSize end,
         function(value)
-            settings.minimizedIconSize = value
+            Database.GetProfileSettings().minimizedIconSize = value
             MainWindow.ApplyMinimizeToIconSettings()
         end,
         false, limits.minimizedIconSize.min, limits.minimizedIconSize.max
@@ -174,7 +173,7 @@ local function CreateInactivitySection(panel, switches, rows)
     iconSizeRange:SetText(string.format(L.UI_D_D_PX, limits.minimizedIconSize.min, limits.minimizedIconSize.max))
 
     RefreshIconControls = function()
-        local enabled = settings.fadeEnabled and settings.minimizeMode == "ICON"
+        local enabled = Database.GetProfileSettings().fadeEnabled and Database.GetProfileSettings().minimizeMode == "ICON"
         local alpha = enabled and 1 or 0.45
 
         iconSizeBox:SetEnabled(enabled)
@@ -183,7 +182,7 @@ local function CreateInactivitySection(panel, switches, rows)
     end
 
     RefreshInactiveControls = function()
-        local enabled = settings.fadeEnabled
+        local enabled = Database.GetProfileSettings().fadeEnabled
         local alpha = enabled and 1 or 0.45
 
         for _, control in ipairs({fadeDelayBox, inactiveOpacityBox}) do
@@ -223,13 +222,13 @@ local function CreateLayoutSection(panel, switches, rows)
 
     local positionXBox = CreateIntegerEditBox(
         panel, 255, positionY + 4, 80,
-        function() return settings.x end,
+        function() return Database.GetProfileSettings().x end,
         function(value)
             MainWindow.ApplyWindowGeometry(
                 value,
-                settings.y,
+                Database.GetProfileSettings().y,
                 nil,
-                settings.height,
+                Database.GetProfileSettings().height,
                 true
             )
         end,
@@ -238,13 +237,13 @@ local function CreateLayoutSection(panel, switches, rows)
 
     local positionYBox = CreateIntegerEditBox(
         panel, 405, positionY + 4, 80,
-        function() return settings.y end,
+        function() return Database.GetProfileSettings().y end,
         function(value)
             MainWindow.ApplyWindowGeometry(
-                settings.x,
+                Database.GetProfileSettings().x,
                 value,
                 nil,
-                settings.height,
+                Database.GetProfileSettings().height,
                 true
             )
         end,
@@ -266,11 +265,11 @@ local function CreateLayoutSection(panel, switches, rows)
 
     local heightBox = CreateIntegerEditBox(
         panel, 255, heightY + 4, 80,
-        function() return settings.height end,
+        function() return Database.GetProfileSettings().height end,
         function(value)
             MainWindow.ApplyWindowGeometry(
-                settings.x,
-                settings.y,
+                Database.GetProfileSettings().x,
+                Database.GetProfileSettings().y,
                 nil,
                 value,
                 true -- x/y remain offsets for the saved anchor.
@@ -284,9 +283,9 @@ local function CreateLayoutSection(panel, switches, rows)
     heightRange:SetText(string.format(L.UI_D_D_PX, limits.height.min, limits.height.max))
 
     local lockSwitch = CreateSwitch(panel, L.UI_LOCK_WINDOW, rows:Next(),
-        function() return settings.locked end,
+        function() return Database.GetProfileSettings().locked end,
         function(value)
-            settings.locked = value
+            Database.GetProfileSettings().locked = value
             MainWindow.ApplyMovementLock()
         end, 255)
     switches[#switches + 1] = lockSwitch
@@ -303,7 +302,6 @@ end
 
 -- Global/Profile behavior is organized by startup/interaction, inactivity/minimize behavior, and layout.
 local function CreateBehaviorPanel()
-    settings = Database.GetSettings()
     local container = CreateFrame("Frame")
     local scrollFrame, panel = Widgets.CreateCanvasScrollBox(container, {step = 40})
     scrollFrame:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
@@ -325,9 +323,8 @@ local function CreateBehaviorPanel()
 
     local defaultsButton = Widgets.CreateButton(panel, L.UI_RESTORE_GLOBAL_DEFAULTS, function()
         Database.ResetGlobalSettings()
-        settings = Database.GetSettings()
         MainWindow.ApplyProfileSettings()
-        Database.SetActive(settings.active)
+        Database.SetActive(Database.GetGlobalSettings().active)
         Refresh()
     end, 170, 24)
     defaultsButton:SetPoint("TOPLEFT", panel, "TOPLEFT", 16, -60)
@@ -349,8 +346,8 @@ local function CreateBehaviorPanel()
         fadeDelayBox:RefreshValue()
         tooltipDelayBox:RefreshValue()
         inactiveOpacityBox:RefreshValue()
-        minimizeSelector:SetValue(settings.minimizeMode,
-            minimizeLabels[settings.minimizeMode] or minimizeLabels.NONE)
+        minimizeSelector:SetValue(Database.GetProfileSettings().minimizeMode,
+            minimizeLabels[Database.GetProfileSettings().minimizeMode] or minimizeLabels.NONE)
         iconSizeBox:RefreshValue()
         RefreshInactiveControls()
     end

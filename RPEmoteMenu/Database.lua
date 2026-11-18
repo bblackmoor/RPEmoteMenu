@@ -1,12 +1,12 @@
 local _, addon = ...
 local L = addon.L
 local definitions = addon.SettingDefinitions
-local limits = definitions.limits
+local Normalization = addon.DatabaseNormalization
+local Presentation = addon.DatabasePresentation
 
 addon.Database = {}
 
 local Database = addon.Database
-local defaultSections = addon.DefaultSections
 local globalDefaults = addon.DefaultGlobalSettings
 local profileDefaults = addon.DefaultProfileSettings
 local themeDefaults = addon.DefaultThemeSettings
@@ -27,11 +27,6 @@ for _, definition in ipairs(builtInThemes) do
     builtInThemeByName[definition.name] = definition
 end
 
-local VALID_CATEGORY_HIGHLIGHT_EFFECTS = definitions.enums.categoryHighlightEffect.allowed
-local VALID_MINIMIZE_MODES = definitions.enums.minimizeMode.allowed
-local VALID_TITLE_BAR_POSITIONS = definitions.enums.titleBarPosition.allowed
-local VALID_ANCHOR_POINTS = definitions.enums.anchorPoint.allowed
-local COLOR_SETTING_KEYS = definitions.colorKeys
 local globalSettingLookup = {}
 local profileSettingLookup = {}
 local themeSettingLookup = {}
@@ -46,285 +41,16 @@ for _, key in ipairs(themeSettingKeys) do
     themeSettingLookup[key] = true
 end
 
-local function NormalizeString(value)
-    return type(value) == "string" and value or ""
-end
-
--- Generated names have byte limits, but must end on a UTF-8 boundary.
-local function TruncateUTF8(value, maximumBytes)
-    local cut = math.min(#value, maximumBytes)
-    while cut > 0 and value:byte(cut + 1)
-        and value:byte(cut + 1) >= 128 and value:byte(cut + 1) < 192 do
-        cut = cut - 1
-    end
-    return value:sub(1, cut)
-end
-
-local function CopyDefaultCategories()
-    local categories = {}
-
-    for categoryIndex, sourceCategory in ipairs(defaultSections) do
-        local category = {
-            name = NormalizeString(sourceCategory.name),
-            emotes = {}
-        }
-
-        for emoteIndex = 1, MAX_EMOTES do
-            local source = sourceCategory.emotes[emoteIndex]
-            category.emotes[emoteIndex] = {
-                label = NormalizeString(source and source[1]),
-                defaultCommand = NormalizeString(source and source[2]),
-                targetedCommand = NormalizeString(source and source[3]),
-                defaultSend = addon.GetDefaultCommandSend(source and source[2]),
-                targetedSend = addon.GetDefaultCommandSend(source and source[3])
-            }
-        end
-
-        categories[categoryIndex] = category
-    end
-
-    return categories
-end
-
-
-local function NormalizeCategories(categories)
-    categories = type(categories) == "table" and categories or {}
-
-    for categoryIndex = 1, MAX_CATEGORIES do
-        local category = categories[categoryIndex]
-
-        if type(category) ~= "table" then
-            category = {}
-            categories[categoryIndex] = category
-        end
-
-        category.name = NormalizeString(category.name)
-        category.emotes = type(category.emotes) == "table" and category.emotes or {}
-
-        for emoteIndex = 1, MAX_EMOTES do
-            local emote = category.emotes[emoteIndex]
-
-            if type(emote) ~= "table" then
-                emote = {}
-                category.emotes[emoteIndex] = emote
-            end
-
-            emote.label = NormalizeString(emote.label)
-            emote.defaultCommand = NormalizeString(emote.defaultCommand)
-            emote.targetedCommand = NormalizeString(emote.targetedCommand)
-            emote.defaultSend = addon.GetCommandSend(emote.defaultSend, emote.defaultCommand)
-            emote.targetedSend = addon.GetCommandSend(emote.targetedSend, emote.targetedCommand)
-        end
-    end
-
-    return categories
-end
-
-
-local function CopyCategories(sourceCategories)
-    local categories = {}
-    sourceCategories = type(sourceCategories) == "table" and sourceCategories or {}
-
-    for categoryIndex = 1, MAX_CATEGORIES do
-        local sourceCategory = sourceCategories[categoryIndex]
-        local category = {
-            name = NormalizeString(sourceCategory and sourceCategory.name),
-            emotes = {}
-        }
-
-        for emoteIndex = 1, MAX_EMOTES do
-            local source = sourceCategory
-                and sourceCategory.emotes
-                and sourceCategory.emotes[emoteIndex]
-
-            category.emotes[emoteIndex] = {
-                label = NormalizeString(source and source.label),
-                defaultCommand = NormalizeString(source and source.defaultCommand),
-                targetedCommand = NormalizeString(source and source.targetedCommand),
-                defaultSend = addon.GetCommandSend(source and source.defaultSend, source and source.defaultCommand),
-                targetedSend = addon.GetCommandSend(source and source.targetedSend, source and source.targetedCommand)
-            }
-        end
-
-        categories[categoryIndex] = category
-    end
-
-    return categories
-end
-
-
-local function IsValidSavedValue(value, defaultValue)
-    if type(value) ~= type(defaultValue) then
-        return false
-    end
-
-    if type(value) == "number" then
-        return value == value and value ~= math.huge and value ~= -math.huge
-    end
-
-    return true
-end
-
-
-local function ClampNumber(value, minimum, maximum, defaultValue)
-    value = tonumber(value)
-
-    if not value or value ~= value or value == math.huge or value == -math.huge then
-        value = defaultValue
-    end
-
-    return math.max(minimum, math.min(maximum, value))
-end
-
-
-local function NormalizeColor(value, defaultValue)
-    value = type(value) == "table" and value or {}
-
-    return {
-        r = ClampNumber(value.r, 0, 1, defaultValue.r),
-        g = ClampNumber(value.g, 0, 1, defaultValue.g),
-        b = ClampNumber(value.b, 0, 1, defaultValue.b)
-    }
-end
-
-
-local function NormalizeGlobalSettings(source)
-    source = type(source) == "table" and source or {}
-    local result = {}
-
-    for key, defaultValue in pairs(globalDefaults) do
-        if IsValidSavedValue(source[key], defaultValue) then
-            result[key] = source[key]
-        else
-            result[key] = defaultValue
-        end
-    end
-
-    result.tooltipDelayMs = math.floor(ClampNumber(
-        source.tooltipDelayMs, limits.tooltipDelayMs.min, limits.tooltipDelayMs.max, globalDefaults.tooltipDelayMs
-    ))
-
-    return result
-end
-
-
-local function NormalizeProfileSettings(source)
-    source = type(source) == "table" and source or {}
-    local result = {}
-    for key, defaultValue in pairs(profileDefaults) do
-        if IsValidSavedValue(source[key], defaultValue) then
-            result[key] = source[key]
-        else
-            result[key] = defaultValue
-        end
-    end
-
-    if VALID_MINIMIZE_MODES[source.minimizeMode] then
-        result.minimizeMode = source.minimizeMode
-    else
-        result.minimizeMode = profileDefaults.minimizeMode
-    end
-
-    result.height = math.floor(ClampNumber(
-        source.height, limits.height.min, limits.height.max, profileDefaults.height
-    ))
-    result.minimizedIconSize = math.floor(ClampNumber(
-        source.minimizedIconSize,
-        limits.minimizedIconSize.min,
-        limits.minimizedIconSize.max,
-        profileDefaults.minimizedIconSize
-    ))
-    result.x = math.floor(ClampNumber(
-        source.x, limits.position.min, limits.position.max, profileDefaults.x
-    ))
-    result.y = math.floor(ClampNumber(
-        source.y, limits.position.min, limits.position.max, profileDefaults.y
-    ))
-
-    if not VALID_ANCHOR_POINTS[result.point] then
-        result.point = profileDefaults.point
-    end
-    if not VALID_ANCHOR_POINTS[result.relativePoint] then
-        result.relativePoint = profileDefaults.relativePoint
-    end
-    if result.selectedCategory % 1 ~= 0
-        or result.selectedCategory < limits.selectedCategory.min
-        or result.selectedCategory > limits.selectedCategory.max then
-        result.selectedCategory = profileDefaults.selectedCategory
-    end
-
-    result.fadeDelay = math.floor(ClampNumber(
-        source.fadeDelay, limits.fadeDelay.min, limits.fadeDelay.max, profileDefaults.fadeDelay
-    ))
-    result.inactiveOpacity = ClampNumber(
-        source.inactiveOpacity, limits.opacity.min, limits.opacity.max, profileDefaults.inactiveOpacity
-    )
-
-    return result
-end
-
-
-local function NormalizeThemeSettings(source)
-    source = type(source) == "table" and source or {}
-    local result = {}
-
-    for key, defaultValue in pairs(themeDefaults) do
-        if type(defaultValue) ~= "table" then
-            if IsValidSavedValue(source[key], defaultValue) then
-                result[key] = source[key]
-            else
-                result[key] = defaultValue
-            end
-        end
-    end
-
-    if strtrim(result.categoryFont) == "" then
-        result.categoryFont = themeDefaults.categoryFont
-    end
-    if strtrim(result.emoteFont) == "" then
-        result.emoteFont = themeDefaults.emoteFont
-    end
-
-    result.categoryFontSize = math.floor(ClampNumber(
-        source.categoryFontSize, limits.fontSize.min, limits.fontSize.max, themeDefaults.categoryFontSize
-    ))
-    result.emoteFontSize = math.floor(ClampNumber(
-        source.emoteFontSize, limits.fontSize.min, limits.fontSize.max, themeDefaults.emoteFontSize
-    ))
-    result.categoryHighlightThickness = math.floor(ClampNumber(
-        source.categoryHighlightThickness,
-        limits.highlightThickness.min,
-        limits.highlightThickness.max,
-        themeDefaults.categoryHighlightThickness
-    ))
-
-    for _, key in ipairs(COLOR_SETTING_KEYS) do
-        result[key] = NormalizeColor(source[key], themeDefaults[key])
-    end
-
-    if not VALID_CATEGORY_HIGHLIGHT_EFFECTS[result.categoryHighlightEffect] then
-        result.categoryHighlightEffect = themeDefaults.categoryHighlightEffect
-    end
-    if not VALID_TITLE_BAR_POSITIONS[result.titleBarPosition] then
-        result.titleBarPosition = themeDefaults.titleBarPosition
-    end
-
-    result.windowOpacity = ClampNumber(
-        source.windowOpacity, limits.opacity.min, limits.opacity.max, themeDefaults.windowOpacity
-    )
-
-    return result
-end
-
-
-local function CopyProfileSettings(source)
-    return NormalizeProfileSettings(source)
-end
-
-
-local function CopyThemeSettings(source)
-    return NormalizeThemeSettings(source)
-end
+local NormalizeString = Normalization.NormalizeString
+local TruncateUTF8 = Normalization.TruncateUTF8
+local CopyDefaultCategories = Normalization.CopyDefaultCategories
+local NormalizeCategories = Normalization.NormalizeCategories
+local CopyEmote = Normalization.CopyEmote
+local CopyCategory = Normalization.CopyCategory
+local CopyCategories = Normalization.CopyCategories
+local NormalizeGlobalSettings = Normalization.NormalizeGlobalSettings
+local CopyProfileSettings = Normalization.CopyProfileSettings
+local CopyThemeSettings = Normalization.CopyThemeSettings
 
 
 function Database.GetCharacterKey()
@@ -419,6 +145,8 @@ function Database.GetProfileThemeName(profileName)
 end
 
 
+-- Compatibility access for callers outside the addon; internal callers use
+-- GetGlobalSettings, GetProfileSettings or GetThemeSettings explicitly.
 local settingsProxy = setmetatable({}, {
     __index = function(_, key)
         if globalSettingLookup[key] then
@@ -685,53 +413,10 @@ function Database.ValidateNewThemeName(themeName, existingThemeName)
 end
 
 
--- Retire Theme previews before changing selection or replacing saved data.
-local function CancelThemeColorEdit()
-    if addon.SettingsUI and addon.SettingsUI.CancelColorEdit then
-        addon.SettingsUI.CancelColorEdit()
-    end
-end
-
 function Database.SetActive(active)
     RPEmoteMenuDB.globalSettings.active = active == true
-    if not active then CancelThemeColorEdit() end
-    if addon.MainWindow and addon.MainWindow.ApplyActivation then
-        addon.MainWindow.ApplyActivation()
-    end
-    if addon.Settings and addon.Settings.RefreshSettingsPanels then
-        addon.Settings.RefreshSettingsPanels()
-    end
-end
-
-local function RefreshSettingsViews()
-    if addon.Settings and addon.Settings.RefreshSettingsPanels then
-        addon.Settings.RefreshSettingsPanels()
-    else
-        if addon.Settings and addon.Settings.RefreshEditors then
-            addon.Settings.RefreshEditors()
-        end
-        if addon.Settings and addon.Settings.RefreshProfiles then
-            addon.Settings.RefreshProfiles()
-        end
-    end
-end
-
-
-local function RefreshProfileViews()
-    if addon.MainWindow and addon.MainWindow.ApplyProfileSettings then
-        addon.MainWindow.ApplyProfileSettings()
-    elseif addon.MainWindow and addon.MainWindow.UpdateMenu then
-        addon.MainWindow.UpdateMenu()
-    end
-    RefreshSettingsViews()
-end
-
-
-local function RefreshThemeViews()
-    if addon.MainWindow and addon.MainWindow.ApplyThemeSettings then
-        addon.MainWindow.ApplyThemeSettings()
-    end
-    RefreshSettingsViews()
+    if not active then Presentation.CancelThemeColorEdit() end
+    Presentation.RefreshActivation()
 end
 
 
@@ -824,12 +509,12 @@ function Database.SetProfileTheme(profileName, themeName)
         return false, L.UI_THAT_THEME_DOES_NOT_EXIST
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     profile.theme = themeName
     if profileName == Database.GetActiveProfileName() then
-        RefreshThemeViews()
+        Presentation.RefreshThemeViews()
     else
-        RefreshSettingsViews()
+        Presentation.RefreshSettingsViews()
     end
     return true
 end
@@ -840,13 +525,13 @@ function Database.CreateTheme(themeName, sourceSettings)
     if not validName then return false, errorMessage end
 
     -- Roll back live colors before cloning either the current or explicit source.
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings or Database.GetThemeSettings()
     RPEmoteMenuDB.themes[validName] = {
         settings = CopyThemeSettings(settingsSource)
     }
-    RefreshSettingsViews()
+    Presentation.RefreshSettingsViews()
     return true, validName
 end
 
@@ -868,7 +553,7 @@ function Database.RenameTheme(oldThemeName, newThemeName)
     local validName, errorMessage = ValidateNewThemeName(newThemeName, oldThemeName)
     if not validName then return false, errorMessage end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.themes[validName] = theme
     RPEmoteMenuDB.themes[oldThemeName] = nil
     for _, profile in pairs(RPEmoteMenuDB.profiles) do
@@ -877,9 +562,9 @@ function Database.RenameTheme(oldThemeName, newThemeName)
         end
     end
     if Database.GetActiveThemeName() == validName then
-        RefreshThemeViews()
+        Presentation.RefreshThemeViews()
     else
-        RefreshSettingsViews()
+        Presentation.RefreshSettingsViews()
     end
     return true, validName
 end
@@ -898,7 +583,7 @@ function Database.DeleteTheme(themeName, confirmedInUse)
         return false, L.UI_THIS_THEME_IS_USED_BY_PROFILES, users
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     for _, profileName in ipairs(users) do
         RPEmoteMenuDB.profiles[profileName].theme = DEFAULT_THEME_NAME
     end
@@ -909,9 +594,9 @@ function Database.DeleteTheme(themeName, confirmedInUse)
         if profileName == activeProfileName then affected = true end
     end
     if affected then
-        RefreshThemeViews()
+        Presentation.RefreshThemeViews()
     else
-        RefreshSettingsViews()
+        Presentation.RefreshSettingsViews()
     end
     return true, users
 end
@@ -944,12 +629,12 @@ function Database.RestoreTheme(themeName)
     local valid, errorMessage = ValidateThemeRestoreName(themeName)
     if not valid then return false, errorMessage end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.themes[themeName] = {settings = CopyThemeSettings(source)}
     if Database.GetActiveThemeName() == themeName then
-        RefreshThemeViews()
+        Presentation.RefreshThemeViews()
     else
-        RefreshSettingsViews()
+        Presentation.RefreshSettingsViews()
     end
     return true
 end
@@ -971,9 +656,9 @@ function Database.SetActiveProfile(profileName)
         return false, L.UI_THE_CURRENT_CHARACTER_IS_NOT_AVAILABLE_YET
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.activeProfiles[characterKey] = profileName
-    RefreshProfileViews()
+    Presentation.RefreshProfileViews()
     return true
 end
 
@@ -992,7 +677,7 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings, s
         return false, L.UI_THE_SOURCE_THEME_DOES_NOT_EXIST
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     local settingsSource = type(sourceSettings) == "table"
         and sourceSettings
         or Database.GetProfileSettings()
@@ -1006,7 +691,7 @@ function Database.CreateProfile(profileName, sourceCategories, sourceSettings, s
     }
     RPEmoteMenuDB.activeProfiles[characterKey] = validName
 
-    RefreshProfileViews()
+    Presentation.RefreshProfileViews()
     return true, validName
 end
 
@@ -1038,7 +723,7 @@ function Database.RenameProfile(oldProfileName, newProfileName)
         return false, errorMessage
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[validName] = profile
     RPEmoteMenuDB.profiles[oldProfileName] = nil
 
@@ -1048,7 +733,7 @@ function Database.RenameProfile(oldProfileName, newProfileName)
         end
     end
 
-    RefreshProfileViews()
+    Presentation.RefreshProfileViews()
     return true, validName
 end
 
@@ -1061,7 +746,7 @@ function Database.DeleteProfile(profileName)
         return false, L.UI_THAT_PROFILE_DOES_NOT_EXIST
     end
 
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[profileName] = nil
 
     for characterKey, activeProfileName in pairs(RPEmoteMenuDB.activeProfiles) do
@@ -1070,7 +755,7 @@ function Database.DeleteProfile(profileName)
         end
     end
 
-    RefreshProfileViews()
+    Presentation.RefreshProfileViews()
     return true
 end
 
@@ -1133,7 +818,7 @@ function Database.AddImportedThemes(importedThemes, deferRefresh)
         nameMap[imported.name] = themeName
         createdNames[#createdNames + 1] = themeName
     end
-    if not deferRefresh then RefreshSettingsViews() end
+    if not deferRefresh then Presentation.RefreshSettingsViews() end
     return createdNames, nameMap
 end
 
@@ -1159,7 +844,7 @@ function Database.AddImportedProfiles(importedProfiles, themeNameMap, deferRefre
         }
         createdNames[#createdNames + 1] = profileName
     end
-    if not deferRefresh then RefreshSettingsViews() end
+    if not deferRefresh then Presentation.RefreshSettingsViews() end
     return createdNames, missingThemes
 end
 
@@ -1169,7 +854,7 @@ function Database.AddImportedEverything(importedProfiles, importedThemes)
     local profileNames, missingThemes = Database.AddImportedProfiles(
         importedProfiles, themeNameMap, true
     )
-    RefreshSettingsViews()
+    Presentation.RefreshSettingsViews()
     return profileNames, themeNames, missingThemes
 end
 
@@ -1261,16 +946,16 @@ function Database.RestoreBuiltInThemes()
         local valid, errorMessage = ValidateThemeRestoreName(definition.name)
         if not valid then return nil, errorMessage end
     end
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.themes[DEFAULT_THEME_NAME] = {settings = CopyThemeSettings(themeDefaults)}
     for _, definition in ipairs(builtInThemes) do
         RPEmoteMenuDB.themes[definition.name] = CopyBuiltInTheme(definition)
     end
     local activeTheme = Database.GetActiveThemeName()
     if activeTheme == DEFAULT_THEME_NAME or builtInThemeByName[activeTheme] then
-        RefreshThemeViews()
+        Presentation.RefreshThemeViews()
     else
-        RefreshSettingsViews()
+        Presentation.RefreshSettingsViews()
     end
     return #builtInThemes + 1
 end
@@ -1280,13 +965,13 @@ function Database.RestoreProfile(profileName)
     if profileName ~= DEFAULT_PROFILE_NAME then
         return false, L.UI_ONLY_THE_DEFAULT_PROFILE_HAS_FACTORY_SETTINGS
     end
-    CancelThemeColorEdit()
+    Presentation.CancelThemeColorEdit()
     RPEmoteMenuDB.profiles[DEFAULT_PROFILE_NAME] = {
         theme = DEFAULT_THEME_NAME,
         categories = CopyDefaultCategories(),
         settings = CopyProfileSettings(profileDefaults)
     }
-    RefreshProfileViews()
+    Presentation.RefreshProfileViews()
     return true
 end
 
@@ -1303,11 +988,7 @@ function Database.ResetCategoryToDefaults(categoryIndex)
 
     Database.GetCategories()[categoryIndex] = CopyDefaultCategories()[categoryIndex]
 
-    if addon.Settings.RefreshEditors then
-        addon.Settings.RefreshEditors(categoryIndex)
-    end
-
-    addon.MainWindow.UpdateMenu()
+    Presentation.RefreshCategories(categoryIndex)
     return true
 end
 
@@ -1319,12 +1000,8 @@ function Database.ResetAllCategoriesToDefaults()
 
     Database.GetActiveProfile().categories = CopyDefaultCategories()
 
-    if addon.Settings.RefreshEditors then
-        addon.Settings.RefreshEditors()
-    end
-
-    addon.MainWindow.SetSelectedCategory(1)
-    addon.MainWindow.UpdateMenu()
+    Database.GetProfileSettings().selectedCategory = 1
+    Presentation.RefreshCategories(nil, true)
     return true
 end
 
@@ -1351,13 +1028,7 @@ function Database.DuplicateEmote(categoryIndex, emoteIndex)
 
     for destinationIndex = 1, MAX_EMOTES do
         if not EmoteHasContent(category.emotes[destinationIndex]) then
-            category.emotes[destinationIndex] = {
-                label = NormalizeString(source.label),
-                defaultCommand = NormalizeString(source.defaultCommand),
-                targetedCommand = NormalizeString(source.targetedCommand),
-                defaultSend = addon.GetCommandSend(source.defaultSend, source.defaultCommand),
-                targetedSend = addon.GetCommandSend(source.targetedSend, source.targetedCommand)
-            }
+            category.emotes[destinationIndex] = CopyEmote(source)
             return true, destinationIndex
         end
     end
@@ -1419,17 +1090,8 @@ function Database.DuplicateCategory(categoryIndex)
         suffix = suffix + 1
     end
 
-    local copy = {name = copyName, emotes = {}}
-    for emoteIndex = 1, MAX_EMOTES do
-        local sourceEmote = source.emotes and source.emotes[emoteIndex]
-        copy.emotes[emoteIndex] = {
-            label = NormalizeString(sourceEmote and sourceEmote.label),
-            defaultCommand = NormalizeString(sourceEmote and sourceEmote.defaultCommand),
-            targetedCommand = NormalizeString(sourceEmote and sourceEmote.targetedCommand),
-            defaultSend = addon.GetCommandSend(sourceEmote and sourceEmote.defaultSend, sourceEmote and sourceEmote.defaultCommand),
-            targetedSend = addon.GetCommandSend(sourceEmote and sourceEmote.targetedSend, sourceEmote and sourceEmote.targetedCommand)
-        }
-    end
+    local copy = CopyCategory(source)
+    copy.name = copyName
 
     categories[destinationIndex] = copy
     return true, destinationIndex

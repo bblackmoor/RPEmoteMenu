@@ -53,7 +53,7 @@ assert(L.MENU_DEFAULT_COMMAND == localization.English.MENU_DEFAULT_COMMAND)
 localization.Register('deDE', {MENU_DEFAULT_COMMAND = 'Invalid %999999s'})
 assert(L.MENU_DEFAULT_COMMAND == localization.English.MENU_DEFAULT_COMMAND)
 localization.Register('deDE', pseudo)
-for _, name in ipairs({'Defaults.lua', 'StandardEmoteCatalog.lua', 'SettingDefinitions.lua', 'BuiltInThemes.lua', 'Database.lua', 'JSON.lua', 'Serialization.lua', 'Scheduling.lua', 'SettingsWidgets.lua', 'SettingsControls.lua', 'StandardEmotePicker.lua', 'EmoteEditor.lua', 'SettingsExchangeText.lua', 'SettingsExchangeActions.lua', 'SettingsExchangeLifecycle.lua', 'SettingsExchange.lua'}) do Load(name) end
+for _, name in ipairs({'Defaults.lua', 'StandardEmoteCatalog.lua', 'SettingDefinitions.lua', 'BuiltInThemes.lua', 'DatabaseNormalization.lua','DatabasePresentation.lua','Database.lua', 'JSON.lua', 'Serialization.lua', 'Scheduling.lua', 'SettingsWidgets.lua', 'SettingsControls.lua', 'StandardEmotePicker.lua', 'EmoteEditor.lua', 'SettingsExchangeText.lua', 'SettingsExchangeActions.lua', 'SettingsExchangeLifecycle.lua', 'SettingsExchange.lua'}) do Load(name) end
 addon.Database.InitializeDatabase()
 UIParent:SetSize(1000, 800)
 -- Deliberately expand help, labels, action captions and validation/status text.

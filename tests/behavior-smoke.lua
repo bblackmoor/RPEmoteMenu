@@ -9,7 +9,7 @@ local addon = {VERSION = 'test', Settings = {}, SettingsUI = {FIELD_GAP = 12}}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu', addon) end
-Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
+Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('DatabaseNormalization.lua'); Load('DatabasePresentation.lua'); Load('Database.lua')
 local db = addon.Database
 db.InitializeDatabase()
 Load('FontMedia.lua'); Load('Scheduling.lua'); Load('VisibleSlotOrder.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('WindowTypography.lua'); Load('MenuRenderer.lua'); Load('MenuDrag.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')

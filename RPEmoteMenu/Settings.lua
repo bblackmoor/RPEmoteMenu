@@ -39,11 +39,10 @@ function AddonSettings.RegisterSettingsPanels()
 
     AddonSettings.RefreshProfiles = panels.Profiles.Refresh
     AddonSettings.RefreshSettingsPanels = function()
-        local settings = Database.GetSettings()
         panels.Behavior.Refresh()
         panels.Themes.Refresh()
         panels.Profiles.Refresh()
-        panels.Emotes.SelectCategory(settings.selectedCategory)
+        panels.Emotes.SelectCategory(Database.GetProfileSettings().selectedCategory)
     end
     AddonSettings.RefreshEditors = function(categoryIndex)
         UI.RefreshExchangeDialog()

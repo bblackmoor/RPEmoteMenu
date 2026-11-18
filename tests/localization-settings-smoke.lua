@@ -11,7 +11,7 @@ local function LoadData(locale, translations)
     Load("Localization.lua"); Load("Locales/enUS.lua")
     if translations then addon.Localization.Register(locale, translations) end
     for _, name in ipairs({"Defaults.lua", "SettingDefinitions.lua", "BuiltInThemes.lua",
-        "JSON.lua", "Database.lua", "Serialization.lua", "Scheduling.lua"}) do Load(name) end
+        "JSON.lua", "DatabaseNormalization.lua","DatabasePresentation.lua","Database.lua", "Serialization.lua", "Scheduling.lua"}) do Load(name) end
     RPEmoteMenuDB = nil
     addon.Database.InitializeDatabase()
     return addon, Load
