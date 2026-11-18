@@ -70,6 +70,8 @@ local ResizeGrip
 local WidthMeasurementText
 local categoryButtons = {}
 local buttonsPool = {}
+local menuView = {}
+local GetMenuRenderer
 local categoryDropIndicator
 local categoryDragState
 local emoteDropIndicator
@@ -795,170 +797,6 @@ function MainWindow.OpenEmoteEditor(categoryIndex, emoteIndex, isNew)
     addon.EmoteEditor.Open(categoryIndex, emoteIndex, isNew)
 end
 
-local function ApplyEmoteHoverHighlight(button)
-    if not button or not button.HoverHighlight then
-        return
-    end
-
-    if not button.isHovered then
-        button.HoverHighlight:Hide()
-        return
-    end
-
-    -- Keep emote hover related to the category selection color, but quieter.
-    -- Blending it toward the emote pane background reduces its saturation and
-    -- contrast without introducing another profile setting.
-    local highlight = themeSettings.categoryHighlightColor
-    local background = themeSettings.emoteBackgroundColor
-    local blend = 0.45
-
-    button.HoverHighlight:SetColorTexture(
-        background.r + (highlight.r - background.r) * blend,
-        background.g + (highlight.g - background.g) * blend,
-        background.b + (highlight.b - background.b) * blend,
-        0.75
-    )
-    button.HoverHighlight:Show()
-end
-
-local function SetEmoteHovered(button, isHovered)
-    button.isHovered = isHovered
-    ApplyEmoteHoverHighlight(button)
-end
-
-local function RefreshEmoteHovered(button)
-    if not button or not button:IsShown() then
-        return
-    end
-
-    local isHovered = button:IsMouseOver()
-        or (button.EditButton and button.EditButton:IsMouseOver())
-    SetEmoteHovered(button, isHovered)
-end
-
-local function ScheduleEmoteHoverRefresh(button)
-    addon.Scheduling.NextTick(button, function()
-        RefreshEmoteHovered(button)
-    end)
-end
-
-local function PopulateEmoteTooltip(button, owner, editHint)
-    if not button.emoteLabel or not button.defaultCommand then
-        return false
-    end
-
-    GameTooltip:SetOwner(owner or button, "ANCHOR_RIGHT")
-    GameTooltip:SetText(button.emoteLabel)
-    GameTooltip:AddLine(
-        string.format(L.MENU_DEFAULT_COMMAND, button.defaultCommand),
-        0.9,
-        0.9,
-        0.9,
-        true
-    )
-
-    if button.targetedCommand and button.targetedCommand ~= "" then
-        GameTooltip:AddLine(
-            string.format(L.MENU_TARGETED_COMMAND, button.targetedCommand),
-            0.75,
-            0.85,
-            1,
-            true
-        )
-    end
-
-    if editHint then
-        GameTooltip:AddLine(editHint, 1, 0.82, 0, false)
-    end
-
-end
-
-local function ApplyEmoteGearVisibility(button)
-    local showGear = not globalSettings.hideSettingsGear
-    button.EditButton:SetShown(showGear)
-    button.EditHoverIcon:SetShown(showGear)
-    button.Text:ClearAllPoints()
-    button.Text:SetPoint("LEFT", button, "LEFT", 7, 0)
-    if showGear then
-        button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
-    else
-        button.Text:SetPoint("RIGHT", button, "RIGHT", -3, 0)
-    end
-end
-
-local function GetContainerButton()
-    for _, button in ipairs(buttonsPool) do
-        if not button:IsShown() then
-            return button
-        end
-    end
-
-    local button = CreateFrame("Button", nil, ScrollChild)
-    button:SetSize(math.max(ScrollChild:GetWidth() - 5, 1), emoteButtonHeight)
-
-    button.HoverHighlight = button:CreateTexture(nil, "BACKGROUND")
-    button.HoverHighlight:SetAllPoints(button)
-    button.HoverHighlight:Hide()
-
-    button.Text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    button.Text:SetPoint("LEFT", button, "LEFT", 7, 0)
-    button.EditButton = CreateFrame("Button", nil, button)
-    button.EditButton:SetSize(16, 16)
-    button.EditButton:SetPoint("RIGHT", button, "RIGHT", -3, 0)
-    button.EditButton:SetFrameLevel(button:GetFrameLevel() + 2)
-    button.EditButton:RegisterForClicks("LeftButtonUp")
-    button.EditButton.Icon = button.EditButton:CreateTexture(nil, "ARTWORK")
-    button.EditButton.Icon:SetAllPoints(button.EditButton)
-    button.EditButton.Icon:SetTexture("Interface\\Buttons\\UI-OptionsButton")
-    button.EditButton.Icon:SetAlpha(0.25)
-
-    -- Native HIGHLIGHT layers follow WoW's actual mouse focus and cannot be
-    -- left bright by missed or reordered OnEnter/OnLeave callbacks.
-    button.EditHoverIcon = button:CreateTexture(nil, "HIGHLIGHT")
-    button.EditHoverIcon:SetSize(16, 16)
-    button.EditHoverIcon:SetPoint("CENTER", button.EditButton, "CENTER")
-    button.EditHoverIcon:SetTexture("Interface\\Buttons\\UI-OptionsButton")
-    button.EditHoverIcon:SetBlendMode("BLEND")
-    button.EditButton:SetHighlightTexture(
-        "Interface\\Buttons\\UI-OptionsButton",
-        "BLEND"
-    )
-    button.EditButton:SetScript("OnEnter", function(self)
-        SetEmoteHovered(button, true)
-        ScheduleTooltip(self, function()
-            return PopulateEmoteTooltip(button, self, L.MENU_CLICK_TO_EDIT)
-        end)
-    end)
-    button.EditButton:SetScript("OnLeave", function(self)
-        ScheduleEmoteHoverRefresh(button)
-        CancelTooltip(self)
-    end)
-
-    button:SetScript("OnEnter", function(self)
-        SetEmoteHovered(button, true)
-        ScheduleTooltip(self, function()
-            return PopulateEmoteTooltip(button, self, L.MENU_RIGHT_CLICK_TO_EDIT)
-        end)
-    end)
-    button:SetScript("OnLeave", function(self)
-        ScheduleEmoteHoverRefresh(button)
-        CancelTooltip(self)
-    end)
-
-    button.Text:SetPoint("RIGHT", button.EditButton, "LEFT", -8, 0)
-    button.Text:SetJustifyH("LEFT")
-    button.Text:SetWordWrap(false)
-    Typography.ApplyFont(
-        button.Text,
-        themeSettings.emoteFont,
-        themeSettings.emoteFontSize,
-        themeSettings.emoteTextColor
-    )
-
-    table.insert(buttonsPool, button)
-    return button
-end
-
 local function GetCurrentCategory(categoryIndex)
     return Database.GetCategory(categoryIndex)
 end
@@ -1329,147 +1167,7 @@ local function StopEmoteDrag(button)
 end
 
 function MainWindow.ApplyCategoryHighlight(button, isSelected)
-    button.Selection:Hide()
-    button.SelectionUnderline:Hide()
-
-    for _, edge in pairs(button.SelectionOutline) do
-        edge:Hide()
-    end
-    for _, outlineText in ipairs(button.TextOutline) do
-        outlineText:Hide()
-    end
-
-    button.Text:SetShadowColor(
-        button.defaultShadowR,
-        button.defaultShadowG,
-        button.defaultShadowB,
-        button.defaultShadowA
-    )
-    button.Text:SetShadowOffset(button.defaultShadowX, button.defaultShadowY)
-
-    local strength = isSelected and 1 or (button.isHovered and 0.5 or 0)
-
-    if strength == 0 then
-        return
-    end
-
-    local color = themeSettings.categoryHighlightColor
-    local effect = not isSelected and button.isHovered
-        and "background"
-        or themeSettings.categoryHighlightEffect
-
-    if effect == "background" then
-        button.Selection:SetColorTexture(
-            color.r,
-            color.g,
-            color.b,
-            0.85 * strength
-        )
-        button.Selection:Show()
-    elseif effect == "outline" then
-        local thickness = themeSettings.categoryHighlightThickness
-        for _, outlineText in ipairs(button.TextOutline) do
-            outlineText:ClearAllPoints()
-            outlineText:SetPoint(
-                "LEFT",
-                button.Text,
-                "LEFT",
-                outlineText.offsetX * thickness,
-                outlineText.offsetY * thickness
-            )
-            outlineText:SetPoint(
-                "RIGHT",
-                button.Text,
-                "RIGHT",
-                outlineText.offsetX * thickness,
-                outlineText.offsetY * thickness
-            )
-            outlineText:SetTextColor(color.r, color.g, color.b, strength)
-            outlineText:Show()
-        end
-    elseif effect == "underline" then
-        button.SelectionUnderline:SetHeight(themeSettings.categoryHighlightThickness)
-        button.SelectionUnderline:SetColorTexture(
-            color.r, color.g, color.b, strength
-        )
-        button.SelectionUnderline:Show()
-    elseif effect == "shadow" then
-        button.Text:SetShadowColor(color.r, color.g, color.b, strength)
-        button.Text:SetShadowOffset(2, -2)
-    elseif effect == "separator" then
-        button.SelectionOutline.right:SetWidth(themeSettings.categoryHighlightThickness)
-        button.SelectionOutline.right:SetColorTexture(
-            color.r, color.g, color.b, strength
-        )
-        button.SelectionOutline.right:Show()
-    end
-end
-
-local function UpdateCategorySidebar()
-    if not CategoryScrollChild then
-        return
-    end
-
-    local visibleCount = 0
-
-    for categoryIndex = 1, MAX_CATEGORIES do
-        local button = categoryButtons[categoryIndex]
-        local category = GetCurrentCategory(categoryIndex)
-
-        if button and IsCategoryVisible(categoryIndex) then
-            button:ClearAllPoints()
-            button:SetPoint(
-                "TOPLEFT",
-                CategoryScrollChild,
-                "TOPLEFT",
-                0,
-                -visibleCount * categoryButtonHeight
-            )
-            button.Text:SetText(category.name)
-            button.visiblePosition = visibleCount + 1
-            for _, outlineText in ipairs(button.TextOutline) do
-                outlineText:SetText(category.name)
-            end
-
-            local isSelected = categoryIndex == selectedCategoryIndex
-            MainWindow.ApplyCategoryHighlight(button, isSelected)
-
-            local textColor = isSelected
-                and themeSettings.selectedCategoryTextColor
-                or themeSettings.categoryTextColor
-
-            button.Text:SetTextColor(
-                textColor.r,
-                textColor.g,
-                textColor.b,
-                1
-            )
-
-            button:Show()
-            visibleCount = visibleCount + 1
-        elseif button then
-            button.visiblePosition = nil
-            button:Hide()
-        end
-    end
-
-    CategoryScrollChild:SetHeight(math.max(visibleCount * categoryButtonHeight, 1))
-
-    if visibleCount == 0 then
-        CategoryEmptyLabel:Show()
-        CategoryEmptyButton:Show()
-    else
-        CategoryEmptyLabel:Hide()
-        CategoryEmptyButton:Hide()
-    end
-
-    local maximumScroll = math.max(
-        CategoryScrollChild:GetHeight() - CategoryScrollFrame:GetHeight(),
-        0
-    )
-    CategoryScrollFrame:SetVerticalScroll(
-        math.min(CategoryScrollFrame:GetVerticalScroll() or 0, maximumScroll)
-    )
+    GetMenuRenderer().ApplyCategoryHighlight(button, isSelected)
 end
 
 local function UpdateScrollIndicators()
@@ -1512,6 +1210,37 @@ local function UpdateScrollIndicators()
     end
 end
 
+local menuRenderer
+GetMenuRenderer = function()
+    if not menuRenderer then
+        menuRenderer = addon.MenuRenderer.Create({
+            window = MainWindow,
+            GetTheme = function() return themeSettings end,
+            GetGlobalSettings = function() return globalSettings end,
+            GetProfile = function() return profileSettings end,
+            GetSelectedCategory = function() return selectedCategoryIndex end,
+            GetCategoryHeight = function() return categoryButtonHeight end,
+            GetEmoteHeight = function() return emoteButtonHeight end,
+            GetSidebarWidth = function() return sidebarWidth end,
+            IsCategoryDragging = function() return categoryDragState ~= nil end,
+            GetCurrentCategory = GetCurrentCategory,
+            IsCategoryVisible = IsCategoryVisible,
+            GetVisibleEmotes = GetVisibleEmotes,
+            ScheduleTooltip = ScheduleTooltip,
+            CancelTooltip = CancelTooltip,
+            StartCategoryDrag = StartCategoryDrag,
+            StopCategoryDrag = StopCategoryDrag,
+            StartEmoteDrag = StartEmoteDrag,
+            StopEmoteDrag = StopEmoteDrag,
+            UsesMinimizedDisplay = UsesMinimizedDisplay,
+            SetWindowAutoHidden = function(hidden) SetWindowAutoHidden(hidden) end,
+            UpdateScrollIndicators = UpdateScrollIndicators,
+            scrollKey = scheduleKeys.scroll,
+        }, menuView, categoryButtons, buttonsPool)
+    end
+    return menuRenderer
+end
+
 function MainWindow.UpdateMenu(options)
     CancelTooltip()
     MainWindow.NotifyActivity()
@@ -1527,20 +1256,7 @@ function MainWindow.UpdateMenu(options)
     categoryDragState = nil
     HideCategoryDropIndicator()
 
-    for _, button in ipairs(buttonsPool) do
-        button:SetScript("OnUpdate", nil)
-        button:SetAlpha(1)
-        SetEmoteHovered(button, false)
-        button:Hide()
-        button:ClearAllPoints()
-        button:SetScript("OnClick", nil)
-        button:SetScript("OnDragStart", nil)
-        button:SetScript("OnDragStop", nil)
-        button.EditButton:SetScript("OnClick", nil)
-        button.emoteLabel = nil
-        button.defaultCommand = nil
-        button.targetedCommand = nil
-    end
+    GetMenuRenderer().ResetEmotes()
 
     emoteDragState = nil
     HideEmoteDropIndicator()
@@ -1550,7 +1266,7 @@ function MainWindow.UpdateMenu(options)
     end
 
     profileSettings.selectedCategory = selectedCategoryIndex or profileDefaults.selectedCategory
-    UpdateCategorySidebar()
+    GetMenuRenderer().UpdateCategories()
 
     if not selectedCategoryIndex then
         EmoteEmptyButton:Hide()
@@ -1561,64 +1277,7 @@ function MainWindow.UpdateMenu(options)
         return
     end
 
-    local category = GetCurrentCategory(selectedCategoryIndex)
-
-    local visibleEmotes = GetVisibleEmotes(category)
-    EmoteEmptyButton:SetShown(#visibleEmotes == 0)
-    local dynamicY = 0
-
-    for visiblePosition, visible in ipairs(visibleEmotes) do
-        local emote = visible.emote
-        local emoteIndex = visible.index
-        local label = emote.label
-        local defaultCommand = emote.defaultCommand
-        local targetedCommand = emote.targetedCommand
-        local emoteButton = GetContainerButton()
-        emoteButton.visiblePosition = visiblePosition
-        emoteButton.emoteIndex = emoteIndex
-        emoteButton.emoteLabel = label
-        emoteButton.defaultCommand = defaultCommand
-        emoteButton.targetedCommand = targetedCommand
-        emoteButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        ApplyEmoteGearVisibility(emoteButton)
-
-        emoteButton:SetPoint("TOPLEFT", ScrollChild, "TOPLEFT", 0, -dynamicY)
-        emoteButton.Text:SetText(label)
-        emoteButton.Text:SetTextColor(
-            themeSettings.emoteTextColor.r,
-            themeSettings.emoteTextColor.g,
-            themeSettings.emoteTextColor.b,
-            1
-        )
-        emoteButton:SetScript("OnClick", function(_, mouseButton)
-            if emoteButton.suppressClick then
-                return
-            end
-            if mouseButton == "RightButton" then
-                MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
-                return
-            end
-            addon.Commands.ExecuteEmoteCommand(defaultCommand, targetedCommand, emote.defaultSend, emote.targetedSend)
-            if profileSettings.fadeEnabled and UsesMinimizedDisplay() then
-                SetWindowAutoHidden(true)
-            end
-        end)
-        emoteButton:RegisterForDrag("LeftButton")
-        emoteButton:SetScript("OnDragStart", StartEmoteDrag)
-        emoteButton:SetScript("OnDragStop", StopEmoteDrag)
-        emoteButton.EditButton:SetScript("OnClick", function()
-            MainWindow.OpenEmoteEditor(selectedCategoryIndex, emoteIndex)
-        end)
-        emoteButton:Show()
-
-        dynamicY = dynamicY + emoteButtonHeight + 2
-    end
-
-    ScrollChild:SetHeight(math.max(dynamicY, #visibleEmotes == 0 and 26 or 1))
-    ScrollFrame:SetVerticalScroll(0)
-
-    addon.Scheduling.NextTick(scheduleKeys.scroll, UpdateScrollIndicators)
-
+    GetMenuRenderer().RenderEmotes()
     ScheduleInactiveFade()
 end
 
@@ -1635,7 +1294,7 @@ ApplyThemeColors = function()
     local color = themeSettings.emoteTextColor
     for _, button in ipairs(buttonsPool) do
         button.Text:SetTextColor(color.r, color.g, color.b, 1)
-        ApplyEmoteHoverHighlight(button)
+        GetMenuRenderer().ApplyEmoteHoverHighlight(button)
     end
     ScrollTopIndicator:SetColorTexture(color.r, color.g, color.b, 1)
     ScrollBottomIndicator:SetColorTexture(color.r, color.g, color.b, 1)
@@ -2001,130 +1660,11 @@ local function CreateCategorySidebar()
     end)
     CategoryEmptyButton:Hide()
 
-    for categoryIndex = 1, MAX_CATEGORIES do
-        local button = CreateFrame("Button", nil, CategoryScrollChild)
-        button:SetSize(sidebarWidth - 7, categoryButtonHeight)
-        button.categoryIndex = categoryIndex
-
-        button.Selection = button:CreateTexture(nil, "BACKGROUND")
-        button.Selection:SetAllPoints(button)
-        button.Selection:Hide()
-
-        button.SelectionOutline = {
-            top = button:CreateTexture(nil, "ARTWORK"),
-            bottom = button:CreateTexture(nil, "ARTWORK"),
-            left = button:CreateTexture(nil, "ARTWORK"),
-            right = button:CreateTexture(nil, "ARTWORK")
-        }
-
-        button.SelectionOutline.top:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
-        button.SelectionOutline.top:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
-        button.SelectionOutline.bottom:SetPoint(
-            "BOTTOMLEFT",
-            button,
-            "BOTTOMLEFT",
-            0,
-            0
-        )
-        button.SelectionOutline.bottom:SetPoint(
-            "BOTTOMRIGHT",
-            button,
-            "BOTTOMRIGHT",
-            0,
-            0
-        )
-        button.SelectionOutline.left:SetPoint("TOPLEFT", button, "TOPLEFT", 0, 0)
-        button.SelectionOutline.left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 0, 0)
-        button.SelectionOutline.right:SetPoint("TOPRIGHT", button, "TOPRIGHT", 0, 0)
-        button.SelectionOutline.right:SetPoint(
-            "BOTTOMRIGHT",
-            button,
-            "BOTTOMRIGHT",
-            0,
-            0
-        )
-
-        for _, edge in pairs(button.SelectionOutline) do
-            edge:Hide()
-        end
-
-        button.SelectionUnderline = button:CreateTexture(nil, "ARTWORK")
-        button.SelectionUnderline:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 0, 0)
-        button.SelectionUnderline:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 0, 0)
-        button.SelectionUnderline:Hide()
-
-        button.Text = button:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        button.Text:SetPoint("LEFT", button, "LEFT", 6, 0)
-        button.Text:SetPoint("RIGHT", button, "RIGHT", -5, 0)
-        button.Text:SetJustifyH("LEFT")
-        button.Text:SetWordWrap(false)
-        button.TextOutline = {}
-        for _, offset in ipairs({
-            {-1, -1}, {-1, 0}, {-1, 1}, {0, -1},
-            {0, 1}, {1, -1}, {1, 0}, {1, 1}
-        }) do
-            local outlineText = button:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-            outlineText:SetPoint("LEFT", button.Text, "LEFT", offset[1], offset[2])
-            outlineText:SetPoint("RIGHT", button.Text, "RIGHT", offset[1], offset[2])
-            outlineText:SetJustifyH("LEFT")
-            outlineText:SetWordWrap(false)
-            outlineText:SetTextColor(1, 1, 1, 1)
-            outlineText.offsetX = offset[1]
-            outlineText.offsetY = offset[2]
-            outlineText:Hide()
-            button.TextOutline[#button.TextOutline + 1] = outlineText
-        end
-        button.defaultShadowX, button.defaultShadowY = button.Text:GetShadowOffset()
-        button.defaultShadowR,
-            button.defaultShadowG,
-            button.defaultShadowB,
-            button.defaultShadowA = button.Text:GetShadowColor()
-        Typography.ApplyFont(
-            button.Text,
-            themeSettings.categoryFont,
-            themeSettings.categoryFontSize,
-            themeSettings.categoryTextColor
-        )
-
-        button:SetScript("OnEnter", function(self)
-            self.isHovered = true
-            if categoryDragState then
-                return
-            elseif self.categoryIndex ~= selectedCategoryIndex then
-                MainWindow.SetSelectedCategory(self.categoryIndex)
-                MainWindow.UpdateMenu()
-            else
-                MainWindow.ApplyCategoryHighlight(self, true)
-            end
-            ScheduleTooltip(self, function()
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetText(self.Text:GetText())
-                GameTooltip:AddLine(L.MENU_RIGHT_CLICK_TO_EDIT, 1, 0.82, 0, false)
-            end)
-        end)
-        button:SetScript("OnLeave", function(self)
-            self.isHovered = false
-            MainWindow.ApplyCategoryHighlight(
-                self,
-                self.categoryIndex == selectedCategoryIndex
-            )
-            CancelTooltip(self)
-        end)
-        button:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        button:SetScript("OnClick", function(self, mouseButton)
-            if mouseButton == "RightButton"
-                and addon.Settings
-                and addon.Settings.OpenEmotes then
-                addon.Settings.OpenEmotes(self.categoryIndex)
-            end
-        end)
-        button:RegisterForDrag("LeftButton")
-        button:SetScript("OnDragStart", StartCategoryDrag)
-        button:SetScript("OnDragStop", StopCategoryDrag)
-        button:Hide()
-
-        categoryButtons[categoryIndex] = button
-    end
+    menuView.CategoryScrollChild = CategoryScrollChild
+    menuView.CategoryScrollFrame = CategoryScrollFrame
+    menuView.CategoryEmptyLabel = CategoryEmptyLabel
+    menuView.CategoryEmptyButton = CategoryEmptyButton
+    GetMenuRenderer().CreateCategories()
 
 
 end
@@ -2153,6 +1693,9 @@ local function CreateEmoteArea()
         end
     end)
     EmoteEmptyButton:Hide()
+    menuView.ScrollFrame = ScrollFrame
+    menuView.ScrollChild = ScrollChild
+    menuView.EmoteEmptyButton = EmoteEmptyButton
 
     ScrollTopIndicator = MainFrame:CreateTexture(nil, "OVERLAY")
     ScrollTopIndicator:SetHeight(1)
@@ -2531,4 +2074,5 @@ end
 function MainWindow.GetFrame()
     return MainFrame
 end
+
 

@@ -2,7 +2,7 @@
 
 ## Design and Architecture
 
-- [Refresh and readability refactor](design/refresh-and-readability-refactor.md): current six-phase plan and Phase 1 verification.
+- [Refresh and readability refactor](design/refresh-and-readability-refactor.md): current six-phase plan and verification through Phase 3.
 
 - [Settings conventions](design/settings-conventions.md): module contracts, deliberate differences from Simple Nameplates, regression coverage, and native acceptance checks.
 - [Addon standardization](design/addon-standardization.md): the completed settings standardization work.
@@ -53,3 +53,4 @@ Transfers exclude global preferences and character-to-Profile assignments. Name 
 See [Packaging and releases](releasing.md) for the one-time hook and CurseForge token setup, automatic build numbering, verified ZIP builds, version-tag publication, and failure recovery.
 
 The [changelog](../CHANGELOG.md) and [v2.0.209 release notes](releases/2.0.209.md) retain release history. User installation instructions are in the [README](../README.md).
+

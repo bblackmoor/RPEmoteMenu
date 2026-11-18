@@ -9,7 +9,7 @@ assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua',
     'Scheduling.lua','FontMedia.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
-    'EmoteEditor.lua','WindowTypography.lua','MainWindow.lua'}) do
+    'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu',addon)
 end
 local db, main = addon.Database, addon.MainWindow
@@ -112,3 +112,4 @@ for _, position in ipairs({'LEFT', 'RIGHT', 'BOTTOM', 'TOP'}) do
     assert(emote:GetScript('OnClick') == handler and emoteScroll:GetVerticalScroll() == 17)
 end
 print('PASS selective Theme refresh, single content rebuild, one typography measurement pass and stable scroll/handlers')
+

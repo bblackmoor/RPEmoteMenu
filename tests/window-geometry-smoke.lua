@@ -9,7 +9,7 @@ assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 for _, name in ipairs({'Defaults.lua','SettingDefinitions.lua','BuiltInThemes.lua','Database.lua',
     'Scheduling.lua','FontMedia.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua',
-    'EmoteEditor.lua','WindowTypography.lua','MainWindow.lua'}) do
+    'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MainWindow.lua'}) do
     assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu',addon)
 end
 local db, main = addon.Database, addon.MainWindow
@@ -467,4 +467,5 @@ for _,position in ipairs({'TOP','LEFT','RIGHT','BOTTOM'}) do
 end
 methods.SetFont,methods.GetFont=oldSetFont,oldGetFont
 print('PASS real window geometry, native dragging, interrupted gesture ownership and layout actions, inactivity guards, events, signed offset reload and all 81 anchor pairs in expanded/compact modes')
+
 

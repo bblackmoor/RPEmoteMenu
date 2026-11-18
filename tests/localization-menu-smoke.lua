@@ -30,7 +30,7 @@ local translated = {
 addon.Localization.Register("deDE", translated)
 for _, name in ipairs({"Defaults.lua", "StandardEmoteCatalog.lua", "SettingDefinitions.lua", "BuiltInThemes.lua",
     "Database.lua", "Scheduling.lua", "FontMedia.lua", "VisibleSlotOrder.lua",
-    "WindowGeometry.lua", "WindowFade.lua", "StandardEmotePicker.lua", "EmoteEditor.lua", "WindowTypography.lua", "MainWindow.lua",
+    "WindowGeometry.lua", "WindowFade.lua", "StandardEmotePicker.lua", "EmoteEditor.lua", "WindowTypography.lua", "MenuRenderer.lua", "MainWindow.lua",
     "SettingsWidgets.lua", "SettingsControls.lua"}) do Load(name) end
 local db, main = addon.Database, addon.MainWindow
 db.InitializeDatabase()
@@ -96,3 +96,4 @@ categories[1].emotes[1] = {label = "Replacement", defaultCommand = "/wave", targ
 dialog.SaveButton.scripts.OnClick()
 assert(dialog.Status:GetText() == translated.EDITOR_TARGET_CHANGED and not dialog.SaveButton:IsEnabled())
 print("PASS translated menu sizing/tooltips/editor and unchanged user content, command routing and stale-target guards")
+

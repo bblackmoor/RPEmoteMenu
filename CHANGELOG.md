@@ -1,3 +1,9 @@
+## 2.2.338 — 2026-11-18
+
+- Complete refactor Phase 3: move category and emote row construction, bindings and rendering into MenuRenderer.
+- Install emote click, edit and drag handlers once; reused rows read their current commands, category, slot and independent Send choices.
+- Add regression coverage for replaced records, category and Profile changes, retired rows, drag click suppression and gear visibility.
+
 ## 2.2.337 — 2026-11-17
 
 - Complete refactor Phase 2: extract font application, fallback, text measurement and bounded retry scheduling into WindowTypography.
@@ -420,6 +426,7 @@
 - Added 90-day development ZIP artifacts for every commit to `main`, identified by addon version and short commit SHA.
 - Reserved permanent, cleanly named GitHub Releases for matching version tags.
 - Added tag-to-TOC version validation before publishing a permanent release.
+
 
 
 

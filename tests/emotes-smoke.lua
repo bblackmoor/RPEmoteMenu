@@ -23,7 +23,7 @@ local addon = {VERSION='test'}
 assert(loadfile("RPEmoteMenu/Localization.lua"))("RPEmoteMenu", addon)
 assert(loadfile("RPEmoteMenu/Locales/enUS.lua"))("RPEmoteMenu", addon)
 local function Load(name) assert(loadfile('RPEmoteMenu/'..name))('RPEmoteMenu', addon) end
-for _, name in ipairs({'Scheduling.lua','Defaults.lua', 'StandardEmoteCatalog.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','StandardEmotePicker.lua', 'EmoteEditor.lua','WindowTypography.lua','MainWindow.lua'}) do Load(name) end
+for _, name in ipairs({'Scheduling.lua','Defaults.lua', 'StandardEmoteCatalog.lua','SettingDefinitions.lua','FontMedia.lua','BuiltInThemes.lua','JSON.lua','Database.lua','Serialization.lua','VisibleSlotOrder.lua','WindowGeometry.lua','WindowFade.lua','StandardEmotePicker.lua', 'EmoteEditor.lua','WindowTypography.lua','MenuRenderer.lua','MainWindow.lua'}) do Load(name) end
 local db=addon.Database; db.InitializeDatabase()
 local updates, selections = 0, 0
 addon.MainWindow.UpdateMenu=function() updates=updates+1 end
@@ -537,3 +537,4 @@ dialog.TargetedBox:SetText('/e waves.'); assert(dialog.TargetedSend:GetChecked()
 dialog.SaveButton.scripts.OnClick()
 assert(c.emotes[2].defaultSend == false and c.emotes[2].targetedSend == true)
 print('PASS Send editor placement, Save/Cancel, help popup and new-command defaults')
+

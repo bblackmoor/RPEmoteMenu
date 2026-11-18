@@ -9,7 +9,7 @@ consume another phase's scope.
 | --- | --- | --- |
 | 1 | Consolidate refresh flow; distinguish content, typography, colors and geometry | Implemented; automated checks pass, in-game acceptance pending |
 | 2 | Extract typography, fallback/retries and measurement from MainWindow | Implemented; automated checks pass, in-game acceptance pending |
-| 3 | Extract category/emote rendering; install stable handlers reading current row bindings | Planned |
+| 3 | Extract category/emote rendering; install stable handlers reading current row bindings | Implemented; automated checks pass, in-game acceptance pending |
 | 4 | Share drag cursor conversion, edge scrolling, hit testing and drop indicators | Planned |
 | 5 | Extract database normalization/copying, use explicit settings ownership and separate presentation coordination | Planned |
 | 6 | Simplify repeated settings-control construction with small helpers and named options | Planned |
@@ -85,3 +85,26 @@ rejection. Existing font-media, window-refresh, localization and geometry suites
 continue to exercise the real integration. In-game checks remain outstanding:
 change fonts, register a late font provider, switch Themes/Profiles during retries,
 and change display size/UI scale with the menu expanded and minimized.
+
+
+## Phase 3
+
+MenuRenderer owns category/emote row construction, selection and hover effects,
+empty-category presentation, row bindings and pooled emote rendering. MainWindow
+retains pane creation, geometry, refresh ordering, tooltip scheduling and drag
+state. Explicit live getters supply current settings and selection; pane references
+and row pools are shared with typography and layout. Public window methods remain
+available, including ApplyCategoryHighlight and UpdateMenu.
+
+Click, edit and drag handlers are installed when an emote button is created.
+Refreshes replace its current category, slot, commands and both Send flags without
+replacing those handlers. Retired rows clear all bindings and ignore click/edit
+callbacks. Drag click suppression survives the refresh until its existing deferred
+cleanup, preserving post-drop behavior. No saved-data or transfer changes are made.
+
+The menu-renderer integration suite covers record replacement, sparse category
+selection, independent Send flags, gear visibility, retired rows, suppression and
+Profile replacement using real database/window modules. Existing suites continue
+to cover reorder, tooltip ownership, font changes, geometry and selective refresh.
+In-game acceptance remains pending for category hover, editing, both Send choices,
+drag/drop, gear visibility and switching Profiles/Themes.

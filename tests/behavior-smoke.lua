@@ -12,7 +12,7 @@ local function Load(name) assert(loadfile('RPEmoteMenu/' .. name))('RPEmoteMenu'
 Load('Defaults.lua'); Load('SettingDefinitions.lua'); Load('BuiltInThemes.lua'); Load('Database.lua')
 local db = addon.Database
 db.InitializeDatabase()
-Load('FontMedia.lua'); Load('Scheduling.lua'); Load('VisibleSlotOrder.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('WindowTypography.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
+Load('FontMedia.lua'); Load('Scheduling.lua'); Load('VisibleSlotOrder.lua'); Load('WindowGeometry.lua'); Load('WindowFade.lua'); Load('EmoteEditor.lua'); Load('WindowTypography.lua'); Load('MenuRenderer.lua'); Load('MainWindow.lua'); Load('SettingsWidgets.lua'); Load('SettingsControls.lua')
 local widgets, main = addon.SettingsWidgets, addon.MainWindow
 local controls = {Switch = {}, IntegerEntry = {}, Dropdown = {}, Button = {}}
 for kind, collection in pairs(controls) do
@@ -227,5 +227,6 @@ for _, point in ipairs(addon.SettingDefinitions.enums.anchorPoint.values) do
     end
 end
 print('PASS real Behavior widgets, ownership, dependencies, resets, input, geometry and scrolling')
+
 
 
