@@ -1,3 +1,11 @@
+## 2.3.0 — 2026-11-27
+
+- Choose separately for each emote’s default and targeted commands whether to send immediately or open a chat draft.
+- Send-enabled chat commands now submit reliably, including `/say` and `/s`.
+- New Profiles fade after three seconds of inactivity. Existing Profiles keep their saved delay.
+- Closing or collapsing the menu mid-drag cancels the drag and restores the row.
+- Consolidated menu rendering, drag-and-drop, saved-data handling, and settings controls.
+
 ## 2.2.343 — 2026-11-18
 
 - Cancel category and emote drags when the window hides or collapses, restoring row opacity and ignoring stale drop events.

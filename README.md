@@ -4,6 +4,13 @@
 
 RP Emote Menu is for World of Warcraft roleplayers who want their character's gestures, habits, and favorite lines a click away. Blizzard's emote list gives you the standard emotes; this menu lets you put the ones you actually use alongside your own, organized into categories that make sense to you. Give each character a different selection, use different wording when addressing someone, and make the menu fit your interface. Less hunting through a list, less typing the same thing again, more time roleplaying.
 
+## What's new in 2.3.0
+
+- Choose separately for each emote’s default and targeted commands whether to send immediately or open a chat draft.
+- Send-enabled chat commands now submit reliably, including `/say` and `/s`.
+- New Profiles fade after three seconds of inactivity. Existing Profiles keep their saved delay.
+- Closing or collapsing the menu mid-drag cancels the drag and restores the row.
+
 ## Features
 
 - Keep up to 100 emotes in 10 categories per Profile.
